@@ -1,192 +1,184 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
   <meta charset="utf-8" />
-  <title>Satellite Discovery Index — Open / No Login</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Satellite Discovery Index</title>
 
-  <!-- Leaflet (2D, stable, no WebGL required) -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Leaflet -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
 
-  <!-- satellite.js (open-source SGP4 propagation; planning reference only) -->
-  <script src="https://cdn.jsdelivr.net/npm/satellite.js@5.0.1/dist/satellite.min.js"></script>
-
-  <link rel="stylesheet" href="styles.css" />
+  <!-- Your HUD theme -->
+  <link rel="stylesheet" href="./styles.css" />
 </head>
 
 <body>
-<header class="topbar">
-  <div class="brand">
-    <div class="logo"></div>
-    <div>
-      <div class="title">Satellite Discovery Index</div>
-      <div class="subtitle">Open data only · No login · Archive coverage + pass planning (reference only)</div>
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo" aria-hidden="true"></div>
+      <div>
+        <div class="title">Satellite Discovery Index</div>
+        <div class="subtitle">Open data only · No login · Archive coverage + pass planning (reference only)</div>
+      </div>
     </div>
-  </div>
-  <div class="nav">
-    <a class="navlink" href="#aoi">AOI</a>
-    <a class="navlink" href="#coverage">Coverage</a>
-    <a class="navlink" href="#footprints">Footprints</a>
-    <a class="navlink" href="#programming">Programming</a>
-    <a class="navlink" href="#sources">Sources</a>
-  </div>
-</header>
 
-<main class="layout">
-  <section class="panel">
+    <nav class="nav" aria-label="Primary">
+      <a class="navlink" href="#aoi">AOI</a>
+      <a class="navlink" href="#coverage">Coverage</a>
+      <a class="navlink" href="#footprints">Footprints</a>
+      <a class="navlink" href="#programming">Programming</a>
+      <a class="navlink" href="#sources">Sources</a>
+    </nav>
+  </header>
 
-    <div class="card" id="aoi">
-      <h2>1) AOI Setup</h2>
+  <!-- Main layout -->
+  <main class="layout">
+    <!-- Left Panel -->
+    <aside class="panel" aria-label="Controls">
+      <!-- 1) AOI SETUP -->
+      <section id="aoi" class="card">
+        <h2>1) AOI SETUP</h2>
 
-      <div class="row">
-        <div class="field">
-          <label>Place search (optional)</label>
+        <div class="row field">
+          <label for="place">Place search (optional)</label>
           <div class="inline">
-            <input id="placeInput" type="text" placeholder="Beijing / Dubai / New York" />
-            <button id="placeBtn" class="btn">Locate</button>
+            <input id="place" type="text" placeholder="Beijing / Dubai / New York" />
+            <button id="btnLocate" class="btn btn-secondary" type="button">Locate</button>
           </div>
-          <div class="hint">Uses OpenStreetMap Nominatim public geocoding (no login).</div>
+          <div class="hint">Uses OpenStreetMap Nominatim public geocoding</div>
+
+          <div class="aoiBox" style="margin-top:12px;">
+            <div class="aoiTitle">AOI STATUS</div>
+            <div class="aoiSummary" id="aoiSummary">
+              No AOI set. Use place search or draw/select on map (if enabled).
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
 
-      <div class="row">
-        <div class="field">
-          <label>Upload AOI (GeoJSON)</label>
-          <input id="fileInput" type="file" accept=".geojson,.json" />
-          <div class="hint">Recommended: Polygon / MultiPolygon. Rectangle bbox GeoJSON also works.</div>
-        </div>
-      </div>
+      <!-- 2) ARCHIVE COVERAGE INDEX -->
+      <section id="coverage" class="card">
+        <h2>2) ARCHIVE COVERAGE INDEX (REFERENCE)</h2>
 
-      <div class="row">
-        <div class="inline">
-          <button id="drawRectBtn" class="btn btn-secondary">Draw rectangle AOI</button>
-          <button id="clearAoiBtn" class="btn btn-ghost">Clear AOI</button>
-        </div>
-      </div>
-
-      <div class="aoiBox">
-        <div class="aoiTitle">Current AOI</div>
-        <div id="aoiSummary" class="aoiSummary">None</div>
-      </div>
-    </div>
-
-    <div class="card" id="coverage">
-      <h2>2) Archive Coverage Index (Reference)</h2>
-
-      <div class="row">
-        <div class="field">
+        <div class="row field">
           <label>Time range (for open STAC signal checks)</label>
           <div class="inline">
-            <input id="startMonth" type="month" />
-            <input id="endMonth" type="month" />
+            <input id="fromMonth" type="month" />
+            <span class="hint" style="margin:0 2px;">→</span>
+            <input id="toMonth" type="month" />
           </div>
-          <div class="hint">Indicators only. No ordering. No guarantees. Procurement stays with official channels.</div>
-        </div>
-      </div>
 
-      <div class="row">
-        <div class="inline">
-          <button id="coverageIndexBtn" class="btn btn-primary">Run coverage index</button>
-          <button id="clearIndexBtn" class="btn btn-ghost">Clear</button>
-        </div>
-      </div>
-
-      <div class="row">
-        <div id="indexStatus" class="hint"></div>
-      </div>
-
-      <div class="row">
-        <div id="coverageIndex" class="indexList"></div>
-      </div>
-
-      <div class="row">
-        <div class="hint">
-          Legend:
-          <span class="pill ok">✅ likely</span>
-          <span class="pill warn">⚠️ partial / non-uniform / samples</span>
-          <span class="pill no">❌ no public signal</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="card" id="footprints">
-      <h2>3) Open STAC Footprints (Loadable Public Data)</h2>
-
-      <div class="row">
-        <div class="inline">
-          <button id="footprintsBtn" class="btn btn-primary">Load open footprints</button>
-          <button id="clearFootprintsBtn" class="btn btn-ghost">Clear footprints</button>
-        </div>
-      </div>
-
-      <div class="row">
-        <div id="footprintsStatus" class="hint"></div>
-      </div>
-
-      <div class="row">
-        <div id="footprintsSummary" class="sources"></div>
-      </div>
-
-      <div class="row">
-        <div class="hint">
-          Loads only public STAC footprints (Planetary Computer): Sentinel-2 / Sentinel-1 / Landsat (visual reference).
-        </div>
-      </div>
-    </div>
-
-    <div class="card" id="programming">
-      <h2>4) Programming Index (Future Passes · Reference)</h2>
-
-      <div class="row">
-        <div class="field">
-          <label>Forecast horizon (days)</label>
-          <div class="inline">
-            <select id="progDays" class="select">
-              <option value="7">7</option>
-              <option value="14" selected>14</option>
-              <option value="30">30</option>
-            </select>
-            <button id="progBtn" class="btn btn-primary">Estimate passes</button>
-            <button id="progClearBtn" class="btn btn-ghost">Clear</button>
+          <div style="margin-top:10px; display:flex; gap:10px;">
+            <button id="btnCheckCoverage" class="btn btn-primary" type="button">Check</button>
+            <button id="btnReset" class="btn btn-ghost" type="button">Reset</button>
           </div>
-          <div class="hint">Uses public TLE + SGP4 (satellite.js) with a simplified swath model. Planning reference only.</div>
+
+          <div class="hint">Reference-only indicators; not a procurement workflow.</div>
         </div>
+
+        <div class="row indexList" id="coverageIndex">
+          <!-- JS 动态填充 -->
+        </div>
+      </section>
+
+      <!-- 3) OPEN STAC FOOTPRINTS -->
+      <section id="footprints" class="card">
+        <h2>3) OPEN STAC FOOTPRINTS (LOADABLE PUBLIC DATA)</h2>
+
+        <div class="row field">
+          <label for="stacUrl">STAC API / Catalog URL</label>
+          <input id="stacUrl" type="text" placeholder="https://example.com/stac" />
+          <div class="hint">Optional. If empty, run in “UI-only” mode.</div>
+        </div>
+
+        <div class="row" style="display:flex; gap:10px;">
+          <button id="btnLoadFootprints" class="btn btn-primary" type="button">Load Footprints</button>
+          <button id="btnClearFootprints" class="btn btn-secondary" type="button">Clear</button>
+        </div>
+
+        <div class="row indexList" id="footprintIndex"></div>
+      </section>
+
+      <!-- 4) PROGRAMMING INDEX -->
+      <section id="programming" class="card">
+        <h2>4) PROGRAMMING INDEX (FUTURE PASSES · REFERENCE)</h2>
+
+        <div class="row field">
+          <label for="satName">Satellite / Constellation</label>
+          <input id="satName" type="text" placeholder="(optional) e.g., Sentinel-2 / Landsat / ..." />
+        </div>
+
+        <div class="row" style="display:flex; gap:10px;">
+          <button class="btn btn-primary" type="button" id="btnPlan">Plan (Mock)</button>
+          <button class="btn btn-secondary" type="button" id="btnPlanClear">Clear</button>
+        </div>
+
+        <div class="row indexList" id="planIndex"></div>
+      </section>
+
+      <!-- 5) SOURCES -->
+      <section id="sources" class="card">
+        <h2>5) SOURCES (PUBLIC PORTALS · TRANSPARENCY)</h2>
+
+        <div class="sources">
+          <div class="source">
+            <div class="sourceTop">
+              <div class="sourceName">OpenStreetMap / Nominatim</div>
+              <span class="pill ok">Public</span>
+            </div>
+            <div class="sourceDesc">Geocoding reference (place search).</div>
+          </div>
+
+          <div class="source">
+            <div class="sourceTop">
+              <div class="sourceName">Leaflet + Basemap Provider</div>
+              <span class="pill warn">Tiles</span>
+            </div>
+            <div class="sourceDesc">Map rendering and base tiles; attribution required.</div>
+          </div>
+
+          <div class="source">
+            <div class="sourceTop">
+              <div class="sourceName">STAC (optional)</div>
+              <span class="pill ok">Open</span>
+            </div>
+            <div class="sourceDesc">Footprints & metadata via public STAC endpoints.</div>
+          </div>
+        </div>
+
+        <div class="footer">
+          <div class="footerLine">
+            Notice: Open data only. This site provides reference-level indicators (coverage & planning).
+            It does not replace official portals or procurement workflows.
+          </div>
+        </div>
+      </section>
+    </aside>
+
+    <!-- Map -->
+    <section class="mapWrap" aria-label="Map">
+      <div class="mapChrome" aria-hidden="true">
+        <div class="hudTag">OPEN · NO LOGIN</div>
+        <div class="hudTag">REFERENCE ONLY</div>
       </div>
+      <div id="map"></div>
+    </section>
+  </main>
 
-      <div class="row">
-        <div id="progStatus" class="hint"></div>
-      </div>
+  <!-- Leaflet -->
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
 
-      <div class="row">
-        <div id="progResult" class="indexList"></div>
-      </div>
-    </div>
-
-    <div class="card" id="sources">
-      <h2>5) Sources (Public Portals · Transparency)</h2>
-      <div class="hint">Listed for transparency and capability context only. This tool requires no login and does not place orders.</div>
-      <div id="sourcesList" class="sources"></div>
-    </div>
-
-    <footer class="footer">
-      <div class="footerLine">
-        <b>Notice:</b> Open data only. This site provides <b>reference-level</b> indicators (coverage & planning).
-        It does <b>not</b> replace official portals or procurement workflows.
-      </div>
-    </footer>
-
-  </section>
-
-  <section class="mapWrap">
-    <div class="mapChrome">
-      <div class="hudTag left">OPEN · NO LOGIN</div>
-      <div class="hudTag right">REFERENCE ONLY</div>
-    </div>
-    <div id="map"></div>
-  </section>
-</main>
-
-<script src="app.js"></script>
+  <!-- Your app -->
+  <script src="./app.js"></script>
 </body>
 </html>
