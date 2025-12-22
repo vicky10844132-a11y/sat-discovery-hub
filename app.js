@@ -1,42 +1,18 @@
-/* ========= Satellite Discovery Index (Stable Globe) =========
-   - No Cesium Ion dependency
-   - OSM imagery + EllipsoidTerrain
-   - Strong fallback: globe.baseColor so Earth never "disappears"
-   - Open STAC footprints (Planetary Computer) for S2/S1/Landsat
-*/
-
 let viewer;
 let aoiEntity = null;
-let aoiBBox = null; // {west,south,east,north} degrees
+let aoiBBox = null;
 
-// coverage layers
 let coverageDataSources = [];
 let coverageFeaturesCount = 0;
 
 const STAC = "https://planetarycomputer.microsoft.com/api/stac/v1";
 
 const COLLECTIONS = [
-  {
-    name: "Sentinel-2",
-    collections: ["sentinel-2-l2a"],
-    fill: "rgba(90,167,255,0.18)",
-    outline: "rgba(90,167,255,0.95)"
-  },
-  {
-    name: "Sentinel-1",
-    collections: ["sentinel-1-grd"],
-    fill: "rgba(34,197,94,0.14)",
-    outline: "rgba(34,197,94,0.90)"
-  },
-  {
-    name: "Landsat 8/9",
-    collections: ["landsat-c2-l2"],
-    fill: "rgba(245,158,11,0.14)",
-    outline: "rgba(245,158,11,0.90)"
-  }
+  { name: "Sentinel-2", collections: ["sentinel-2-l2a"], fill: "rgba(90,167,255,0.18)", outline: "rgba(90,167,255,0.95)" },
+  { name: "Sentinel-1", collections: ["sentinel-1-grd"], fill: "rgba(34,197,94,0.14)", outline: "rgba(34,197,94,0.90)" },
+  { name: "Landsat 8/9", collections: ["landsat-c2-l2"], fill: "rgba(245,158,11,0.14)", outline: "rgba(245,158,11,0.90)" }
 ];
 
-// limits to avoid browser freeze
 const MAX_ITEMS_PER_COLLECTION = 300;
 const MAX_TOTAL_FEATURES = 800;
 
@@ -54,10 +30,21 @@ async function loadJSON(path) {
   return await r.json();
 }
 
-/* -------------------- MOST STABLE GLOBE INIT -------------------- */
+function flyToLatLon(lat, lon, height = 2000000) {
+  viewer.camera.flyTo({
+    destination: Cesium.Cartesian3.fromDegrees(lon, lat, height),
+    duration: 1.0,
+  });
+}
+
 function initCesium() {
-  // ✅ Most stable choice: OpenStreetMap tiles
-  // If tiles fail, baseColor guarantees a visible globe.
+  // ✅ If this alerts, the "black screen" is NOT your code. It's WebGL.
+  if (!Cesium.FeatureDetection.supportsWebGL()) {
+    alert("WebGL is not supported or disabled in this browser/device. Cesium cannot render the globe.");
+    return;
+  }
+
+  // Try OSM tiles; if blocked, globe still shows via baseColor.
   const osm = new Cesium.OpenStreetMapImageryProvider({
     url: "https://a.tile.openstreetmap.org/",
     credit: ""
@@ -66,7 +53,7 @@ function initCesium() {
   viewer = new Cesium.Viewer("cesiumContainer", {
     imageryProvider: osm,
     baseLayerPicker: false,
-    terrainProvider: new Cesium.EllipsoidTerrainProvider(), // ✅ never needs Ion/terrain tokens
+    terrainProvider: new Cesium.EllipsoidTerrainProvider(),
     timeline: false,
     animation: false,
     geocoder: false,
@@ -76,55 +63,40 @@ function initCesium() {
     fullscreenButton: true,
     infoBox: false,
     selectionIndicator: false,
-    shouldAnimate: true
+    shouldAnimate: false
   });
 
   const scene = viewer.scene;
 
-  // ✅ Critical fallback: even if imagery fails, you still see a globe
-  scene.globe.baseColor = Cesium.Color.fromCssColorString("#0b1220");
+  // ✅ Make globe VERY visible even with no imagery
+  scene.globe.baseColor = Cesium.Color.fromCssColorString("#1e90ff"); // bright blue
+  scene.backgroundColor = Cesium.Color.fromCssColorString("#0b1220");
+  scene.globe.show = true;
 
-  // Atmosphere for visual cue (stable)
+  // Atmosphere for strong visibility cue
   scene.skyAtmosphere.show = true;
-  scene.skyAtmosphere.hueShift = -0.20;
-  scene.skyAtmosphere.saturationShift = 0.10;
-  scene.skyAtmosphere.brightnessShift = -0.10;
+  scene.globe.enableLighting = false;
 
-  // Lighting helps day/night terminator (still stable)
-  scene.globe.enableLighting = true;
-
-  // Light fog (optional, stable)
-  scene.fog.enabled = true;
-  scene.fog.density = 0.00008;
-  scene.fog.minimumBrightness = 0.06;
-
-  // Post FX: keep only FXAA, disable Bloom (Bloom can make some setups go too dark)
+  // Disable all post-processing in safe mode
   try {
-    if (scene.postProcessStages?.fxaa) {
-      scene.postProcessStages.fxaa.enabled = true;
-    }
-    if (scene.postProcessStages?.bloom) {
-      scene.postProcessStages.bloom.enabled = false;
-    }
-  } catch (e) {
-    console.warn("PostFX setup skipped:", e);
-  }
+    if (scene.postProcessStages?.fxaa) scene.postProcessStages.fxaa.enabled = false;
+    if (scene.postProcessStages?.bloom) scene.postProcessStages.bloom.enabled = false;
+  } catch {}
 
-  // Avoid terrain depth issues (we're on ellipsoid anyway)
-  scene.globe.depthTestAgainstTerrain = false;
+  // If WebGL context lost, tell user
+  viewer.canvas.addEventListener("webglcontextlost", (e) => {
+    e.preventDefault();
+    alert("WebGL context lost (GPU/driver/browser issue). Refresh page, or try another browser/device.");
+  }, false);
 
-  // Start view
+  // Put a visible test marker so you know rendering works
+  viewer.entities.add({
+    position: Cesium.Cartesian3.fromDegrees(0, 0, 0),
+    point: { pixelSize: 10, color: Cesium.Color.YELLOW }
+  });
+
   flyToLatLon(20, 0, 22000000);
 }
-
-function flyToLatLon(lat, lon, height = 2000000) {
-  viewer.camera.flyTo({
-    destination: Cesium.Cartesian3.fromDegrees(lon, lat, height),
-    duration: 1.1,
-  });
-}
-
-/* -------------------- AOI helpers -------------------- */
 
 function renderAOISummary() {
   const s = el("aoiSummary");
@@ -141,14 +113,22 @@ function setAOIBBox(west, south, east, north) {
   aoiEntity = viewer.entities.add({
     rectangle: {
       coordinates: rect,
-      material: Cesium.Color.fromCssColorString("rgba(255,255,255,0.06)"),
+      material: Cesium.Color.fromCssColorString("rgba(255,255,255,0.08)"),
       outline: true,
-      outlineColor: Cesium.Color.fromCssColorString("rgba(255,255,255,0.85)"),
+      outlineColor: Cesium.Color.WHITE
     }
   });
 
-  viewer.camera.flyTo({ destination: rect, duration: 1.0 });
+  viewer.camera.flyTo({ destination: rect, duration: 0.8 });
   renderAOISummary();
+}
+
+function clearCoverage() {
+  for (const ds of coverageDataSources) viewer.dataSources.remove(ds, true);
+  coverageDataSources = [];
+  coverageFeaturesCount = 0;
+  el("coverageStatus").textContent = "";
+  el("coverageSummary").innerHTML = "";
 }
 
 function clearAOI() {
@@ -161,24 +141,13 @@ function clearAOI() {
   renderAOISummary();
 }
 
-function clearCoverage() {
-  for (const ds of coverageDataSources) viewer.dataSources.remove(ds, true);
-  coverageDataSources = [];
-  coverageFeaturesCount = 0;
-  el("coverageStatus").textContent = "";
-  el("coverageSummary").innerHTML = "";
-}
-
-/* -------------------- Draw rectangle AOI -------------------- */
-
+/* ---------- Draw AOI rectangle ---------- */
 function enableDrawRectangle() {
   const handler = new Cesium.ScreenSpaceEventHandler(viewer.canvas);
   let startCart = null;
   let tempEntity = null;
 
   function pickCart(pos) {
-    const p = viewer.scene.pickPosition(pos);
-    if (p) return p;
     const ray = viewer.camera.getPickRay(pos);
     return viewer.scene.globe.pick(ray, viewer.scene);
   }
@@ -187,9 +156,7 @@ function enableDrawRectangle() {
     return { lon: Cesium.Math.toDegrees(c.longitude), lat: Cesium.Math.toDegrees(c.latitude) };
   }
 
-  handler.setInputAction((e) => {
-    startCart = pickCart(e.position);
-  }, Cesium.ScreenSpaceEventType.LEFT_DOWN);
+  handler.setInputAction((e) => { startCart = pickCart(e.position); }, Cesium.ScreenSpaceEventType.LEFT_DOWN);
 
   handler.setInputAction((e) => {
     if (!startCart) return;
@@ -198,6 +165,7 @@ function enableDrawRectangle() {
 
     const a = toLonLat(startCart);
     const b = toLonLat(endCart);
+
     const west = Math.min(a.lon, b.lon);
     const east = Math.max(a.lon, b.lon);
     const south = Math.min(a.lat, b.lat);
@@ -209,38 +177,42 @@ function enableDrawRectangle() {
     tempEntity = viewer.entities.add({
       rectangle: {
         coordinates: rect,
-        material: Cesium.Color.fromCssColorString("rgba(168,85,247,0.10)"),
+        material: Cesium.Color.fromCssColorString("rgba(255,0,255,0.10)"),
         outline: true,
-        outlineColor: Cesium.Color.fromCssColorString("rgba(168,85,247,0.95)")
+        outlineColor: Cesium.Color.fromCssColorString("#ff66ff")
       }
     });
   }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
 
   handler.setInputAction(() => {
     if (!startCart) return;
-
     if (tempEntity?.rectangle?.coordinates) {
       const rect = tempEntity.rectangle.coordinates.getValue(Cesium.JulianDate.now());
       viewer.entities.remove(tempEntity);
       tempEntity = null;
 
-      const west = Cesium.Math.toDegrees(rect.west);
-      const south = Cesium.Math.toDegrees(rect.south);
-      const east = Cesium.Math.toDegrees(rect.east);
-      const north = Cesium.Math.toDegrees(rect.north);
-
-      setAOIBBox(west, south, east, north);
+      setAOIBBox(
+        Cesium.Math.toDegrees(rect.west),
+        Cesium.Math.toDegrees(rect.south),
+        Cesium.Math.toDegrees(rect.east),
+        Cesium.Math.toDegrees(rect.north)
+      );
     }
-
     handler.destroy();
-    alert("AOI set.");
   }, Cesium.ScreenSpaceEventType.LEFT_UP);
-
-  alert("Draw rectangle: click-drag on the globe, then release to finish.");
 }
 
-/* -------------------- Upload AOI files -------------------- */
+/* ---------- Place search ---------- */
+async function geocodePlace(q) {
+  const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`;
+  const r = await fetch(url, { headers: { "Accept": "application/json" } });
+  if (!r.ok) throw new Error("Geocoding failed");
+  const data = await r.json();
+  if (!data?.length) return null;
+  return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+}
 
+/* ---------- Upload AOI files (same as before) ---------- */
 async function handleFileUpload(file) {
   if (!file) return;
   const name = file.name.toLowerCase();
@@ -297,73 +269,30 @@ function computeBBoxFromDataSource(ds) {
       const h = ent.polygon.hierarchy.getValue(now);
       for (const p of (h?.positions || [])) {
         const c = Cesium.Cartographic.fromCartesian(p);
-        const lon = Cesium.Math.toDegrees(c.longitude);
-        const lat = Cesium.Math.toDegrees(c.latitude);
-        west = Math.min(west, lon); east = Math.max(east, lon);
-        south = Math.min(south, lat); north = Math.max(north, lat);
+        west = Math.min(west, Cesium.Math.toDegrees(c.longitude));
+        east = Math.max(east, Cesium.Math.toDegrees(c.longitude));
+        south = Math.min(south, Cesium.Math.toDegrees(c.latitude));
+        north = Math.max(north, Cesium.Math.toDegrees(c.latitude));
         has = true;
       }
-    }
-    const pos = ent.position?.getValue(now);
-    if (pos) {
-      const c = Cesium.Cartographic.fromCartesian(pos);
-      const lon = Cesium.Math.toDegrees(c.longitude);
-      const lat = Cesium.Math.toDegrees(c.latitude);
-      west = Math.min(west, lon); east = Math.max(east, lon);
-      south = Math.min(south, lat); north = Math.max(north, lat);
-      has = true;
     }
   }
   return has ? { west, south, east, north } : null;
 }
 
-/* -------------------- Place search -------------------- */
-
-async function geocodePlace(q) {
-  const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`;
-  const r = await fetch(url, { headers: { "Accept": "application/json" } });
-  if (!r.ok) throw new Error("Geocoding failed");
-  const data = await r.json();
-  if (!data?.length) return null;
-  return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
-}
-
-/* -------------------- Sources list -------------------- */
-
-function renderSources(list) {
-  const root = el("sourcesList");
-  root.innerHTML = "";
-  for (const s of list) {
-    const div = document.createElement("div");
-    div.className = "source";
-    div.innerHTML = `
-      <div class="sourceTop">
-        <div class="sourceName">${escapeHTML(s.name)}</div>
-        <a class="btn" href="${s.url}" target="_blank" rel="noopener">Open</a>
-      </div>
-      <div class="sourceDesc">${escapeHTML(s.desc || "")}</div>
-    `;
-    root.appendChild(div);
-  }
-}
-
-/* -------------------- Coverage (Open STAC footprints) -------------------- */
-
+/* ---------- Open STAC footprints ---------- */
 function monthRangeToDatetime(startYYYYMM, endYYYYMM) {
   const [sy, sm] = startYYYYMM.split("-").map(Number);
   const [ey, em] = endYYYYMM.split("-").map(Number);
   const start = new Date(Date.UTC(sy, sm - 1, 1, 0, 0, 0));
-  const end = new Date(Date.UTC(ey, em, 1, 0, 0, 0)); // next month start
+  const end = new Date(Date.UTC(ey, em, 1, 0, 0, 0));
   return `${start.toISOString()}/${end.toISOString()}`;
 }
 
 async function stacSearch(body) {
   const r = await fetch(`${STAC}/search`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Accept": "application/geo+json,application/json"
-    },
+    headers: { "Content-Type": "application/json", "Accept": "application/geo+json,application/json" },
     body: JSON.stringify(body)
   });
   if (!r.ok) throw new Error(`STAC search failed: ${r.status}`);
@@ -371,17 +300,14 @@ async function stacSearch(body) {
 }
 
 async function showCoverage() {
-  if (!aoiBBox) {
-    alert("You must set an AOI (draw rectangle or upload AOI). Flying to a point is not AOI.");
-    return;
-  }
+  if (!aoiBBox) return alert("Set AOI first.");
   const start = el("startMonth").value;
   const end = el("endMonth").value;
-  if (!start || !end) { alert("Please set start and end month."); return; }
-  if (start > end) { alert("Start month must be <= end month."); return; }
+  if (!start || !end) return alert("Set start & end month.");
+  if (start > end) return alert("Start month must be <= end month.");
 
   clearCoverage();
-  el("coverageStatus").textContent = "Querying open catalogs…";
+  el("coverageStatus").textContent = "Querying open STAC…";
   el("coverageSummary").innerHTML = "";
 
   const datetime = monthRangeToDatetime(start, end);
@@ -397,10 +323,9 @@ async function showCoverage() {
     const body = { collections: cfg.collections, datetime, bbox, limit };
 
     let fc;
-    try {
-      fc = await stacSearch(body);
-    } catch (e) {
-      console.error(e);
+    try { fc = await stacSearch(body); }
+    catch (e) {
+      console.warn(e);
       summary.push({ name: cfg.name, items: 0, note: "Query failed" });
       continue;
     }
@@ -409,39 +334,28 @@ async function showCoverage() {
     total += features.length;
     coverageFeaturesCount += features.length;
 
-    if (features.length > 0) {
-      const ds = await Cesium.GeoJsonDataSource.load(
-        { type: "FeatureCollection", features },
-        { clampToGround: true }
-      );
-
+    if (features.length) {
+      const ds = await Cesium.GeoJsonDataSource.load({ type: "FeatureCollection", features }, { clampToGround: true });
       ds.entities.values.forEach((ent) => {
         if (ent.polygon) {
           ent.polygon.material = Cesium.Color.fromCssColorString(cfg.fill);
           ent.polygon.outline = true;
           ent.polygon.outlineColor = Cesium.Color.fromCssColorString(cfg.outline);
         }
-        if (ent.polyline) {
-          ent.polyline.material = Cesium.Color.fromCssColorString(cfg.outline);
-          ent.polyline.width = 1;
-        }
       });
-
       viewer.dataSources.add(ds);
       coverageDataSources.push(ds);
     }
 
-    summary.push({ name: cfg.name, items: features.length, note: "Footprints only (open STAC)" });
+    summary.push({ name: cfg.name, items: features.length, note: "Open footprints (reference)" });
   }
 
-  el("coverageStatus").textContent =
-    `Done. Footprints drawn: ${coverageFeaturesCount}. Time: ${start} → ${end}.`;
-
+  el("coverageStatus").textContent = `Done. Footprints drawn: ${coverageFeaturesCount}`;
   renderCoverageSummary(summary);
 
   viewer.camera.flyTo({
     destination: Cesium.Rectangle.fromDegrees(aoiBBox.west, aoiBBox.south, aoiBBox.east, aoiBBox.north),
-    duration: 0.8
+    duration: 0.6
   });
 }
 
@@ -456,24 +370,18 @@ function renderCoverageSummary(rows) {
         <div class="sourceName">${escapeHTML(r.name)}</div>
         <span class="tag">Items: ${r.items}</span>
       </div>
-      <div class="sourceDesc">
-        ${escapeHTML(r.note)}. Reference only.
-      </div>
+      <div class="sourceDesc">${escapeHTML(r.note || "")}</div>
     `;
     root.appendChild(div);
   }
 }
 
-/* -------------------- Wiring -------------------- */
-
+/* ---------- UI wiring ---------- */
 function wireUI() {
   el("coordBtn").addEventListener("click", () => {
     const lat = parseFloat(el("latInput").value);
     const lon = parseFloat(el("lonInput").value);
-    if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
-      alert("Enter valid lat/lon.");
-      return;
-    }
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return alert("Enter valid lat/lon.");
     flyToLatLon(lat, lon, 3000000);
   });
 
@@ -496,36 +404,4 @@ function wireUI() {
   });
 
   el("drawRectBtn").addEventListener("click", () => enableDrawRectangle());
-  el("clearAoiBtn").addEventListener("click", () => clearAOI());
-
-  el("coverageBtn").addEventListener("click", () => showCoverage());
-  el("clearCoverageBtn").addEventListener("click", () => clearCoverage());
-
-  // default time range last 12 months
-  const now = new Date();
-  const end = `${now.getUTCFullYear()}-${String(now.getUTCMonth()+1).padStart(2,"0")}`;
-  const prev = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth()-11, 1));
-  const start = `${prev.getUTCFullYear()}-${String(prev.getUTCMonth()+1).padStart(2,"0")}`;
-  el("startMonth").value = start;
-  el("endMonth").value = end;
-}
-
-async function main() {
-  initCesium();
-  wireUI();
-
-  // Your existing sources list (only for transparency)
-  try {
-    const sources = await loadJSON("./data/sources.json");
-    renderSources(sources);
-  } catch (e) {
-    console.warn("sources.json not loaded:", e);
-  }
-
-  renderAOISummary();
-}
-
-main().catch((e) => {
-  console.error(e);
-  alert("App init failed. Open console for details.");
-});
+  el("clearAoiBtn").addE
