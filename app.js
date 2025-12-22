@@ -7,26 +7,22 @@ const map = L.map("map", {
   worldCopyJump: true,
 }).setView([25, 10], 2);
 
-// 你可以替换成你自己的底图（注意 attribution）
+// Basemap (swap as needed; keep attribution)
 L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
   maxZoom: 19,
   attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
 }).addTo(map);
 
-// Demo layers
 let marker = null;
 let footprintLayer = null;
 
-// Default months
 (function setDefaultMonths() {
   const now = new Date();
   const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, "0");
   $("#fromMonth").value = `${y}-01`;
   $("#toMonth").value = `${y}-12`;
 })();
 
-// Render helpers
 function renderCoverageIndex(items) {
   const root = $("#coverageIndex");
   root.innerHTML = "";
@@ -53,7 +49,6 @@ function setAOISummary(text) {
   $("#aoiSummary").textContent = text;
 }
 
-// 1) Place locate via Nominatim (public)
 async function geocode(place) {
   const url = new URL("https://nominatim.openstreetmap.org/search");
   url.searchParams.set("q", place);
@@ -66,6 +61,7 @@ async function geocode(place) {
   if (!res.ok) throw new Error("Geocoding failed");
   const data = await res.json();
   if (!data?.length) return null;
+
   return {
     lat: Number(data[0].lat),
     lon: Number(data[0].lon),
@@ -97,7 +93,6 @@ $("#btnLocate").addEventListener("click", async () => {
   }
 });
 
-// 2) Coverage check (mock; replace with your real STAC logic)
 $("#btnCheckCoverage").addEventListener("click", () => {
   const from = $("#fromMonth").value || "—";
   const to = $("#toMonth").value || "—";
@@ -124,7 +119,6 @@ $("#btnCheckCoverage").addEventListener("click", () => {
   ]);
 });
 
-// Reset
 $("#btnReset").addEventListener("click", () => {
   $("#place").value = "";
   $("#stacUrl").value = "";
@@ -140,12 +134,9 @@ $("#btnReset").addEventListener("click", () => {
   map.setView([25, 10], 2);
 });
 
-// 3) Load footprints (mock polygon)
 $("#btnLoadFootprints").addEventListener("click", () => {
-  // 清理旧图层
   if (footprintLayer) footprintLayer.remove();
 
-  // 用一个示意 polygon 模拟 footprint（你可替换为 STAC search 的 geometry）
   const poly = L.polygon(
     [
       [30, 10],
@@ -185,7 +176,6 @@ $("#btnClearFootprints").addEventListener("click", () => {
   $("#footprintIndex").innerHTML = "";
 });
 
-// 4) Programming (mock)
 $("#btnPlan").addEventListener("click", () => {
   const sat = $("#satName").value.trim() || "Unspecified";
   const root = $("#planIndex");
