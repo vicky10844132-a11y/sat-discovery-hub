@@ -3,12 +3,17 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Satellite Discovery Index</title>
+  <title>Satellite Discovery Index (Open / No Login)</title>
 
+  <!-- Cesium -->
   <link href="https://cesium.com/downloads/cesiumjs/releases/1.118/Build/Cesium/Widgets/widgets.css" rel="stylesheet" />
   <script src="https://cesium.com/downloads/cesiumjs/releases/1.118/Build/Cesium/Cesium.js"></script>
 
+  <!-- shpjs -->
   <script src="https://unpkg.com/shpjs@latest/dist/shp.min.js"></script>
+
+  <!-- satellite.js (open-source orbit propagation; used for planning reference only) -->
+  <script src="https://cdn.jsdelivr.net/npm/satellite.js@5.0.1/dist/satellite.min.js"></script>
 
   <link rel="stylesheet" href="styles.css" />
 </head>
@@ -19,11 +24,11 @@
       <div class="logo"></div>
       <div>
         <div class="title">Satellite Discovery Index</div>
-        <div class="subtitle">AOI + time → archive footprints (public/open catalogs only). No data hosting.</div>
+        <div class="subtitle">Open data only · No login · Reference indicators (archive + pass planning). No ordering.</div>
       </div>
     </div>
     <nav class="nav">
-      <a class="navlink" href="compliance.html" target="_blank" rel="noopener">Compliance</a>
+      <a class="navlink" href="#rules">Coverage rules</a>
       <a class="navlink" href="#sources">Sources</a>
     </nav>
   </header>
@@ -53,7 +58,7 @@
               <input id="lonInput" type="number" step="0.000001" placeholder="lon" />
               <button id="coordBtn" class="btn">Fly</button>
             </div>
-            <div class="hint">Tip: you must still draw/upload an AOI polygon/rectangle for coverage.</div>
+            <div class="hint">Tip: you must still draw/upload an AOI polygon/rectangle for coverage / planning checks.</div>
           </div>
         </div>
 
@@ -78,26 +83,54 @@
         </div>
       </div>
 
-      <div class="card">
-        <h2>2) Archive Coverage (Footprints)</h2>
+      <div class="card" id="rules">
+        <h2>2) Archive Coverage Index (Reference)</h2>
 
         <div class="row">
           <div class="field">
-            <label>Time range (year-month)</label>
+            <label>Time range (year-month) – for open STAC footprint checks</label>
             <div class="inline">
               <input id="startMonth" type="month" />
               <input id="endMonth" type="month" />
             </div>
             <div class="hint">
-              Shows footprints only (public/open STAC). No imagery download. No vendor inventory APIs.
+              This section gives reference-level indicators. No ordering. No guarantees.
             </div>
           </div>
         </div>
 
         <div class="row">
           <div class="inline">
-            <button id="coverageBtn" class="btn btn-primary">Show archive coverage</button>
-            <button id="clearCoverageBtn" class="btn btn-ghost">Clear coverage</button>
+            <button id="coverageIndexBtn" class="btn btn-primary">Run coverage index</button>
+            <button id="clearIndexBtn" class="btn btn-ghost">Clear index</button>
+          </div>
+        </div>
+
+        <div class="row">
+          <div id="indexStatus" class="hint"></div>
+        </div>
+
+        <div class="row">
+          <div id="coverageIndex" class="indexList"></div>
+        </div>
+
+        <div class="row">
+          <div class="hint">
+            Legend:
+            <span class="pill ok">✅ likely</span>
+            <span class="pill warn">⚠️ partial / non-uniform / samples</span>
+            <span class="pill no">❌ no public signal</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>3) Open STAC Footprints (Open data only)</h2>
+
+        <div class="row">
+          <div class="inline">
+            <button id="footprintsBtn" class="btn btn-primary">Draw open footprints</button>
+            <button id="clearFootprintsBtn" class="btn btn-ghost">Clear footprints</button>
           </div>
         </div>
 
@@ -111,7 +144,7 @@
 
         <div class="row">
           <div class="hint">
-            Legend:
+            Footprints legend:
             <span class="tag" style="border-color:rgba(90,167,255,.5)">Sentinel-2</span>
             <span class="tag" style="border-color:rgba(34,197,94,.45)">Sentinel-1</span>
             <span class="tag" style="border-color:rgba(245,158,11,.45)">Landsat</span>
@@ -119,21 +152,68 @@
         </div>
       </div>
 
+      <div class="card">
+        <h2>4) Programming Index (Future passes · Reference)</h2>
+
+        <div class="row">
+          <div class="field">
+            <label>Forecast horizon (days)</label>
+            <div class="inline">
+              <select id="progDays" class="select">
+                <option value="7">7</option>
+                <option value="14" selected>14</option>
+                <option value="30">30</option>
+              </select>
+              <button id="progBtn" class="btn btn-primary">Estimate passes</button>
+              <button id="progClearBtn" class="btn btn-ghost">Clear</button>
+            </div>
+            <div class="hint">
+              Uses public TLE + SGP4 propagation (satellite.js). Planning reference only.
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div id="progStatus" class="hint"></div>
+        </div>
+
+        <div class="row">
+          <div id="progResult" class="indexList"></div>
+        </div>
+      </div>
+
       <div class="card" id="sources">
-        <h2>3) Sources (Portals)</h2>
+        <h2>5) Sources (Portals)</h2>
+        <div class="hint">Listed for transparency only. This tool does not require login and does not place orders.</div>
         <div id="sourcesList" class="sources"></div>
       </div>
 
       <footer class="footer">
         <div class="footerLine">
-          <b>Compliance:</b> Aggregates public portals and public/open catalogs. No data hosting. No scraping. No vendor inventory APIs.
+          <b>Notice:</b> Open data only. This site provides <b>reference-level</b> coverage and pass estimates.
+          It does not replace official portals, ordering systems, or procurement workflows.
         </div>
       </footer>
 
     </section>
 
     <section class="mapWrap">
+      <div class="mapChrome">
+        <div class="hudTag left">OPEN · NO LOGIN · REFERENCE</div>
+        <div class="hudTag right">ARCHIVE + PROGRAMMING</div>
+      </div>
+
       <div id="cesiumContainer"></div>
+
+      <div id="loading" class="loading">
+        <div class="loadingCard">
+          <div class="loadingDot"></div>
+          <div class="loadingText">
+            <div class="loadingTitle">Initializing globe…</div>
+            <div class="loadingSub">If tiles are blocked, you should still see an ellipsoid + atmosphere.</div>
+          </div>
+        </div>
+      </div>
     </section>
   </main>
 

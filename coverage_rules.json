@@ -1,0 +1,142 @@
+{
+  "version": "1.0",
+  "principles": [
+    "Open / public information only",
+    "No login required for this tool",
+    "Reference indicators only (not availability / not guarantee / not ordering)"
+  ],
+  "providers": [
+    {
+      "name": "CRESDA (China Land Observation Satellite Data Service)",
+      "family": "CN National",
+      "sensors": ["optical", "SAR", "atmospheric", "lidar (mission-dependent)"],
+      "coverage": {
+        "confidence": "high",
+        "latRange": [-85, 85],
+        "notes": "Authoritative public archive search entry for GF/ZY/HJ/LT/Carbon missions. Indicator only."
+      },
+      "publicNote": "Public portal: data.cresda.cn (indicator only)."
+    },
+    {
+      "name": "SASClouds (Natural Resources Satellite Remote Sensing Cloud)",
+      "family": "CN National",
+      "sensors": ["optical", "SAR"],
+      "coverage": {
+        "confidence": "medium",
+        "latRange": [-85, 85],
+        "notes": "Secondary cross-check portal; for GF/ZY, treat CRESDA as primary."
+      },
+      "publicNote": "Public portal: sasclouds.com (indicator only)."
+    },
+    {
+      "name": "Jilin-1 (CGSTL) Public Store Indicator",
+      "family": "CN Commercial",
+      "sensors": ["optical (VHR)"],
+      "coverage": {
+        "confidence": "medium",
+        "latRange": [-85, 85],
+        "notes": "Tasking + archive indicator. Coverage may be non-uniform; strong in populated / requested regions."
+      },
+      "publicNote": "Public store page indicator (no ordering here)."
+    },
+    {
+      "name": "Siwei Earth (HighJing series) Indicator",
+      "family": "CN Commercial",
+      "sensors": ["optical (VHR)"],
+      "coverage": {
+        "confidence": "low",
+        "latRange": [-85, 85],
+        "notes": "Registration may exist on official portal; here we only present a generic public capability indicator."
+      },
+      "publicNote": "Indicator only."
+    },
+    {
+      "name": "Airbus (SPOT / Pleiades / TerraSAR-X) Indicator",
+      "family": "Intl Commercial",
+      "sensors": ["optical", "SAR"],
+      "coverage": {
+        "confidence": "medium",
+        "latRange": [-85, 85],
+        "notes": "Global commercial archive indicator (not queried here)."
+      },
+      "publicNote": "Indicator only. Procurement remains with official channels."
+    },
+    {
+      "name": "Apollo Mapping (ImageHunter) Aggregated Indicator",
+      "family": "Intl Aggregator",
+      "sensors": ["optical", "SAR (some)"],
+      "coverage": {
+        "confidence": "low",
+        "latRange": [-85, 85],
+        "notes": "Aggregator listing is not complete; treat as a broad capability hint only."
+      },
+      "publicNote": "Indicator only."
+    },
+    {
+      "name": "Planet (PlanetScope / SkySat) Indicator",
+      "family": "Intl Commercial",
+      "sensors": ["optical (high revisit)"],
+      "coverage": {
+        "confidence": "medium",
+        "latRange": [-85, 85],
+        "notes": "High temporal coverage globally; archive/availability varies with product and licensing. Indicator only."
+      },
+      "publicNote": "Indicator only."
+    },
+    {
+      "name": "ALOS-2 / ALOS-4 (SAR) Indicator",
+      "family": "JP Public",
+      "sensors": ["SAR"],
+      "coverage": {
+        "confidence": "medium",
+        "latRange": [-85, 85],
+        "notes": "Public SAR mission information; availability depends on official access. Indicator only."
+      },
+      "publicNote": "Indicator only."
+    },
+    {
+      "name": "OBT (Orbita) Indicator",
+      "family": "CN Commercial",
+      "sensors": ["optical", "hyperspectral"],
+      "coverage": {
+        "confidence": "low",
+        "latRange": [-85, 85],
+        "notes": "Commercial archive indicator; coverage may be non-uniform. Indicator only."
+      },
+      "publicNote": "Indicator only."
+    },
+    {
+      "name": "NASA GIBS (Global Baseline Visualization)",
+      "family": "Open Baseline",
+      "sensors": ["various earth observation layers"],
+      "coverage": {
+        "confidence": "high",
+        "latRange": [-90, 90],
+        "notes": "Global visualization services (WMTS/WMS). Useful baseline; not VHR archive."
+      },
+      "publicNote": "Open visualization baseline."
+    },
+    {
+      "name": "Capella Open Data (SAR samples)",
+      "family": "Open Data",
+      "sensors": ["SAR"],
+      "coverage": {
+        "confidence": "low",
+        "latRange": [-85, 85],
+        "notes": "Open samples only; not comprehensive archive coverage."
+      },
+      "publicNote": "Open sample dataset."
+    },
+    {
+      "name": "Umbra Open Data (SAR samples)",
+      "family": "Open Data",
+      "sensors": ["SAR"],
+      "coverage": {
+        "confidence": "low",
+        "latRange": [-85, 85],
+        "notes": "Open samples only; not comprehensive archive coverage."
+      },
+      "publicNote": "Open sample dataset."
+    }
+  ]
+}

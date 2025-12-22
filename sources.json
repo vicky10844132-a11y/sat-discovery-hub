@@ -1,20 +1,68 @@
 [
   {
-    "id": "planet",
-    "name": "Planet Explorer",
-    "url": "https://planet.com/explorer",
-    "desc": "Official Planet imagery discovery portal."
-  },
-  {
-    "id": "apollo",
-    "name": "Apollo ImageHunter",
-    "url": "https://imagehunter.apollomapping.com/",
-    "desc": "Multi-source public imagery search portal."
+    "id": "jl1",
+    "name": "吉林一号遥感商城（长光）",
+    "url": "https://www.jl1mall.com/store/",
+    "desc": "公开影像查询入口（高分光学，覆盖不均匀属正常现象）。"
   },
   {
     "id": "cresda",
-    "name": "CRESDA Data Service",
+    "name": "陆地观测卫星数据服务（CRESDA）",
     "url": "https://data.cresda.cn/#/mapSearch",
-    "desc": "China resources satellite public data search."
+    "desc": "中国官方公开检索入口：高分/资源/环境/LT/碳卫星等（光学/SAR/激光/大气等）。"
+  },
+  {
+    "id": "sasclouds",
+    "name": "自然资源卫星遥感云平台（SASClouds）",
+    "url": "http://www.sasclouds.com/chinese/normal/",
+    "desc": "公开检索入口：高分/资源等（高分资源系列以 CRESDA 为准）。"
+  },
+  {
+    "id": "siwei",
+    "name": "四维地球商城（高景系列）",
+    "url": "https://oms.siweigic.com/mapQuery",
+    "desc": "卫星影像查询入口（官方站点可能要求注册；本工具不依赖登录）。"
+  },
+  {
+    "id": "airbus",
+    "name": "Airbus Intelligence Ordering / Archive",
+    "url": "https://www.intelligence-airbusds.com/en/4871-ordering",
+    "desc": "SPOT 6/7、Pleiades、TerraSAR-X 等公开入口（本工具不下单、不保证可得）。"
+  },
+  {
+    "id": "apollo",
+    "name": "Apollo Mapping ImageHunter",
+    "url": "https://imagehunter.apollomapping.com/",
+    "desc": "多源聚合查询入口（数据不保证完整，作为能力提示）。"
+  },
+  {
+    "id": "planet",
+    "name": "Planet Explorer",
+    "url": "https://planet.com/explorer",
+    "desc": "Planet 官方发现入口（通常需账号；本工具不依赖登录）。"
+  },
+  {
+    "id": "alos",
+    "name": "日本 ALOS 数据平台（SAR）",
+    "url": "https://satpf.jp/spf/",
+    "desc": "ALOS-2 / ALOS-4 SAR 数据相关公开入口。"
+  },
+  {
+    "id": "obt",
+    "name": "欧比特数据查询平台",
+    "url": "https://www.obtdata.com/#/dataExpress",
+    "desc": "公开查询入口：1m/2m 光学与 10m 高光谱等。"
+  },
+  {
+    "id": "capella_open",
+    "name": "Capella Open Data (AWS)",
+    "url": "https://registry.opendata.aws/capella_opendata/",
+    "desc": "公开 SAR 样例数据（AWS Open Data）。"
+  },
+  {
+    "id": "gibs",
+    "name": "NASA GIBS (WMTS/WMS/TWMS/TMS)",
+    "url": "https://nasa-gibs.github.io/gibs-api-docs/access-basics/#visualization-services",
+    "desc": "NASA 地球观测可视化服务文档与调用方式（可按日期访问）。"
   }
 ]
