@@ -510,3 +510,44 @@ input[type="text"]:focus, input[type="month"]:focus{
   .panel{ max-height: unset; overflow: visible; padding-right: 0; }
   .mapWrap{ min-height: 520px; height: 60vh; }
 }
+/* ==============================
+   HUD VISUAL BOOST (PRODUCTION)
+   ============================== */
+
+/* 地图整体降亮，给 HUD 让对比 */
+.mapWrap {
+  filter: brightness(0.85) contrast(1.15);
+}
+
+/* HUD 网格：更亮、更清晰 */
+.mapWrap::before {
+  background:
+    linear-gradient(rgba(47,214,255,.18) 1px, transparent 1px) 0 0 / 56px 56px,
+    linear-gradient(90deg, rgba(47,214,255,.18) 1px, transparent 1px) 0 0 / 56px 56px,
+    radial-gradient(900px 600px at 50% 45%, rgba(47,214,255,.22), transparent 60%),
+    radial-gradient(1200px 900px at 50% 40%, transparent 55%, rgba(0,0,0,.65));
+  opacity: 0.85;
+}
+
+/* 扫光线更明显 */
+.mapWrap::after {
+  opacity: 0.65;
+  filter: blur(0.5px);
+}
+/* HUD 玻璃叠层 */
+.mapChrome {
+  backdrop-filter: blur(6px) brightness(1.05);
+  background: linear-gradient(
+    180deg,
+    rgba(10,16,30,.45),
+    rgba(6,10,18,.25)
+  );
+}
+/* HUD-style vector lines */
+.leaflet-interactive {
+  stroke: #2fd6ff !important;
+  stroke-width: 1.6 !important;
+  stroke-dasharray: 6 6 !important;
+  filter: drop-shadow(0 0 6px rgba(47,214,255,.6));
+}
+
