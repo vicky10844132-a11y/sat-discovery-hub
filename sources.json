@@ -2,93 +2,19 @@
   {
     "id": "planet",
     "name": "Planet Explorer",
-    "operator": "Planet Labs",
     "url": "https://planet.com/explorer",
-    "sensor": ["optical"],
-    "coverage": "global",
-    "access": "public search",
-    "category": "commercial",
-    "updated": "2025-01-01",
-    "evidence_url": "",
-    "notes": "Official Planet imagery discovery portal."
-  },
-  {
-    "id": "airbus",
-    "name": "Airbus OneAtlas / GeoStore",
-    "operator": "Airbus Defence and Space",
-    "url": "https://www.intelligence-airbusds.com/en/4871-ordering",
-    "sensor": ["optical", "sar"],
-    "coverage": "global",
-    "access": "public search",
-    "category": "commercial",
-    "updated": "2025-01-01",
-    "evidence_url": "",
-    "notes": "Commercial imagery discovery and ordering entry."
-  },
-  {
-    "id": "esa_copernicus",
-    "name": "Copernicus Data Space",
-    "operator": "European Space Agency",
-    "url": "https://dataspace.copernicus.eu/",
-    "sensor": ["optical", "sar"],
-    "coverage": "global",
-    "access": "public open data",
-    "category": "open",
-    "updated": "2025-01-01",
-    "evidence_url": "",
-    "notes": "Sentinel open satellite data access."
-  },
-  {
-    "id": "usgs_earthexplorer",
-    "name": "USGS EarthExplorer",
-    "operator": "USGS",
-    "url": "https://earthexplorer.usgs.gov/",
-    "sensor": ["optical"],
-    "coverage": "global",
-    "access": "public open data",
-    "category": "open",
-    "updated": "2025-01-01",
-    "evidence_url": "",
-    "notes": "Landsat and global archive access."
-  },
-  {
-    "id": "cresda",
-    "name": "CRESDA Map Search",
-    "operator": "China Centre for Resources Satellite Data",
-    "url": "https://data.cresda.cn/#/mapSearch",
-    "sensor": ["optical"],
-    "coverage": "china",
-    "access": "public search",
-    "category": "government",
-    "updated": "2025-01-01",
-    "evidence_url": "",
-    "notes": "Official China resources satellite public data search."
-  },
-  {
-    "id": "jl1",
-    "name": "Jilin-1 Mall",
-    "operator": "Chang Guang Satellite",
-    "url": "https://www.jl1mall.com/store/",
-    "sensor": ["optical", "video"],
-    "coverage": "global",
-    "access": "public search",
-    "category": "commercial",
-    "updated": "2025-01-01",
-    "evidence_url": "",
-    "notes": "Commercial imagery and video discovery entry."
+    "desc": "Official Planet imagery discovery portal."
   },
   {
     "id": "apollo",
     "name": "Apollo ImageHunter",
-    "operator": "Apollo Mapping",
     "url": "https://imagehunter.apollomapping.com/",
-    "sensor": ["optical", "sar"],
-    "coverage": "global",
-    "access": "public search",
-    "category": "aggregator",
-    "updated": "2025-01-01",
-    "evidence_url": "",
-    "notes": "Multi-source public imagery discovery portal."
+    "desc": "Multi-source public imagery search portal."
+  },
+  {
+    "id": "cresda",
+    "name": "CRESDA Data Service",
+    "url": "https://data.cresda.cn/#/mapSearch",
+    "desc": "China resources satellite public data search."
   }
 ]
-

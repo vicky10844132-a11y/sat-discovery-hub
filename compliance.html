@@ -3,38 +3,52 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Compliance</title>
+  <title>Compliance – Satellite Discovery Index</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <header class="top">
-    <div class="brand">Compliance</div>
-    <div class="hero-sub">Minimal statement. Public discovery index only.</div>
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo"></div>
+      <div>
+        <div class="title">Compliance</div>
+        <div class="subtitle">Public discovery index only</div>
+      </div>
+    </div>
     <nav class="nav">
-      <a class="navlink" href="/" rel="noopener noreferrer">Back</a>
-      <a class="navlink" href="/about.html" target="_blank" rel="noopener noreferrer">About</a>
+      <a class="navlink" href="index.html">Home</a>
     </nav>
   </header>
 
-  <main class="wrap" style="padding-top:18px;">
-    <div class="card">
-      <div class="h2" style="margin-top:0">Scope</div>
-      <div class="note">Public discovery index only. We list publicly available satellite data search portals.</div>
-    </div>
+  <main class="layout" style="grid-template-columns:1fr; max-width:980px; margin:0 auto;">
+    <section class="panel">
+      <div class="card">
+        <h2>Scope</h2>
+        <p class="sourceDesc">
+          This site aggregates publicly available portals and public/open catalogs for discovery and visualization of footprints only.
+          No imagery is hosted or distributed.
+        </p>
+      </div>
 
-    <div style="height:12px"></div>
+      <div class="card">
+        <h2>We do</h2>
+        <ul class="sourceDesc">
+          <li>Show public portal links.</li>
+          <li>Overlay public/open archive footprints on a map.</li>
+          <li>Help reduce discovery time for professionals.</li>
+        </ul>
+      </div>
 
-    <div class="card">
-      <div class="h2" style="margin-top:0">Exclusions</div>
-      <div class="note">No data hosting. No downloads. No ordering/tasking. No transactions.</div>
-    </div>
-
-    <div style="height:12px"></div>
-
-    <div class="card">
-      <div class="h2" style="margin-top:0">Sources</div>
-      <div class="note">All entries link to providers’ public portals and/or official public pages.</div>
-    </div>
+      <div class="card">
+        <h2>We do NOT</h2>
+        <ul class="sourceDesc">
+          <li>No data hosting.</li>
+          <li>No scraping.</li>
+          <li>No vendor inventory APIs for commercial archives.</li>
+          <li>No ordering, pricing, payment, or transactions.</li>
+        </ul>
+      </div>
+    </section>
   </main>
 </body>
 </html>
