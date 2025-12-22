@@ -1,222 +1,192 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Satellite Discovery Index (Open / No Login)</title>
+  <title>Satellite Discovery Index — Open / No Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Cesium -->
-  <link href="https://cesium.com/downloads/cesiumjs/releases/1.118/Build/Cesium/Widgets/widgets.css" rel="stylesheet" />
-  <script src="https://cesium.com/downloads/cesiumjs/releases/1.118/Build/Cesium/Cesium.js"></script>
+  <!-- Leaflet (2D, stable, no WebGL required) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-  <!-- shpjs -->
-  <script src="https://unpkg.com/shpjs@latest/dist/shp.min.js"></script>
-
-  <!-- satellite.js (open-source orbit propagation; used for planning reference only) -->
+  <!-- satellite.js (open-source SGP4 propagation; planning reference only) -->
   <script src="https://cdn.jsdelivr.net/npm/satellite.js@5.0.1/dist/satellite.min.js"></script>
 
   <link rel="stylesheet" href="styles.css" />
 </head>
 
 <body>
-  <header class="topbar">
-    <div class="brand">
-      <div class="logo"></div>
-      <div>
-        <div class="title">Satellite Discovery Index</div>
-        <div class="subtitle">Open data only · No login · Reference indicators (archive + pass planning). No ordering.</div>
+<header class="topbar">
+  <div class="brand">
+    <div class="logo"></div>
+    <div>
+      <div class="title">Satellite Discovery Index</div>
+      <div class="subtitle">Open data only · No login · Archive coverage + pass planning (reference only)</div>
+    </div>
+  </div>
+  <div class="nav">
+    <a class="navlink" href="#aoi">AOI</a>
+    <a class="navlink" href="#coverage">Coverage</a>
+    <a class="navlink" href="#footprints">Footprints</a>
+    <a class="navlink" href="#programming">Programming</a>
+    <a class="navlink" href="#sources">Sources</a>
+  </div>
+</header>
+
+<main class="layout">
+  <section class="panel">
+
+    <div class="card" id="aoi">
+      <h2>1) AOI 设置</h2>
+
+      <div class="row">
+        <div class="field">
+          <label>地点搜索（可选）</label>
+          <div class="inline">
+            <input id="placeInput" type="text" placeholder="Beijing / Dubai / New York" />
+            <button id="placeBtn" class="btn">定位</button>
+          </div>
+          <div class="hint">使用 OpenStreetMap Nominatim 公共地理编码（不登录）。</div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label>上传 AOI（GeoJSON）</label>
+          <input id="fileInput" type="file" accept=".geojson,.json" />
+          <div class="hint">建议上传 polygon/ multipolygon。也可上传 bbox 矩形的 GeoJSON。</div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="inline">
+          <button id="drawRectBtn" class="btn btn-secondary">拖拽绘制矩形 AOI</button>
+          <button id="clearAoiBtn" class="btn btn-ghost">清除 AOI</button>
+        </div>
+      </div>
+
+      <div class="aoiBox">
+        <div class="aoiTitle">当前 AOI</div>
+        <div id="aoiSummary" class="aoiSummary">None</div>
       </div>
     </div>
-    <nav class="nav">
-      <a class="navlink" href="#rules">Coverage rules</a>
-      <a class="navlink" href="#sources">Sources</a>
-    </nav>
-  </header>
 
-  <main class="layout">
-    <section class="panel">
+    <div class="card" id="coverage">
+      <h2>2) Archive Coverage Index（覆盖指示 · 参考）</h2>
 
-      <div class="card">
-        <h2>1) Set AOI</h2>
-
-        <div class="row">
-          <div class="field">
-            <label>Search place</label>
-            <div class="inline">
-              <input id="placeInput" type="text" placeholder="e.g., Burj Al Arab, Dubai" />
-              <button id="placeBtn" class="btn">Go</button>
-            </div>
-            <div class="hint">Public geocoding (OpenStreetMap Nominatim). Optional.</div>
-          </div>
-        </div>
-
-        <div class="row">
-          <div class="field">
-            <label>Coordinates</label>
-            <div class="inline">
-              <input id="latInput" type="number" step="0.000001" placeholder="lat" />
-              <input id="lonInput" type="number" step="0.000001" placeholder="lon" />
-              <button id="coordBtn" class="btn">Fly</button>
-            </div>
-            <div class="hint">Tip: you must still draw/upload an AOI polygon/rectangle for coverage / planning checks.</div>
-          </div>
-        </div>
-
-        <div class="row">
-          <div class="field">
-            <label>Upload AOI (GeoJSON / KML / SHP)</label>
-            <input id="fileInput" type="file" accept=".geojson,.json,.kml,.zip" />
-            <div class="hint">SHP must be a .zip containing .shp/.dbf/.shx (.prj optional).</div>
-          </div>
-        </div>
-
-        <div class="row">
+      <div class="row">
+        <div class="field">
+          <label>时间范围（用于公开 STAC 信号检查）</label>
           <div class="inline">
-            <button id="drawRectBtn" class="btn btn-secondary">Draw rectangle</button>
-            <button id="clearAoiBtn" class="btn btn-ghost">Clear AOI</button>
+            <input id="startMonth" type="month" />
+            <input id="endMonth" type="month" />
           </div>
-        </div>
-
-        <div class="aoiBox">
-          <div class="aoiTitle">Current AOI</div>
-          <div id="aoiSummary" class="aoiSummary">None</div>
+          <div class="hint">这里是“公开信号/规则指示”，不是可得性承诺，不涉及采购/下单。</div>
         </div>
       </div>
 
-      <div class="card" id="rules">
-        <h2>2) Archive Coverage Index (Reference)</h2>
-
-        <div class="row">
-          <div class="field">
-            <label>Time range (year-month) – for open STAC footprint checks</label>
-            <div class="inline">
-              <input id="startMonth" type="month" />
-              <input id="endMonth" type="month" />
-            </div>
-            <div class="hint">
-              This section gives reference-level indicators. No ordering. No guarantees.
-            </div>
-          </div>
+      <div class="row">
+        <div class="inline">
+          <button id="coverageIndexBtn" class="btn btn-primary">运行覆盖指示</button>
+          <button id="clearIndexBtn" class="btn btn-ghost">清空</button>
         </div>
+      </div>
 
-        <div class="row">
+      <div class="row">
+        <div id="indexStatus" class="hint"></div>
+      </div>
+
+      <div class="row">
+        <div id="coverageIndex" class="indexList"></div>
+      </div>
+
+      <div class="row">
+        <div class="hint">
+          Legend:
+          <span class="pill ok">✅ likely</span>
+          <span class="pill warn">⚠️ partial / non-uniform / samples</span>
+          <span class="pill no">❌ no public signal</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="footprints">
+      <h2>3) Open STAC Footprints（公开数据可加载）</h2>
+
+      <div class="row">
+        <div class="inline">
+          <button id="footprintsBtn" class="btn btn-primary">加载公开足迹</button>
+          <button id="clearFootprintsBtn" class="btn btn-ghost">清除足迹</button>
+        </div>
+      </div>
+
+      <div class="row">
+        <div id="footprintsStatus" class="hint"></div>
+      </div>
+
+      <div class="row">
+        <div id="footprintsSummary" class="sources"></div>
+      </div>
+
+      <div class="row">
+        <div class="hint">
+          仅加载公开 STAC（Planetary Computer）足迹：Sentinel-2 / Sentinel-1 / Landsat（参考可视化）。
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="programming">
+      <h2>4) Programming Index（未来过境 · 参考）</h2>
+
+      <div class="row">
+        <div class="field">
+          <label>预测窗口（天）</label>
           <div class="inline">
-            <button id="coverageIndexBtn" class="btn btn-primary">Run coverage index</button>
-            <button id="clearIndexBtn" class="btn btn-ghost">Clear index</button>
+            <select id="progDays" class="select">
+              <option value="7">7</option>
+              <option value="14" selected>14</option>
+              <option value="30">30</option>
+            </select>
+            <button id="progBtn" class="btn btn-primary">估算过境</button>
+            <button id="progClearBtn" class="btn btn-ghost">清空</button>
           </div>
-        </div>
-
-        <div class="row">
-          <div id="indexStatus" class="hint"></div>
-        </div>
-
-        <div class="row">
-          <div id="coverageIndex" class="indexList"></div>
-        </div>
-
-        <div class="row">
-          <div class="hint">
-            Legend:
-            <span class="pill ok">✅ likely</span>
-            <span class="pill warn">⚠️ partial / non-uniform / samples</span>
-            <span class="pill no">❌ no public signal</span>
-          </div>
+          <div class="hint">使用公开 TLE + SGP4（satellite.js），用简化扫幅模型做“规划参考”。</div>
         </div>
       </div>
 
-      <div class="card">
-        <h2>3) Open STAC Footprints (Open data only)</h2>
-
-        <div class="row">
-          <div class="inline">
-            <button id="footprintsBtn" class="btn btn-primary">Draw open footprints</button>
-            <button id="clearFootprintsBtn" class="btn btn-ghost">Clear footprints</button>
-          </div>
-        </div>
-
-        <div class="row">
-          <div id="coverageStatus" class="hint"></div>
-        </div>
-
-        <div class="row">
-          <div id="coverageSummary" class="sources"></div>
-        </div>
-
-        <div class="row">
-          <div class="hint">
-            Footprints legend:
-            <span class="tag" style="border-color:rgba(90,167,255,.5)">Sentinel-2</span>
-            <span class="tag" style="border-color:rgba(34,197,94,.45)">Sentinel-1</span>
-            <span class="tag" style="border-color:rgba(245,158,11,.45)">Landsat</span>
-          </div>
-        </div>
+      <div class="row">
+        <div id="progStatus" class="hint"></div>
       </div>
 
-      <div class="card">
-        <h2>4) Programming Index (Future passes · Reference)</h2>
-
-        <div class="row">
-          <div class="field">
-            <label>Forecast horizon (days)</label>
-            <div class="inline">
-              <select id="progDays" class="select">
-                <option value="7">7</option>
-                <option value="14" selected>14</option>
-                <option value="30">30</option>
-              </select>
-              <button id="progBtn" class="btn btn-primary">Estimate passes</button>
-              <button id="progClearBtn" class="btn btn-ghost">Clear</button>
-            </div>
-            <div class="hint">
-              Uses public TLE + SGP4 propagation (satellite.js). Planning reference only.
-            </div>
-          </div>
-        </div>
-
-        <div class="row">
-          <div id="progStatus" class="hint"></div>
-        </div>
-
-        <div class="row">
-          <div id="progResult" class="indexList"></div>
-        </div>
+      <div class="row">
+        <div id="progResult" class="indexList"></div>
       </div>
+    </div>
 
-      <div class="card" id="sources">
-        <h2>5) Sources (Portals)</h2>
-        <div class="hint">Listed for transparency only. This tool does not require login and does not place orders.</div>
-        <div id="sourcesList" class="sources"></div>
+    <div class="card" id="sources">
+      <h2>5) Sources（公开平台 · 透明列示）</h2>
+      <div class="hint">仅用于来源透明与能力说明。本工具不要求登录，不进行采购/下单。</div>
+      <div id="sourcesList" class="sources"></div>
+    </div>
+
+    <footer class="footer">
+      <div class="footerLine">
+        <b>Notice:</b> Open data only. This site provides <b>reference-level</b> indicators (coverage & planning).
+        It does <b>not</b> replace official portals or procurement workflows.
       </div>
+    </footer>
 
-      <footer class="footer">
-        <div class="footerLine">
-          <b>Notice:</b> Open data only. This site provides <b>reference-level</b> coverage and pass estimates.
-          It does not replace official portals, ordering systems, or procurement workflows.
-        </div>
-      </footer>
+  </section>
 
-    </section>
+  <section class="mapWrap">
+    <div class="mapChrome">
+      <div class="hudTag left">OPEN · NO LOGIN</div>
+      <div class="hudTag right">REFERENCE ONLY</div>
+    </div>
+    <div id="map"></div>
+  </section>
+</main>
 
-    <section class="mapWrap">
-      <div class="mapChrome">
-        <div class="hudTag left">OPEN · NO LOGIN · REFERENCE</div>
-        <div class="hudTag right">ARCHIVE + PROGRAMMING</div>
-      </div>
-
-      <div id="cesiumContainer"></div>
-
-      <div id="loading" class="loading">
-        <div class="loadingCard">
-          <div class="loadingDot"></div>
-          <div class="loadingText">
-            <div class="loadingTitle">Initializing globe…</div>
-            <div class="loadingSub">If tiles are blocked, you should still see an ellipsoid + atmosphere.</div>
-          </div>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <script src="app.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
