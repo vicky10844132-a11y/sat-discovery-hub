@@ -1,5 +1,5 @@
 async function loadSources() {
-  const res = await fetch("./public/sources.default.json");
+  const res = await fetch("./sources.json");
   const sources = await res.json();
 
   const container = document.createElement("div");

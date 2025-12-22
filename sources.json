@@ -1,0 +1,72 @@
+[
+  {
+    "id": "planet",
+    "name": "Planet Explorer",
+    "operator": "Planet Labs",
+    "url": "https://planet.com/explorer",
+    "sensor": ["optical"],
+    "coverage": "global",
+    "access": "public search",
+    "notes": "Official Planet imagery discovery portal."
+  },
+  {
+    "id": "airbus",
+    "name": "Airbus OneAtlas / GeoStore",
+    "operator": "Airbus Defence and Space",
+    "url": "https://www.intelligence-airbusds.com/en/4871-ordering",
+    "sensor": ["optical", "sar"],
+    "coverage": "global",
+    "access": "public search",
+    "notes": "Airbus commercial imagery discovery and ordering portal."
+  },
+  {
+    "id": "maxar",
+    "name": "Maxar SecureWatch",
+    "operator": "Maxar",
+    "url": "https://discover.digitalglobe.com/",
+    "sensor": ["optical"],
+    "coverage": "global",
+    "access": "account required",
+    "notes": "Maxar imagery discovery platform (login required)."
+  },
+  {
+    "id": "apollo",
+    "name": "Apollo ImageHunter",
+    "operator": "Apollo Mapping",
+    "url": "https://imagehunter.apollomapping.com/",
+    "sensor": ["optical", "sar"],
+    "coverage": "global",
+    "access": "public search",
+    "notes": "Multi-source public imagery search portal."
+  },
+  {
+    "id": "cresda",
+    "name": "CRESDA Data Service",
+    "operator": "China Centre for Resources Satellite Data",
+    "url": "https://data.cresda.cn/#/mapSearch",
+    "sensor": ["optical"],
+    "coverage": "china",
+    "access": "public search",
+    "notes": "Official China resources satellite public data search."
+  },
+  {
+    "id": "jl1",
+    "name": "Jilin-1 Satellite Mall",
+    "operator": "Chang Guang Satellite",
+    "url": "https://www.jl1mall.com/store/",
+    "sensor": ["optical"],
+    "coverage": "global",
+    "access": "public search",
+    "notes": "Jilin-1 commercial imagery discovery and ordering."
+  },
+  {
+    "id": "siwei",
+    "name": "Siwei GEO Image Query",
+    "operator": "Siwei GEO",
+    "url": "https://oms.siweigic.com/mapQuery",
+    "sensor": ["optical"],
+    "coverage": "china",
+    "access": "public search",
+    "notes": "Siwei GEO public imagery query system."
+  }
+]
