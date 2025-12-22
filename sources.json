@@ -17,7 +17,7 @@
     "sensor": ["optical", "sar"],
     "coverage": "global",
     "access": "public search",
-    "notes": "Airbus commercial imagery discovery and ordering portal."
+    "notes": "Airbus commercial imagery discovery and ordering."
   },
   {
     "id": "maxar",
@@ -26,8 +26,48 @@
     "url": "https://discover.digitalglobe.com/",
     "sensor": ["optical"],
     "coverage": "global",
-    "access": "account required",
-    "notes": "Maxar imagery discovery platform (login required)."
+    "access": "login required",
+    "notes": "Maxar imagery discovery platform."
+  },
+  {
+    "id": "blacksky",
+    "name": "BlackSky Spectra",
+    "operator": "BlackSky",
+    "url": "https://spectra.blacksky.com/",
+    "sensor": ["optical"],
+    "coverage": "global",
+    "access": "login required",
+    "notes": "High revisit commercial imagery platform."
+  },
+  {
+    "id": "capella",
+    "name": "Capella Space Console",
+    "operator": "Capella Space",
+    "url": "https://console.capellaspace.com/",
+    "sensor": ["sar"],
+    "coverage": "global",
+    "access": "login required",
+    "notes": "High-resolution commercial SAR imagery."
+  },
+  {
+    "id": "iceye",
+    "name": "ICEYE Data Hub",
+    "operator": "ICEYE",
+    "url": "https://www.iceye.com/",
+    "sensor": ["sar"],
+    "coverage": "global",
+    "access": "commercial access",
+    "notes": "Commercial SAR constellation provider."
+  },
+  {
+    "id": "umbra",
+    "name": "Umbra SAR",
+    "operator": "Umbra",
+    "url": "https://umbra.space/",
+    "sensor": ["sar"],
+    "coverage": "global",
+    "access": "commercial access",
+    "notes": "Next-generation SAR imagery provider."
   },
   {
     "id": "apollo",
@@ -40,6 +80,66 @@
     "notes": "Multi-source public imagery search portal."
   },
   {
+    "id": "skyfi",
+    "name": "SkyFi",
+    "operator": "SkyFi",
+    "url": "https://www.skyfi.com/",
+    "sensor": ["optical"],
+    "coverage": "global",
+    "access": "public search",
+    "notes": "Multi-provider satellite imagery marketplace."
+  },
+  {
+    "id": "sobloo",
+    "name": "Sobloo",
+    "operator": "Airbus / CS Group",
+    "url": "https://sobloo.eu/",
+    "sensor": ["optical", "sar"],
+    "coverage": "europe",
+    "access": "public search",
+    "notes": "European EO data platform."
+  },
+  {
+    "id": "esa",
+    "name": "ESA Copernicus Data Space",
+    "operator": "European Space Agency",
+    "url": "https://dataspace.copernicus.eu/",
+    "sensor": ["optical", "sar"],
+    "coverage": "global",
+    "access": "public open data",
+    "notes": "Sentinel open satellite data access."
+  },
+  {
+    "id": "usgs",
+    "name": "USGS EarthExplorer",
+    "operator": "USGS",
+    "url": "https://earthexplorer.usgs.gov/",
+    "sensor": ["optical"],
+    "coverage": "global",
+    "access": "public open data",
+    "notes": "Landsat and global archive access."
+  },
+  {
+    "id": "nasa",
+    "name": "NASA Earthdata Search",
+    "operator": "NASA",
+    "url": "https://search.earthdata.nasa.gov/",
+    "sensor": ["optical", "sar"],
+    "coverage": "global",
+    "access": "public open data",
+    "notes": "NASA Earth observation data portal."
+  },
+  {
+    "id": "jaxa",
+    "name": "JAXA G-Portal",
+    "operator": "JAXA",
+    "url": "https://gportal.jaxa.jp/",
+    "sensor": ["optical", "sar"],
+    "coverage": "asia-pacific",
+    "access": "public open data",
+    "notes": "Japanese Earth observation data portal."
+  },
+  {
     "id": "cresda",
     "name": "CRESDA Data Service",
     "operator": "China Centre for Resources Satellite Data",
@@ -47,17 +147,27 @@
     "sensor": ["optical"],
     "coverage": "china",
     "access": "public search",
-    "notes": "Official China resources satellite public data search."
+    "notes": "Official China resources satellite data search."
+  },
+  {
+    "id": "gaofen",
+    "name": "Gaofen Data Platform",
+    "operator": "CNSA",
+    "url": "http://www.cheosgrid.org.cn/",
+    "sensor": ["optical"],
+    "coverage": "china",
+    "access": "public search",
+    "notes": "China High-resolution Earth Observation System."
   },
   {
     "id": "jl1",
     "name": "Jilin-1 Satellite Mall",
     "operator": "Chang Guang Satellite",
     "url": "https://www.jl1mall.com/store/",
-    "sensor": ["optical"],
+    "sensor": ["optical", "video"],
     "coverage": "global",
     "access": "public search",
-    "notes": "Jilin-1 commercial imagery discovery and ordering."
+    "notes": "Jilin-1 commercial imagery and video discovery."
   },
   {
     "id": "siwei",
@@ -67,6 +177,36 @@
     "sensor": ["optical"],
     "coverage": "china",
     "access": "public search",
-    "notes": "Siwei GEO public imagery query system."
+    "notes": "Siwei GEO public imagery query."
+  },
+  {
+    "id": "supmap",
+    "name": "SuperMap EO Platform",
+    "operator": "SuperMap",
+    "url": "https://www.supermap.com/",
+    "sensor": ["optical"],
+    "coverage": "china",
+    "access": "commercial access",
+    "notes": "Enterprise geospatial and EO services."
+  },
+  {
+    "id": "ksat",
+    "name": "KSAT Lite",
+    "operator": "KSAT",
+    "url": "https://litesat.ksat.no/",
+    "sensor": ["sar"],
+    "coverage": "global",
+    "access": "commercial access",
+    "notes": "SAR data access and services."
+  },
+  {
+    "id": "satellogic",
+    "name": "Satellogic Platform",
+    "operator": "Satellogic",
+    "url": "https://www.satellogic.com/",
+    "sensor": ["optical"],
+    "coverage": "global",
+    "access": "commercial access",
+    "notes": "High-resolution optical imagery constellation."
   }
 ]
