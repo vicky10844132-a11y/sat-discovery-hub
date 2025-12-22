@@ -1,80 +1,80 @@
 [
   {
     "id": "jl1",
-    "name": "吉林一号遥感商城（长光）",
+    "name": "Jilin-1 Remote Sensing Store (CGSTL)",
     "url": "https://www.jl1mall.com/store/",
-    "desc": "公开影像查询入口：0.5m / 0.75m / 0.8m 多星。覆盖非均匀属常态。"
+    "desc": "Public discovery entry for CGSTL imagery (VHR optical). Coverage density can be non-uniform."
   },
   {
     "id": "cresda",
-    "name": "陆地观测卫星数据服务（中国资源卫星应用中心 CRESDA）",
+    "name": "Land Observation Satellite Data Service (CRESDA)",
     "url": "https://data.cresda.cn/#/mapSearch",
-    "desc": "公开检索入口：高分/资源/环境/LT/碳卫星等（光学/SAR/激光/大气等）。"
+    "desc": "Public search entry for China's GF/ZY/HJ/LT/Carbon missions (optical/SAR/atmosphere, mission-dependent)."
   },
   {
     "id": "sasclouds",
-    "name": "自然资源卫星遥感云平台（SASClouds）",
+    "name": "SASClouds (Natural Resources Remote Sensing Cloud Platform)",
     "url": "http://www.sasclouds.com/chinese/normal/",
-    "desc": "公开检索入口：高分/资源/部分吉林一号等。高分资源系列以 CRESDA 为准。"
+    "desc": "Public search entry for GF/ZY and some other datasets. For GF/ZY, treat CRESDA as the primary reference."
   },
   {
     "id": "siwei",
-    "name": "四维地球商城（高景系列）",
+    "name": "Siwei Earth Store (HighJing series)",
     "url": "https://oms.siweigic.com/mapQuery",
-    "desc": "公开查询入口（官方可能要求注册；本工具不依赖登录，仅透明列示来源）。"
+    "desc": "Discovery entry (official portal may require registration; this tool does not depend on login and does not place orders)."
   },
   {
     "id": "airbus",
     "name": "Airbus Intelligence Ordering / Archive",
     "url": "https://www.intelligence-airbusds.com/en/4871-ordering",
-    "desc": "公开入口：SPOT 6/7、PLEIADES、TerraSAR-X 等（本工具不下单、不保证可得）。"
+    "desc": "Public entry for SPOT 6/7, Pleiades, TerraSAR-X, etc. This tool does not order or guarantee availability."
   },
   {
     "id": "apollo",
-    "name": "Apollo Mapping ImageHunter（聚合查询）",
+    "name": "Apollo Mapping ImageHunter (Aggregator)",
     "url": "https://imagehunter.apollomapping.com/",
-    "desc": "聚合入口：WV/IKONOS/QuickBird/GeoEye/Planet/SkySat、SPOT/PLEIADES/NEO、KOMPSAT、EROS、RapidEye、Deimos-2 等（聚合数据不保证完整）。"
+    "desc": "Aggregator discovery entry (WV/IKONOS/QuickBird/GeoEye/Planet/SkySat, SPOT/Pleiades/NEO, KOMPSAT, EROS, RapidEye, Deimos-2, etc.). Catalog completeness may vary."
   },
   {
     "id": "planet",
     "name": "Planet Explorer",
     "url": "https://planet.com/explorer",
-    "desc": "Planet 官方发现入口（通常需要账号；本工具不依赖登录，仅透明列示）。"
+    "desc": "Planet discovery entry (often requires an account; this tool does not depend on login and does not place orders)."
   },
   {
     "id": "alos",
-    "name": "日本 ALOS 平台（ALOS-2 / ALOS-4 SAR）",
+    "name": "ALOS Platform (ALOS-2 / ALOS-4 SAR)",
     "url": "https://satpf.jp/spf/",
-    "desc": "公开入口：ALOS-2、ALOS-4 雷达数据（ALOS-1 已去除）。"
+    "desc": "Public entry for ALOS-2 and ALOS-4 SAR datasets (ALOS-1 removed)."
   },
   {
     "id": "obt",
-    "name": "欧比特数据查询平台（OBT）",
+    "name": "OBT Data Platform (Orbita)",
     "url": "https://www.obtdata.com/#/dataExpress",
-    "desc": "公开查询入口：1m、2m 光学，10m 高光谱等。"
+    "desc": "Public discovery entry for 1m/2m optical and 10m hyperspectral products."
   },
   {
     "id": "capella_open",
-    "name": "Capella Open Data（AWS Open Data）",
+    "name": "Capella Open Data (AWS Open Data)",
     "url": "https://registry.opendata.aws/capella_opendata/",
-    "desc": "公开 SAR 样例数据（AWS Open Data）。"
+    "desc": "Public SAR sample dataset (AWS Open Data). Samples only; not a comprehensive archive."
   },
   {
     "id": "capella_felt",
-    "name": "Capella Open Data（Felt 示例地图）",
+    "name": "Capella Open Data (Felt example map)",
     "url": "https://felt.com/map/Capella-Space-Open-Data-bB24xsH3SuiUlpMdDbVRaA?loc=-15.66,150.53,2z",
-    "desc": "公开样例可视化（仅示例级）。"
+    "desc": "Public sample visualization (example-level)."
   },
   {
     "id": "gibs_docs",
-    "name": "NASA GIBS 文档（WMTS/WMS/TWMS/TMS）",
+    "name": "NASA GIBS Docs (WMTS/WMS/TWMS/TMS)",
     "url": "https://nasa-gibs.github.io/gibs-api-docs/access-basics/#visualization-services",
-    "desc": "公开可视化服务说明，可按日期访问。"
+    "desc": "Public documentation for NASA GIBS visualization services (time-enabled layers)."
   },
   {
     "id": "gibs_catalog",
-    "name": "NASA GIBS 产品目录",
+    "name": "NASA GIBS Visualization Product Catalog",
     "url": "https://nasa-gibs.github.io/gibs-api-docs/available-visualizations/#visualization-product-catalog",
-    "desc": "GIBS 图层/时间/投影等目录索引。"
+    "desc": "Catalog of GIBS layers, projections, time dimensions, and formats."
   }
 ]

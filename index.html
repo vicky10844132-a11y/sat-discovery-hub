@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <title>Satellite Discovery Index — Open / No Login</title>
@@ -37,58 +37,58 @@
   <section class="panel">
 
     <div class="card" id="aoi">
-      <h2>1) AOI 设置</h2>
+      <h2>1) AOI Setup</h2>
 
       <div class="row">
         <div class="field">
-          <label>地点搜索（可选）</label>
+          <label>Place search (optional)</label>
           <div class="inline">
             <input id="placeInput" type="text" placeholder="Beijing / Dubai / New York" />
-            <button id="placeBtn" class="btn">定位</button>
+            <button id="placeBtn" class="btn">Locate</button>
           </div>
-          <div class="hint">使用 OpenStreetMap Nominatim 公共地理编码（不登录）。</div>
+          <div class="hint">Uses OpenStreetMap Nominatim public geocoding (no login).</div>
         </div>
       </div>
 
       <div class="row">
         <div class="field">
-          <label>上传 AOI（GeoJSON）</label>
+          <label>Upload AOI (GeoJSON)</label>
           <input id="fileInput" type="file" accept=".geojson,.json" />
-          <div class="hint">建议上传 polygon/ multipolygon。也可上传 bbox 矩形的 GeoJSON。</div>
+          <div class="hint">Recommended: Polygon / MultiPolygon. Rectangle bbox GeoJSON also works.</div>
         </div>
       </div>
 
       <div class="row">
         <div class="inline">
-          <button id="drawRectBtn" class="btn btn-secondary">拖拽绘制矩形 AOI</button>
-          <button id="clearAoiBtn" class="btn btn-ghost">清除 AOI</button>
+          <button id="drawRectBtn" class="btn btn-secondary">Draw rectangle AOI</button>
+          <button id="clearAoiBtn" class="btn btn-ghost">Clear AOI</button>
         </div>
       </div>
 
       <div class="aoiBox">
-        <div class="aoiTitle">当前 AOI</div>
+        <div class="aoiTitle">Current AOI</div>
         <div id="aoiSummary" class="aoiSummary">None</div>
       </div>
     </div>
 
     <div class="card" id="coverage">
-      <h2>2) Archive Coverage Index（覆盖指示 · 参考）</h2>
+      <h2>2) Archive Coverage Index (Reference)</h2>
 
       <div class="row">
         <div class="field">
-          <label>时间范围（用于公开 STAC 信号检查）</label>
+          <label>Time range (for open STAC signal checks)</label>
           <div class="inline">
             <input id="startMonth" type="month" />
             <input id="endMonth" type="month" />
           </div>
-          <div class="hint">这里是“公开信号/规则指示”，不是可得性承诺，不涉及采购/下单。</div>
+          <div class="hint">Indicators only. No ordering. No guarantees. Procurement stays with official channels.</div>
         </div>
       </div>
 
       <div class="row">
         <div class="inline">
-          <button id="coverageIndexBtn" class="btn btn-primary">运行覆盖指示</button>
-          <button id="clearIndexBtn" class="btn btn-ghost">清空</button>
+          <button id="coverageIndexBtn" class="btn btn-primary">Run coverage index</button>
+          <button id="clearIndexBtn" class="btn btn-ghost">Clear</button>
         </div>
       </div>
 
@@ -111,12 +111,12 @@
     </div>
 
     <div class="card" id="footprints">
-      <h2>3) Open STAC Footprints（公开数据可加载）</h2>
+      <h2>3) Open STAC Footprints (Loadable Public Data)</h2>
 
       <div class="row">
         <div class="inline">
-          <button id="footprintsBtn" class="btn btn-primary">加载公开足迹</button>
-          <button id="clearFootprintsBtn" class="btn btn-ghost">清除足迹</button>
+          <button id="footprintsBtn" class="btn btn-primary">Load open footprints</button>
+          <button id="clearFootprintsBtn" class="btn btn-ghost">Clear footprints</button>
         </div>
       </div>
 
@@ -130,27 +130,27 @@
 
       <div class="row">
         <div class="hint">
-          仅加载公开 STAC（Planetary Computer）足迹：Sentinel-2 / Sentinel-1 / Landsat（参考可视化）。
+          Loads only public STAC footprints (Planetary Computer): Sentinel-2 / Sentinel-1 / Landsat (visual reference).
         </div>
       </div>
     </div>
 
     <div class="card" id="programming">
-      <h2>4) Programming Index（未来过境 · 参考）</h2>
+      <h2>4) Programming Index (Future Passes · Reference)</h2>
 
       <div class="row">
         <div class="field">
-          <label>预测窗口（天）</label>
+          <label>Forecast horizon (days)</label>
           <div class="inline">
             <select id="progDays" class="select">
               <option value="7">7</option>
               <option value="14" selected>14</option>
               <option value="30">30</option>
             </select>
-            <button id="progBtn" class="btn btn-primary">估算过境</button>
-            <button id="progClearBtn" class="btn btn-ghost">清空</button>
+            <button id="progBtn" class="btn btn-primary">Estimate passes</button>
+            <button id="progClearBtn" class="btn btn-ghost">Clear</button>
           </div>
-          <div class="hint">使用公开 TLE + SGP4（satellite.js），用简化扫幅模型做“规划参考”。</div>
+          <div class="hint">Uses public TLE + SGP4 (satellite.js) with a simplified swath model. Planning reference only.</div>
         </div>
       </div>
 
@@ -164,8 +164,8 @@
     </div>
 
     <div class="card" id="sources">
-      <h2>5) Sources（公开平台 · 透明列示）</h2>
-      <div class="hint">仅用于来源透明与能力说明。本工具不要求登录，不进行采购/下单。</div>
+      <h2>5) Sources (Public Portals · Transparency)</h2>
+      <div class="hint">Listed for transparency and capability context only. This tool requires no login and does not place orders.</div>
       <div id="sourcesList" class="sources"></div>
     </div>
 

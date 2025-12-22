@@ -153,14 +153,14 @@ function enableDrawRectangle() {
   map.on("mousemove", onMouseMove);
   map.on("mouseup", onMouseUp);
 
-  alert("在地图上拖拽绘制 AOI 矩形");
+  alert("Draw an AOI rectangle by click-dragging on the map.");
 }
 
 async function handleFileUpload(file) {
   if (!file) return;
   const name = file.name.toLowerCase();
   if (!name.endsWith(".geojson") && !name.endsWith(".json")) {
-    alert("只支持 GeoJSON (.geojson/.json)");
+    alert("Only GeoJSON (.geojson/.json) is supported.");
     return;
   }
 
@@ -175,7 +175,7 @@ async function handleFileUpload(file) {
     setAOILayer(layer);
   } catch (e) {
     console.error(e);
-    alert("GeoJSON 解析失败");
+    alert("Failed to parse GeoJSON.");
   }
 }
 
@@ -271,10 +271,10 @@ async function stacSearchPC(body) {
 }
 
 async function runCoverageIndex() {
-  if (!aoiBounds) return alert("请先设置 AOI（画框或上传 GeoJSON）。");
+  if (!aoiBounds) return alert("Please set an AOI first (draw rectangle or upload GeoJSON).");
 
   clearCoverageIndex();
-  el("indexStatus").textContent = "运行中：公开规则 +（可选）公开 STAC 信号检查…";
+  el("indexStatus").textContent = "Running coverage index (public rules + optional open STAC signals)…";
 
   const aoi = aoiToRuleBbox();
   const rows = [];
@@ -308,7 +308,7 @@ async function runCoverageIndex() {
         ok = false;
       }
       rows.push({
-        name: `${cfg.name}（Open STAC signal）`,
+        name: `${cfg.name} (Open STAC signal)`,
         family: "Open",
         sensor: "open archive",
         level: ok ? "ok" : "no",
@@ -320,17 +320,17 @@ async function runCoverageIndex() {
     }
   } else {
     rows.push({
-      name: "Open STAC signal（可选）",
+      name: "Open STAC signal (optional)",
       family: "Tip",
       sensor: "—",
       level: "warn",
-      desc: "如需对 Sentinel/Landsat 等公开数据做信号检查，请设置时间范围后再运行。",
+      desc: "To check public Sentinel/Landsat signals, set a time range and run again.",
       note: ""
     });
   }
 
   renderCoverageIndex(rows);
-  el("indexStatus").textContent = `完成：${rows.length} 条覆盖指示（参考）。`;
+  el("indexStatus").textContent = `Done. ${rows.length} indicators (reference).`;
 }
 
 function renderCoverageIndex(rows) {
@@ -401,15 +401,15 @@ function footprintStyle(color) {
 }
 
 async function loadFootprints() {
-  if (!aoiBounds) return alert("请先设置 AOI（画框或上传 GeoJSON）。");
+  if (!aoiBounds) return alert("Please set an AOI first (draw rectangle or upload GeoJSON).");
 
   const start = el("startMonth").value;
   const end = el("endMonth").value;
-  if (!start || !end) return alert("请先设置时间范围（开始月/结束月）。");
-  if (start > end) return alert("开始月必须 <= 结束月。");
+  if (!start || !end) return alert("Please set a time range first (start month / end month).");
+  if (start > end) return alert("Start month must be <= end month.");
 
   clearFootprints();
-  el("footprintsStatus").textContent = "加载公开 STAC 足迹中…";
+  el("footprintsStatus").textContent = "Loading open STAC footprints…";
 
   const bbox = boundsToBBox(aoiBounds);
   const datetime = isoMonthRange(start, end);
@@ -453,7 +453,7 @@ async function loadFootprints() {
     summary.push({ name: cfg.name, count: features.length, note: `Footprints only (open STAC). ${start} → ${end}.` });
   }
 
-  el("footprintsStatus").textContent = `完成：加载足迹 ${total} 条（参考可视化）。`;
+  el("footprintsStatus").textContent = `Done. Loaded ${total} footprint(s) (visual reference).`;
   renderFootprintsSummary(summary);
 }
 
@@ -503,7 +503,7 @@ function approxHitAOI(lat, lon, aoiBbox, swathKm = 250) {
   const east = aoiBbox[2] + dLon;
   const north = aoiBbox[3] + dLat;
 
-  // assume AOI not spanning dateline (common). If it does, this is approximate only.
+  // assumes AOI does not span the dateline (approximation)
   return (lat >= south && lat <= north && lon >= west && lon <= east);
 }
 
@@ -540,12 +540,12 @@ function parseTLE3Line(text) {
 }
 
 async function estimatePasses() {
-  if (!aoiBounds) return alert("请先设置 AOI。");
+  if (!aoiBounds) return alert("Please set an AOI first.");
 
   clearProgramming();
   const days = parseInt(el("progDays").value, 10) || 14;
 
-  el("progStatus").textContent = `拉取公开 TLE 并估算未来 ${days} 天过境窗口（参考）…`;
+  el("progStatus").textContent = `Fetching public TLE and estimating pass windows for the next ${days} day(s) (reference)…`;
 
   const bbox = boundsToBBox(aoiBounds); // [W,S,E,N]
   const startTime = new Date();
@@ -555,7 +555,7 @@ async function estimatePasses() {
   const sats = programmingCfg?.satellites || [];
   const sourcesCfg = programmingCfg?.tleSources || {};
   if (!sats.length) {
-    el("progStatus").textContent = "没有配置任何卫星。";
+    el("progStatus").textContent = "No satellites configured.";
     return;
   }
 
@@ -589,7 +589,7 @@ async function estimatePasses() {
       results.push({
         name: `${src.name || srcKey}`,
         level: "warn",
-        desc: "无法拉取 TLE（可能网络限制）。可稍后重试；或换网络环境。预测为参考级。",
+        desc: "Failed to fetch TLE (network restrictions possible). Try again later or use a different network. Planning reference only.",
         meta: ["TLE fetch failed"]
       });
       continue;
@@ -608,7 +608,7 @@ async function estimatePasses() {
         results.push({
           name: sat.name,
           level: "warn",
-          desc: "TLE 未在源列表中找到（名称不匹配）。",
+          desc: "TLE not found in the feed (name mismatch).",
           meta: ["no TLE match"]
         });
         continue;
@@ -621,7 +621,7 @@ async function estimatePasses() {
         results.push({
           name: sat.name,
           level: "warn",
-          desc: "TLE 解析失败。",
+          desc: "Failed to parse TLE.",
           meta: ["TLE parse error"]
         });
         continue;
@@ -676,8 +676,8 @@ async function estimatePasses() {
         name: sat.name,
         level,
         desc: windows.length
-          ? `预计 ${windows.length} 个过境窗口（扫幅≈${swathKm}km，采样步长=1min），命中时长≈${Math.round(minutes)} 分钟。`
-          : `未检测到过境窗口（简化模型/网络/TLE 可能影响）。`,
+          ? `Estimated ${windows.length} window(s) (swath≈${swathKm}km, step=1min). Hit time≈${Math.round(minutes)} min.`
+          : `No window detected (simplified model / network / TLE may affect results).`,
         meta: windows.slice(0,5).map(w =>
           `${w.start.toISOString().slice(0,16).replace("T"," ")} → ${w.end.toISOString().slice(0,16).replace("T"," ")}`
         )
@@ -686,7 +686,7 @@ async function estimatePasses() {
   }
 
   renderProgramming(results);
-  el("progStatus").textContent = "完成：过境估算为参考级（非成像承诺）。";
+  el("progStatus").textContent = "Done. Planning reference only (no imaging guarantee).";
 }
 
 /* -------------------------- wiring -------------------------- */
@@ -705,10 +705,10 @@ function wireUI() {
     if (!q) return;
     try {
       const res = await geocodePlace(q);
-      if (!res) return alert("未找到地点");
+      if (!res) return alert("No result found.");
       map.setView(res, 8);
     } catch {
-      alert("地点搜索失败（可能网络限制）");
+      alert("Place search failed (network restrictions possible).");
     }
   });
 
@@ -751,5 +751,5 @@ async function main() {
 
 main().catch((e) => {
   console.error(e);
-  alert("初始化失败：请打开控制台查看报错（通常是 data/*.json 路径或网络限制）。");
+  alert("Initialization failed. Check console errors (usually data/*.json paths or network restrictions).");
 });

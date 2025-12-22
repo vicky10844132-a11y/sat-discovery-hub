@@ -7,136 +7,136 @@
   ],
   "providers": [
     {
-      "name": "CRESDA（中国资源卫星应用中心）",
+      "name": "CRESDA (China Resources Satellite Application Center)",
       "family": "CN National",
       "sensors": ["optical", "SAR", "atmospheric", "lidar (mission-dependent)"],
       "coverage": {
         "confidence": "high",
         "latRange": [-85, 85],
-        "notes": "国内高分/资源/环境等公开检索的权威指示源（参考级）。"
+        "notes": "Authoritative public discovery entry for GF/ZY/HJ/LT/Carbon missions (reference-level indicator)."
       },
-      "publicNote": "仅作公开指示，不代表可得性承诺。"
+      "publicNote": "Indicator only. Procurement remains with official channels."
     },
     {
-      "name": "SASClouds（自然资源遥感云）",
+      "name": "SASClouds (Natural Resources Remote Sensing Cloud)",
       "family": "CN National",
       "sensors": ["optical", "SAR"],
       "coverage": {
         "confidence": "medium",
         "latRange": [-85, 85],
-        "notes": "补充/交叉验证源；高分资源系列以 CRESDA 为准（参考级）。"
+        "notes": "Secondary cross-check entry. For GF/ZY, treat CRESDA as primary (reference-level)."
       },
-      "publicNote": "仅作公开指示。"
+      "publicNote": "Indicator only."
     },
     {
-      "name": "吉林一号（长光）",
+      "name": "Jilin-1 (CGSTL)",
       "family": "CN Commercial",
       "sensors": ["optical (VHR)"],
       "coverage": {
         "confidence": "medium",
         "latRange": [-85, 85],
-        "notes": "任务驱动 + 存档指示；覆盖密度可能不均匀（参考级）。"
+        "notes": "Archive/tasking indicator; coverage density can be non-uniform (reference-level)."
       },
-      "publicNote": "仅作公开指示。"
+      "publicNote": "Indicator only."
     },
     {
-      "name": "四维地球（高景系列）",
+      "name": "Siwei Earth (HighJing series)",
       "family": "CN Commercial",
       "sensors": ["optical (VHR)"],
       "coverage": {
         "confidence": "low",
         "latRange": [-85, 85],
-        "notes": "商业体系公开能力提示；覆盖非均匀（参考级）。"
+        "notes": "Commercial capability hint; coverage can be non-uniform (reference-level)."
       },
-      "publicNote": "仅作公开指示。"
+      "publicNote": "Indicator only."
     },
     {
-      "name": "欧比特（OBT）",
+      "name": "OBT (Orbita)",
       "family": "CN Commercial",
       "sensors": ["optical", "hyperspectral"],
       "coverage": {
         "confidence": "low",
         "latRange": [-85, 85],
-        "notes": "公开能力提示：光学 + 高光谱；覆盖非均匀（参考级）。"
+        "notes": "Commercial capability hint for optical and hyperspectral products (reference-level)."
       },
-      "publicNote": "仅作公开指示。"
+      "publicNote": "Indicator only."
     },
     {
-      "name": "Airbus（SPOT / PLEIADES / TerraSAR-X）",
+      "name": "Airbus (SPOT / Pleiades / TerraSAR-X)",
       "family": "Intl Commercial",
       "sensors": ["optical", "SAR"],
       "coverage": {
         "confidence": "medium",
         "latRange": [-85, 85],
-        "notes": "国际商业体系公开能力提示（参考级）。"
+        "notes": "Global commercial capability hint (reference-level)."
       },
-      "publicNote": "仅作公开指示。"
+      "publicNote": "Indicator only."
     },
     {
-      "name": "Apollo Mapping ImageHunter（聚合器）",
+      "name": "Apollo Mapping ImageHunter (Aggregator)",
       "family": "Intl Aggregator",
       "sensors": ["optical", "SAR (some)"],
       "coverage": {
         "confidence": "low",
         "latRange": [-85, 85],
-        "notes": "聚合查询并非完整目录，作为能力提示（参考级）。"
+        "notes": "Aggregator listings may be incomplete; treat as a broad hint only (reference-level)."
       },
-      "publicNote": "仅作公开指示。"
+      "publicNote": "Indicator only."
     },
     {
-      "name": "Planet（PlanetScope / SkySat）",
+      "name": "Planet (PlanetScope / SkySat)",
       "family": "Intl Commercial",
       "sensors": ["optical (high revisit)"],
       "coverage": {
         "confidence": "medium",
         "latRange": [-85, 85],
-        "notes": "高重访体系公开能力提示；实际可得性与授权相关（参考级）。"
+        "notes": "High temporal coverage capability hint; availability/licensing depends on official channels (reference-level)."
       },
-      "publicNote": "仅作公开指示。"
+      "publicNote": "Indicator only."
     },
     {
-      "name": "ALOS-2 / ALOS-4（SAR）",
+      "name": "ALOS-2 / ALOS-4 (SAR)",
       "family": "JP Public",
       "sensors": ["SAR"],
       "coverage": {
         "confidence": "medium",
         "latRange": [-85, 85],
-        "notes": "公开任务/数据入口提示；可得性以官方渠道为准（参考级）。"
+        "notes": "Public mission/data entry; availability depends on official access terms (reference-level)."
       },
-      "publicNote": "仅作公开指示。"
+      "publicNote": "Indicator only."
     },
     {
-      "name": "NASA GIBS（全球可视化基线）",
+      "name": "NASA GIBS (Global Visualization Baseline)",
       "family": "Open Baseline",
       "sensors": ["various earth observation layers"],
       "coverage": {
         "confidence": "high",
         "latRange": [-90, 90],
-        "notes": "全球可视化服务（WMTS/WMS），适合作为背景与时间浏览；非高分存档目录（参考级）。"
+        "notes": "Global WMTS/WMS visualization services. Useful baseline/time browsing; not a VHR archive catalog."
       },
-      "publicNote": "公开基线服务。"
+      "publicNote": "Open visualization baseline."
     },
     {
-      "name": "Capella Open Data（SAR samples）",
+      "name": "Capella Open Data (SAR samples)",
       "family": "Open Data",
       "sensors": ["SAR"],
       "coverage": {
         "confidence": "low",
         "latRange": [-85, 85],
-        "notes": "公开样例数据，不代表完整覆盖（参考级）。"
+        "notes": "Public samples only; not comprehensive archive coverage (reference-level)."
       },
-      "publicNote": "样例级。"
+      "publicNote": "Sample-level."
     },
     {
-      "name": "Umbra Open Data（SAR samples）",
+      "name": "Umbra Open Data (SAR samples)",
       "family": "Open Data",
       "sensors": ["SAR"],
       "coverage": {
         "confidence": "low",
         "latRange": [-85, 85],
-        "notes": "公开样例数据，不代表完整覆盖（参考级）。"
+        "notes": "Public samples only; not comprehensive archive coverage (reference-level)."
       },
-      "publicNote": "样例级。"
+      "publicNote": "Sample-level."
     }
   ]
 }
