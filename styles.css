@@ -5,10 +5,12 @@
   --border:rgba(255,255,255,0.12);
   --border2:rgba(255,255,255,0.16);
   --text:#eaefff;
-  --muted:rgba(234,239,255,0.70);
+  --muted:rgba(234,239,255,0.72);
   --link:#74a9ff;
   --accent:rgba(90,162,255,0.18);
   --accentBorder:rgba(90,162,255,0.55);
+  --good:rgba(35,163,111,0.20);
+  --warn:rgba(255,180,60,0.18);
 }
 
 *{box-sizing:border-box}
@@ -59,7 +61,7 @@ body{
 }
 
 main{padding:18px 22px 48px}
-.wrap{max-width:1080px}
+.wrap{max-width:1120px}
 
 .h2{
   margin:18px 0 10px;
@@ -69,7 +71,7 @@ main{padding:18px 22px 48px}
 
 .controls{
   display:grid;
-  grid-template-columns: 1.2fr 2fr 1fr 1fr auto;
+  grid-template-columns: 1.3fr 2.2fr 1fr 1fr 1fr auto;
   gap:12px;
   align-items:end;
   margin: 12px 0 10px;
@@ -89,11 +91,11 @@ main{padding:18px 22px 48px}
 .group{display:grid; gap:8px}
 .label{font-size:12px; color:var(--muted)}
 
+.chips{display:flex; flex-wrap:wrap; gap:8px}
 .chip{
   display:inline-flex;
   align-items:center;
   gap:8px;
-  margin-right:10px;
   padding:8px 10px;
   border:1px solid var(--border);
   border-radius:999px;
@@ -111,6 +113,7 @@ main{padding:18px 22px 48px}
   padding:10px 14px;
   cursor:pointer;
   font-size:13px;
+  white-space:nowrap;
 }
 .btn:hover{background:rgba(255,255,255,0.14)}
 .btnPrimary{
@@ -126,11 +129,31 @@ main{padding:18px 22px 48px}
   margin: 6px 0 14px;
 }
 
+.statsRow{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  flex-wrap:wrap;
+}
+
 .stats{
   font-size:12px;
   color:var(--muted);
   padding-bottom:8px;
 }
+
+.pills{display:flex; gap:8px; flex-wrap:wrap}
+.pill{
+  border:1px solid var(--border);
+  background:rgba(255,255,255,0.03);
+  border-radius:999px;
+  padding:7px 10px;
+  font-size:12px;
+  color:var(--text);
+  cursor:pointer;
+}
+.pill:hover{background:rgba(255,255,255,0.07)}
 
 .list{display:grid; gap:14px}
 .card{
@@ -139,20 +162,36 @@ main{padding:18px 22px 48px}
   border:1px solid var(--border);
   background:var(--panel);
 }
+
+.cardTop{display:flex; justify-content:space-between; gap:10px; align-items:flex-start; flex-wrap:wrap}
 .link{
   color:var(--link);
   text-decoration:underline;
   font-size:18px;
 }
+.badges{display:flex; gap:8px; flex-wrap:wrap}
+.badge{
+  font-size:11px;
+  padding:4px 8px;
+  border-radius:999px;
+  border:1px solid var(--border);
+  background:rgba(255,255,255,0.03);
+  color:var(--text);
+}
+.badgeGood{border-color:rgba(35,163,111,0.45); background:var(--good)}
+.badgeWarn{border-color:rgba(255,180,60,0.45); background:var(--warn)}
+.badgeNew{border-color:rgba(90,162,255,0.55); background:rgba(90,162,255,0.18)}
+
 .meta{
   margin-top:6px;
   font-size:12px;
   color:var(--muted);
+  line-height:1.5;
 }
 .note{
   margin-top:6px;
   font-size:13px;
-  color:rgba(234,239,255,0.85);
+  color:rgba(234,239,255,0.86);
   line-height:1.5;
 }
 

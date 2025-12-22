@@ -7,6 +7,9 @@
     "sensor": ["optical"],
     "coverage": "global",
     "access": "public search",
+    "category": "commercial",
+    "updated": "2025-01-01",
+    "evidence_url": "",
     "notes": "Official Planet imagery discovery portal."
   },
   {
@@ -17,77 +20,10 @@
     "sensor": ["optical", "sar"],
     "coverage": "global",
     "access": "public search",
+    "category": "commercial",
+    "updated": "2025-01-01",
+    "evidence_url": "",
     "notes": "Commercial imagery discovery and ordering entry."
-  },
-  {
-    "id": "maxar",
-    "name": "Maxar SecureWatch",
-    "operator": "Maxar",
-    "url": "https://discover.digitalglobe.com/",
-    "sensor": ["optical"],
-    "coverage": "global",
-    "access": "login required",
-    "notes": "Imagery discovery platform (login required)."
-  },
-  {
-    "id": "blacksky",
-    "name": "BlackSky Spectra",
-    "operator": "BlackSky",
-    "url": "https://spectra.blacksky.com/",
-    "sensor": ["optical"],
-    "coverage": "global",
-    "access": "login required",
-    "notes": "Commercial imagery platform (login required)."
-  },
-  {
-    "id": "capella",
-    "name": "Capella Space Console",
-    "operator": "Capella Space",
-    "url": "https://console.capellaspace.com/",
-    "sensor": ["sar"],
-    "coverage": "global",
-    "access": "login required",
-    "notes": "High-resolution commercial SAR (login required)."
-  },
-  {
-    "id": "umbra",
-    "name": "Umbra SAR",
-    "operator": "Umbra",
-    "url": "https://umbra.space/",
-    "sensor": ["sar"],
-    "coverage": "global",
-    "access": "commercial access",
-    "notes": "Commercial SAR provider."
-  },
-  {
-    "id": "iceye",
-    "name": "ICEYE",
-    "operator": "ICEYE",
-    "url": "https://www.iceye.com/",
-    "sensor": ["sar"],
-    "coverage": "global",
-    "access": "commercial access",
-    "notes": "Commercial SAR constellation provider."
-  },
-  {
-    "id": "apollo",
-    "name": "Apollo ImageHunter",
-    "operator": "Apollo Mapping",
-    "url": "https://imagehunter.apollomapping.com/",
-    "sensor": ["optical", "sar"],
-    "coverage": "global",
-    "access": "public search",
-    "notes": "Multi-source public imagery discovery portal."
-  },
-  {
-    "id": "skyfi",
-    "name": "SkyFi",
-    "operator": "SkyFi",
-    "url": "https://www.skyfi.com/",
-    "sensor": ["optical"],
-    "coverage": "global",
-    "access": "public search",
-    "notes": "Multi-provider satellite imagery marketplace entry."
   },
   {
     "id": "esa_copernicus",
@@ -97,6 +33,9 @@
     "sensor": ["optical", "sar"],
     "coverage": "global",
     "access": "public open data",
+    "category": "open",
+    "updated": "2025-01-01",
+    "evidence_url": "",
     "notes": "Sentinel open satellite data access."
   },
   {
@@ -107,27 +46,10 @@
     "sensor": ["optical"],
     "coverage": "global",
     "access": "public open data",
+    "category": "open",
+    "updated": "2025-01-01",
+    "evidence_url": "",
     "notes": "Landsat and global archive access."
-  },
-  {
-    "id": "nasa_earthdata",
-    "name": "NASA Earthdata Search",
-    "operator": "NASA",
-    "url": "https://search.earthdata.nasa.gov/",
-    "sensor": ["optical", "sar"],
-    "coverage": "global",
-    "access": "public open data",
-    "notes": "NASA Earth observation data portal."
-  },
-  {
-    "id": "jaxa_gportal",
-    "name": "JAXA G-Portal",
-    "operator": "JAXA",
-    "url": "https://gportal.jaxa.jp/",
-    "sensor": ["optical", "sar"],
-    "coverage": "asia-pacific",
-    "access": "public open data",
-    "notes": "Japanese Earth observation data portal."
   },
   {
     "id": "cresda",
@@ -137,6 +59,9 @@
     "sensor": ["optical"],
     "coverage": "china",
     "access": "public search",
+    "category": "government",
+    "updated": "2025-01-01",
+    "evidence_url": "",
     "notes": "Official China resources satellite public data search."
   },
   {
@@ -147,16 +72,23 @@
     "sensor": ["optical", "video"],
     "coverage": "global",
     "access": "public search",
+    "category": "commercial",
+    "updated": "2025-01-01",
+    "evidence_url": "",
     "notes": "Commercial imagery and video discovery entry."
   },
   {
-    "id": "siwei_oms",
-    "name": "Siwei OMS Map Query",
-    "operator": "Siwei GEO",
-    "url": "https://oms.siweigic.com/mapQuery",
-    "sensor": ["optical"],
-    "coverage": "china",
+    "id": "apollo",
+    "name": "Apollo ImageHunter",
+    "operator": "Apollo Mapping",
+    "url": "https://imagehunter.apollomapping.com/",
+    "sensor": ["optical", "sar"],
+    "coverage": "global",
     "access": "public search",
-    "notes": "Public imagery query entry."
+    "category": "aggregator",
+    "updated": "2025-01-01",
+    "evidence_url": "",
+    "notes": "Multi-source public imagery discovery portal."
   }
 ]
+
