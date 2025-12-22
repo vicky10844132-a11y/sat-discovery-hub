@@ -38,12 +38,19 @@ const MAX_TOTAL_FEATURES = 800;
 const el = (id) => document.getElementById(id);
 
 function initCesium() {
+  // ✅ 不依赖 Cesium Ion 的底图（最稳）
+  const osm = new Cesium.OpenStreetMapImageryProvider({
+    url: "https://a.tile.openstreetmap.org/"
+  });
+
   viewer = new Cesium.Viewer("cesiumContainer", {
+    imageryProvider: osm,
+    baseLayerPicker: false,          // 避免用户切回 Ion 图层
+    terrainProvider: new Cesium.EllipsoidTerrainProvider(), // 不用 Ion 地形
     timeline: false,
     animation: false,
     geocoder: false,
     homeButton: true,
-    baseLayerPicker: true,
     sceneModePicker: true,
     navigationHelpButton: false,
     fullscreenButton: true,
@@ -51,7 +58,9 @@ function initCesium() {
     selectionIndicator: false,
     shouldAnimate: false,
   });
-  viewer.scene.globe.depthTestAgainstTerrain = true;
+
+  viewer.scene.globe.depthTestAgainstTerrain = false;
+  viewer.scene.globe.baseColor = Cesium.Color.BLACK; // 加个底色防止“白闪”
   flyToLatLon(20, 0, 22000000);
 }
 
