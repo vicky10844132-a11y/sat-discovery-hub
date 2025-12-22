@@ -1,675 +1,666 @@
-let ALL = [];
-let LAST_FILTERED = [];
+/* Satellite Discovery Index
+   Phase-1: AOI + time range -> archive coverage footprints (public/open STAC only)
+   - No vendor inventory APIs
+   - No scraping
+   - No imagery hosting
+*/
 
-const LS_KEY = "sdi_filters_v1";
+let viewer;
+let aoiEntity = null;
+let aoiBBox = null;         // {west,south,east,north} degrees
+let aoiGeoJSON = null;      // GeoJSON Polygon/MultiPolygon (for STAC intersects)
+let sources = [];
+let activeSensor = "all";
+let drawHandler = null;
 
-function el(tag, attrs = {}, children = []) {
-  const node = document.createElement(tag);
-  for (const [k, v] of Object.entries(attrs)) {
-    if (k === "class") node.className = v;
-    else if (k === "text") node.textContent = v;
-    else if (k.startsWith("on") && typeof v === "function") node.addEventListener(k.slice(2), v);
-    else node.setAttribute(k, v);
+// Coverage layers
+let coverageDataSources = [];
+let coverageFeaturesCount = 0;
+
+const STAC_ENDPOINTS = [
+  // Planetary Computer STAC (CORS OK)
+  "https://planetarycomputer.microsoft.com/api/stac/v1"
+  // 备用：AWS Earth Search（也可加）
+  // "https://earth-search.aws.element84.com/v1"
+];
+
+const COLLECTIONS = [
+  {
+    key: "sentinel-2",
+    name: "Sentinel-2",
+    collections: ["sentinel-2-l2a"],
+    color: "rgba(90,167,255,0.22)",
+    outline: "rgba(90,167,255,0.95)",
+  },
+  {
+    key: "sentinel-1",
+    name: "Sentinel-1",
+    collections: ["sentinel-1-grd"],
+    color: "rgba(34,197,94,0.18)",
+    outline: "rgba(34,197,94,0.90)",
+  },
+  {
+    key: "landsat",
+    name: "Landsat 8/9",
+    collections: ["landsat-c2-l2"],
+    color: "rgba(245,158,11,0.18)",
+    outline: "rgba(245,158,11,0.90)",
   }
-  for (const c of children) node.appendChild(typeof c === "string" ? document.createTextNode(c) : c);
-  return node;
+];
+
+// Limits (avoid freezing the browser)
+const MAX_ITEMS_PER_COLLECTION = 350;     // per collection per query
+const MAX_TOTAL_FEATURES = 900;           // total drawn footprints
+
+const els = {
+  placeInput: () => document.getElementById("placeInput"),
+  placeBtn: () => document.getElementById("placeBtn"),
+  latInput: () => document.getElementById("latInput"),
+  lonInput: () => document.getElementById("lonInput"),
+  coordBtn: () => document.getElementById("coordBtn"),
+  fileInput: () => document.getElementById("fileInput"),
+  drawRectBtn: () => document.getElementById("drawRectBtn"),
+  clearAoiBtn: () => document.getElementById("clearAoiBtn"),
+  aoiSummary: () => document.getElementById("aoiSummary"),
+  sourcesList: () => document.getElementById("sourcesList"),
+  startMonth: () => document.getElementById("startMonth"),
+  endMonth: () => document.getElementById("endMonth"),
+  coverageBtn: () => document.getElementById("coverageBtn"),
+  clearCoverageBtn: () => document.getElementById("clearCoverageBtn"),
+  coverageStatus: () => document.getElementById("coverageStatus"),
+  coverageSummary: () => document.getElementById("coverageSummary"),
+};
+
+function initCesium() {
+  viewer = new Cesium.Viewer("cesiumContainer", {
+    timeline: false,
+    animation: false,
+    geocoder: false,
+    homeButton: true,
+    baseLayerPicker: true,
+    sceneModePicker: true,
+    navigationHelpButton: false,
+    fullscreenButton: true,
+    infoBox: false,
+    selectionIndicator: false,
+    shouldAnimate: false,
+  });
+
+  viewer.scene.globe.depthTestAgainstTerrain = true;
+  flyToLatLon(20, 0, 22000000);
 }
 
-const norm = (s) => (s || "").toString().toLowerCase().trim();
-const uniq = (arr) => Array.from(new Set(arr.filter(Boolean)));
-
-function safeArr(v) { return Array.isArray(v) ? v : (v ? [v] : []); }
-
-function accessBucket(accessText) {
-  const a = norm(accessText);
-  if (!a) return "";
-  if (a.includes("public") || a.includes("open")) return "public";
-  if (a.includes("login") || a.includes("account")) return "login";
-  if (a.includes("commercial")) return "commercial";
-  return "";
-}
-
-function toISODate(d) {
-  // Expect YYYY-MM-DD, else empty
-  const s = (d || "").toString().trim();
-  return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : "";
-}
-
-function daysSince(iso) {
-  const s = toISODate(iso);
-  if (!s) return Infinity;
-  const dt = new Date(s + "T00:00:00Z");
-  const now = new Date();
-  const diff = (now.getTime() - dt.getTime()) / 86400000;
-  return Math.floor(diff);
-}
-
-function isHttps(url) {
-  return /^https:\/\//i.test((url || "").toString().trim());
-}
-
-async function loadSources() {
-  const res = await fetch("./sources.json", { cache: "no-store" });
-  if (!res.ok) throw new Error(`Failed to load sources.json (${res.status})`);
-  const data = await res.json();
-
-  // Backward compatibility: normalize records
-  ALL = (Array.isArray(data) ? data : []).map(x => ({
-    id: (x.id || "").toString().trim(),
-    name: (x.name || "").toString().trim(),
-    operator: (x.operator || "").toString().trim(),
-    url: (x.url || "").toString().trim(),
-    sensor: safeArr(x.sensor).map(v => v.toString().trim()).filter(Boolean),
-    coverage: (x.coverage || "").toString().trim() || "global",
-    access: (x.access || "").toString().trim(),
-    category: (x.category || "").toString().trim() || "",          // commercial/government/open/aggregator/research
-    updated: toISODate(x.updated || ""),                           // YYYY-MM-DD
-    evidence_url: (x.evidence_url || "").toString().trim(),
-    notes: (x.notes || "").toString().trim()
-  }));
-}
-
-function buildUI() {
-  const mount = document.getElementById("app");
-  mount.innerHTML = "";
-
-  const wrap = el("div", { class: "wrap" });
-
-  // Title row + quick pills
-  const title = el("div", { class: "h2", text: "Sources" });
-
-  const pills = el("div", { class: "pills" }, [
-    el("button", { class: "pill", id: "pill_all", text: "All" }),
-    el("button", { class: "pill", id: "pill_new30", text: "New/Updated (30d)" }),
-    el("button", { class: "pill", id: "pill_new90", text: "New/Updated (90d)" }),
-    el("button", { class: "pill", id: "pill_public", text: "Public/Open" }),
-    el("button", { class: "pill", id: "pill_china", text: "China" }),
-    el("button", { class: "pill", id: "pill_sar", text: "SAR" })
-  ]);
-
-  // Controls
-  const controls = el("div", { class: "controls" });
-
-  const q = el("input", { class: "input", type: "search", id: "q", placeholder: "Search name / operator / notes…" });
-
-  // Sensor chips
-  const sensorGroup = el("div", { class: "group" }, [
-    el("div", { class: "label", text: "Sensor" })
-  ]);
-
-  const sensors = [
-    { id: "f_optical", label: "Optical", value: "optical" },
-    { id: "f_sar", label: "SAR", value: "sar" },
-    { id: "f_video", label: "Video", value: "video" },
-    { id: "f_dem", label: "DEM", value: "dem" }
-  ];
-
-  const chipsWrap = el("div", { class: "chips" });
-  sensors.forEach(s => {
-    chipsWrap.appendChild(
-      el("label", { class: "chip" }, [
-        el("input", { type: "checkbox", id: s.id, value: s.value }),
-        el("span", {}, [s.label])
-      ])
-    );
-  });
-  sensorGroup.appendChild(chipsWrap);
-
-  // Coverage select (from data)
-  const covSelect = el("select", { class: "select", id: "coverage" });
-  covSelect.appendChild(el("option", { value: "", text: "All coverage" }));
-  uniq(ALL.map(x => x.coverage)).sort().forEach(c => covSelect.appendChild(el("option", { value: c, text: c })));
-
-  const covGroup = el("div", { class: "group" }, [
-    el("div", { class: "label", text: "Coverage" }),
-    covSelect
-  ]);
-
-  // Category select
-  const catSelect = el("select", { class: "select", id: "category" });
-  catSelect.appendChild(el("option", { value: "", text: "All categories" }));
-  // offer common buckets + discovered values
-  const commonCats = ["commercial","government","open","aggregator","research"];
-  const foundCats = uniq(ALL.map(x => x.category)).filter(Boolean);
-  uniq([...commonCats, ...foundCats]).forEach(c => catSelect.appendChild(el("option", { value: c, text: c })));
-
-  const catGroup = el("div", { class: "group" }, [
-    el("div", { class: "label", text: "Category" }),
-    catSelect
-  ]);
-
-  // Access select
-  const accessSelect = el("select", { class: "select", id: "access" });
-  accessSelect.appendChild(el("option", { value: "", text: "All access" }));
-  accessSelect.appendChild(el("option", { value: "public", text: "Public / Open" }));
-  accessSelect.appendChild(el("option", { value: "login", text: "Login required" }));
-  accessSelect.appendChild(el("option", { value: "commercial", text: "Commercial" }));
-
-  const accessGroup = el("div", { class: "group" }, [
-    el("div", { class: "label", text: "Access" }),
-    accessSelect
-  ]);
-
-  // Sort
-  const sortSelect = el("select", { class: "select", id: "sort" });
-  [
-    ["updated_desc","Sort: Updated (newest)"],
-    ["name_asc","Sort: Name (A→Z)"],
-    ["coverage_asc","Sort: Coverage"],
-    ["category_asc","Sort: Category"]
-  ].forEach(([v,t]) => sortSelect.appendChild(el("option",{value:v,text:t})));
-
-  const sortGroup = el("div", { class: "group" }, [
-    el("div", { class: "label", text: "Sort" }),
-    sortSelect
-  ]);
-
-  const resetBtn = el("button", { class: "btn", id: "reset", text: "Reset" });
-
-  const stats = el("div", { class: "stats", id: "stats", text: "—" });
-
-  controls.appendChild(q);
-  controls.appendChild(sensorGroup);
-  controls.appendChild(covGroup);
-  controls.appendChild(catGroup);
-  controls.appendChild(accessGroup);
-  controls.appendChild(sortGroup);
-  controls.appendChild(resetBtn);
-
-  // Actions
-  const actions = el("div", { class: "actions" });
-  const copyLinkBtn = el("button", { class: "btn btnPrimary", id: "copyLink", text: "Copy share link" });
-  const copyTextBtn = el("button", { class: "btn", id: "copyText", text: "Copy results (text)" });
-  const copyMdBtn = el("button", { class: "btn", id: "copyMd", text: "Copy results (markdown)" });
-  const exportBtn = el("button", { class: "btn", id: "exportCsv", text: "Export CSV" });
-
-  actions.appendChild(copyLinkBtn);
-  actions.appendChild(copyTextBtn);
-  actions.appendChild(copyMdBtn);
-  actions.appendChild(exportBtn);
-
-  const toast = el("div", { class: "toast", id: "toast" });
-  const statsRow = el("div", { class: "statsRow" }, [stats, pills]);
-  const list = el("div", { class: "list", id: "list" });
-
-  const hint = el("div", { class: "footerHint" }, [
-    "Tip: Filters are encoded in the URL for sharing. ",
-    "This site indexes public discovery portals only."
-  ]);
-
-  wrap.appendChild(title);
-  wrap.appendChild(controls);
-  wrap.appendChild(actions);
-  wrap.appendChild(toast);
-  wrap.appendChild(statsRow);
-  wrap.appendChild(list);
-  wrap.appendChild(hint);
-
-  mount.appendChild(wrap);
-
-  // Events
-  const rerender = () => { syncURLFromFilters(); saveFiltersLocal(); render(); };
-  q.addEventListener("input", rerender);
-  sensors.forEach(s => document.getElementById(s.id).addEventListener("change", rerender));
-  covSelect.addEventListener("change", rerender);
-  catSelect.addEventListener("change", rerender);
-  accessSelect.addEventListener("change", rerender);
-  sortSelect.addEventListener("change", rerender);
-
-  resetBtn.addEventListener("click", () => {
-    q.value = "";
-    sensors.forEach(s => (document.getElementById(s.id).checked = false));
-    covSelect.value = "";
-    catSelect.value = "";
-    accessSelect.value = "";
-    sortSelect.value = "updated_desc";
-    syncURLFromFilters();
-    saveFiltersLocal();
-    render();
-  });
-
-  // Quick pills
-  document.getElementById("pill_all").addEventListener("click", () => {
-    document.getElementById("q").value = "";
-    sensors.forEach(s => (document.getElementById(s.id).checked = false));
-    covSelect.value = "";
-    catSelect.value = "";
-    accessSelect.value = "";
-    rerender();
-  });
-
-  document.getElementById("pill_new30").addEventListener("click", () => {
-    setSpecial("recent", "30");
-    rerender();
-  });
-  document.getElementById("pill_new90").addEventListener("click", () => {
-    setSpecial("recent", "90");
-    rerender();
-  });
-  document.getElementById("pill_public").addEventListener("click", () => {
-    accessSelect.value = "public";
-    rerender();
-  });
-  document.getElementById("pill_china").addEventListener("click", () => {
-    covSelect.value = "china";
-    rerender();
-  });
-  document.getElementById("pill_sar").addEventListener("click", () => {
-    document.getElementById("f_sar").checked = true;
-    rerender();
-  });
-
-  // Actions
-  copyLinkBtn.addEventListener("click", async () => {
-    try {
-      await navigator.clipboard.writeText(new URL(window.location.href).toString());
-      showToast("Share link copied.");
-    } catch {
-      showToast("Copy failed. Copy from address bar.");
-    }
-  });
-
-  copyTextBtn.addEventListener("click", async () => {
-    try {
-      await navigator.clipboard.writeText(buildTextList(LAST_FILTERED));
-      showToast("Results copied as text.");
-    } catch {
-      showToast("Copy failed (browser permission).");
-    }
-  });
-
-  copyMdBtn.addEventListener("click", async () => {
-    try {
-      await navigator.clipboard.writeText(buildMarkdownList(LAST_FILTERED));
-      showToast("Results copied as markdown.");
-    } catch {
-      showToast("Copy failed (browser permission).");
-    }
-  });
-
-  exportBtn.addEventListener("click", () => {
-    downloadText(buildCsv(LAST_FILTERED), "satellite-discovery-sources.csv", "text/csv;charset=utf-8");
-    showToast("CSV exported.");
+function flyToLatLon(lat, lon, height = 2000000) {
+  viewer.camera.flyTo({
+    destination: Cesium.Cartesian3.fromDegrees(lon, lat, height),
+    duration: 1.2,
   });
 }
 
-function showToast(msg) {
-  const t = document.getElementById("toast");
-  if (!t) return;
-  t.textContent = msg;
-  t.classList.add("show");
-  clearTimeout(showToast._tm);
-  showToast._tm = setTimeout(() => t.classList.remove("show"), 1200);
+function escapeHTML(str) {
+  return String(str).replace(/[&<>"']/g, (m) => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+  }[m]));
 }
 
-/* Special URL param: recent=30|90 */
-function setSpecial(key, val) {
-  const url = new URL(window.location.href);
-  url.searchParams.set(key, val);
-  history.replaceState(null, "", url.toString());
-}
-function getSpecialRecent() {
-  const url = new URL(window.location.href);
-  const r = url.searchParams.get("recent") || "";
-  const n = parseInt(r, 10);
-  if (n === 30 || n === 90) return n;
-  return 0;
-}
-function clearSpecialRecent() {
-  const url = new URL(window.location.href);
-  url.searchParams.delete("recent");
-  history.replaceState(null, "", url.toString());
+async function loadJSON(path) {
+  const r = await fetch(path, { cache: "no-store" });
+  if (!r.ok) throw new Error(`Failed to load ${path}`);
+  return await r.json();
 }
 
-function getFilters() {
-  const q = norm(document.getElementById("q")?.value);
-  const cov = document.getElementById("coverage")?.value || "";
-  const cat = document.getElementById("category")?.value || "";
-  const access = document.getElementById("access")?.value || "";
-  const sort = document.getElementById("sort")?.value || "updated_desc";
+// ---------------- AOI ----------------
 
-  const sensorWanted = [];
-  ["f_optical","f_sar","f_video","f_dem"].forEach(id => {
-    const cb = document.getElementById(id);
-    if (cb?.checked) sensorWanted.push(cb.value);
-  });
-
-  return { q, cov, cat, access, sort, sensorWanted };
-}
-
-function match(item, f) {
-  // keyword
-  if (f.q) {
-    const hay = norm(
-      `${item.name} ${item.operator} ${item.notes} ${(item.sensor||[]).join(" ")} ${item.coverage} ${item.access} ${item.category}`
-    );
-    if (!hay.includes(f.q)) return false;
-  }
-
-  // coverage
-  if (f.cov && item.coverage !== f.cov) return false;
-
-  // category
-  if (f.cat && norm(item.category) !== norm(f.cat)) return false;
-
-  // access bucket
-  if (f.access) {
-    const b = accessBucket(item.access);
-    if (b !== f.access) return false;
-  }
-
-  // sensor
-  if (f.sensorWanted.length) {
-    const s = (item.sensor || []).map(norm);
-    if (!f.sensorWanted.some(w => s.includes(w))) return false;
-  }
-
-  // recent special (30/90 days)
-  const recent = getSpecialRecent();
-  if (recent) {
-    const d = daysSince(item.updated);
-    if (!(d <= recent)) return false;
-  }
-
-  return true;
-}
-
-/* URL sync: q/cov/cat/acc/sen/sort + keep recent */
-function syncURLFromFilters() {
-  const f = getFilters();
-  const url = new URL(window.location.href);
-
-  if (f.q) url.searchParams.set("q", f.q); else url.searchParams.delete("q");
-  if (f.cov) url.searchParams.set("cov", f.cov); else url.searchParams.delete("cov");
-  if (f.cat) url.searchParams.set("cat", f.cat); else url.searchParams.delete("cat");
-  if (f.access) url.searchParams.set("acc", f.access); else url.searchParams.delete("acc");
-  if (f.sensorWanted.length) url.searchParams.set("sen", f.sensorWanted.join(",")); else url.searchParams.delete("sen");
-  if (f.sort && f.sort !== "updated_desc") url.searchParams.set("sort", f.sort); else url.searchParams.delete("sort");
-
-  history.replaceState(null, "", url.toString());
-}
-
-function applyFiltersFromURL() {
-  const url = new URL(window.location.href);
-  const q = url.searchParams.get("q") || "";
-  const cov = url.searchParams.get("cov") || "";
-  const cat = url.searchParams.get("cat") || "";
-  const acc = url.searchParams.get("acc") || "";
-  const sen = url.searchParams.get("sen") || "";
-  const sort = url.searchParams.get("sort") || "updated_desc";
-
-  const qEl = document.getElementById("q");
-  const covEl = document.getElementById("coverage");
-  const catEl = document.getElementById("category");
-  const accEl = document.getElementById("access");
-  const sortEl = document.getElementById("sort");
-
-  if (qEl) qEl.value = q;
-  if (covEl && cov) covEl.value = cov;
-  if (catEl && cat) catEl.value = cat;
-  if (accEl && acc) accEl.value = acc;
-  if (sortEl && sort) sortEl.value = sort;
-
-  const wanted = sen.split(",").map(norm).filter(Boolean);
-  const map = { optical: "f_optical", sar: "f_sar", video: "f_video", dem: "f_dem" };
-  Object.values(map).forEach(id => {
-    const cb = document.getElementById(id);
-    if (cb) cb.checked = false;
-  });
-  wanted.forEach(w => {
-    const id = map[w];
-    if (id) {
-      const cb = document.getElementById(id);
-      if (cb) cb.checked = true;
-    }
-  });
-}
-
-function loadFiltersLocal() {
-  try {
-    const raw = localStorage.getItem(LS_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw);
-  } catch { return null; }
-}
-function saveFiltersLocal() {
-  try {
-    const f = getFilters();
-    localStorage.setItem(LS_KEY, JSON.stringify(f));
-  } catch {}
-}
-function applyFiltersLocalIfNoURL() {
-  const url = new URL(window.location.href);
-  const hasAny =
-    url.searchParams.get("q") || url.searchParams.get("cov") || url.searchParams.get("cat") ||
-    url.searchParams.get("acc") || url.searchParams.get("sen") || url.searchParams.get("sort") ||
-    url.searchParams.get("recent");
-  if (hasAny) return;
-
-  const f = loadFiltersLocal();
-  if (!f) return;
-
-  const qEl = document.getElementById("q");
-  const covEl = document.getElementById("coverage");
-  const catEl = document.getElementById("category");
-  const accEl = document.getElementById("access");
-  const sortEl = document.getElementById("sort");
-
-  if (qEl) qEl.value = f.q || "";
-  if (covEl) covEl.value = f.cov || "";
-  if (catEl) catEl.value = f.cat || "";
-  if (accEl) accEl.value = f.access || "";
-  if (sortEl) sortEl.value = f.sort || "updated_desc";
-
-  const wanted = (f.sensorWanted || []).map(norm);
-  const map = { optical: "f_optical", sar: "f_sar", video: "f_video", dem: "f_dem" };
-  Object.values(map).forEach(id => {
-    const cb = document.getElementById(id);
-    if (cb) cb.checked = false;
-  });
-  wanted.forEach(w => {
-    const id = map[w];
-    if (id) {
-      const cb = document.getElementById(id);
-      if (cb) cb.checked = true;
-    }
-  });
-
-  syncURLFromFilters();
-}
-
-/* Copy + Export */
-function buildTextList(list) {
-  const lines = [];
-  lines.push("Satellite Discovery Index — filtered results");
-  lines.push(`Count: ${list.length}`);
-  lines.push(`Link: ${window.location.href}`);
-  lines.push("");
-  list.forEach((s, i) => {
-    lines.push(`${i + 1}. ${s.name || "Unnamed"}`);
-    if (s.operator) lines.push(`   Operator: ${s.operator}`);
-    lines.push(`   Coverage: ${s.coverage || "—"} | Sensor: ${(s.sensor || []).join(", ") || "—"} | Access: ${s.access || "—"} | Category: ${s.category || "—"}`);
-    if (s.updated) lines.push(`   Updated: ${s.updated}`);
-    lines.push(`   URL: ${s.url}`);
-    if (s.evidence_url) lines.push(`   Evidence: ${s.evidence_url}`);
-    if (s.notes) lines.push(`   Notes: ${s.notes}`);
-    lines.push("");
-  });
-  return lines.join("\n");
-}
-
-function buildMarkdownList(list) {
-  const lines = [];
-  lines.push(`# Satellite Discovery Index — filtered results`);
-  lines.push(`- Count: **${list.length}**`);
-  lines.push(`- Link: ${window.location.href}`);
-  lines.push("");
-  list.forEach((s) => {
-    const title = s.name || "Unnamed";
-    const meta = [
-      s.coverage ? `Coverage: ${s.coverage}` : null,
-      (s.sensor && s.sensor.length) ? `Sensor: ${s.sensor.join(", ")}` : null,
-      s.access ? `Access: ${s.access}` : null,
-      s.category ? `Category: ${s.category}` : null,
-      s.updated ? `Updated: ${s.updated}` : null
-    ].filter(Boolean).join(" | ");
-
-    lines.push(`- **${title}** — ${meta}`);
-    if (s.operator) lines.push(`  - Operator: ${s.operator}`);
-    lines.push(`  - Portal: ${s.url}`);
-    if (s.evidence_url) lines.push(`  - Evidence: ${s.evidence_url}`);
-    if (s.notes) lines.push(`  - Notes: ${s.notes}`);
-  });
-  lines.push("");
-  return lines.join("\n");
-}
-
-function buildCsv(list) {
-  const header = ["id","name","operator","coverage","sensor","access","category","updated","url","evidence_url","notes"];
-  const rows = [header.join(",")];
-  const esc = (v) => `"${(v ?? "").toString().replaceAll('"','""')}"`;
-
-  list.forEach(x => {
-    rows.push([
-      esc(x.id),
-      esc(x.name),
-      esc(x.operator),
-      esc(x.coverage),
-      esc((x.sensor || []).join("|")),
-      esc(x.access),
-      esc(x.category),
-      esc(x.updated),
-      esc(x.url),
-      esc(x.evidence_url),
-      esc(x.notes)
-    ].join(","));
-  });
-
-  return rows.join("\n");
-}
-
-function downloadText(text, filename, mime) {
-  const blob = new Blob([text], { type: mime });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  setTimeout(() => {
-    URL.revokeObjectURL(a.href);
-    a.remove();
-  }, 0);
-}
-
-function sortList(list, sortKey) {
-  const byName = (a,b)=> (a.name||"").localeCompare(b.name||"");
-  const byCov = (a,b)=> (a.coverage||"").localeCompare(b.coverage||"") || byName(a,b);
-  const byCat = (a,b)=> (a.category||"").localeCompare(b.category||"") || byName(a,b);
-  const byUpd = (a,b)=> {
-    const da = toISODate(a.updated), db = toISODate(b.updated);
-    // newest first; empty at bottom
-    if (!da && !db) return byName(a,b);
-    if (!da) return 1;
-    if (!db) return -1;
-    return db.localeCompare(da) || byName(a,b);
+function bboxToGeoJSONPolygon(b) {
+  // Handle dateline? (Phase-1 keep simple: assume no dateline crossing)
+  return {
+    type: "Polygon",
+    coordinates: [[
+      [b.west, b.south],
+      [b.east, b.south],
+      [b.east, b.north],
+      [b.west, b.north],
+      [b.west, b.south]
+    ]]
   };
-
-  const fn = (sortKey === "name_asc") ? byName :
-             (sortKey === "coverage_asc") ? byCov :
-             (sortKey === "category_asc") ? byCat :
-             byUpd;
-
-  list.sort(fn);
-  return list;
 }
 
-function badgesFor(src) {
-  const b = [];
-  // category badge
-  if (src.category) b.push({ text: src.category, kind: "normal" });
+function setAOIBBoxFromDegrees(west, south, east, north) {
+  aoiBBox = { west, south, east, north };
+  aoiGeoJSON = bboxToGeoJSONPolygon(aoiBBox);
 
-  // access bucket badge
-  const ab = accessBucket(src.access);
-  if (ab === "public") b.push({ text: "public", kind: "good" });
-  if (ab === "login") b.push({ text: "login", kind: "warn" });
-  if (ab === "commercial") b.push({ text: "commercial", kind: "normal" });
+  const centerLat = (south + north) / 2;
+  const centerLon = (west + east) / 2;
 
-  // https hint
-  if (!isHttps(src.url)) b.push({ text: "non-https", kind: "warn" });
+  const rect = Cesium.Rectangle.fromDegrees(west, south, east, north);
+  if (aoiEntity) viewer.entities.remove(aoiEntity);
+  aoiEntity = viewer.entities.add({
+    name: "AOI",
+    rectangle: {
+      coordinates: rect,
+      material: Cesium.Color.fromCssColorString("rgba(255,255,255,0.06)"),
+      outline: true,
+      outlineColor: Cesium.Color.fromCssColorString("rgba(255,255,255,0.85)"),
+      outlineWidth: 2,
+    },
+  });
 
-  // NEW/updated badge
-  const d = daysSince(src.updated);
-  if (d <= 30) b.push({ text: "updated<30d", kind: "new" });
-  else if (d <= 90) b.push({ text: "updated<90d", kind: "new" });
+  viewer.camera.flyTo({
+    destination: Cesium.Rectangle.fromDegrees(west, south, east, north),
+    duration: 1.2,
+  });
 
-  return b;
+  renderAOISummary({ type: "bbox", west, south, east, north, centerLat, centerLon });
 }
 
-function render() {
-  const listEl = document.getElementById("list");
-  const statsEl = document.getElementById("stats");
-  if (!listEl || !statsEl) return;
+function renderAOISummary(aoi) {
+  const el = els.aoiSummary();
+  if (!aoi) { el.textContent = "None"; return; }
 
-  const f = getFilters();
-  let filtered = ALL.filter(x => match(x, f));
-  filtered = sortList(filtered, f.sort);
-  LAST_FILTERED = filtered;
+  if (aoi.type === "point") {
+    el.innerHTML = `Point: <b>${aoi.lat.toFixed(6)}, ${aoi.lon.toFixed(6)}</b>`;
+    return;
+  }
 
-  // stats summary
-  const recent = getSpecialRecent();
-  const recentText = recent ? ` · recent=${recent}d` : "";
-  statsEl.textContent = `${filtered.length} / ${ALL.length} sources${recentText}`;
+  el.innerHTML =
+    `BBox: W <b>${aoi.west.toFixed(4)}</b>, S <b>${aoi.south.toFixed(4)}</b>, ` +
+    `E <b>${aoi.east.toFixed(4)}</b>, N <b>${aoi.north.toFixed(4)}</b><br/>` +
+    `Center: <b>${aoi.centerLat.toFixed(4)}, ${aoi.centerLon.toFixed(4)}</b>`;
+}
 
-  listEl.innerHTML = "";
+function clearAOI() {
+  aoiBBox = null;
+  aoiGeoJSON = null;
+  if (aoiEntity) viewer.entities.remove(aoiEntity);
+  aoiEntity = null;
+  viewer.dataSources.removeAll();
 
-  filtered.forEach(src => {
-    const title = `${src.name || "Unnamed"} (${src.coverage || "—"}, ${(src.sensor || []).join(", ") || "—"})`;
-    const a = el("a", { class: "link", href: src.url, target: "_blank", rel: "noopener noreferrer" }, [title]);
+  clearCoverage();
+  renderAOISummary(null);
+}
 
-    const badges = el("div", { class: "badges" });
-    badgesFor(src).forEach(x => {
-      const cls = x.kind === "good" ? "badge badgeGood" :
-                  x.kind === "warn" ? "badge badgeWarn" :
-                  x.kind === "new" ? "badge badgeNew" : "badge";
-      badges.appendChild(el("span", { class: cls, text: x.text }));
+function clearCoverage() {
+  // Remove coverage layers
+  for (const ds of coverageDataSources) viewer.dataSources.remove(ds, true);
+  coverageDataSources = [];
+  coverageFeaturesCount = 0;
+  els.coverageStatus().textContent = "";
+  els.coverageSummary().innerHTML = "";
+}
+
+// ---------------- AOI drawing (rectangle) ----------------
+
+function enableDrawRectangle() {
+  if (drawHandler) { drawHandler.destroy(); drawHandler = null; }
+
+  const handler = new Cesium.ScreenSpaceEventHandler(viewer.canvas);
+  drawHandler = handler;
+
+  let startCart = null;
+  let tempEntity = null;
+
+  function cartesianToLonLat(cart) {
+    const c = Cesium.Cartographic.fromCartesian(cart);
+    return { lon: Cesium.Math.toDegrees(c.longitude), lat: Cesium.Math.toDegrees(c.latitude) };
+  }
+
+  handler.setInputAction((click) => {
+    startCart = viewer.scene.pickPosition(click.position);
+    if (!startCart) {
+      const ray = viewer.camera.getPickRay(click.position);
+      startCart = viewer.scene.globe.pick(ray, viewer.scene);
+    }
+  }, Cesium.ScreenSpaceEventType.LEFT_DOWN);
+
+  handler.setInputAction((movement) => {
+    if (!startCart) return;
+
+    const endCart = viewer.scene.pickPosition(movement.endPosition) || (() => {
+      const ray = viewer.camera.getPickRay(movement.endPosition);
+      return viewer.scene.globe.pick(ray, viewer.scene);
+    })();
+    if (!endCart) return;
+
+    const a = cartesianToLonLat(startCart);
+    const b = cartesianToLonLat(endCart);
+
+    const west = Math.min(a.lon, b.lon);
+    const east = Math.max(a.lon, b.lon);
+    const south = Math.min(a.lat, b.lat);
+    const north = Math.max(a.lat, b.lat);
+
+    const rect = Cesium.Rectangle.fromDegrees(west, south, east, north);
+
+    if (tempEntity) viewer.entities.remove(tempEntity);
+    tempEntity = viewer.entities.add({
+      rectangle: {
+        coordinates: rect,
+        material: Cesium.Color.fromCssColorString("rgba(168,85,247,0.10)"),
+        outline: true,
+        outlineColor: Cesium.Color.fromCssColorString("rgba(168,85,247,0.95)"),
+      },
+    });
+  }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+
+  handler.setInputAction(() => {
+    if (!startCart) return;
+
+    if (tempEntity?.rectangle?.coordinates) {
+      const rect = tempEntity.rectangle.coordinates.getValue(Cesium.JulianDate.now());
+      const west = Cesium.Math.toDegrees(rect.west);
+      const south = Cesium.Math.toDegrees(rect.south);
+      const east = Cesium.Math.toDegrees(rect.east);
+      const north = Cesium.Math.toDegrees(rect.north);
+
+      viewer.entities.remove(tempEntity);
+      tempEntity = null;
+
+      setAOIBBoxFromDegrees(west, south, east, north);
+    }
+
+    startCart = null;
+    if (drawHandler) { drawHandler.destroy(); drawHandler = null; }
+  }, Cesium.ScreenSpaceEventType.LEFT_UP);
+
+  alert("Draw rectangle: click-drag on the globe, then release to finish.");
+}
+
+// ---------------- File upload ----------------
+
+async function handleFileUpload(file) {
+  if (!file) return;
+  const name = file.name.toLowerCase();
+
+  try {
+    if (name.endsWith(".kml")) {
+      const text = await file.text();
+      const blob = new Blob([text], { type: "application/vnd.google-earth.kml+xml" });
+      const url = URL.createObjectURL(blob);
+      const ds = await Cesium.KmlDataSource.load(url, { camera: viewer.camera, canvas: viewer.canvas });
+      viewer.dataSources.add(ds);
+      await viewer.flyTo(ds);
+      computeBBoxAndGeoJSONFromDataSource(ds);
+      URL.revokeObjectURL(url);
+      return;
+    }
+
+    if (name.endsWith(".geojson") || name.endsWith(".json")) {
+      const text = await file.text();
+      const gj = JSON.parse(text);
+      const ds = await Cesium.GeoJsonDataSource.load(gj, { clampToGround: true });
+      viewer.dataSources.add(ds);
+      await viewer.flyTo(ds);
+      // Store geometry for STAC intersects (best effort)
+      aoiGeoJSON = extractFirstPolygonGeometry(gj) || null;
+      computeBBoxAndMaybeSet(gj, ds);
+      return;
+    }
+
+    if (name.endsWith(".zip")) {
+      const buf = await file.arrayBuffer();
+      const gj = await shp(buf);
+      const ds = await Cesium.GeoJsonDataSource.load(gj, { clampToGround: true });
+      viewer.dataSources.add(ds);
+      await viewer.flyTo(ds);
+      aoiGeoJSON = extractFirstPolygonGeometry(gj) || null;
+      computeBBoxAndMaybeSet(gj, ds);
+      return;
+    }
+
+    alert("Unsupported file type. Use GeoJSON (.geojson/.json), KML (.kml), or SHP zip (.zip).");
+  } catch (e) {
+    console.error(e);
+    alert("Failed to load AOI file. Verify format and try again.");
+  }
+}
+
+function extractFirstPolygonGeometry(gj) {
+  // Accept FeatureCollection or Feature; return Polygon/MultiPolygon geometry
+  try {
+    if (!gj) return null;
+    if (gj.type === "FeatureCollection" && gj.features?.length) {
+      for (const f of gj.features) {
+        const g = f?.geometry;
+        if (g && (g.type === "Polygon" || g.type === "MultiPolygon")) return g;
+      }
+    }
+    if (gj.type === "Feature") {
+      const g = gj.geometry;
+      if (g && (g.type === "Polygon" || g.type === "MultiPolygon")) return g;
+    }
+    if (gj.type === "Polygon" || gj.type === "MultiPolygon") return gj;
+  } catch {}
+  return null;
+}
+
+function computeBBoxAndMaybeSet(gj, ds) {
+  // Prefer bbox from GeoJSON if present
+  if (Array.isArray(gj.bbox) && gj.bbox.length >= 4) {
+    const [west, south, east, north] = gj.bbox;
+    setAOIBBoxFromDegrees(west, south, east, north);
+    return;
+  }
+  computeBBoxAndGeoJSONFromDataSource(ds);
+}
+
+function computeBBoxAndGeoJSONFromDataSource(ds) {
+  const entities = ds.entities.values;
+  let west = 180, east = -180, south = 90, north = -90;
+  let has = false;
+
+  const now = Cesium.JulianDate.now();
+  for (const ent of entities) {
+    if (ent.polygon && ent.polygon.hierarchy) {
+      const h = ent.polygon.hierarchy.getValue(now);
+      const positions = h?.positions || [];
+      for (const p of positions) {
+        const c = Cesium.Cartographic.fromCartesian(p);
+        const lon = Cesium.Math.toDegrees(c.longitude);
+        const lat = Cesium.Math.toDegrees(c.latitude);
+        west = Math.min(west, lon); east = Math.max(east, lon);
+        south = Math.min(south, lat); north = Math.max(north, lat);
+        has = true;
+      }
+    }
+    const pos = ent.position && ent.position.getValue(now);
+    if (pos) {
+      const c = Cesium.Cartographic.fromCartesian(pos);
+      const lon = Cesium.Math.toDegrees(c.longitude);
+      const lat = Cesium.Math.toDegrees(c.latitude);
+      west = Math.min(west, lon); east = Math.max(east, lon);
+      south = Math.min(south, lat); north = Math.max(north, lat);
+      has = true;
+    }
+  }
+
+  if (has) {
+    setAOIBBoxFromDegrees(west, south, east, north);
+  }
+}
+
+// ---------------- Place search (optional) ----------------
+
+async function geocodePlace(q) {
+  const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`;
+  const r = await fetch(url, {
+    headers: { "Accept": "application/json" }
+  });
+  if (!r.ok) throw new Error("Geocoding failed");
+  const data = await r.json();
+  if (!data || !data.length) return null;
+  return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+}
+
+// ---------------- Sources list (simple) ----------------
+
+function renderSources() {
+  const root = els.sourcesList();
+  root.innerHTML = "";
+  for (const s of sources) {
+    const div = document.createElement("div");
+    div.className = "source";
+    div.innerHTML = `
+      <div class="sourceTop">
+        <div class="sourceName">${escapeHTML(s.name)}</div>
+        <a class="btn" href="${s.url}" target="_blank" rel="noopener">Open</a>
+      </div>
+      <div class="sourceDesc">${escapeHTML(s.desc || "")}</div>
+    `;
+    root.appendChild(div);
+  }
+}
+
+// ---------------- Archive Coverage (STAC) ----------------
+
+function monthToDatetimeRange(startYYYYMM, endYYYYMM) {
+  // start: YYYY-MM
+  // end:   YYYY-MM
+  const [sy, sm] = startYYYYMM.split("-").map(Number);
+  const [ey, em] = endYYYYMM.split("-").map(Number);
+
+  const start = new Date(Date.UTC(sy, sm - 1, 1, 0, 0, 0));
+  // end month inclusive -> next month start
+  const end = new Date(Date.UTC(ey, em, 1, 0, 0, 0));
+
+  const isoStart = start.toISOString().replace(".000", "");
+  const isoEnd = end.toISOString().replace(".000", "");
+  return `${isoStart}/${isoEnd}`;
+}
+
+async function stacSearch(endpoint, body) {
+  const url = `${endpoint}/search`;
+  const r = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Accept": "application/geo+json,application/json" },
+    body: JSON.stringify(body)
+  });
+  if (!r.ok) throw new Error(`STAC search failed: ${r.status}`);
+  return await r.json();
+}
+
+async function queryArchiveCoverage() {
+  if (!aoiBBox || !aoiGeoJSON) {
+    alert("Please set an AOI first (draw rectangle or upload AOI).");
+    return;
+  }
+
+  const start = els.startMonth().value;
+  const end = els.endMonth().value;
+  if (!start || !end) {
+    alert("Please set a start and end month.");
+    return;
+  }
+  if (start > end) {
+    alert("Start month must be <= end month.");
+    return;
+  }
+
+  clearCoverage();
+  els.coverageStatus().textContent = "Querying open catalogs…";
+  els.coverageSummary().innerHTML = "";
+
+  const datetime = monthToDatetimeRange(start, end);
+  const intersects = { type: "Feature", geometry: aoiGeoJSON, properties: {} };
+
+  const endpoint = STAC_ENDPOINTS[0]; // use first by default
+
+  const results = [];
+  let totalDrawn = 0;
+
+  for (const cfg of COLLECTIONS) {
+    if (totalDrawn >= MAX_TOTAL_FEATURES) break;
+
+    const body = {
+      collections: cfg.collections,
+      datetime,
+      intersects,
+      limit: Math.min(MAX_ITEMS_PER_COLLECTION, MAX_TOTAL_FEATURES - totalDrawn),
+    };
+
+    let fc;
+    try {
+      fc = await stacSearch(endpoint, body);
+    } catch (e) {
+      console.error(e);
+      results.push({ name: cfg.name, items: 0, note: "Query failed" });
+      continue;
+    }
+
+    const features = (fc.features || []).slice(0, body.limit);
+    totalDrawn += features.length;
+    coverageFeaturesCount += features.length;
+
+    // Draw footprints on globe
+    const ds = await Cesium.GeoJsonDataSource.load(
+      { type: "FeatureCollection", features },
+      { clampToGround: true }
+    );
+
+    // style
+    ds.entities.values.forEach((ent) => {
+      if (ent.polygon) {
+        ent.polygon.material = Cesium.Color.fromCssColorString(cfg.color);
+        ent.polygon.outline = true;
+        ent.polygon.outlineColor = Cesium.Color.fromCssColorString(cfg.outline);
+        ent.polygon.outlineWidth = 1;
+      }
+      if (ent.polyline) {
+        ent.polyline.material = Cesium.Color.fromCssColorString(cfg.outline);
+        ent.polyline.width = 1;
+      }
     });
 
-    const top = el("div", { class: "cardTop" }, [a, badges]);
+    viewer.dataSources.add(ds);
+    coverageDataSources.push(ds);
 
-    const metaParts = [];
-    metaParts.push(src.operator ? `Operator: ${src.operator}` : "Operator: —");
-    metaParts.push(src.access ? `Access: ${src.access}` : "Access: —");
-    metaParts.push(src.updated ? `Updated: ${src.updated}` : "Updated: —");
-    if (src.evidence_url) metaParts.push(`Evidence: ${src.evidence_url}`);
+    // Coverage estimate (rough): compare bbox overlap hits
+    const cover = estimateCoverageByBbox(features, aoiBBox);
+    results.push({
+      name: cfg.name,
+      items: features.length,
+      coveragePct: cover.pct,
+      coverageNote: cover.note
+    });
+  }
 
-    const meta = el("div", { class: "meta", text: metaParts.join(" · ") });
-    const note = el("div", { class: "note", text: src.notes || "" });
+  // Update UI
+  els.coverageStatus().textContent =
+    `Done. Footprints drawn: ${coverageFeaturesCount}. Time range: ${start} → ${end}.`;
 
-    listEl.appendChild(el("div", { class: "card" }, [top, meta, note]));
+  renderCoverageSummary(results);
+
+  // Optionally zoom to AOI if not already
+  viewer.camera.flyTo({
+    destination: Cesium.Rectangle.fromDegrees(aoiBBox.west, aoiBBox.south, aoiBBox.east, aoiBBox.north),
+    duration: 0.8,
   });
+}
 
-  if (!filtered.length) {
-    listEl.appendChild(el("div", { class: "empty" }, ["No sources match your filters."]));
+function estimateCoverageByBbox(features, bbox) {
+  // Rough estimate: if many footprints intersect bbox, assume higher coverage.
+  // For Phase-1, we avoid heavy geometry math.
+  // pct = min(100, hits / 30 * 100) heuristic.
+  let hits = 0;
+  for (const f of features) {
+    const g = f.geometry;
+    if (!g) continue;
+    const gb = geomBbox(g);
+    if (!gb) continue;
+    if (bboxesIntersect(gb, bbox)) hits++;
+  }
+  const pct = Math.min(100, Math.round((hits / 30) * 100));
+  let note = "Approx.";
+  if (features.length === 0) note = "No items returned";
+  return { pct, note };
+}
+
+function geomBbox(geom) {
+  // Returns bbox {west,south,east,north} for Polygon/MultiPolygon (best effort)
+  try {
+    let coords = [];
+    if (geom.type === "Polygon") coords = geom.coordinates.flat(1);
+    else if (geom.type === "MultiPolygon") coords = geom.coordinates.flat(2);
+    else return null;
+    let west = 180, east = -180, south = 90, north = -90;
+    for (const [lon, lat] of coords) {
+      west = Math.min(west, lon);
+      east = Math.max(east, lon);
+      south = Math.min(south, lat);
+      north = Math.max(north, lat);
+    }
+    return { west, south, east, north };
+  } catch {
+    return null;
   }
 }
 
-(async function main(){
-  try {
-    await loadSources();
-    buildUI();
+function bboxesIntersect(a, b) {
+  return !(a.east < b.west || a.west > b.east || a.north < b.south || a.south > b.north);
+}
 
-    // Priority: URL params > Local memory
-    applyFiltersFromURL();
-    applyFiltersLocalIfNoURL();
+function renderCoverageSummary(rows) {
+  const root = els.coverageSummary();
+  root.innerHTML = "";
 
-    // If recent was set previously via pills in URL, keep it; otherwise clear for clean state
-    const r = getSpecialRecent();
-    if (!r) clearSpecialRecent();
-
-    render();
-  } catch (e) {
-    const mount = document.getElementById("app");
-    mount.innerHTML = "";
-    mount.appendChild(el("div", { class: "error" }, [`Failed to load sources. ${e.message}`]));
+  for (const r of rows) {
+    const div = document.createElement("div");
+    div.className = "source";
+    const pct = (typeof r.coveragePct === "number") ? `${r.coveragePct}%` : "—";
+    div.innerHTML = `
+      <div class="sourceTop">
+        <div class="sourceName">${escapeHTML(r.name)}</div>
+        <div class="tagRow" style="margin:0">
+          <span class="tag">Items: ${r.items}</span>
+          <span class="tag">Coverage: ${pct}</span>
+          <span class="tag">${escapeHTML(r.coverageNote || "")}</span>
+        </div>
+      </div>
+      <div class="sourceDesc">
+        Footprints only (public/open catalog). No guarantee of deliverability or commercial availability.
+      </div>
+    `;
+    root.appendChild(div);
   }
-})();
+}
+
+// ---------------- UI wiring ----------------
+
+function wireUI() {
+  els.coordBtn().addEventListener("click", () => {
+    const lat = parseFloat(els.latInput().value);
+    const lon = parseFloat(els.lonInput().value);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+      alert("Please enter valid lat/lon.");
+      return;
+    }
+    flyToLatLon(lat, lon, 3000000);
+    // point isn't AOI yet; user can still draw/upload
+    renderAOISummary({ type: "point", lat, lon });
+  });
+
+  els.placeBtn().addEventListener("click", async () => {
+    const q = (els.placeInput().value || "").trim();
+    if (!q) return;
+    try {
+      const res = await geocodePlace(q);
+      if (!res) { alert("No result."); return; }
+      flyToLatLon(res.lat, res.lon, 2500000);
+      renderAOISummary({ type: "point", lat: res.lat, lon: res.lon });
+    } catch {
+      alert("Place search failed.");
+    }
+  });
+
+  els.fileInput().addEventListener("change", async (e) => {
+    const file = e.target.files?.[0];
+    await handleFileUpload(file);
+    e.target.value = "";
+  });
+
+  els.drawRectBtn().addEventListener("click", () => enableDrawRectangle());
+  els.clearAoiBtn().addEventListener("click", () => clearAOI());
+
+  els.coverageBtn().addEventListener("click", () => queryArchiveCoverage());
+  els.clearCoverageBtn().addEventListener("click", () => clearCoverage());
+
+  // default time range (last 12 months)
+  const now = new Date();
+  const end = `${now.getUTCFullYear()}-${String(now.getUTCMonth()+1).padStart(2,"0")}`;
+  const prev = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth()-11, 1));
+  const start = `${prev.getUTCFullYear()}-${String(prev.getUTCMonth()+1).padStart(2,"0")}`;
+  els.startMonth().value = start;
+  els.endMonth().value = end;
+}
+
+async function main() {
+  initCesium();
+  wireUI();
+  sources = await loadJSON("./data/sources.json");
+  renderSources();
+  renderAOISummary(null);
+}
+
+main().catch((e) => {
+  console.error(e);
+  alert("App init failed. Check console.");
+});
