@@ -1,14 +1,32 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Satellite Discovery Index</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <h1>Satellite Discovery Index</h1>
-  <p>Public discovery index only.</p>
-  <p>No data hosting. No downloads. No transactions.</p>
+  <header class="top">
+    <div class="brand">Satellite Discovery Index</div>
+
+    <div class="hero">
+      <div class="hero-title">Public discovery index only.</div>
+      <div class="hero-sub">
+        We list publicly available satellite data search portals.
+        <span class="muted">No data hosting. No downloads. No transactions.</span>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <a class="navlink" href="/about.html" target="_blank" rel="noopener noreferrer">About</a>
+      <a class="navlink" href="/compliance.html" target="_blank" rel="noopener noreferrer">Compliance</a>
+      <a class="navlink" href="/sources.json" target="_blank" rel="noopener noreferrer">sources.json</a>
+    </nav>
+  </header>
+
+  <main id="app"></main>
+
+  <script src="app.js"></script>
 </body>
 </html>
-<script src="app.js"></script>

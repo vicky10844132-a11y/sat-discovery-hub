@@ -1,10 +1,11 @@
 let ALL = [];
+let LAST_FILTERED = [];
 
 function el(tag, attrs = {}, children = []) {
   const node = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs)) {
     if (k === "class") node.className = v;
-    else if (k === "html") node.innerHTML = v;
+    else if (k === "text") node.textContent = v;
     else if (k.startsWith("on") && typeof v === "function") node.addEventListener(k.slice(2), v);
     else node.setAttribute(k, v);
   }
@@ -12,39 +13,40 @@ function el(tag, attrs = {}, children = []) {
   return node;
 }
 
-function norm(s) {
-  return (s || "").toString().toLowerCase().trim();
-}
+const norm = (s) => (s || "").toString().toLowerCase().trim();
+const uniq = (arr) => Array.from(new Set(arr.filter(Boolean)));
 
-function uniq(arr) {
-  return Array.from(new Set(arr.filter(Boolean)));
+function accessBucket(accessText) {
+  const a = norm(accessText);
+  if (!a) return "";
+  if (a.includes("public") || a.includes("open")) return "public";
+  if (a.includes("login") || a.includes("account")) return "login";
+  if (a.includes("commercial")) return "commercial";
+  return "";
 }
 
 async function loadSources() {
   const res = await fetch("./sources.json", { cache: "no-store" });
   if (!res.ok) throw new Error(`Failed to load sources.json (${res.status})`);
   ALL = await res.json();
-  initUI();
-  render();
 }
 
-function initUI() {
-  // --- Mount container ---
-  const wrap = el("div", { class: "hub-wrap" });
+function buildUI() {
+  const mount = document.getElementById("app");
+  mount.innerHTML = "";
 
-  // --- Controls ---
-  const controls = el("div", { class: "hub-controls" });
+  const wrap = el("div", { class: "wrap" });
 
-  const q = el("input", {
-    class: "hub-input",
-    type: "search",
-    placeholder: "Search name / operator / notes…",
-    id: "q"
-  });
+  const title = el("div", { class: "h2", text: "Sources" });
 
-  // Sensor filters
-  const sensorGroup = el("div", { class: "hub-group" }, [
-    el("div", { class: "hub-label" }, ["Sensor"])
+  // Controls
+  const controls = el("div", { class: "controls" });
+
+  const q = el("input", { class: "input", type: "search", id: "q", placeholder: "Search name / operator / notes…" });
+
+  // Sensor chips
+  const sensorGroup = el("div", { class: "group" }, [
+    el("div", { class: "label", text: "Sensor" })
   ]);
 
   const sensors = [
@@ -55,42 +57,38 @@ function initUI() {
 
   sensors.forEach(s => {
     sensorGroup.appendChild(
-      el("label", { class: "hub-chip" }, [
+      el("label", { class: "chip" }, [
         el("input", { type: "checkbox", id: s.id, value: s.value }),
-        el("span", {}, [s.label])
+        el("span", { }, [s.label])
       ])
     );
   });
 
-  // Coverage dropdown (based on present values)
-  const covSelect = el("select", { class: "hub-select", id: "coverage" });
-  covSelect.appendChild(el("option", { value: "" }, ["All coverage"]));
+  // Coverage select (from data)
+  const covSelect = el("select", { class: "select", id: "coverage" });
+  covSelect.appendChild(el("option", { value: "", text: "All coverage" }));
+  uniq(ALL.map(x => x.coverage)).sort().forEach(c => covSelect.appendChild(el("option", { value: c, text: c })));
 
-  const covValues = uniq(ALL.map(x => x.coverage));
-  covValues.sort().forEach(c => covSelect.appendChild(el("option", { value: c }, [c])));
-
-  const covGroup = el("div", { class: "hub-group" }, [
-    el("div", { class: "hub-label" }, ["Coverage"]),
+  const covGroup = el("div", { class: "group" }, [
+    el("div", { class: "label", text: "Coverage" }),
     covSelect
   ]);
 
-  // Access dropdown (normalize to buckets)
-  const accessSelect = el("select", { class: "hub-select", id: "access" });
-  accessSelect.appendChild(el("option", { value: "" }, ["All access"]));
-  accessSelect.appendChild(el("option", { value: "public" }, ["Public / Open"]));
-  accessSelect.appendChild(el("option", { value: "login" }, ["Login required"]));
-  accessSelect.appendChild(el("option", { value: "commercial" }, ["Commercial"]));
+  // Access select
+  const accessSelect = el("select", { class: "select", id: "access" });
+  accessSelect.appendChild(el("option", { value: "", text: "All access" }));
+  accessSelect.appendChild(el("option", { value: "public", text: "Public / Open" }));
+  accessSelect.appendChild(el("option", { value: "login", text: "Login required" }));
+  accessSelect.appendChild(el("option", { value: "commercial", text: "Commercial" }));
 
-  const accessGroup = el("div", { class: "hub-group" }, [
-    el("div", { class: "hub-label" }, ["Access"]),
+  const accessGroup = el("div", { class: "group" }, [
+    el("div", { class: "label", text: "Access" }),
     accessSelect
   ]);
 
-  // Reset button
-  const resetBtn = el("button", { class: "hub-btn", id: "reset" }, ["Reset"]);
+  const resetBtn = el("button", { class: "btn", id: "reset", text: "Reset" });
 
-  // Stats
-  const stats = el("div", { class: "hub-stats", id: "stats" }, ["—"]);
+  const stats = el("div", { class: "stats", id: "stats", text: "—" });
 
   controls.appendChild(q);
   controls.appendChild(sensorGroup);
@@ -99,18 +97,35 @@ function initUI() {
   controls.appendChild(resetBtn);
   controls.appendChild(stats);
 
-  // --- List container ---
-  const listTitle = el("h2", { class: "hub-h2" }, ["Available Public Satellite Discovery Sources"]);
-  const list = el("div", { class: "hub-list", id: "list" });
+  // Actions
+  const actions = el("div", { class: "actions" });
+  const copyLinkBtn = el("button", { class: "btn btnPrimary", id: "copyLink", text: "Copy share link" });
+  const copyListBtn = el("button", { class: "btn", id: "copyList", text: "Copy results (text)" });
+  const exportBtn = el("button", { class: "btn", id: "exportCsv", text: "Export CSV" });
 
-  wrap.appendChild(listTitle);
+  actions.appendChild(copyLinkBtn);
+  actions.appendChild(copyListBtn);
+  actions.appendChild(exportBtn);
+
+  const toast = el("div", { class: "toast", id: "toast" });
+  const list = el("div", { class: "list", id: "list" });
+
+  const hint = el("div", { class: "footerHint" }, [
+    "Tip: Filters are encoded in the URL for sharing. ",
+    "This site indexes public discovery portals only."
+  ]);
+
+  wrap.appendChild(title);
   wrap.appendChild(controls);
+  wrap.appendChild(actions);
+  wrap.appendChild(toast);
   wrap.appendChild(list);
+  wrap.appendChild(hint);
 
-  document.body.appendChild(wrap);
+  mount.appendChild(wrap);
 
-  // --- Events ---
-  const rerender = () => render();
+  // Events
+  const rerender = () => { syncURLFromFilters(); render(); };
   q.addEventListener("input", rerender);
   sensors.forEach(s => document.getElementById(s.id).addEventListener("change", rerender));
   covSelect.addEventListener("change", rerender);
@@ -121,17 +136,41 @@ function initUI() {
     sensors.forEach(s => (document.getElementById(s.id).checked = false));
     covSelect.value = "";
     accessSelect.value = "";
+    syncURLFromFilters();
     render();
+  });
+
+  copyLinkBtn.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(new URL(window.location.href).toString());
+      showToast("Share link copied.");
+    } catch {
+      showToast("Copy failed. Copy from address bar.");
+    }
+  });
+
+  copyListBtn.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(buildTextList(LAST_FILTERED));
+      showToast("Results copied as text.");
+    } catch {
+      showToast("Copy failed (browser permission).");
+    }
+  });
+
+  exportBtn.addEventListener("click", () => {
+    downloadText(buildCsv(LAST_FILTERED), "satellite-discovery-sources.csv", "text/csv;charset=utf-8");
+    showToast("CSV exported.");
   });
 }
 
-function accessBucket(accessText) {
-  const a = norm(accessText);
-  if (!a) return "";
-  if (a.includes("public") || a.includes("open")) return "public";
-  if (a.includes("login") || a.includes("account")) return "login";
-  if (a.includes("commercial")) return "commercial";
-  return ""; // unknown
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(showToast._tm);
+  showToast._tm = setTimeout(() => t.classList.remove("show"), 1200);
 }
 
 function getFilters() {
@@ -157,23 +196,117 @@ function match(item, f) {
     if (!hay.includes(f.q)) return false;
   }
 
-  // coverage exact match
+  // coverage
   if (f.cov && (item.coverage || "") !== f.cov) return false;
 
-  // access bucket match
+  // access bucket
   if (f.access) {
     const b = accessBucket(item.access);
     if (b !== f.access) return false;
   }
 
-  // sensor: if any checked, item must contain at least one
+  // sensor
   if (f.sensorWanted.length) {
     const s = (item.sensor || []).map(norm);
-    const ok = f.sensorWanted.some(w => s.includes(w));
-    if (!ok) return false;
+    if (!f.sensorWanted.some(w => s.includes(w))) return false;
   }
 
   return true;
+}
+
+/* URL sync: q/cov/acc/sen */
+function syncURLFromFilters() {
+  const f = getFilters();
+  const url = new URL(window.location.href);
+
+  if (f.q) url.searchParams.set("q", f.q); else url.searchParams.delete("q");
+  if (f.cov) url.searchParams.set("cov", f.cov); else url.searchParams.delete("cov");
+  if (f.access) url.searchParams.set("acc", f.access); else url.searchParams.delete("acc");
+  if (f.sensorWanted.length) url.searchParams.set("sen", f.sensorWanted.join(",")); else url.searchParams.delete("sen");
+
+  history.replaceState(null, "", url.toString());
+}
+
+function applyFiltersFromURL() {
+  const url = new URL(window.location.href);
+  const q = url.searchParams.get("q") || "";
+  const cov = url.searchParams.get("cov") || "";
+  const acc = url.searchParams.get("acc") || "";
+  const sen = url.searchParams.get("sen") || "";
+
+  const qEl = document.getElementById("q");
+  const covEl = document.getElementById("coverage");
+  const accEl = document.getElementById("access");
+
+  if (qEl) qEl.value = q;
+  if (covEl && cov) covEl.value = cov;
+  if (accEl && acc) accEl.value = acc;
+
+  const wanted = sen.split(",").map(norm).filter(Boolean);
+  const map = { optical: "f_optical", sar: "f_sar", video: "f_video" };
+
+  Object.values(map).forEach(id => {
+    const cb = document.getElementById(id);
+    if (cb) cb.checked = false;
+  });
+  wanted.forEach(w => {
+    const id = map[w];
+    if (id) {
+      const cb = document.getElementById(id);
+      if (cb) cb.checked = true;
+    }
+  });
+}
+
+/* Copy + Export */
+function buildTextList(list) {
+  const lines = [];
+  lines.push("Satellite Discovery Index — filtered results");
+  lines.push(`Count: ${list.length}`);
+  lines.push(`Link: ${window.location.href}`);
+  lines.push("");
+  list.forEach((s, i) => {
+    lines.push(`${i + 1}. ${s.name || "Unnamed"}`);
+    if (s.operator) lines.push(`   Operator: ${s.operator}`);
+    lines.push(`   Coverage: ${s.coverage || "—"} | Sensor: ${(s.sensor || []).join(", ") || "—"} | Access: ${s.access || "—"}`);
+    lines.push(`   URL: ${s.url}`);
+    if (s.notes) lines.push(`   Notes: ${s.notes}`);
+    lines.push("");
+  });
+  return lines.join("\n");
+}
+
+function buildCsv(list) {
+  const header = ["name","operator","coverage","sensor","access","url","notes"];
+  const rows = [header.join(",")];
+  const esc = (v) => `"${(v ?? "").toString().replaceAll('"','""')}"`;
+
+  list.forEach(x => {
+    rows.push([
+      esc(x.name),
+      esc(x.operator),
+      esc(x.coverage),
+      esc((x.sensor || []).join("|")),
+      esc(x.access),
+      esc(x.url),
+      esc(x.notes)
+    ].join(","));
+  });
+
+  return rows.join("\n");
+}
+
+function downloadText(text, filename, mime) {
+  const blob = new Blob([text], { type: mime });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    URL.revokeObjectURL(a.href);
+    a.remove();
+  }, 0);
 }
 
 function render() {
@@ -183,8 +316,8 @@ function render() {
 
   const f = getFilters();
   const filtered = ALL.filter(x => match(x, f));
+  LAST_FILTERED = filtered;
 
-  // Sort: coverage then name
   filtered.sort((a, b) => {
     const ca = (a.coverage || "").localeCompare(b.coverage || "");
     if (ca !== 0) return ca;
@@ -196,35 +329,33 @@ function render() {
   list.innerHTML = "";
   filtered.forEach(src => {
     const title = `${src.name || "Unnamed"} (${src.coverage || "—"}, ${(src.sensor || []).join(", ") || "—"})`;
+    const a = el("a", { class: "link", href: src.url, target: "_blank", rel: "noopener noreferrer" }, [title]);
 
-    const a = el("a", {
-      href: src.url,
-      target: "_blank",
-      rel: "noopener noreferrer",
-      class: "hub-link"
-    }, [title]);
-
-    const meta = el("div", { class: "hub-meta" }, [
-      src.operator ? `Operator: ${src.operator}` : "Operator: —",
+    const meta = el("div", { class: "meta" }, [
+      (src.operator ? `Operator: ${src.operator}` : "Operator: —"),
       " · ",
-      src.access ? `Access: ${src.access}` : "Access: —"
+      (src.access ? `Access: ${src.access}` : "Access: —")
     ]);
 
-    const note = el("div", { class: "hub-note" }, [src.notes || ""]);
+    const note = el("div", { class: "note" }, [src.notes || ""]);
 
-    const card = el("div", { class: "hub-card" }, [a, meta, note]);
-    list.appendChild(card);
+    list.appendChild(el("div", { class: "card" }, [a, meta, note]));
   });
 
   if (!filtered.length) {
-    list.appendChild(el("div", { class: "hub-empty" }, ["No sources match your filters."]));
+    list.appendChild(el("div", { class: "empty" }, ["No sources match your filters."]));
   }
 }
 
-loadSources().catch(err => {
-  const msg = el("div", { class: "hub-error" }, [
-    "Failed to load sources. ",
-    err.message
-  ]);
-  document.body.appendChild(msg);
-});
+(async function main(){
+  try {
+    await loadSources();
+    buildUI();
+    applyFiltersFromURL();
+    render();
+  } catch (e) {
+    const mount = document.getElementById("app");
+    mount.innerHTML = "";
+    mount.appendChild(el("div", { class: "error" }, [`Failed to load sources. ${e.message}`]));
+  }
+})();
