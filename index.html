@@ -15,8 +15,8 @@
     crossorigin=""
   />
 
-  <!-- HUD Theme (cache-bust for GH Pages) -->
-  <link rel="stylesheet" href="./styles.css?v=20251223-2" />
+  <!-- HUD Theme -->
+  <link rel="stylesheet" href="./styles.css?v=20251223-NEON-1" />
 </head>
 
 <body>
@@ -53,9 +53,7 @@
 
           <!-- 1) AOI SETUP -->
           <section id="aoi" class="section">
-            <div class="sectionTitle">
-              <span class="mono">1)</span> AOI SETUP
-            </div>
+            <div class="sectionTitle"><span class="mono">1)</span> AOI Setup</div>
 
             <div class="kicker">
               Place search uses OpenStreetMap Nominatim public geocoding (rate-limited).
@@ -63,20 +61,30 @@
 
             <div class="row" style="align-items:stretch;">
               <div style="flex:1;">
-                <label class="small" for="place">Place search (optional)</label>
+                <label class="small" for="place">Place Search (Optional)</label>
                 <input id="place" type="text" placeholder="Beijing / Dubai / New York" autocomplete="off" />
               </div>
               <div style="display:flex; flex-direction:column; justify-content:flex-end;">
-                <button id="btnLocate" class="btn" type="button">
+                <button id="btnLocate" class="btn primary" type="button">
                   <span class="btnText">Locate</span>
                   <span class="spinner" aria-hidden="true"></span>
                 </button>
               </div>
             </div>
 
+            <div class="row" style="margin-top:10px;">
+              <div style="flex:1;">
+                <label class="small" for="basemapSelect">Basemap Style</label>
+                <select id="basemapSelect">
+                  <option value="esri">Esri Dark Gray</option>
+                  <option value="carto">CARTO Dark (Neon)</option>
+                </select>
+              </div>
+            </div>
+
             <div class="notice" style="margin-top:10px;">
-              <div class="mono" style="letter-spacing:2px; font-weight:800; font-size:12px;">AOI STATUS</div>
-              <div id="aoiSummary" style="margin-top:6px; color:rgba(234,243,255,.82);">
+              <div class="mono noticeTitle">AOI Status</div>
+              <div id="aoiSummary" class="noticeBody">
                 No AOI set. Use place search or draw/select on map (if enabled).
               </div>
             </div>
@@ -84,13 +92,11 @@
 
           <!-- 2) ARCHIVE COVERAGE INDEX -->
           <section id="coverage" class="section">
-            <div class="sectionTitle">
-              <span class="mono">2)</span> ARCHIVE COVERAGE INDEX <span style="opacity:.65;">(REFERENCE)</span>
-            </div>
+            <div class="sectionTitle"><span class="mono">2)</span> Archive Coverage Index <span class="dim">(Reference)</span></div>
 
             <div class="row" style="align-items:flex-end;">
               <div style="flex:1;">
-                <label class="small" for="fromMonth">Time range</label>
+                <label class="small">Time Range</label>
                 <div class="row" style="margin:6px 0 0;">
                   <input id="fromMonth" type="month" />
                   <span class="mono" style="opacity:.7;">→</span>
@@ -100,7 +106,7 @@
             </div>
 
             <div class="row" style="margin-top:10px;">
-              <button id="btnCheckCoverage" class="btn primary" type="button">Check</button>
+              <button id="btnCheckCoverage" class="btn" type="button">Check</button>
               <button id="btnReset" class="btn ghost" type="button">Reset</button>
             </div>
 
@@ -114,9 +120,7 @@
 
           <!-- 3) OPEN STAC FOOTPRINTS -->
           <section id="footprints" class="section">
-            <div class="sectionTitle">
-              <span class="mono">3)</span> OPEN STAC FOOTPRINTS
-            </div>
+            <div class="sectionTitle"><span class="mono">3)</span> Open STAC Footprints</div>
 
             <div class="kicker">
               Provide a STAC API / Catalog URL. We attempt /search (GET then POST fallback). CORS may block some endpoints.
@@ -143,9 +147,7 @@
 
           <!-- 4) PROGRAMMING INDEX -->
           <section id="programming" class="section">
-            <div class="sectionTitle">
-              <span class="mono">4)</span> PROGRAMMING INDEX <span style="opacity:.65;">(REFERENCE)</span>
-            </div>
+            <div class="sectionTitle"><span class="mono">4)</span> Programming Index <span class="dim">(Reference)</span></div>
 
             <div class="kicker">
               Reference-only. For production pass predictions, plug in your orbital engine (SGP4 + ground track).
@@ -160,8 +162,8 @@
             </div>
 
             <div class="row" style="margin-top:10px;">
-              <button id="btnPlan" class="btn primary" type="button">Generate Reference</button>
-              <button id="btnPlanClear" class="btn" type="button">Clear</button>
+              <button id="btnPlan" class="btn" type="button">Generate Reference</button>
+              <button id="btnPlanClear" class="btn ghost" type="button">Clear</button>
             </div>
 
             <div class="hr"></div>
@@ -170,9 +172,7 @@
 
           <!-- 5) SOURCES -->
           <section id="sources" class="section">
-            <div class="sectionTitle">
-              <span class="mono">5)</span> SOURCES <span style="opacity:.65;">(PUBLIC PORTALS)</span>
-            </div>
+            <div class="sectionTitle"><span class="mono">5)</span> Sources <span class="dim">(Public Portals)</span></div>
 
             <div class="sources" id="sourcesList">
               <!-- fallback content (replaced by sources.json if available) -->
@@ -194,7 +194,7 @@
 
               <div class="source">
                 <div class="sourceTop">
-                  <div class="sourceName">STAC (optional)</div>
+                  <div class="sourceName">STAC (Optional)</div>
                   <span class="pill ok">Open</span>
                 </div>
                 <div class="sourceDesc">Footprints & metadata via public STAC endpoints (CORS dependent).</div>
@@ -210,11 +210,14 @@
         </div>
       </aside>
 
+      <!-- Splitter (Resizable Sidebar) -->
+      <div class="splitter" id="splitter" aria-hidden="true"></div>
+
       <!-- Map -->
       <section class="mapWrap" aria-label="Map">
         <div class="mapChrome" aria-hidden="true">
-          <div class="hudTag">OPEN · NO LOGIN</div>
-          <div class="hudTag dim">REFERENCE ONLY</div>
+          <div class="hudTag">Open · No Login</div>
+          <div class="hudTag dim">Reference Only</div>
         </div>
         <div id="map"></div>
       </section>
@@ -229,7 +232,7 @@
     crossorigin=""
   ></script>
 
-  <!-- App (cache-bust for GH Pages) -->
-  <script src="./app.js?v=20251223-2"></script>
+  <!-- App -->
+  <script src="./app.js?v=20251223-NEON-1"></script>
 </body>
 </html>
