@@ -3,6 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Open data only. Archive coverage + pass planning (reference only)." />
+  <meta name="theme-color" content="#070b14" />
   <title>Satellite Discovery Index</title>
 
   <!-- Leaflet -->
@@ -13,8 +15,8 @@
     crossorigin=""
   />
 
-  <!-- HUD Theme -->
-  <link rel="stylesheet" href="./styles.css" />
+  <!-- HUD Theme (cache-bust for GH Pages) -->
+  <link rel="stylesheet" href="./styles.css?v=20251223-1" />
 </head>
 
 <body>
@@ -37,10 +39,14 @@
     </nav>
   </header>
 
+  <!-- Toast / Status -->
+  <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+
   <!-- Main layout -->
   <main class="layout">
     <!-- Left Panel -->
     <aside class="panel" aria-label="Controls">
+
       <!-- 1) AOI SETUP -->
       <section id="aoi" class="card">
         <h2>1) AOI SETUP</h2>
@@ -48,10 +54,13 @@
         <div class="row field">
           <label for="place">Place search (optional)</label>
           <div class="inline">
-            <input id="place" type="text" placeholder="Beijing / Dubai / New York" />
-            <button id="btnLocate" class="btn btn-secondary" type="button">Locate</button>
+            <input id="place" type="text" placeholder="Beijing / Dubai / New York" autocomplete="off" />
+            <button id="btnLocate" class="btn btn-secondary" type="button">
+              <span class="btnText">Locate</span>
+              <span class="spinner" aria-hidden="true"></span>
+            </button>
           </div>
-          <div class="hint">Uses OpenStreetMap Nominatim public geocoding</div>
+          <div class="hint">Uses OpenStreetMap Nominatim public geocoding (rate-limited).</div>
 
           <div class="aoiBox" style="margin-top:12px;">
             <div class="aoiTitle">AOI STATUS</div>
@@ -91,12 +100,17 @@
 
         <div class="row field">
           <label for="stacUrl">STAC API / Catalog URL</label>
-          <input id="stacUrl" type="text" placeholder="https://example.com/stac" />
-          <div class="hint">Optional. If empty, run in “UI-only” mode.</div>
+          <input id="stacUrl" type="text" placeholder="https://planetarycomputer.microsoft.com/api/stac/v1" />
+          <div class="hint">
+            If provided, we will attempt STAC /search (GET then POST fallback). CORS may block some endpoints.
+          </div>
         </div>
 
         <div class="row" style="display:flex; gap:10px;">
-          <button id="btnLoadFootprints" class="btn btn-primary" type="button">Load Footprints</button>
+          <button id="btnLoadFootprints" class="btn btn-primary" type="button">
+            <span class="btnText">Load Footprints</span>
+            <span class="spinner" aria-hidden="true"></span>
+          </button>
           <button id="btnClearFootprints" class="btn btn-secondary" type="button">Clear</button>
         </div>
 
@@ -109,12 +123,14 @@
 
         <div class="row field">
           <label for="satName">Satellite / Constellation</label>
-          <input id="satName" type="text" placeholder="(optional) e.g., Sentinel-2 / Landsat / ..." />
+          <input id="satName" type="text" placeholder="(optional) e.g., Sentinel-2 / Landsat / ..." list="satHints" />
+          <datalist id="satHints"></datalist>
+          <div class="hint">Reference-only. For production pass predictions, plug in your orbital engine (SGP4 + ground track).</div>
         </div>
 
         <div class="row" style="display:flex; gap:10px;">
-          <button class="btn btn-primary" type="button" id="btnPlan">Plan (Mock)</button>
-          <button class="btn btn-secondary" type="button" id="btnPlanClear">Clear</button>
+          <button id="btnPlan" class="btn btn-primary" type="button">Generate Reference</button>
+          <button id="btnPlanClear" class="btn btn-secondary" type="button">Clear</button>
         </div>
 
         <div class="row indexList" id="planIndex"></div>
@@ -124,7 +140,8 @@
       <section id="sources" class="card">
         <h2>5) SOURCES (PUBLIC PORTALS · TRANSPARENCY)</h2>
 
-        <div class="sources">
+        <!-- Dynamic sources list (loaded from sources.json; fallback below if load fails) -->
+        <div class="sources" id="sourcesList">
           <div class="source">
             <div class="sourceTop">
               <div class="sourceName">OpenStreetMap / Nominatim</div>
@@ -132,7 +149,6 @@
             </div>
             <div class="sourceDesc">Geocoding reference (place search).</div>
           </div>
-
           <div class="source">
             <div class="sourceTop">
               <div class="sourceName">Leaflet + Basemap Provider</div>
@@ -140,13 +156,12 @@
             </div>
             <div class="sourceDesc">Map rendering and base tiles; attribution required.</div>
           </div>
-
           <div class="source">
             <div class="sourceTop">
               <div class="sourceName">STAC (optional)</div>
               <span class="pill ok">Open</span>
             </div>
-            <div class="sourceDesc">Footprints & metadata via public STAC endpoints.</div>
+            <div class="sourceDesc">Footprints & metadata via public STAC endpoints (CORS dependent).</div>
           </div>
         </div>
 
@@ -157,6 +172,7 @@
           </div>
         </div>
       </section>
+
     </aside>
 
     <!-- Map -->
@@ -176,7 +192,7 @@
     crossorigin=""
   ></script>
 
-  <!-- App -->
-  <script src="./app.js"></script>
+  <!-- App (cache-bust for GH Pages) -->
+  <script src="./app.js?v=20251223-1"></script>
 </body>
 </html>
