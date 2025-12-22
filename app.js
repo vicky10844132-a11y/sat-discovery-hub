@@ -10,9 +10,9 @@
 const el = (id) => document.getElementById(id);
 
 let map;
-let aoiLayer = null;             // Leaflet layer (rectangle or GeoJSON)
-let aoiBounds = null;            // Leaflet LatLngBounds
-let footprintsGroup = null;      // L.LayerGroup for footprints
+let aoiLayer = null;
+let aoiBounds = null;
+let footprintsGroup = null;
 
 let coverageRules = null;
 let programmingCfg = null;
@@ -29,8 +29,7 @@ const OPEN_COLLECTIONS = [
 const MAX_ITEMS_PER_COLLECTION = 250;
 const MAX_TOTAL_FEATURES = 650;
 
-/* -------------------------- utils -------------------------- */
-
+/* ---------------- utils ---------------- */
 function escapeHTML(str) {
   return String(str).replace(/[&<>"']/g, (m) => ({
     "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
@@ -47,12 +46,11 @@ function isoMonthRange(startYYYYMM, endYYYYMM) {
   const [sy, sm] = startYYYYMM.split("-").map(Number);
   const [ey, em] = endYYYYMM.split("-").map(Number);
   const start = new Date(Date.UTC(sy, sm - 1, 1, 0, 0, 0));
-  const end = new Date(Date.UTC(ey, em, 1, 0, 0, 0)); // next month start
+  const end = new Date(Date.UTC(ey, em, 1, 0, 0, 0));
   return `${start.toISOString()}/${end.toISOString()}`;
 }
 
 function boundsToBBox(bounds) {
-  // STAC bbox is [west, south, east, north] with lon/lat
   const sw = bounds.getSouthWest();
   const ne = bounds.getNorthEast();
   return [sw.lng, sw.lat, ne.lng, ne.lat];
@@ -71,35 +69,61 @@ function updateAOISummary(bounds) {
     `E <b>${ne.lng.toFixed(4)}</b>, N <b>${ne.lat.toFixed(4)}</b>`;
 }
 
-/* -------------------------- map init -------------------------- */
-
+/* ---------------- map init (DARK + fallback) ---------------- */
 function initMap() {
   map = L.map("map", {
     center: [20, 0],
     zoom: 2,
-    worldCopyJump: true
+    worldCopyJump: true,
+    zoomControl: true
   });
 
-  // Most stable public tiles:
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 19,
-    attribution: "© OpenStreetMap contributors"
-  }).addTo(map);
+  // ✅ Best-looking & stable: CARTO Dark Matter (no key)
+  // If blocked/unreachable, we fallback to standard OSM.
+  const cartoDark = L.tileLayer(
+    "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+    {
+      subdomains: "abcd",
+      maxZoom: 20,
+      attribution: "© OpenStreetMap contributors © CARTO"
+    }
+  );
+
+  const osm = L.tileLayer(
+    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    {
+      subdomains: "abc",
+      maxZoom: 19,
+      attribution: "© OpenStreetMap contributors"
+    }
+  );
+
+  // Add Carto first
+  cartoDark.addTo(map);
+
+  // If any tile errors happen early, swap to OSM once
+  let swapped = false;
+  cartoDark.on("tileerror", () => {
+    if (swapped) return;
+    swapped = true;
+    try {
+      map.removeLayer(cartoDark);
+      osm.addTo(map);
+      console.warn("CARTO tiles failed. Fallback to OSM.");
+    } catch {}
+  });
 
   footprintsGroup = L.layerGroup().addTo(map);
 }
 
-/* -------------------------- AOI -------------------------- */
-
+/* ---------------- AOI ---------------- */
 function setAOILayer(layer) {
   if (aoiLayer) map.removeLayer(aoiLayer);
   aoiLayer = layer;
   aoiLayer.addTo(map);
 
   aoiBounds = aoiLayer.getBounds ? aoiLayer.getBounds() : null;
-  if (aoiBounds) {
-    map.fitBounds(aoiBounds, { padding: [18, 18] });
-  }
+  if (aoiBounds) map.fitBounds(aoiBounds, { padding: [18, 18] });
   updateAOISummary(aoiBounds);
 }
 
@@ -122,7 +146,6 @@ function enableDrawRectangle() {
     startLatLng = e.latlng;
     map.dragging.disable();
   }
-
   function onMouseMove(e) {
     if (!startLatLng) return;
     const bounds = L.latLngBounds(startLatLng, e.latlng);
@@ -133,7 +156,6 @@ function enableDrawRectangle() {
       fillOpacity: 0.12
     }).addTo(map);
   }
-
   function onMouseUp() {
     if (!startLatLng) return;
 
@@ -167,11 +189,9 @@ async function handleFileUpload(file) {
   try {
     const text = await file.text();
     const geojson = JSON.parse(text);
-
     const layer = L.geoJSON(geojson, {
       style: { color: "#ffffff", weight: 2, fillOpacity: 0.10 }
     });
-
     setAOILayer(layer);
   } catch (e) {
     console.error(e);
@@ -179,8 +199,7 @@ async function handleFileUpload(file) {
   }
 }
 
-/* -------------------------- geocode (optional) -------------------------- */
-
+/* ---------------- geocode ---------------- */
 async function geocodePlace(q) {
   const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`;
   const r = await fetch(url, { headers: { "Accept":"application/json" } });
@@ -190,8 +209,7 @@ async function geocodePlace(q) {
   return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
 }
 
-/* -------------------------- sources UI -------------------------- */
-
+/* ---------------- sources UI ---------------- */
 function renderSources() {
   const root = el("sourcesList");
   root.innerHTML = "";
@@ -209,15 +227,13 @@ function renderSources() {
   }
 }
 
-/* -------------------------- Coverage Index (rules + STAC signal) -------------------------- */
-
+/* ---------------- Coverage Index ---------------- */
 function clearCoverageIndex() {
   el("indexStatus").textContent = "";
   el("coverageIndex").innerHTML = "";
 }
 
 function aoiToRuleBbox() {
-  // convert Leaflet bounds to {west,south,east,north}
   if (!aoiBounds) return null;
   const sw = aoiBounds.getSouthWest();
   const ne = aoiBounds.getNorthEast();
@@ -260,10 +276,7 @@ function ruleEvaluateAOI(rule, aoi) {
 async function stacSearchPC(body) {
   const r = await fetch(`${STAC_PC}/search`, {
     method: "POST",
-    headers: {
-      "Content-Type":"application/json",
-      "Accept":"application/geo+json,application/json"
-    },
+    headers: { "Content-Type":"application/json", "Accept":"application/geo+json,application/json" },
     body: JSON.stringify(body)
   });
   if (!r.ok) throw new Error(`STAC search failed: ${r.status}`);
@@ -279,7 +292,6 @@ async function runCoverageIndex() {
   const aoi = aoiToRuleBbox();
   const rows = [];
 
-  // 1) Rule-based indicators
   for (const p of (coverageRules?.providers || [])) {
     const ev = ruleEvaluateAOI(p, aoi);
     rows.push({
@@ -292,7 +304,6 @@ async function runCoverageIndex() {
     });
   }
 
-  // 2) Optional open STAC signal check (if time range provided)
   const start = el("startMonth").value;
   const end = el("endMonth").value;
   if (start && end && start <= end) {
@@ -304,17 +315,14 @@ async function runCoverageIndex() {
       try {
         const fc = await stacSearchPC({ collections: cfg.collections, datetime, bbox, limit: 1 });
         ok = (fc.features || []).length > 0;
-      } catch {
-        ok = false;
-      }
+      } catch { ok = false; }
+
       rows.push({
         name: `${cfg.name} (Open STAC signal)`,
         family: "Open",
         sensor: "open archive",
         level: ok ? "ok" : "no",
-        desc: ok
-          ? `Public open signal found in ${start} → ${end}.`
-          : `No open signal found in ${start} → ${end}.`,
+        desc: ok ? `Public open signal found in ${start} → ${end}.` : `No open signal found in ${start} → ${end}.`,
         note: "Reference only."
       });
     }
@@ -365,8 +373,7 @@ function renderCoverageIndex(rows) {
   }
 }
 
-/* -------------------------- Footprints (Open STAC) -------------------------- */
-
+/* ---------------- Footprints ---------------- */
 function clearFootprints() {
   footprintsGroup.clearLayers();
   el("footprintsStatus").textContent = "";
@@ -391,13 +398,7 @@ function renderFootprintsSummary(items) {
 }
 
 function footprintStyle(color) {
-  return {
-    color,
-    weight: 1,
-    opacity: 0.95,
-    fillColor: color,
-    fillOpacity: 0.08
-  };
+  return { color, weight: 1, opacity: 0.95, fillColor: color, fillOpacity: 0.08 };
 }
 
 async function loadFootprints() {
@@ -419,10 +420,9 @@ async function loadFootprints() {
 
   for (const cfg of OPEN_COLLECTIONS) {
     if (total >= MAX_TOTAL_FEATURES) break;
-
     const limit = Math.min(MAX_ITEMS_PER_COLLECTION, MAX_TOTAL_FEATURES - total);
-    let fc;
 
+    let fc;
     try {
       fc = await stacSearchPC({ collections: cfg.collections, datetime, bbox, limit });
     } catch (e) {
@@ -457,8 +457,7 @@ async function loadFootprints() {
   renderFootprintsSummary(summary);
 }
 
-/* -------------------------- Programming (Pass planning, reference) -------------------------- */
-
+/* ---------------- Programming (unchanged from your working version) ---------------- */
 function clearProgramming() {
   el("progStatus").textContent = "";
   el("progResult").innerHTML = "";
@@ -493,17 +492,13 @@ function renderProgramming(rows) {
   }
 }
 
-// simplified hit-test: sub-satellite point within expanded bbox (swathKm -> degrees)
 function approxHitAOI(lat, lon, aoiBbox, swathKm = 250) {
   const dLat = swathKm / 111.0;
   const dLon = swathKm / (111.0 * Math.max(0.2, Math.cos(lat * Math.PI / 180)));
-
   const west = aoiBbox[0] - dLon;
   const south = aoiBbox[1] - dLat;
   const east = aoiBbox[2] + dLon;
   const north = aoiBbox[3] + dLat;
-
-  // assumes AOI does not span the dateline (approximation)
   return (lat >= south && lat <= north && lon >= west && lon <= east);
 }
 
@@ -511,19 +506,14 @@ async function fetchTextWithCache(url, cacheKey, ttlHours = 12) {
   const now = Date.now();
   try {
     const cached = JSON.parse(localStorage.getItem(cacheKey) || "null");
-    if (cached && cached.t && (now - cached.t) < ttlHours * 3600 * 1000 && cached.text) {
-      return cached.text;
-    }
+    if (cached && cached.t && (now - cached.t) < ttlHours * 3600 * 1000 && cached.text) return cached.text;
   } catch {}
 
   const r = await fetch(url, { cache: "no-store" });
   if (!r.ok) throw new Error(`Fetch failed: ${r.status}`);
   const text = await r.text();
 
-  try {
-    localStorage.setItem(cacheKey, JSON.stringify({ t: now, text }));
-  } catch {}
-
+  try { localStorage.setItem(cacheKey, JSON.stringify({ t: now, text })); } catch {}
   return text;
 }
 
@@ -544,22 +534,17 @@ async function estimatePasses() {
 
   clearProgramming();
   const days = parseInt(el("progDays").value, 10) || 14;
-
   el("progStatus").textContent = `Fetching public TLE and estimating pass windows for the next ${days} day(s) (reference)…`;
 
-  const bbox = boundsToBBox(aoiBounds); // [W,S,E,N]
+  const bbox = boundsToBBox(aoiBounds);
   const startTime = new Date();
   const endTime = new Date(startTime.getTime() + days * 24 * 3600 * 1000);
-  const stepSec = 60; // 1-minute sampling, reference
+  const stepSec = 60;
 
   const sats = programmingCfg?.satellites || [];
   const sourcesCfg = programmingCfg?.tleSources || {};
-  if (!sats.length) {
-    el("progStatus").textContent = "No satellites configured.";
-    return;
-  }
+  if (!sats.length) { el("progStatus").textContent = "No satellites configured."; return; }
 
-  // group satellites by TLE source
   const bySrc = new Map();
   for (const s of sats) {
     const key = s.tleSource || "default";
@@ -572,12 +557,7 @@ async function estimatePasses() {
   for (const [srcKey, group] of bySrc.entries()) {
     const src = sourcesCfg[srcKey];
     if (!src?.url) {
-      results.push({
-        name: srcKey,
-        level: "warn",
-        desc: "TLE source not configured.",
-        meta: []
-      });
+      results.push({ name: srcKey, level: "warn", desc: "TLE source not configured.", meta: [] });
       continue;
     }
 
@@ -600,32 +580,16 @@ async function estimatePasses() {
 
     for (const sat of group) {
       const keyName = (sat.tleName || sat.name || "").toLowerCase();
-      const match =
-        tleMap.get(keyName) ||
-        tleArr.find(t => t.name.toLowerCase().includes(keyName));
+      const match = tleMap.get(keyName) || tleArr.find(t => t.name.toLowerCase().includes(keyName));
 
       if (!match) {
-        results.push({
-          name: sat.name,
-          level: "warn",
-          desc: "TLE not found in the feed (name mismatch).",
-          meta: ["no TLE match"]
-        });
+        results.push({ name: sat.name, level: "warn", desc: "TLE not found in the feed (name mismatch).", meta: ["no TLE match"] });
         continue;
       }
 
       let satrec;
-      try {
-        satrec = satellite.twoline2satrec(match.l1, match.l2);
-      } catch {
-        results.push({
-          name: sat.name,
-          level: "warn",
-          desc: "Failed to parse TLE.",
-          meta: ["TLE parse error"]
-        });
-        continue;
-      }
+      try { satrec = satellite.twoline2satrec(match.l1, match.l2); }
+      catch { results.push({ name: sat.name, level: "warn", desc: "Failed to parse TLE.", meta: ["TLE parse error"] }); continue; }
 
       const swathKm = sat.swathKm || 250;
       let hitCount = 0;
@@ -635,13 +599,11 @@ async function estimatePasses() {
 
       for (let t = startTime.getTime(); t <= endTime.getTime(); t += stepSec * 1000) {
         const date = new Date(t);
-
         const pv = satellite.propagate(satrec, date);
         if (!pv.position) continue;
 
         const gmst = satellite.gstime(date);
         const geo = satellite.eciToGeodetic(pv.position, gmst);
-
         const lat = geo.latitude * 180 / Math.PI;
         const lon = geo.longitude * 180 / Math.PI;
 
@@ -649,25 +611,17 @@ async function estimatePasses() {
 
         if (hit) {
           hitCount++;
-          if (!inWindow) {
-            inWindow = true;
-            windowStart = new Date(t);
-          }
-        } else {
-          if (inWindow) {
-            inWindow = false;
-            const windowEnd = new Date(t);
-            windows.push({ start: windowStart, end: windowEnd });
-            windowStart = null;
-          }
+          if (!inWindow) { inWindow = true; windowStart = new Date(t); }
+        } else if (inWindow) {
+          inWindow = false;
+          windows.push({ start: windowStart, end: new Date(t) });
+          windowStart = null;
         }
 
-        if (windows.length >= 6) break; // keep UI concise
+        if (windows.length >= 6) break;
       }
 
-      if (inWindow && windowStart) {
-        windows.push({ start: windowStart, end: endTime });
-      }
+      if (inWindow && windowStart) windows.push({ start: windowStart, end: endTime });
 
       const minutes = hitCount * (stepSec / 60);
       const level = windows.length ? "ok" : "no";
@@ -689,8 +643,7 @@ async function estimatePasses() {
   el("progStatus").textContent = "Done. Planning reference only (no imaging guarantee).";
 }
 
-/* -------------------------- wiring -------------------------- */
-
+/* ---------------- wiring ---------------- */
 function wireUI() {
   el("drawRectBtn").addEventListener("click", enableDrawRectangle);
   el("clearAoiBtn").addEventListener("click", clearAOI);
@@ -712,15 +665,12 @@ function wireUI() {
     }
   });
 
-  // coverage index
   el("coverageIndexBtn").addEventListener("click", runCoverageIndex);
   el("clearIndexBtn").addEventListener("click", clearCoverageIndex);
 
-  // footprints
   el("footprintsBtn").addEventListener("click", loadFootprints);
   el("clearFootprintsBtn").addEventListener("click", clearFootprints);
 
-  // programming
   el("progBtn").addEventListener("click", estimatePasses);
   el("progClearBtn").addEventListener("click", clearProgramming);
 
@@ -739,7 +689,6 @@ async function main() {
   initMap();
   wireUI();
 
-  // load data files
   [sources, coverageRules, programmingCfg] = await Promise.all([
     loadJSON("./data/sources.json"),
     loadJSON("./data/coverage_rules.json"),
