@@ -1,3 +1,4 @@
+Cesium.Ion.defaultAccessToken = “eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIxMDIyZDUxMi1jMmYwLTRmMmUtYTExYi1iZTk3ZTQ0NTFlN2UiLCJpZCI6MzcxODg0LCJpYXQiOjE3NjY0MTI5NTl9.yEdV4LIiYFNNvdZP2sPh4d_lhOUuO9J_NDMBBTy5vl4“
 let viewer;
 let aoiEntity = null;
 let aoiBBox = null; // {west,south,east,north} degrees
