@@ -41,25 +41,88 @@ function toUtcDate(d){ return d.toISOString().slice(0,10); }
 
 /* ---------------- Map ---------------- */
 const map = L.map("map", {
-  minZoom: 2,           // ✅ limit zoom-out
+  minZoom: 2,
   maxZoom: 16,
-  worldCopyJump: false, // ✅ prevent repeated worlds
+  worldCopyJump: false,
 }).setView([20,0], 2);
 
 map.options.wheelPxPerZoomLevel = 120;
 
-/* Dark basemap */
-L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",{
-  subdomains:"abcd",
-  maxZoom:19,
-  attribution:"© OpenStreetMap © CARTO"
-}).addTo(map);
+/* Preferred tiles: CARTO dark_nolabels + labels */
+const cartoNoLabels = L.tileLayer(
+  "https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png",
+  { subdomains:"abcd", maxZoom:19, attribution:"© OpenStreetMap © CARTO" }
+);
 
-/* === Key: deep-space + glowing coasts look (matches your target) === */
-try{
-  map.getPane("tilePane").style.filter =
-    "brightness(0.65) contrast(1.35) saturate(1.25)";
-} catch {}
+const cartoLabels = L.tileLayer(
+  "https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png",
+  { subdomains:"abcd", maxZoom:19, opacity: 0.92 }
+);
+
+/* Fallback: OSM standard (if CARTO blocked/unreachable) */
+const osmFallback = L.tileLayer(
+  "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+  { subdomains:"abc", maxZoom:19, attribution:"© OpenStreetMap" }
+);
+
+cartoNoLabels.addTo(map);
+cartoLabels.addTo(map);
+
+/* Safer filter: keep neon but don’t kill the map */
+function applyTileFilter(mode){
+  try{
+    const tile = map.getPane("tilePane");
+    // 这里不动 overlayPane，避免影响 footprints 的颜色
+    if (mode === "carto") {
+      if (tile) tile.style.filter = "brightness(0.92) contrast(1.22) saturate(1.18)";
+    } else {
+      if (tile) tile.style.filter = "brightness(0.98) contrast(1.10) saturate(1.06)";
+    }
+  } catch {}
+}
+applyTileFilter("carto");
+
+/* Auto fallback on tile errors (6s rolling window) */
+let fallbackActivated = false;
+let errCount = 0;
+let errWindowStart = 0;
+
+function activateFallback(){
+  if (fallbackActivated) return;
+  fallbackActivated = true;
+
+  toast("Base map blocked/unreachable. Switched to fallback tiles.", 3600);
+
+  try { map.removeLayer(cartoNoLabels); } catch {}
+  try { map.removeLayer(cartoLabels); } catch {}
+
+  osmFallback.addTo(map);
+  applyTileFilter("osm");
+}
+
+function onTileError(){
+  if (fallbackActivated) return;
+
+  const now = Date.now();
+  if (!errWindowStart || (now - errWindowStart) > 6000) {
+    errWindowStart = now;
+    errCount = 0;
+  }
+  errCount++;
+
+  if (errCount >= 8) activateFallback();
+}
+
+cartoNoLabels.on("tileerror", onTileError);
+cartoLabels.on("tileerror", onTileError);
+
+/* Optional: if tiles never load (e.g., blocked with no errors), fallback after 7s */
+setTimeout(() => {
+  if (fallbackActivated) return;
+  // Leaflet adds .leaflet-tile-loaded on loaded tiles
+  const anyLoaded = document.querySelector("#map .leaflet-tile-loaded");
+  if (!anyLoaded) activateFallback();
+}, 7000);
 
 /* Layers */
 const drawn = new L.FeatureGroup().addTo(map);
@@ -390,3 +453,6 @@ $("btnQuery").addEventListener("click", async ()=>{
     toast(`Query failed: ${e.message || e}`, 3200);
   }
 });
+
+/* init timeline label */
+updateTimeThreshold(Number($("timeSlider").value || 100));
