@@ -1,93 +1,146 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Satellite Discovery Index</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Satellite Discovery Index</title>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css"/>
-<link rel="stylesheet" href="styles.css"/>
+  <!-- Typography: modern + tech -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Orbitron:wght@500;600&display=swap" rel="stylesheet">
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css"/>
+
+  <link rel="stylesheet" href="styles.css"/>
 </head>
 
 <body>
-
-<header id="topbar">
-  <div class="title">Satellite Discovery Index</div>
-  <div class="badges">
-    <span>OPEN</span>
-    <span>NO LOGIN</span>
-    <span>REFERENCE ONLY</span>
-  </div>
-</header>
-
-<div id="app">
-  <aside id="sidebar">
-
-    <section>
-      <h2><span class="step">1</span> AOI</h2>
-      <button id="btnDraw">Draw AOI</button>
-      <button id="btnClearAOI">Clear AOI</button>
-      <label>Place</label>
-      <div class="row">
-        <input id="placeInput" placeholder="Beijing / Dubai / New York"/>
-        <button id="btnGeocode">Locate</button>
+  <header id="topbar">
+    <div class="brand">
+      <span class="brandDot"></span>
+      <div class="brandText">
+        <div class="brandTitle">Satellite Discovery Index</div>
+        <div class="brandSub">Open data only · No login · Archive footprints (reference only)</div>
       </div>
-      <label>Point + Radius (km)</label>
-      <div class="row">
-        <input id="radiusKm" type="number" value="50"/>
-        <button id="btnPointRadius">Pick</button>
-      </div>
-      <div id="aoiStatus" class="hint">AOI not set</div>
-    </section>
+    </div>
 
-    <section>
-      <h2><span class="step">2</span> Time Range (UTC)</h2>
-      <div class="row">
-        <input id="startDate" type="date"/>
-        <input id="endDate" type="date"/>
-      </div>
-    </section>
+    <nav class="tabs" aria-label="sections">
+      <span class="tab active">AOI</span>
+      <span class="tab">Coverage</span>
+      <span class="tab">Footprints</span>
+      <span class="tab">Programming</span>
+      <span class="tab">Sources</span>
+    </nav>
 
-    <section>
-      <h2><span class="step">3</span> Public Archives</h2>
-      <div id="sources"></div>
-      <button id="btnQuery">Query Archive</button>
-      <button id="btnClearResults">Clear Results</button>
-    </section>
+    <div class="chips">
+      <span class="chip">OPEN</span>
+      <span class="chip">NO LOGIN</span>
+      <span class="chip warn">REFERENCE ONLY</span>
+    </div>
+  </header>
 
-    <section>
-      <h2><span class="step">4</span> Results</h2>
+  <div id="app">
+    <aside id="sidebar">
 
-      <select id="timeMode">
-        <option value="date">Date</option>
-        <option value="datetime">Date + Time (UTC)</option>
-      </select>
-
-      <div class="timeline">
-        <input id="timeSlider" type="range" min="0" max="100" value="100"/>
-        <div class="timeline-label">
-          Show data up to <span id="timeLabel">Now</span>
+      <section class="card">
+        <div class="cardHead">
+          <div class="step">1</div>
+          <div class="cardTitle">AOI Setup</div>
         </div>
+
+        <div class="btnRow">
+          <button id="btnDraw" class="btn primary">Draw AOI</button>
+          <button id="btnClearAOI" class="btn ghost">Clear</button>
+        </div>
+
+        <div class="field">
+          <label>Place search (optional)</label>
+          <div class="row">
+            <input id="placeInput" placeholder="Beijing / Dubai / New York"/>
+            <button id="btnGeocode" class="btn mini">Locate</button>
+          </div>
+          <div class="hint">Uses OpenStreetMap Nominatim public geocoding.</div>
+        </div>
+
+        <div class="field">
+          <label>Point + Radius (km)</label>
+          <div class="row">
+            <input id="radiusKm" type="number" min="1" max="1000" value="50"/>
+            <button id="btnPointRadius" class="btn mini">Pick</button>
+          </div>
+        </div>
+
+        <div id="aoiStatus" class="hint strong">AOI not set</div>
+      </section>
+
+      <section class="card">
+        <div class="cardHead">
+          <div class="step">2</div>
+          <div class="cardTitle">Time Range (UTC)</div>
+        </div>
+        <div class="row">
+          <input id="startDate" type="date"/>
+          <input id="endDate" type="date"/>
+        </div>
+        <div class="hint">Used for open STAC checks (footprints + time only).</div>
+      </section>
+
+      <section class="card">
+        <div class="cardHead">
+          <div class="step">3</div>
+          <div class="cardTitle">Public Archives</div>
+        </div>
+
+        <div id="sources" class="sources"></div>
+
+        <div class="btnRow">
+          <button id="btnQuery" class="btn primary">Query Archive</button>
+          <button id="btnClearResults" class="btn ghost">Clear Results</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="cardHead">
+          <div class="step">4</div>
+          <div class="cardTitle">Results</div>
+        </div>
+
+        <div class="row">
+          <select id="timeMode" class="select">
+            <option value="date" selected>Date</option>
+            <option value="datetime">Date + Time (UTC)</option>
+          </select>
+          <div id="countPill" class="count">0</div>
+        </div>
+
+        <div class="timeline">
+          <input id="timeSlider" type="range" min="0" max="100" value="100"/>
+          <div class="timelineLabel">Show data up to <span id="timeLabel">Now</span></div>
+        </div>
+
+        <div id="results" class="results"></div>
+      </section>
+
+      <footer class="foot">
+        Reference only. No imagery. No proprietary APIs. No vendor inventory checks.
+      </footer>
+    </aside>
+
+    <main id="main">
+      <div id="mapFrame">
+        <div id="map"></div>
+        <div class="gridOverlay"></div>
+        <div id="toast" class="toast hidden"></div>
       </div>
+    </main>
+  </div>
 
-      <div id="countPill" class="pill">0</div>
-      <div id="results" class="results"></div>
-    </section>
-
-    <footer>
-      Open archive reference only · No imagery · No proprietary systems
-    </footer>
-
-  </aside>
-
-  <div id="map"></div>
-</div>
-
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@turf/turf@6.5.0/turf.min.js"></script>
-<script src="app.js"></script>
-
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6.5.0/turf.min.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
