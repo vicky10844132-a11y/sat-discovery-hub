@@ -3,97 +3,95 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Satellite Discovery Index</title>
+  <title>Open Satellite Observation Capability Index</title>
 
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-  <link rel="stylesheet" href="./styles.css"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css"/>
+  <link rel="stylesheet" href="styles.css"/>
 </head>
 
 <body>
-<div class="app">
+<div id="app">
+  <aside id="sidebar">
+    <h1>Open Satellite Observation Capability Index</h1>
+    <p class="subtitle">
+      Open · Archive-based · Reference-only · No imagery · No proprietary API
+    </p>
 
-  <!-- Top Bar -->
-  <header class="topbar">
-    <div class="brand">
-      <div class="orb"></div>
-      <div>
-        <div class="brandTitle">Satellite Discovery Index</div>
-        <div class="brandSub">
-          Open · Reference-only · No imagery · No proprietary API
-        </div>
+    <!-- AOI -->
+    <section>
+      <h2>AOI</h2>
+      <button id="btnDraw">Draw AOI</button>
+      <button id="btnClearAOI">Clear AOI</button>
+
+      <label>Place name</label>
+      <div class="row">
+        <input id="placeInput" placeholder="e.g. Singapore / Shenzhen"/>
+        <button id="btnGeocode">Locate</button>
       </div>
-    </div>
-  </header>
 
-  <main class="layout">
+      <label>Point + Radius (km)</label>
+      <div class="row">
+        <input id="radiusKm" type="number" value="50"/>
+        <button id="btnPointRadius">Pick center</button>
+      </div>
 
-    <!-- LEFT PANEL -->
-    <aside class="sidebar">
+      <label>Upload AOI file</label>
+      <input id="fileInput" type="file"
+             accept=".zip,.shp,.kmz,.kml,.geojson,.json"/>
 
-      <!-- AOI -->
-      <section class="card">
-        <h2>1) AOI</h2>
-        <input id="placeInput" placeholder="City / Region / Country"/>
-        <button id="locateBtn">Locate</button>
-        <div id="aoiInfo" class="hint">No AOI set</div>
-      </section>
-
-      <!-- ARCHIVE -->
-      <section class="card">
-        <h2>2) Archive Index (Open)</h2>
-
-        <label>Time Range</label>
-        <div class="inline">
-          <input id="fromMonth" type="month"/>
-          <span>→</span>
-          <input id="toMonth" type="month"/>
-        </div>
-
-        <label>Archive Source</label>
-        <select id="archiveGroup"></select>
-        <select id="archiveSource"></select>
-
-        <button id="archiveBtn">Check Archive</button>
-        <button id="archiveClearBtn" class="secondary">Clear</button>
-
-        <div id="archiveResults" class="results"></div>
-      </section>
-
-      <!-- PROGRAMMING -->
-      <section class="card">
-        <h2>3) Programming / Pass Reference</h2>
-
-        <label>Days Ahead</label>
-        <input id="daysAhead" type="number" min="1" max="14" value="7"/>
-
-        <button id="programBtn">Compute Passes</button>
-        <button id="programClearBtn" class="secondary">Clear</button>
-
-        <div id="programResults" class="results"></div>
-
-        <div class="footnote">
-          Pass windows are derived from public TLE + SGP4 and are
-          geometric references only.
-        </div>
-      </section>
-
-    </aside>
-
-    <!-- MAP -->
-    <section class="mapWrap">
-      <div id="map"></div>
-      <div class="hud left">Open · No Login</div>
-      <div class="hud right">Reference Only</div>
+      <div id="aoiStatus" class="hint">AOI not set</div>
     </section>
 
-  </main>
+    <!-- Time -->
+    <section>
+      <h2>Time Range (UTC)</h2>
+      <div class="row">
+        <input id="startDate" type="date"/>
+        <input id="endDate" type="date"/>
+      </div>
+    </section>
 
+    <!-- Sources -->
+    <section>
+      <h2>Public Archives</h2>
+      <div id="sources"></div>
+
+      <button id="btnQuery">Query Archive</button>
+      <button id="btnClearResults">Clear Results</button>
+    </section>
+
+    <!-- Results -->
+    <section>
+      <h2>Results</h2>
+
+      <div class="row">
+        <select id="timeMode">
+          <option value="date" selected>Date</option>
+          <option value="datetime">Date + Time (UTC)</option>
+        </select>
+        <span id="countPill" class="pill">0</span>
+      </div>
+
+      <div id="results" class="results"></div>
+    </section>
+
+    <footer>
+      Archive records only. No imagery.  
+      All results are indicative and for reference.
+    </footer>
+  </aside>
+
+  <div id="map"></div>
 </div>
 
-<div id="toast"></div>
-
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/satellite.js@5.0.1/dist/satellite.min.js"></script>
-<script src="./app.js"></script>
+<script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@turf/turf@6.5.0/turf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/shpjs@4.0.4/dist/shp.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tmcw/togeojson@5.8.1/dist/togeojson.umd.js"></script>
+
+<script src="app.js"></script>
 </body>
 </html>

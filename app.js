@@ -1,177 +1,182 @@
-const $ = s => document.querySelector(s);
+/* -----------------------------
+   Utilities
+------------------------------ */
+const $ = id => document.getElementById(id);
 
-/* ---------- Toast ---------- */
-function toast(msg){
-  const t=$("#toast");
-  t.textContent=msg;
-  t.style.display="block";
-  clearTimeout(t._t);
-  t._t=setTimeout(()=>t.style.display="none",2200);
+function utcDateKey(iso) {
+  const t = Date.parse(iso);
+  if (!Number.isFinite(t)) return "Unknown";
+  return new Date(t).toISOString().slice(0,10);
 }
 
-/* ---------- Map ---------- */
-const map=L.map("map",{minZoom:2,maxZoom:19}).setView([20,0],2);
-
-L.tileLayer(
-  "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-  {attribution:"© OSM © CARTO"}
-).addTo(map);
-
-L.tileLayer(
-  "https://tiledbasemaps.arcgis.com/arcgis/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",
-  {opacity:.9}
-).addTo(map);
-
-let marker=null, archiveLayer=null;
-
-/* ---------- AOI ---------- */
-async function locate(){
-  const q=$("#placeInput").value.trim();
-  if(!q)return toast("Enter a place name");
-
-  const r=await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`);
-  const j=await r.json();
-  if(!j[0])return toast("No result");
-
-  const lat=+j[0].lat, lon=+j[0].lon;
-  map.setView([lat,lon],7);
-
-  if(marker)marker.remove();
-  marker=L.marker([lat,lon]).addTo(map);
-
-  $("#aoiInfo").textContent=`AOI: ${j[0].display_name}`;
+function fmtByMode(iso, mode) {
+  if (!iso) return "Unknown";
+  const t = Date.parse(iso);
+  if (!Number.isFinite(t)) return iso;
+  if (mode === "date") return utcDateKey(iso);
+  return new Date(t).toISOString().slice(0,16).replace("T"," ") + " UTC";
 }
-$("#locateBtn").onclick=locate;
 
-/* ---------- Archive Presets ---------- */
-let archivePresets=null, selectedStac="";
+function getSatelliteName(feature, fallback) {
+  const p = feature.properties || {};
+  return p.platform || p.constellation || fallback || "Unknown satellite";
+}
 
-async function loadArchivePresets(){
-  const r=await fetch("./open_archives.json");
-  archivePresets=await r.json();
+/* -----------------------------
+   Map
+------------------------------ */
+const map = L.map("map").setView([20, 0], 2);
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  attribution: "© OpenStreetMap"
+}).addTo(map);
 
-  const gSel=$("#archiveGroup");
-  const sSel=$("#archiveSource");
+const drawnItems = new L.FeatureGroup().addTo(map);
+const resultsLayer = L.layerGroup().addTo(map);
 
-  archivePresets.groups.forEach(g=>{
-    const o=document.createElement("option");
-    o.value=g.id;o.textContent=g.label;
-    gSel.appendChild(o);
-  });
+let aoiGeom = null;
+let mergedResults = [];
 
-  function refresh(){
-    sSel.innerHTML="";
-    const g=archivePresets.groups.find(x=>x.id===gSel.value);
-    g.sources.forEach(s=>{
-      const o=document.createElement("option");
-      o.textContent=s.name;
-      o.value=s.stacRoot;
-      sSel.appendChild(o);
+/* -----------------------------
+   Draw AOI
+------------------------------ */
+map.addControl(new L.Control.Draw({
+  draw: { polyline:false, circle:false, marker:false, circlemarker:false },
+  edit: { featureGroup: drawnItems }
+}));
+
+map.on(L.Draw.Event.CREATED, e => {
+  drawnItems.clearLayers();
+  drawnItems.addLayer(e.layer);
+  aoiGeom = e.layer.toGeoJSON().geometry;
+  $("aoiStatus").textContent = "AOI set";
+});
+
+/* -----------------------------
+   Sources (Open STAC)
+------------------------------ */
+const STAC = "https://earth-search.aws.element84.com/v1";
+
+const SOURCES = [
+  { id:"s2", title:"Sentinel-2", collection:"sentinel-2-l2a", color:"#2dd4bf" },
+  { id:"s1", title:"Sentinel-1", collection:"sentinel-1-grd", color:"#fb7185" },
+  { id:"ls", title:"Landsat",    collection:"landsat-c2-l2", color:"#60a5fa" }
+];
+
+$("sources").innerHTML = SOURCES.map(s =>
+  `<label><input type="checkbox" id="src_${s.id}" checked> ${s.title}</label>`
+).join("");
+
+/* -----------------------------
+   Query
+------------------------------ */
+$("btnQuery").onclick = async () => {
+  if (!aoiGeom) return alert("Set AOI first");
+
+  const start = $("startDate").value;
+  const end = $("endDate").value;
+  const datetime = (start && end) ? `${start}T00:00:00Z/${end}T23:59:59Z` : "..";
+
+  resultsLayer.clearLayers();
+  mergedResults = [];
+
+  const raw = [];
+
+  for (const s of SOURCES) {
+    if (!$(`src_${s.id}`).checked) continue;
+
+    const res = await fetch(`${STAC}/search`, {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({
+        collections:[s.collection],
+        intersects:aoiGeom,
+        datetime,
+        limit:200
+      })
     });
-    selectedStac=sSel.value;
+    const json = await res.json();
+    (json.features || []).forEach(f => {
+      raw.push({
+        satellite: getSatelliteName(f, s.title),
+        datetime: f.properties.datetime,
+        feature: f,
+        color: s.color
+      });
+    });
+
+    L.geoJSON(json.features, {
+      style:{ color:s.color, weight:2, fillOpacity:0.08 },
+      onEachFeature:(f,l)=>{
+        l.bindPopup(
+          `<b>${getSatelliteName(f,s.title)}</b><br/>${fmtByMode(f.properties.datetime,"datetime")}`
+        );
+      }
+    }).addTo(resultsLayer);
   }
 
-  gSel.onchange=refresh;
-  sSel.onchange=()=>selectedStac=sSel.value;
-  refresh();
-}
-loadArchivePresets();
-
-/* ---------- Archive ---------- */
-async function checkArchive(){
-  if(!marker)return toast("Set AOI first");
-  if(!selectedStac)return toast("No archive source");
-
-  if(archiveLayer){archiveLayer.remove();archiveLayer=null}
-
-  const {lat,lng}=marker.getLatLng();
-  const bbox=[lng-1,lat-1,lng+1,lat+1];
-
-  const r=await fetch(`${selectedStac}/search?bbox=${bbox.join(",")}&limit=20`);
-  const j=await r.json();
-
-  if(!j.features?.length)return toast("No archive features");
-
-  archiveLayer=L.geoJSON(j,{
-    style:{color:"#3ad6ff",weight:2,fillOpacity:.05}
-  }).addTo(map);
-  map.fitBounds(archiveLayer.getBounds());
-
-  const res=$("#archiveResults");
-  res.innerHTML="";
-  j.features.forEach(f=>{
-    const d=document.createElement("div");
-    d.className="result";
-    d.textContent=`${f.properties?.platform||"Unknown"} · ${f.properties?.datetime?.slice(0,10)||"Unknown date"}`;
-    res.appendChild(d);
-  });
-}
-$("#archiveBtn").onclick=checkArchive;
-$("#archiveClearBtn").onclick=()=>{
-  if(archiveLayer)archiveLayer.remove();
-  $("#archiveResults").innerHTML="";
+  mergedResults = mergeBySatelliteAndDate(raw);
+  renderList();
 };
 
-/* ---------- Programming ---------- */
-async function loadTLE(){
-  try{
-    const r=await fetch("https://celestrak.org/NORAD/elements/active.txt");
-    return await r.text();
-  }catch{
-    return fetch("./tle_cache.txt").then(r=>r.text());
-  }
-}
-
-function parseTLE(txt){
-  const l=txt.split("\n").map(x=>x.trim()).filter(Boolean);
-  const m=new Map();
-  for(let i=0;i<l.length-2;i+=3){
-    if(l[i+1]?.startsWith("1 ")&&l[i+2]?.startsWith("2 "))
-      m.set(l[i],{l1:l[i+1],l2:l[i+2]});
-  }
-  return m;
-}
-
-function hav(lat1,lon1,lat2,lon2){
-  const R=6371,d=Math.PI/180;
-  const a=Math.sin((lat2-lat1)*d/2)**2+
-    Math.cos(lat1*d)*Math.cos(lat2*d)*Math.sin((lon2-lon1)*d/2)**2;
-  return 2*R*Math.asin(Math.sqrt(a));
-}
-
-async function computePasses(){
-  if(!marker)return toast("Set AOI first");
-
-  const days=+$("#daysAhead").value||7;
-  const tleTxt=await loadTLE();
-  const tleMap=parseTLE(tleTxt);
-
-  const res=$("#programResults");
-  res.innerHTML="";
-
-  const {lat,lon}=marker.getLatLng();
-  const now=Date.now();
-
-  tleMap.forEach((v,name)=>{
-    const satrec=satellite.twoline2satrec(v.l1,v.l2);
-    for(let t=now;t<now+days*864e5;t+=300000){
-      const pv=satellite.propagate(satrec,new Date(t));
-      if(!pv.position)continue;
-      const g=satellite.eciToGeodetic(pv.position,satellite.gstime(new Date(t)));
-      const d=hav(lat,lon,
-        satellite.degreesLat(g.latitude),
-        satellite.degreesLong(g.longitude));
-      if(d<400){
-        const div=document.createElement("div");
-        div.className="result";
-        div.textContent=`${name} · ${new Date(t).toISOString().slice(0,16)} UTC`;
-        res.appendChild(div);
-        break;
-      }
+function mergeBySatelliteAndDate(items) {
+  const map = new Map();
+  items.forEach(it => {
+    const key = `${it.satellite}_${utcDateKey(it.datetime)}`;
+    if (!map.has(key)) {
+      map.set(key, {
+        satellite: it.satellite,
+        date: utcDateKey(it.datetime),
+        times: [],
+        features: [],
+        color: it.color
+      });
     }
+    const g = map.get(key);
+    g.times.push(it.datetime);
+    g.features.push(it.feature);
+  });
+  return Array.from(map.values())
+    .sort((a,b)=> b.date.localeCompare(a.date));
+}
+
+/* -----------------------------
+   Render list
+------------------------------ */
+function renderList() {
+  const mode = $("timeMode").value;
+  const box = $("results");
+  box.innerHTML = "";
+
+  mergedResults.forEach(g => {
+    const row = document.createElement("div");
+    row.className = "result";
+    row.innerHTML =
+      `<b>${g.satellite}</b> · ${g.date}${g.times.length>1?` (${g.times.length})`:""}`;
+    row.onclick = ()=>{
+      resultsLayer.clearLayers();
+      L.geoJSON(
+        { type:"FeatureCollection", features:g.features },
+        { style:{ color:"#fff", weight:3, fillOpacity:0.15 } }
+      ).addTo(resultsLayer);
+    };
+    box.appendChild(row);
   });
 
-  toast("Pass reference computed");
+  $("countPill").textContent = mergedResults.length;
 }
-$("#programBtn").onclick=computePasses;
-$("#programClearBtn").onclick=()=>$("#programResults").innerHTML="";
+
+$("timeMode").onchange = renderList;
+
+/* -----------------------------
+   Clear
+------------------------------ */
+$("btnClearResults").onclick = ()=>{
+  resultsLayer.clearLayers();
+  $("results").innerHTML = "";
+  $("countPill").textContent = 0;
+};
+$("btnClearAOI").onclick = ()=>{
+  drawnItems.clearLayers();
+  aoiGeom = null;
+  $("aoiStatus").textContent = "AOI not set";
+};
