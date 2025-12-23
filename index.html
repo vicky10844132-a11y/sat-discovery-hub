@@ -1,238 +1,42 @@
-<!doctype html>
-<html lang="zh-CN">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="Open data only. Archive coverage + pass planning (reference only)." />
-  <meta name="theme-color" content="#070b14" />
-  <title>Satellite Discovery Index</title>
-
-  <!-- Leaflet -->
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-    crossorigin=""
-  />
-
-  <!-- HUD Theme -->
-  <link rel="stylesheet" href="./styles.css?v=20251223-NEON-1" />
+  <meta charset="UTF-8" />
+  <title>Open Satellite Observation Capability Index</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="./styles.css" />
 </head>
-
 <body>
-  <div class="app">
+  <header class="top">
+    <h1>Open Satellite Observation Capability Index</h1>
+    <p class="subtitle">
+      Cross-satellite reference based on publicly available information
+    </p>
+  </header>
 
-    <!-- Topbar -->
-    <header class="topbar">
-      <div class="brand">
-        <div class="brandMark" aria-hidden="true"></div>
-        <div class="brandText">
-          <div class="brandTitle">Satellite Discovery Index</div>
-          <div class="brandSub">Open data only · No login · Archive coverage + pass planning (reference only)</div>
-        </div>
-      </div>
+  <main>
+    <section class="controls">
+      <label>
+        From
+        <input type="month" id="from" value="2018-01" />
+      </label>
+      <label>
+        To
+        <input type="month" id="to" value="2025-01" />
+      </label>
+      <button id="run">Show Capabilities</button>
+    </section>
 
-      <nav class="tabs" aria-label="Primary">
-        <a class="tab" href="#aoi">AOI</a>
-        <a class="tab" href="#coverage">Coverage</a>
-        <a class="tab" href="#footprints">Footprints</a>
-        <a class="tab" href="#programming">Programming</a>
-        <a class="tab" href="#sources">Sources</a>
-      </nav>
-    </header>
+    <section id="results"></section>
+  </main>
 
-    <!-- Toast / Status -->
-    <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+  <footer>
+    <p>
+      Reference only. No imagery is hosted, stored, proxied, or distributed.
+      All links point to official public information pages.
+    </p>
+  </footer>
 
-    <!-- Main layout -->
-    <main class="main">
-
-      <!-- Left panel -->
-      <aside class="sidebar" aria-label="Controls">
-        <div class="sideScroll">
-
-          <!-- 1) AOI SETUP -->
-          <section id="aoi" class="section">
-            <div class="sectionTitle"><span class="mono">1)</span> AOI Setup</div>
-
-            <div class="kicker">
-              Place search uses OpenStreetMap Nominatim public geocoding (rate-limited).
-            </div>
-
-            <div class="row" style="align-items:stretch;">
-              <div style="flex:1;">
-                <label class="small" for="place">Place Search (Optional)</label>
-                <input id="place" type="text" placeholder="Beijing / Dubai / New York" autocomplete="off" />
-              </div>
-              <div style="display:flex; flex-direction:column; justify-content:flex-end;">
-                <button id="btnLocate" class="btn primary" type="button">
-                  <span class="btnText">Locate</span>
-                  <span class="spinner" aria-hidden="true"></span>
-                </button>
-              </div>
-            </div>
-
-            <div class="row" style="margin-top:10px;">
-              <div style="flex:1;">
-                <label class="small" for="basemapSelect">Basemap Style</label>
-                <select id="basemapSelect">
-                  <option value="esri">Esri Dark Gray</option>
-                  <option value="carto">CARTO Dark (Neon)</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="notice" style="margin-top:10px;">
-              <div class="mono noticeTitle">AOI Status</div>
-              <div id="aoiSummary" class="noticeBody">
-                No AOI set. Use place search or draw/select on map (if enabled).
-              </div>
-            </div>
-          </section>
-
-          <!-- 2) ARCHIVE COVERAGE INDEX -->
-          <section id="coverage" class="section">
-            <div class="sectionTitle"><span class="mono">2)</span> Archive Coverage Index <span class="dim">(Reference)</span></div>
-
-            <div class="row" style="align-items:flex-end;">
-              <div style="flex:1;">
-                <label class="small">Time Range</label>
-                <div class="row" style="margin:6px 0 0;">
-                  <input id="fromMonth" type="month" />
-                  <span class="mono" style="opacity:.7;">→</span>
-                  <input id="toMonth" type="month" />
-                </div>
-              </div>
-            </div>
-
-            <div class="row" style="margin-top:10px;">
-              <button id="btnCheckCoverage" class="btn" type="button">Check</button>
-              <button id="btnReset" class="btn ghost" type="button">Reset</button>
-            </div>
-
-            <div class="badge" style="margin-top:10px;">
-              Reference-only indicators; not a procurement workflow.
-            </div>
-
-            <div class="hr"></div>
-            <div class="indexList" id="coverageIndex"></div>
-          </section>
-
-          <!-- 3) OPEN STAC FOOTPRINTS -->
-          <section id="footprints" class="section">
-            <div class="sectionTitle"><span class="mono">3)</span> Open STAC Footprints</div>
-
-            <div class="kicker">
-              Provide a STAC API / Catalog URL. We attempt /search (GET then POST fallback). CORS may block some endpoints.
-            </div>
-
-            <div class="row">
-              <label class="small" for="stacUrl" style="width:100%;">STAC API / Catalog URL</label>
-            </div>
-            <div class="row" style="margin-top:6px;">
-              <input id="stacUrl" type="text" placeholder="https://planetarycomputer.microsoft.com/api/stac/v1" />
-            </div>
-
-            <div class="row" style="margin-top:10px;">
-              <button id="btnLoadFootprints" class="btn primary" type="button">
-                <span class="btnText">Load Footprints</span>
-                <span class="spinner" aria-hidden="true"></span>
-              </button>
-              <button id="btnClearFootprints" class="btn" type="button">Clear</button>
-            </div>
-
-            <div class="hr"></div>
-            <div class="indexList" id="footprintIndex"></div>
-          </section>
-
-          <!-- 4) PROGRAMMING INDEX -->
-          <section id="programming" class="section">
-            <div class="sectionTitle"><span class="mono">4)</span> Programming Index <span class="dim">(Reference)</span></div>
-
-            <div class="kicker">
-              Reference-only. For production pass predictions, plug in your orbital engine (SGP4 + ground track).
-            </div>
-
-            <div class="row">
-              <label class="small" for="satName" style="width:100%;">Satellite / Constellation</label>
-            </div>
-            <div class="row" style="margin-top:6px;">
-              <input id="satName" type="text" placeholder="(optional) e.g., Sentinel-2 / Landsat / ..." list="satHints" />
-              <datalist id="satHints"></datalist>
-            </div>
-
-            <div class="row" style="margin-top:10px;">
-              <button id="btnPlan" class="btn" type="button">Generate Reference</button>
-              <button id="btnPlanClear" class="btn ghost" type="button">Clear</button>
-            </div>
-
-            <div class="hr"></div>
-            <div class="indexList" id="planIndex"></div>
-          </section>
-
-          <!-- 5) SOURCES -->
-          <section id="sources" class="section">
-            <div class="sectionTitle"><span class="mono">5)</span> Sources <span class="dim">(Public Portals)</span></div>
-
-            <div class="sources" id="sourcesList">
-              <!-- fallback content (replaced by sources.json if available) -->
-              <div class="source">
-                <div class="sourceTop">
-                  <div class="sourceName">OpenStreetMap / Nominatim</div>
-                  <span class="pill ok">Public</span>
-                </div>
-                <div class="sourceDesc">Geocoding reference (place search).</div>
-              </div>
-
-              <div class="source">
-                <div class="sourceTop">
-                  <div class="sourceName">Leaflet + Basemap Provider</div>
-                  <span class="pill warn">Tiles</span>
-                </div>
-                <div class="sourceDesc">Map rendering and base tiles; attribution required.</div>
-              </div>
-
-              <div class="source">
-                <div class="sourceTop">
-                  <div class="sourceName">STAC (Optional)</div>
-                  <span class="pill ok">Open</span>
-                </div>
-                <div class="sourceDesc">Footprints & metadata via public STAC endpoints (CORS dependent).</div>
-              </div>
-            </div>
-
-            <div class="notice" style="margin-top:12px;">
-              Notice: Open data only. This site provides reference-level indicators (coverage & planning).
-              It does not replace official portals or procurement workflows.
-            </div>
-          </section>
-
-        </div>
-      </aside>
-
-      <!-- Splitter (Resizable Sidebar) -->
-      <div class="splitter" id="splitter" aria-hidden="true"></div>
-
-      <!-- Map -->
-      <section class="mapWrap" aria-label="Map">
-        <div class="mapChrome" aria-hidden="true">
-          <div class="hudTag">Open · No Login</div>
-          <div class="hudTag dim">Reference Only</div>
-        </div>
-        <div id="map"></div>
-      </section>
-
-    </main>
-  </div>
-
-  <!-- Leaflet -->
-  <script
-    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-    crossorigin=""
-  ></script>
-
-  <!-- App -->
-  <script src="./app.js?v=20251223-NEON-1"></script>
+  <script src="./app.js"></script>
 </body>
 </html>

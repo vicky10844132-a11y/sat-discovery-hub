@@ -1,0 +1,85 @@
+{
+  "groups": [
+    {
+      "id": "optical",
+      "label": "Optical",
+      "description": "Optical and multispectral Earth observation missions",
+      "satellites": [
+        {
+          "name": "Sentinel-2",
+          "operator": "ESA",
+          "type": "Optical",
+          "commercial": false,
+          "public_archive": true,
+          "archive_since": "2015-06",
+          "coverage": "Global",
+          "revisit_days": 5,
+          "programming": false,
+          "query_url": "https://browser.dataspace.copernicus.eu/"
+        },
+        {
+          "name": "PlanetScope",
+          "operator": "Planet Labs",
+          "type": "Optical",
+          "commercial": true,
+          "public_archive": "Partial",
+          "archive_since": "2016-01",
+          "coverage": "Global",
+          "revisit_days": 1,
+          "programming": true,
+          "query_url": "https://www.planet.com/explorer/"
+        }
+      ]
+    },
+    {
+      "id": "sar",
+      "label": "SAR",
+      "description": "Synthetic Aperture Radar missions (day/night, all-weather)",
+      "satellites": [
+        {
+          "name": "Sentinel-1",
+          "operator": "ESA",
+          "type": "SAR",
+          "commercial": false,
+          "public_archive": true,
+          "archive_since": "2014-10",
+          "coverage": "Global",
+          "revisit_days": 6,
+          "programming": false,
+          "query_url": "https://browser.dataspace.copernicus.eu/"
+        },
+        {
+          "name": "ICEYE",
+          "operator": "ICEYE",
+          "type": "SAR",
+          "commercial": true,
+          "public_archive": "Limited",
+          "archive_since": "2018-01",
+          "coverage": "Global",
+          "revisit_days": 1,
+          "programming": true,
+          "query_url": "https://www.iceye.com/"
+        }
+      ]
+    },
+    {
+      "id": "weather",
+      "label": "Weather / Environmental",
+      "description": "Meteorological and environmental observation satellites",
+      "satellites": [
+        {
+          "name": "GOES-R Series",
+          "operator": "NOAA",
+          "type": "Weather",
+          "commercial": false,
+          "public_archive": true,
+          "archive_since": "2016-11",
+          "coverage": "Regional (GEO)",
+          "revisit_days": "Minutes",
+          "programming": false,
+          "query_url": "https://www.star.nesdis.noaa.gov/"
+        }
+      ]
+    }
+  ]
+}
