@@ -1,21 +1,33 @@
 :root{
-  --bg0:#060a12;
-  --bg1:#070d19;
+  /* ===== Core palette ===== */
+  --bg0:#030712;
+  --bg1:#050d1f;
 
-  --panelA: rgba(10, 18, 34, .78);
-  --panelB: rgba(6, 12, 24, .92);
+  --deepBlue:#020816;
+  --deepBlue2:#061a3a;
 
-  --neon:#77e3ff;
-  --neon2:#8a7bff;
+  --cyan:#6fe7ff;
+  --cyan2:#3fb7ff;
+  --blue:#2a6dff;
+  --violet:#7a6dff;
 
   --text:#eaf2ff;
-  --muted:#9bb0c9;
+  --muted:#9fb2cc;
+  --muted2:#7f93b3;
 
-  --shadow: 0 16px 60px rgba(0,0,0,.55);
-  --glow: 0 0 22px rgba(119,227,255,.20);
-  --glowStrong: 0 0 30px rgba(119,227,255,.30);
+  --glassA: rgba(10,20,42,.60);
+  --glassB: rgba(6,14,30,.72);
 
+  --borderA: rgba(120,190,255,.14);
+  --borderB: rgba(255,255,255,.06);
+
+  --shadow: 0 18px 70px rgba(0,0,0,.55);
+  --shadowSoft: 0 10px 28px rgba(0,0,0,.35);
+
+  --r12:12px;
+  --r16:16px;
   --r20:20px;
+  --r24:24px;
 }
 
 *{ box-sizing:border-box; }
@@ -25,227 +37,255 @@ body{
   font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
   color: var(--text);
   background:
-    radial-gradient(1100px 600px at 15% -10%, rgba(40,120,210,.22), transparent 55%),
-    radial-gradient(900px 540px at 110% 20%, rgba(138,123,255,.16), transparent 55%),
+    radial-gradient(1200px 720px at 18% -10%, rgba(63,183,255,.18), transparent 60%),
+    radial-gradient(900px 520px at 115% 20%, rgba(122,109,255,.10), transparent 60%),
     linear-gradient(180deg, var(--bg1), var(--bg0));
 }
 
-/* ================= Topbar ================= */
+/* subtle page star dust */
+body::before{
+  content:"";
+  position:fixed; inset:0;
+  pointer-events:none;
+  background:
+    radial-gradient(circle, rgba(120,200,255,.05) 0 1px, transparent 2px) 0 0/26px 26px,
+    radial-gradient(circle, rgba(120,200,255,.035) 0 1px, transparent 2px) 0 0/38px 38px;
+  opacity:.5;
+  mix-blend-mode: screen;
+}
+
+/* ===================== Topbar ===================== */
 #topbar{
-  position:relative;
-  height:66px;
+  height:64px;
   display:flex;
   align-items:center;
   justify-content:space-between;
-  padding:0 20px;
-  background: linear-gradient(180deg, rgba(11,18,34,.92), rgba(7,10,18,.94));
-  border-bottom: 1px solid rgba(255,255,255,.05);
-  box-shadow: 0 12px 36px rgba(0,0,0,.55);
+  padding:0 18px;
+  position:relative;
+
+  background: linear-gradient(180deg, rgba(7,14,30,.72), rgba(5,10,22,.62));
+  border-bottom: 1px solid rgba(140,210,255,.10);
+  box-shadow: var(--shadowSoft);
+  backdrop-filter: blur(10px);
 }
+
 #topbar::after{
   content:"";
   position:absolute;
-  left:0; right:0; bottom:-1px;
-  height:2px;
-  background: linear-gradient(90deg, transparent, rgba(119,227,255,.65), transparent);
+  left:18px; right:18px; bottom:-1px;
+  height:1px;
+  background: linear-gradient(90deg, transparent, rgba(111,231,255,.28), transparent);
   opacity:.85;
-  pointer-events:none;
 }
 
-.brand{ display:flex; align-items:center; gap:12px; min-width:420px; }
-.brandDot{
-  width:14px; height:14px; border-radius:50%;
-  background: radial-gradient(circle at 30% 30%, #f2fbff, var(--neon) 60%, rgba(119,227,255,.25) 78%, transparent 80%);
-  box-shadow: var(--glowStrong);
+.brand{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  min-width:360px;
 }
+.brandDot{
+  width:12px; height:12px; border-radius:50%;
+  background: radial-gradient(circle at 30% 30%, #fff, rgba(111,231,255,.9) 55%, rgba(63,183,255,.25) 78%, transparent 82%);
+  box-shadow: 0 0 18px rgba(111,231,255,.22);
+}
+.brandText{ display:flex; flex-direction:column; gap:3px; }
 .brandTitle{
   font-family: Orbitron, Inter, system-ui;
-  font-size:22px;
-  letter-spacing:2.8px;
+  font-size:20px;
+  letter-spacing:2.2px;
   text-transform:uppercase;
-  text-shadow: 0 0 14px rgba(119,227,255,.22);
+  text-shadow: 0 0 12px rgba(63,183,255,.18);
 }
-.brandSub{ font-size:12px; color:var(--muted); }
+.brandSub{ font-size:12px; color: var(--muted); }
 
-/* ================= Layout ================= */
-#app{ height: calc(100% - 66px); display:flex; }
+.tabs{
+  display:flex;
+  gap:18px;
+}
+.tab{
+  font-size:14px;
+  padding:8px 2px;
+  border-bottom:2px solid transparent;
+  color: rgba(180,200,230,.9);
+}
+.tab.active{
+  color: var(--text);
+  border-bottom-color: rgba(111,231,255,.55);
+}
+
+.rightPills{ display:flex; gap:10px; }
+.pill{
+  font-family: Orbitron, Inter, system-ui;
+  font-size:11px;
+  letter-spacing:1px;
+  padding:9px 12px;
+  border-radius:999px;
+  border:1px solid rgba(130,190,255,.16);
+  background: rgba(8,16,34,.35);
+}
+.pill.ghost{
+  border-color: rgba(122,109,255,.18);
+  color: #dcd7ff;
+}
+
+/* ===================== Layout ===================== */
+#app{ height: calc(100% - 64px); display:flex; }
 
 #sidebar{
-  width:420px;
-  padding:16px;
+  width:410px;
+  padding:14px;
   overflow:auto;
-  background: linear-gradient(180deg, rgba(9,12,22,.88), rgba(6,8,14,.94));
-  border-right: 1px solid rgba(255,255,255,.05);
-  box-shadow: inset 0 0 80px rgba(119,227,255,.06);
+  background: linear-gradient(180deg, rgba(7,14,30,.62), rgba(4,9,20,.72));
+  border-right:1px solid rgba(140,210,255,.10);
+  backdrop-filter: blur(10px);
 }
 
+/* ===================== Cards ===================== */
 .card{
   border-radius: var(--r20);
-  background: linear-gradient(180deg, var(--panelA), var(--panelB));
-  border: 1px solid rgba(119,227,255,.14);
-  box-shadow: var(--shadow);
+  background: linear-gradient(180deg, rgba(12,22,46,.52), rgba(6,14,30,.62));
+  border:1px solid var(--borderA);
+  box-shadow: var(--shadowSoft);
   padding:14px;
-  margin-bottom:14px;
+  margin-bottom:12px;
   position:relative;
-  overflow:hidden;
 }
 .card::before{
   content:"";
-  position:absolute; inset:-2px;
-  background:
-    radial-gradient(420px 140px at 20% 0%, rgba(119,227,255,.10), transparent 60%),
-    radial-gradient(360px 140px at 80% 0%, rgba(138,123,255,.08), transparent 60%);
+  position:absolute; inset:0;
+  background: linear-gradient(180deg, rgba(111,231,255,.06), transparent 22%);
   pointer-events:none;
 }
 
-#main{ flex:1; padding:14px; }
+.cardHead{ display:flex; gap:10px; margin-bottom:10px; }
+.step{
+  width:22px; height:22px; border-radius:999px;
+  display:flex; align-items:center; justify-content:center;
+  font-family: Orbitron, Inter, system-ui;
+  font-size:11px;
+  background: radial-gradient(circle at 30% 30%, #fff, rgba(111,231,255,.9) 65%, rgba(63,183,255,.25));
+  color:#020816;
+}
+.cardTitle{
+  font-family: Orbitron, Inter, system-ui;
+  font-size:12px;
+  letter-spacing:1.4px;
+  text-transform:uppercase;
+}
 
-/* ================= Map Frame ================= */
+/* ===================== Forms ===================== */
+label{ font-size:12px; color: var(--muted); margin:10px 0 6px; }
+.row{ display:flex; gap:10px; }
+
+input, .select{
+  width:100%;
+  padding:11px 12px;
+  border-radius: var(--r12);
+  border:1px solid var(--borderB);
+  background: rgba(3,8,18,.45);
+  color: var(--text);
+}
+input::placeholder{ color: rgba(160,180,210,.55); }
+
+.btn{
+  padding:11px 12px;
+  border-radius: var(--r12);
+  border:1px solid var(--borderB);
+  background: rgba(3,8,18,.35);
+  color: var(--text);
+}
+.btn.primary{
+  background: linear-gradient(180deg, rgba(63,183,255,.18), rgba(3,8,18,.38));
+  border-color: rgba(111,231,255,.28);
+  font-family: Orbitron, Inter, system-ui;
+}
+
+/* ===================== Map ===================== */
+#main{ flex:1; padding:12px; }
+
 #mapFrame{
   height:100%;
-  border-radius:22px;
-  border:1px solid rgba(255,255,255,.05);
-  background: radial-gradient(1200px 700px at 40% 30%, rgba(10,20,40,.65), rgba(0,0,0,.86));
+  border-radius: var(--r24);
+  border:1px solid rgba(140,210,255,.12);
+  background:
+    radial-gradient(1200px 720px at 52% 38%, rgba(6,26,62,.82), rgba(2,8,22,.96));
   box-shadow: var(--shadow);
   position:relative;
   overflow:hidden;
 }
 
-/* Leaflet map */
 #map{
   position:absolute;
   inset:0;
   z-index:1;
 }
 
-/* ===== Low-frequency continental glow ===== */
+/* starfield + blue light points */
 #mapFrame::before{
   content:"";
   position:absolute;
   inset:0;
-  pointer-events:none;
   z-index:2;
+  pointer-events:none;
   background:
-    radial-gradient(820px 520px at 58% 36%, rgba(90,200,255,.22), transparent 65%),
-    radial-gradient(760px 520px at 32% 34%, rgba(90,200,255,.20), transparent 62%),
-    radial-gradient(900px 600px at 72% 40%, rgba(120,150,255,.16), transparent 66%),
-    radial-gradient(900px 700px at 52% 72%, rgba(80,140,255,.10), transparent 70%),
-
-    /* micro star dust */
-    radial-gradient(circle, rgba(255,255,255,.055) 0 1px, transparent 2px) 0 0/16px 16px;
-  opacity:.42;
+    radial-gradient(circle at 18% 28%, rgba(111,231,255,.38) 0 1px, transparent 2px),
+    radial-gradient(circle at 72% 42%, rgba(63,183,255,.32) 0 1px, transparent 2px),
+    radial-gradient(circle at 44% 70%, rgba(42,109,255,.26) 0 1px, transparent 2px),
+    radial-gradient(circle, rgba(120,200,255,.055) 0 1px, transparent 2px) 0 0/18px 18px,
+    radial-gradient(circle, rgba(120,200,255,.04) 0 1px, transparent 2px) 0 0/28px 28px;
+  opacity:.78;
   mix-blend-mode: screen;
 }
 
-/* ===== HUD grid & coordinate system ===== */
+/* grid overlay */
 .gridOverlay{
   position:absolute;
   inset:0;
-  pointer-events:none;
   z-index:3;
-  background:
-    radial-gradient(900px 520px at 50% 45%, rgba(120,220,255,.14), transparent 65%),
-    radial-gradient(circle, rgba(120,220,255,.10) 0 1px, transparent 2px) 0 0/26px 26px,
-
-    linear-gradient(rgba(120,220,255,.16) 1px, transparent 1px) 0 0/180px 180px,
-    linear-gradient(90deg, rgba(120,220,255,.16) 1px, transparent 1px) 0 0/180px 180px,
-
-    linear-gradient(rgba(120,220,255,.07) 1px, transparent 1px) 0 0/45px 45px,
-    linear-gradient(90deg, rgba(120,220,255,.07) 1px, transparent 1px) 0 0/45px 45px,
-
-    linear-gradient(90deg,
-      rgba(120,220,255,.00) 0%,
-      rgba(120,220,255,.05) 18%,
-      rgba(120,220,255,.00) 34%,
-      rgba(140,120,255,.045) 52%,
-      rgba(120,220,255,.00) 68%,
-      rgba(120,220,255,.05) 86%,
-      rgba(120,220,255,.00) 100%
-    );
-  opacity:.78;
-  mix-blend-mode: screen;
-  animation: gridBreath 5.8s ease-in-out infinite;
-}
-
-@keyframes gridBreath{
-  0%,100%{ opacity:.78; }
-  50%{ opacity:.62; }
-}
-
-/* pseudo spherical coordinate arcs */
-.gridOverlay::after{
-  content:"";
-  position:absolute;
-  inset:-20%;
   pointer-events:none;
   background:
-    repeating-radial-gradient(
-      ellipse at center,
-      rgba(120,220,255,.08) 0px,
-      rgba(120,220,255,.08) 1px,
-      transparent 38px,
-      transparent 42px
-    ),
-    repeating-radial-gradient(
-      ellipse at center,
-      rgba(120,220,255,.06) 0px,
-      rgba(120,220,255,.06) 1px,
-      transparent 54px,
-      transparent 58px
-    );
-  opacity:.22;
+    radial-gradient(circle, rgba(111,231,255,.10) 0 1px, transparent 2px) 0 0/28px 28px,
+    linear-gradient(rgba(111,231,255,.14) 1px, transparent 1px) 0 0/180px 180px,
+    linear-gradient(90deg, rgba(111,231,255,.14) 1px, transparent 1px) 0 0/180px 180px,
+    linear-gradient(rgba(111,231,255,.06) 1px, transparent 1px) 0 0/45px 45px,
+    linear-gradient(90deg, rgba(111,231,255,.06) 1px, transparent 1px) 0 0/45px 45px;
+  opacity:.7;
   mix-blend-mode: screen;
-  transform: scaleX(1.25);
 }
 
-/* ===== Deep space vignette ===== */
+/* vignette */
 #mapFrame::after{
   content:"";
   position:absolute;
   inset:0;
-  pointer-events:none;
   z-index:4;
-  background: radial-gradient(ellipse at center,
-    rgba(0,0,0,0) 34%,
-    rgba(0,0,0,.30) 62%,
-    rgba(0,0,0,.78) 100%);
+  pointer-events:none;
+  background:
+    radial-gradient(ellipse at center,
+      rgba(2,8,22,0) 42%,
+      rgba(2,8,22,.18) 70%,
+      rgba(1,5,14,.82) 100%);
 }
 
-/* ================= Leaflet controls ================= */
+/* ===================== Leaflet controls ===================== */
 .leaflet-control-zoom,
 .leaflet-draw-toolbar{
-  background: rgba(10,14,24,.55) !important;
-  border: 1px solid rgba(255,255,255,.06) !important;
-  border-radius: 14px !important;
-  box-shadow: 0 10px 28px rgba(0,0,0,.45) !important;
-  overflow:hidden;
+  background: rgba(8,16,34,.55) !important;
+  border:1px solid rgba(140,210,255,.14) !important;
+  border-radius:12px !important;
+  box-shadow: var(--shadowSoft) !important;
 }
-.leaflet-control-zoom a,
-.leaflet-draw-toolbar a{
-  background: transparent !important;
-  color: #eaf2ff !important;
-  border-bottom: 1px solid rgba(255,255,255,.06) !important;
-}
-.leaflet-control-zoom a:hover,
-.leaflet-draw-toolbar a:hover{
-  background: rgba(119,227,255,.10) !important;
-}
-.leaflet-bar a:last-child{ border-bottom:none !important; }
 
 /* Toast */
 .toast{
   position:absolute;
   left:16px;
   bottom:16px;
-  max-width:560px;
   padding:10px 12px;
-  border-radius:14px;
-  border:1px solid rgba(255,255,255,.06);
-  background: rgba(10,14,24,.72);
-  box-shadow: 0 16px 40px rgba(0,0,0,.55);
-  color:#eaf2ff;
+  border-radius:12px;
+  background: rgba(8,16,34,.62);
+  border:1px solid var(--borderB);
   font-size:12px;
-  pointer-events:none;
-  z-index:30;
 }
 .hidden{ display:none; }
