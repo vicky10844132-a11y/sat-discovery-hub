@@ -1,182 +1,114 @@
-/* -----------------------------
-   Utilities
------------------------------- */
 const $ = id => document.getElementById(id);
 
-function utcDateKey(iso) {
+/* ---------- Time helpers ---------- */
+function utcDateKey(iso){
   const t = Date.parse(iso);
-  if (!Number.isFinite(t)) return "Unknown";
-  return new Date(t).toISOString().slice(0,10);
+  return Number.isFinite(t) ? new Date(t).toISOString().slice(0,10) : "Unknown";
+}
+function fmtByMode(iso,mode){
+  if(!iso)return"Unknown";
+  const t=Date.parse(iso);
+  if(!Number.isFinite(t))return iso;
+  if(mode==="date")return utcDateKey(iso);
+  return new Date(t).toISOString().slice(0,16).replace("T"," ")+" UTC";
+}
+function opacityByTime(iso){
+  const t=Date.parse(iso);if(!Number.isFinite(t))return.15;
+  const d=(Date.now()-t)/(864e5);
+  if(d<30)return.55;if(d<180)return.35;if(d<365)return.25;
+  if(d<1095)return.18;return.12;
 }
 
-function fmtByMode(iso, mode) {
-  if (!iso) return "Unknown";
-  const t = Date.parse(iso);
-  if (!Number.isFinite(t)) return iso;
-  if (mode === "date") return utcDateKey(iso);
-  return new Date(t).toISOString().slice(0,16).replace("T"," ") + " UTC";
-}
+/* ---------- Map ---------- */
+const map=L.map("map",{minZoom:2,maxZoom:15,worldCopyJump:false})
+  .setView([20,0],2);
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
 
-function getSatelliteName(feature, fallback) {
-  const p = feature.properties || {};
-  return p.platform || p.constellation || fallback || "Unknown satellite";
-}
+const drawn=new L.FeatureGroup().addTo(map);
+const resultsLayer=L.layerGroup().addTo(map);
+let aoiBounds=null,mergedResults=[];
 
-/* -----------------------------
-   Map
------------------------------- */
-const map = L.map("map").setView([20, 0], 2);
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  attribution: "© OpenStreetMap"
-}).addTo(map);
-
-const drawnItems = new L.FeatureGroup().addTo(map);
-const resultsLayer = L.layerGroup().addTo(map);
-
-let aoiGeom = null;
-let mergedResults = [];
-
-/* -----------------------------
-   Draw AOI
------------------------------- */
-map.addControl(new L.Control.Draw({
-  draw: { polyline:false, circle:false, marker:false, circlemarker:false },
-  edit: { featureGroup: drawnItems }
-}));
-
-map.on(L.Draw.Event.CREATED, e => {
-  drawnItems.clearLayers();
-  drawnItems.addLayer(e.layer);
-  aoiGeom = e.layer.toGeoJSON().geometry;
-  $("aoiStatus").textContent = "AOI set";
+/* ---------- Draw ---------- */
+map.addControl(new L.Control.Draw({draw:{polyline:false,circle:false,marker:false,circlemarker:false},edit:{featureGroup:drawn}}));
+map.on(L.Draw.Event.CREATED,e=>{
+  drawn.clearLayers();drawn.addLayer(e.layer);
+  aoiBounds=e.layer.getBounds();
+  lockMap();
 });
+function lockMap(){
+  map.fitBounds(aoiBounds.pad(.3));
+  map.setMaxBounds(aoiBounds.pad(.3));
+  $("aoiStatus").textContent="AOI set";
+}
 
-/* -----------------------------
-   Sources (Open STAC)
------------------------------- */
-const STAC = "https://earth-search.aws.element84.com/v1";
-
-const SOURCES = [
-  { id:"s2", title:"Sentinel-2", collection:"sentinel-2-l2a", color:"#2dd4bf" },
-  { id:"s1", title:"Sentinel-1", collection:"sentinel-1-grd", color:"#fb7185" },
-  { id:"ls", title:"Landsat",    collection:"landsat-c2-l2", color:"#60a5fa" }
+/* ---------- Sources ---------- */
+const STAC="https://earth-search.aws.element84.com/v1";
+const SOURCES=[
+  {id:"s2",name:"Sentinel-2",col:"sentinel-2-l2a",color:"#2dd4bf"},
+  {id:"s1",name:"Sentinel-1",col:"sentinel-1-grd",color:"#fb7185"},
+  {id:"ls",name:"Landsat",col:"landsat-c2-l2",color:"#60a5fa"}
 ];
+$("sources").innerHTML=SOURCES.map(s=>`<label><input id="src_${s.id}" type="checkbox" checked> ${s.name}</label>`).join("");
 
-$("sources").innerHTML = SOURCES.map(s =>
-  `<label><input type="checkbox" id="src_${s.id}" checked> ${s.title}</label>`
-).join("");
-
-/* -----------------------------
-   Query
------------------------------- */
-$("btnQuery").onclick = async () => {
-  if (!aoiGeom) return alert("Set AOI first");
-
-  const start = $("startDate").value;
-  const end = $("endDate").value;
-  const datetime = (start && end) ? `${start}T00:00:00Z/${end}T23:59:59Z` : "..";
-
-  resultsLayer.clearLayers();
-  mergedResults = [];
-
-  const raw = [];
-
-  for (const s of SOURCES) {
-    if (!$(`src_${s.id}`).checked) continue;
-
-    const res = await fetch(`${STAC}/search`, {
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify({
-        collections:[s.collection],
-        intersects:aoiGeom,
-        datetime,
-        limit:200
-      })
-    });
-    const json = await res.json();
-    (json.features || []).forEach(f => {
-      raw.push({
-        satellite: getSatelliteName(f, s.title),
-        datetime: f.properties.datetime,
-        feature: f,
-        color: s.color
-      });
-    });
-
-    L.geoJSON(json.features, {
-      style:{ color:s.color, weight:2, fillOpacity:0.08 },
-      onEachFeature:(f,l)=>{
-        l.bindPopup(
-          `<b>${getSatelliteName(f,s.title)}</b><br/>${fmtByMode(f.properties.datetime,"datetime")}`
-        );
-      }
+/* ---------- Query ---------- */
+$("btnQuery").onclick=async()=>{
+  if(!aoiBounds)return alert("Set AOI first");
+  resultsLayer.clearLayers();mergedResults=[];
+  const start=$("startDate").value,end=$("endDate").value;
+  const datetime=start&&end?`${start}T00:00:00Z/${end}T23:59:59Z`:"..";
+  let raw=[];
+  for(const s of SOURCES){
+    if(!$(`src_${s.id}`).checked)continue;
+    const r=await fetch(`${STAC}/search`,{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({collections:[s.col],intersects:drawn.toGeoJSON().features[0].geometry,datetime,limit:200})});
+    const j=await r.json();
+    L.geoJSON(j.features,{
+      style:f=>({color:s.color,fillColor:s.color,weight:2,fillOpacity:opacityByTime(f.properties.datetime)}),
+      onEachFeature:(f,l)=>l.bindPopup(`<b>${s.name}</b><br>${fmtByMode(f.properties.datetime,"datetime")}`)
     }).addTo(resultsLayer);
+    j.features.forEach(f=>raw.push({sat:s.name,dt:f.properties.datetime,f,color:s.color}));
   }
-
-  mergedResults = mergeBySatelliteAndDate(raw);
-  renderList();
+  mergedResults=merge(raw);renderList();
 };
 
-function mergeBySatelliteAndDate(items) {
-  const map = new Map();
-  items.forEach(it => {
-    const key = `${it.satellite}_${utcDateKey(it.datetime)}`;
-    if (!map.has(key)) {
-      map.set(key, {
-        satellite: it.satellite,
-        date: utcDateKey(it.datetime),
-        times: [],
-        features: [],
-        color: it.color
-      });
-    }
-    const g = map.get(key);
-    g.times.push(it.datetime);
-    g.features.push(it.feature);
+/* ---------- Merge ---------- */
+function merge(items){
+  const m=new Map();
+  items.forEach(i=>{
+    const k=i.sat+"_"+utcDateKey(i.dt);
+    if(!m.has(k))m.set(k,{sat:i.sat,date:utcDateKey(i.dt),times:[],features:[],color:i.color});
+    m.get(k).times.push(i.dt);m.get(k).features.push(i.f);
   });
-  return Array.from(map.values())
-    .sort((a,b)=> b.date.localeCompare(a.date));
+  return[...m.values()].sort((a,b)=>b.date.localeCompare(a.date));
 }
 
-/* -----------------------------
-   Render list
------------------------------- */
-function renderList() {
-  const mode = $("timeMode").value;
-  const box = $("results");
-  box.innerHTML = "";
-
-  mergedResults.forEach(g => {
-    const row = document.createElement("div");
-    row.className = "result";
-    row.innerHTML =
-      `<b>${g.satellite}</b> · ${g.date}${g.times.length>1?` (${g.times.length})`:""}`;
-    row.onclick = ()=>{
-      resultsLayer.clearLayers();
-      L.geoJSON(
-        { type:"FeatureCollection", features:g.features },
-        { style:{ color:"#fff", weight:3, fillOpacity:0.15 } }
-      ).addTo(resultsLayer);
-    };
-    box.appendChild(row);
+/* ---------- Render ---------- */
+function renderList(){
+  const box=$("results");box.innerHTML="";
+  mergedResults.forEach(g=>{
+    const d=document.createElement("div");
+    d.className="result";
+    d.innerHTML=`<b>${g.sat}</b> · ${g.date}${g.times.length>1?` (${g.times.length})`:""}`;
+    d.onclick=()=>{resultsLayer.clearLayers();
+      L.geoJSON({type:"FeatureCollection",features:g.features},
+        {style:{color:"#fff",fillOpacity:.15}}).addTo(resultsLayer);}
+    box.appendChild(d);
   });
-
-  $("countPill").textContent = mergedResults.length;
+  $("countPill").textContent=mergedResults.length;
 }
+$("timeMode").onchange=renderList;
 
-$("timeMode").onchange = renderList;
+/* ---------- Timeline ---------- */
+$("timeSlider").oninput=e=>{
+  const p=+e.target.value;
+  const t=Date.now()-(3650*p/100)*864e5;
+  $("timeLabel").textContent=p==100?"Now":new Date(t).toISOString().slice(0,10);
+  resultsLayer.eachLayer(l=>l.eachLayer?.(x=>{
+    const dt=Date.parse(x.feature.properties.datetime);
+    x.setStyle({fillOpacity:dt>=t?opacityByTime(x.feature.properties.datetime):0});
+  }));
+};
 
-/* -----------------------------
-   Clear
------------------------------- */
-$("btnClearResults").onclick = ()=>{
-  resultsLayer.clearLayers();
-  $("results").innerHTML = "";
-  $("countPill").textContent = 0;
-};
-$("btnClearAOI").onclick = ()=>{
-  drawnItems.clearLayers();
-  aoiGeom = null;
-  $("aoiStatus").textContent = "AOI not set";
-};
+/* ---------- Clear ---------- */
+$("btnClearResults").onclick=()=>{resultsLayer.clearLayers();$("results").innerHTML="";$("countPill").textContent=0;}
+$("btnClearAOI").onclick=()=>{drawn.clearLayers();map.setMaxBounds(null);$("aoiStatus").textContent="AOI not set";}

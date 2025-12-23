@@ -1,85 +1,84 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Open Satellite Observation Capability Index</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Satellite Discovery Index</title>
 
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css"/>
-  <link rel="stylesheet" href="styles.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css"/>
+<link rel="stylesheet" href="styles.css"/>
 </head>
 
 <body>
+
+<header id="topbar">
+  <div class="title">Satellite Discovery Index</div>
+  <div class="badges">
+    <span>OPEN</span>
+    <span>NO LOGIN</span>
+    <span>REFERENCE ONLY</span>
+  </div>
+</header>
+
 <div id="app">
   <aside id="sidebar">
-    <h1>Open Satellite Observation Capability Index</h1>
-    <p class="subtitle">
-      Open · Archive-based · Reference-only · No imagery · No proprietary API
-    </p>
 
-    <!-- AOI -->
     <section>
-      <h2>AOI</h2>
+      <h2><span class="step">1</span> AOI</h2>
       <button id="btnDraw">Draw AOI</button>
       <button id="btnClearAOI">Clear AOI</button>
-
-      <label>Place name</label>
+      <label>Place</label>
       <div class="row">
-        <input id="placeInput" placeholder="e.g. Singapore / Shenzhen"/>
+        <input id="placeInput" placeholder="Beijing / Dubai / New York"/>
         <button id="btnGeocode">Locate</button>
       </div>
-
       <label>Point + Radius (km)</label>
       <div class="row">
         <input id="radiusKm" type="number" value="50"/>
-        <button id="btnPointRadius">Pick center</button>
+        <button id="btnPointRadius">Pick</button>
       </div>
-
-      <label>Upload AOI file</label>
-      <input id="fileInput" type="file"
-             accept=".zip,.shp,.kmz,.kml,.geojson,.json"/>
-
       <div id="aoiStatus" class="hint">AOI not set</div>
     </section>
 
-    <!-- Time -->
     <section>
-      <h2>Time Range (UTC)</h2>
+      <h2><span class="step">2</span> Time Range (UTC)</h2>
       <div class="row">
         <input id="startDate" type="date"/>
         <input id="endDate" type="date"/>
       </div>
     </section>
 
-    <!-- Sources -->
     <section>
-      <h2>Public Archives</h2>
+      <h2><span class="step">3</span> Public Archives</h2>
       <div id="sources"></div>
-
       <button id="btnQuery">Query Archive</button>
       <button id="btnClearResults">Clear Results</button>
     </section>
 
-    <!-- Results -->
     <section>
-      <h2>Results</h2>
+      <h2><span class="step">4</span> Results</h2>
 
-      <div class="row">
-        <select id="timeMode">
-          <option value="date" selected>Date</option>
-          <option value="datetime">Date + Time (UTC)</option>
-        </select>
-        <span id="countPill" class="pill">0</span>
+      <select id="timeMode">
+        <option value="date">Date</option>
+        <option value="datetime">Date + Time (UTC)</option>
+      </select>
+
+      <div class="timeline">
+        <input id="timeSlider" type="range" min="0" max="100" value="100"/>
+        <div class="timeline-label">
+          Show data up to <span id="timeLabel">Now</span>
+        </div>
       </div>
 
+      <div id="countPill" class="pill">0</div>
       <div id="results" class="results"></div>
     </section>
 
     <footer>
-      Archive records only. No imagery.  
-      All results are indicative and for reference.
+      Open archive reference only · No imagery · No proprietary systems
     </footer>
+
   </aside>
 
   <div id="map"></div>
@@ -88,10 +87,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6.5.0/turf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/shpjs@4.0.4/dist/shp.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tmcw/togeojson@5.8.1/dist/togeojson.umd.js"></script>
-
 <script src="app.js"></script>
+
 </body>
 </html>
