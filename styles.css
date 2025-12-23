@@ -1,200 +1,247 @@
-/* =========================
-   GLOBAL THEME
-========================= */
+/* ===============================
+   GLOBAL / BACKGROUND
+=============================== */
 :root{
-  --bg:#060b14;
-  --panel:#0b1220;
-  --panel-2:#0e1628;
-  --line:#1e3355;
-  --glow:#2da8ff;
-  --glow-soft:rgba(45,168,255,.35);
-  --text:#dce7f5;
-  --muted:#7f95b3;
+  --bg:#050a14;
+  --panel:#0b1424;
+  --panel-glass:rgba(15,30,55,.75);
+  --line:#223a5e;
+  --glow:#4cc9ff;
+  --glow-soft:rgba(76,201,255,.35);
+  --text:#e6f0ff;
+  --muted:#8aa2c8;
 }
 
 html,body{
   margin:0;
   height:100%;
-  background:radial-gradient(circle at 30% 20%, #0b1a33, #05080f 60%);
+  background:
+    radial-gradient(1200px 600px at 20% -10%, #132a4d, #050a14 60%);
   color:var(--text);
-  font-family: "Segoe UI", system-ui, sans-serif;
-  letter-spacing:.2px;
+  font-family: system-ui, "Segoe UI", sans-serif;
 }
 
-/* =========================
-   TOP BAR (HUD)
-========================= */
+/* ===============================
+   TOP BAR
+=============================== */
 #topbar{
   position:fixed;
-  inset:0 0 auto 0;
-  height:52px;
+  top:0;left:0;right:0;
+  height:56px;
   display:flex;
   align-items:center;
   justify-content:space-between;
-  padding:0 18px;
+  padding:0 22px;
   background:
-    linear-gradient(180deg, rgba(20,40,80,.65), rgba(5,8,15,.95));
+    linear-gradient(180deg, rgba(20,45,85,.9), rgba(8,15,30,.95));
   border-bottom:1px solid var(--line);
-  box-shadow:0 0 30px rgba(45,168,255,.15);
+  box-shadow:0 10px 40px rgba(0,0,0,.6);
   z-index:1000;
 }
 
+/* ✅ 标题：加大 + 冷光（你说的“太小”就在这里解决） */
 #topbar .title{
-  font-size:15px;
+  font-size:24px;
+  font-weight:700;
+  letter-spacing:2.5px;
   text-transform:uppercase;
-  color:#e9f2ff;
-  text-shadow:0 0 12px var(--glow-soft);
+  color:#f5faff;
+  text-shadow:
+    0 0 10px rgba(76,201,255,.45),
+    0 0 30px rgba(76,201,255,.25);
+  padding-left:4px;
 }
 
 #topbar .badges span{
   margin-left:8px;
-  font-size:10px;
+  font-size:11px;
   padding:4px 10px;
-  border:1px solid var(--line);
   border-radius:999px;
-  color:#9cc7ff;
-  background:linear-gradient(180deg, #0f2544, #091528);
-  box-shadow:0 0 10px rgba(45,168,255,.25);
+  color:#bfe6ff;
+  background:
+    linear-gradient(180deg, #16345c, #0a1a33);
+  box-shadow:0 0 16px var(--glow-soft);
 }
 
-/* =========================
+/* ===============================
    LAYOUT
-========================= */
+=============================== */
 #app{
   display:flex;
   height:100%;
-  padding-top:52px;
+  padding-top:56px;
 }
 
 #sidebar{
-  width:390px;
-  padding:16px;
+  width:400px;
+  padding:18px;
   background:
-    linear-gradient(180deg, rgba(12,20,38,.9), rgba(6,10,18,.98));
+    linear-gradient(180deg,
+      rgba(15,30,55,.95),
+      rgba(6,10,18,.98));
   border-right:1px solid var(--line);
-  box-shadow:inset 0 0 40px rgba(45,168,255,.05);
+  box-shadow:
+    inset 0 0 80px rgba(76,201,255,.08),
+    0 0 40px rgba(0,0,0,.6);
   overflow:auto;
 }
 
-/* =========================
-   PANELS
-========================= */
+/* ===============================
+   PANELS (AOI / TIME / ARCHIVE)
+=============================== */
 section{
-  margin-bottom:18px;
-  padding:14px;
+  margin-bottom:20px;
+  padding:16px;
   background:
-    linear-gradient(180deg, var(--panel-2), var(--panel));
-  border:1px solid var(--line);
-  border-radius:14px;
+    linear-gradient(180deg,
+      rgba(18,36,70,.85),
+      rgba(10,18,36,.95));
+  border-radius:18px;
   box-shadow:
-    inset 0 0 0 1px rgba(45,168,255,.05),
-    0 0 25px rgba(0,0,0,.6);
+    inset 0 0 0 1px rgba(76,201,255,.15),
+    inset 0 0 30px rgba(76,201,255,.08),
+    0 0 30px rgba(0,0,0,.6);
 }
 
 h2{
-  margin:0 0 10px;
-  font-size:13px;
+  margin:0 0 14px;
+  font-size:14px;
   text-transform:uppercase;
-  color:#cfe4ff;
+  letter-spacing:.6px;
+  color:#e8f2ff;
 }
 
 .step{
-  display:inline-block;
-  width:18px;height:18px;
-  line-height:18px;
-  text-align:center;
-  margin-right:6px;
+  display:inline-flex;
+  justify-content:center;
+  align-items:center;
+  width:22px;height:22px;
+  margin-right:8px;
   border-radius:50%;
-  font-size:11px;
-  background:linear-gradient(180deg, #1c3b66, #0b1b33);
-  box-shadow:0 0 10px var(--glow-soft);
+  font-size:12px;
+  background:
+    radial-gradient(circle at 30% 30%, #5fd0ff, #1b4f85);
+  box-shadow:0 0 14px var(--glow-soft);
 }
 
-/* =========================
-   FORM ELEMENTS
-========================= */
-input,select,button{
+/* ===============================
+   INPUTS / BUTTONS
+=============================== */
+input,select{
   width:100%;
   margin-top:6px;
-  padding:8px 10px;
-  background:#070d18;
+  padding:10px 12px;
+  background:rgba(5,10,20,.9);
   color:var(--text);
-  border:1px solid var(--line);
-  border-radius:10px;
-  outline:none;
+  border:none;
+  border-radius:14px;
+  box-shadow:
+    inset 0 0 0 1px rgba(76,201,255,.25),
+    inset 0 0 14px rgba(0,0,0,.8);
 }
 
 button{
-  cursor:pointer;
+  width:100%;
+  margin-top:8px;
+  padding:12px;
+  border:none;
+  border-radius:16px;
+  color:#eaf6ff;
+  font-size:14px;
+  letter-spacing:.4px;
   background:
-    linear-gradient(180deg, #12284a, #0a1628);
-  box-shadow:0 0 12px rgba(45,168,255,.25);
+    linear-gradient(180deg, #1e4f88, #0f274a);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.08),
+    0 0 20px rgba(76,201,255,.35);
+  cursor:pointer;
 }
 
 button:hover{
-  box-shadow:0 0 18px rgba(45,168,255,.45);
+  box-shadow:
+    0 0 28px rgba(76,201,255,.6);
 }
 
 .row{
   display:flex;
-  gap:8px;
+  gap:10px;
 }
 
 .hint{
-  font-size:11px;
+  margin-top:6px;
+  font-size:12px;
   color:var(--muted);
 }
 
-/* =========================
+/* ===============================
    RESULTS LIST
-========================= */
+=============================== */
 .results{
   max-height:260px;
   overflow:auto;
-  border:1px solid var(--line);
-  border-radius:10px;
-  background:#060b14;
+  border-radius:14px;
+  background:rgba(5,10,20,.9);
+  box-shadow:
+    inset 0 0 0 1px rgba(76,201,255,.2);
 }
 
 .result{
-  padding:8px 10px;
-  font-size:12px;
-  border-bottom:1px solid #162745;
+  padding:10px 12px;
+  font-size:13px;
+  border-bottom:1px solid rgba(76,201,255,.15);
   cursor:pointer;
 }
 
 .result:hover{
-  background:rgba(45,168,255,.08);
+  background:rgba(76,201,255,.1);
 }
 
-/* =========================
+/* ===============================
    TIMELINE
-========================= */
+=============================== */
 .timeline input[type=range]{
-  accent-color:#2da8ff;
+  accent-color:#4cc9ff;
 }
 
 .timeline-label{
-  font-size:11px;
+  font-size:12px;
   color:var(--muted);
-  margin-top:4px;
+  margin-top:6px;
 }
 
-/* =========================
-   MAP
-========================= */
+/* ===============================
+   MAP (VERY IMPORTANT)
+=============================== */
 #map{
   flex:1;
-  background:#05080f;
-  box-shadow:inset 0 0 60px rgba(0,0,0,.8);
+  background:#02060d;
+  filter: brightness(.85) saturate(.85);
+  box-shadow:
+    inset 0 0 120px rgba(0,0,0,.85);
 }
 
-/* =========================
+/* ===============================
+   LEAFLET CONTROLS (UNIFY STYLE)
+=============================== */
+.leaflet-control-zoom,
+.leaflet-draw-toolbar{
+  background:rgba(15,30,55,.9) !important;
+  border-radius:12px !important;
+  box-shadow:0 0 18px rgba(0,0,0,.8) !important;
+}
+
+.leaflet-control-zoom a,
+.leaflet-draw-toolbar a{
+  background:transparent !important;
+  color:#e6f0ff !important;
+}
+
+/* ===============================
    FOOTER
-========================= */
+=============================== */
 footer{
-  font-size:11px;
-  color:#7f95b3;
-  margin-top:10px;
-  opacity:.85;
+  margin-top:14px;
+  font-size:12px;
+  color:#8aa2c8;
+  opacity:.9;
 }
