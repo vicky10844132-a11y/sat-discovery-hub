@@ -289,3 +289,13 @@ input::placeholder{ color: rgba(160,180,210,.55); }
   font-size:12px;
 }
 .hidden{ display:none; }
+/* ===== Force basemap into deep-blue (fix "still black") ===== */
+.leaflet-tile-pane{
+  filter: brightness(1.06) contrast(1.35) saturate(2.05) hue-rotate(185deg) !important;
+}
+
+/* optional: slightly lift label layer if you use labels tiles */
+.leaflet-tile-pane img{
+  opacity: .92;
+}
+

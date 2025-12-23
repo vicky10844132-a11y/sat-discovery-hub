@@ -68,6 +68,10 @@ const osmFallback = L.tileLayer(
 cartoNoLabels.addTo(map);
 cartoLabels.addTo(map);
 
+map.getPane("tilePane").style.filter =
+  "brightness(1.06) contrast(1.35) saturate(2.05) hue-rotate(185deg)";
+
+
 /* Safer filter: keep neon but don’t kill the map */
 function applyTileFilter(mode){
   try{
