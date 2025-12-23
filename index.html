@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Satellite Discovery Index</title>
 
-  <!-- Typography: modern + tech -->
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Orbitron:wght@500;600&display=swap" rel="stylesheet">
@@ -22,12 +22,12 @@
     <div class="brand">
       <span class="brandDot"></span>
       <div class="brandText">
-        <div class="brandTitle">Satellite Discovery Index</div>
+        <div class="brandTitle">SATELLITE DISCOVERY INDEX</div>
         <div class="brandSub">Open data only · No login · Archive footprints (reference only)</div>
       </div>
     </div>
 
-    <nav class="tabs" aria-label="sections">
+    <nav class="tabs" aria-label="tabs">
       <span class="tab active">AOI</span>
       <span class="tab">Coverage</span>
       <span class="tab">Footprints</span>
@@ -35,20 +35,19 @@
       <span class="tab">Sources</span>
     </nav>
 
-    <div class="chips">
-      <span class="chip">OPEN</span>
-      <span class="chip">NO LOGIN</span>
-      <span class="chip warn">REFERENCE ONLY</span>
+    <div class="rightPills">
+      <span class="pill">OPEN · NO LOGIN</span>
+      <span class="pill ghost">REFERENCE ONLY</span>
     </div>
   </header>
 
   <div id="app">
     <aside id="sidebar">
-
+      <!-- 1 AOI -->
       <section class="card">
         <div class="cardHead">
           <div class="step">1</div>
-          <div class="cardTitle">AOI Setup</div>
+          <div class="cardTitle">AOI SETUP</div>
         </div>
 
         <div class="btnRow">
@@ -76,36 +75,41 @@
         <div id="aoiStatus" class="hint strong">AOI not set</div>
       </section>
 
+      <!-- 2 TIME -->
       <section class="card">
         <div class="cardHead">
           <div class="step">2</div>
-          <div class="cardTitle">Time Range (UTC)</div>
+          <div class="cardTitle">TIME RANGE (UTC)</div>
         </div>
+
         <div class="row">
           <input id="startDate" type="date"/>
           <input id="endDate" type="date"/>
         </div>
+
         <div class="hint">Used for open STAC checks (footprints + time only).</div>
       </section>
 
+      <!-- 3 SOURCES -->
       <section class="card">
         <div class="cardHead">
           <div class="step">3</div>
-          <div class="cardTitle">Public Archives</div>
+          <div class="cardTitle">PUBLIC ARCHIVES</div>
         </div>
 
         <div id="sources" class="sources"></div>
 
         <div class="btnRow">
-          <button id="btnQuery" class="btn primary">Query Archive</button>
+          <button id="btnQuery" class="btn primary wide">Query Archive</button>
           <button id="btnClearResults" class="btn ghost">Clear Results</button>
         </div>
       </section>
 
+      <!-- 4 RESULTS -->
       <section class="card">
         <div class="cardHead">
           <div class="step">4</div>
-          <div class="cardTitle">Results</div>
+          <div class="cardTitle">RESULTS</div>
         </div>
 
         <div class="row">
@@ -125,14 +129,17 @@
       </section>
 
       <footer class="foot">
-        Reference only. No imagery. No proprietary APIs. No vendor inventory checks.
+        Reference only · No imagery · No proprietary APIs · No vendor inventory checks
       </footer>
     </aside>
 
     <main id="main">
       <div id="mapFrame">
         <div id="map"></div>
+
+        <!-- HUD overlay (grid + dots) -->
         <div class="gridOverlay"></div>
+
         <div id="toast" class="toast hidden"></div>
       </div>
     </main>

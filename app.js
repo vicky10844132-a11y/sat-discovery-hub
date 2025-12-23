@@ -41,23 +41,24 @@ function toUtcDate(d){ return d.toISOString().slice(0,10); }
 
 /* ---------------- Map ---------------- */
 const map = L.map("map", {
-  minZoom: 2,           // ✅ 防止无限缩小
+  minZoom: 2,           // ✅ limit zoom-out
   maxZoom: 16,
-  worldCopyJump: false, // ✅ 防止横向无限世界复制
+  worldCopyJump: false, // ✅ prevent repeated worlds
 }).setView([20,0], 2);
 
 map.options.wheelPxPerZoomLevel = 120;
 
-/* Dark basemap (tech vibe) */
+/* Dark basemap */
 L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",{
   subdomains:"abcd",
   maxZoom:19,
   attribution:"© OpenStreetMap © CARTO"
 }).addTo(map);
 
-/* Slightly stylize tiles to match fashion-tech */
+/* === Key: deep-space + glowing coasts look (matches your target) === */
 try{
-  map.getPane("tilePane").style.filter = "brightness(0.92) saturate(0.95) contrast(1.05)";
+  map.getPane("tilePane").style.filter =
+    "brightness(0.65) contrast(1.35) saturate(1.25)";
 } catch {}
 
 /* Layers */
@@ -73,8 +74,8 @@ let sliderThresholdTime = Infinity;
 map.addControl(new L.Control.Draw({
   draw:{
     polyline:false, marker:false, circle:false, circlemarker:false,
-    rectangle:{ shapeOptions:{ color:"#6ee7ff", weight:2, fillOpacity:0.06 }},
-    polygon:{ allowIntersection:false, shapeOptions:{ color:"#6ee7ff", weight:2, fillOpacity:0.06 }}
+    rectangle:{ shapeOptions:{ color:"#77e3ff", weight:2, fillOpacity:0.06 }},
+    polygon:{ allowIntersection:false, shapeOptions:{ color:"#77e3ff", weight:2, fillOpacity:0.06 }}
   },
   edit:{ featureGroup: drawn, remove:true }
 }));
@@ -97,6 +98,7 @@ function lockMapToAOI(bounds){
   const padded = bounds.pad(0.35);
   map.fitBounds(padded, { padding:[24,24] });
   map.setMaxBounds(padded);
+
   map.off("drag", _panInside);
   function _panInside(){ map.panInsideBounds(padded, { animate:false }); }
   map.on("drag", _panInside);
@@ -124,7 +126,7 @@ $("btnDraw").addEventListener("click", ()=>toast("Use draw tools on map (rectang
 $("btnClearAOI").addEventListener("click", ()=>{
   clearAOI();
   clearResults();
-  toast("AOI cleared.", 1800);
+  toast("AOI cleared.", 1600);
 });
 
 /* Point + Radius */
@@ -139,9 +141,11 @@ map.on("click", (e)=>{
   const km = Math.max(1, Math.min(1000, Number($("radiusKm").value || 50)));
   const center = turf.point([e.latlng.lng, e.latlng.lat]);
   const circle = turf.circle(center, km, { units:"kilometers", steps: 72 });
-  const layer = L.geoJSON(circle, { style:{ color:"#6ee7ff", weight:2, fillOpacity:0.06 }});
+
+  const layer = L.geoJSON(circle, { style:{ color:"#77e3ff", weight:2, fillOpacity:0.06 }});
   drawn.clearLayers();
   drawn.addLayer(layer);
+
   aoiGeom = circle.geometry;
   aoiBounds = L.geoJSON(circle).getBounds();
   $("aoiStatus").textContent = "AOI set";
@@ -157,18 +161,21 @@ $("btnGeocode").addEventListener("click", async ()=>{
     const r = await fetch(url, { headers:{ "accept":"application/json" }});
     const j = await r.json();
     if(!j?.length) return toast("Place not found.", 2200);
+
     const lat = Number(j[0].lat), lon = Number(j[0].lon);
     map.setView([lat, lon], 9);
 
     // convenience AOI: 10km circle
     const center = turf.point([lon, lat]);
     const circle = turf.circle(center, 10, { units:"kilometers", steps:72 });
-    const layer = L.geoJSON(circle, { style:{ color:"#6ee7ff", weight:2, fillOpacity:0.06 }});
+    const layer = L.geoJSON(circle, { style:{ color:"#77e3ff", weight:2, fillOpacity:0.06 }});
     drawn.clearLayers(); drawn.addLayer(layer);
+
     aoiGeom = circle.geometry;
     aoiBounds = L.geoJSON(circle).getBounds();
     $("aoiStatus").textContent = "AOI set";
     lockMapToAOI(aoiBounds);
+
     toast("Located & AOI created.", 1800);
   } catch(e){
     console.error(e);
@@ -179,8 +186,8 @@ $("btnGeocode").addEventListener("click", async ()=>{
 /* ---------------- Sources ---------------- */
 const STAC_ROOT = "https://earth-search.aws.element84.com/v1";
 const SOURCES = [
-  { id:"s2", name:"Sentinel-2", collection:"sentinel-2-l2a", color:"#6ee7ff" },
-  { id:"s1", name:"Sentinel-1", collection:"sentinel-1-grd", color:"#a78bfa" },
+  { id:"s2", name:"Sentinel-2", collection:"sentinel-2-l2a", color:"#77e3ff" },
+  { id:"s1", name:"Sentinel-1", collection:"sentinel-1-grd", color:"#8a7bff" },
   { id:"ls", name:"Landsat",    collection:"landsat-c2-l2",  color:"#34d399" }
 ];
 
@@ -249,8 +256,8 @@ function renderList(){
     `;
 
     item.onclick = ()=>{
-      // isolate highlight (decision mode)
       resultsLayer.clearLayers();
+
       const layer = L.geoJSON(
         { type:"FeatureCollection", features: g.features },
         {
@@ -268,7 +275,6 @@ function renderList(){
         }
       ).addTo(resultsLayer);
 
-      // respect AOI lock
       try { map.fitBounds(layer.getBounds(), { padding:[24,24] }); } catch {}
       if(aoiBounds) lockMapToAOI(aoiBounds);
       applyTimelineFilterToLayer(resultsLayer);
@@ -281,11 +287,12 @@ function renderList(){
 }
 $("timeMode").addEventListener("change", renderList);
 
-/* Timeline slider (no re-query) */
+/* Timeline slider */
 function updateTimeThreshold(percent){
   const maxAgeDays = 365 * 10;
   const days = maxAgeDays * (percent / 100);
   sliderThresholdTime = Date.now() - days * 86400000;
+
   const d = new Date(sliderThresholdTime);
   $("timeLabel").textContent = (percent===100) ? "Now" : d.toISOString().slice(0,10);
 }
@@ -345,7 +352,7 @@ $("btnQuery").addEventListener("click", async ()=>{
       const fc = await stacSearch(src.collection, aoiGeom, datetime, 200);
       const feats = fc.features || [];
 
-      const layer = L.geoJSON(feats, {
+      L.geoJSON(feats, {
         style:(f)=>({
           color: src.color,
           weight: 2,
@@ -368,14 +375,12 @@ $("btnQuery").addEventListener("click", async ()=>{
         });
       }
 
-      // keep AOI lock
       if(aoiBounds) lockMapToAOI(aoiBounds);
     }
 
     mergedGroups = mergeBySatelliteAndDate(allItems);
     renderList();
 
-    // timeline default (100 => Now, show all)
     updateTimeThreshold(Number($("timeSlider").value || 100));
     applyTimelineFilterToLayer(resultsLayer);
 
