@@ -1,19 +1,3 @@
 {
-  "version": "1.0",
-  "note": "Planning reference only. Uses public TLE + simplified swath model.",
-  "tleSources": {
-    "celestrak_resource": {
-      "name": "CelesTrak - Resource Satellites (public TLE)",
-      "url": "https://celestrak.org/NORAD/elements/gp.php?GROUP=resource&FORMAT=tle",
-      "ttlHours": 12
-    }
-  },
-  "satellites": [
-    { "name": "SENTINEL-2A", "tleSource": "celestrak_resource", "tleName": "SENTINEL-2A", "swathKm": 290 },
-    { "name": "SENTINEL-2B", "tleSource": "celestrak_resource", "tleName": "SENTINEL-2B", "swathKm": 290 },
-    { "name": "SENTINEL-1A", "tleSource": "celestrak_resource", "tleName": "SENTINEL-1A", "swathKm": 250 },
-    { "name": "SENTINEL-1B", "tleSource": "celestrak_resource", "tleName": "SENTINEL-1B", "swathKm": 250 },
-    { "name": "LANDSAT 8", "tleSource": "celestrak_resource", "tleName": "LANDSAT 8", "swathKm": 185 },
-    { "name": "LANDSAT 9", "tleSource": "celestrak_resource", "tleName": "LANDSAT 9", "swathKm": 185 }
-  ]
+  "note": "Optional mapping file if you later want to filter satellites explicitly."
 }

@@ -1,42 +1,99 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Open Satellite Observation Capability Index</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="./styles.css" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Satellite Discovery Index</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <link rel="stylesheet" href="./styles.css"/>
 </head>
+
 <body>
-  <header class="top">
-    <h1>Open Satellite Observation Capability Index</h1>
-    <p class="subtitle">
-      Cross-satellite reference based on publicly available information
-    </p>
+<div class="app">
+
+  <!-- Top Bar -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="orb"></div>
+      <div>
+        <div class="brandTitle">Satellite Discovery Index</div>
+        <div class="brandSub">
+          Open · Reference-only · No imagery · No proprietary API
+        </div>
+      </div>
+    </div>
   </header>
 
-  <main>
-    <section class="controls">
-      <label>
-        From
-        <input type="month" id="from" value="2018-01" />
-      </label>
-      <label>
-        To
-        <input type="month" id="to" value="2025-01" />
-      </label>
-      <button id="run">Show Capabilities</button>
+  <main class="layout">
+
+    <!-- LEFT PANEL -->
+    <aside class="sidebar">
+
+      <!-- AOI -->
+      <section class="card">
+        <h2>1) AOI</h2>
+        <input id="placeInput" placeholder="City / Region / Country"/>
+        <button id="locateBtn">Locate</button>
+        <div id="aoiInfo" class="hint">No AOI set</div>
+      </section>
+
+      <!-- ARCHIVE -->
+      <section class="card">
+        <h2>2) Archive Index (Open)</h2>
+
+        <label>Time Range</label>
+        <div class="inline">
+          <input id="fromMonth" type="month"/>
+          <span>→</span>
+          <input id="toMonth" type="month"/>
+        </div>
+
+        <label>Archive Source</label>
+        <select id="archiveGroup"></select>
+        <select id="archiveSource"></select>
+
+        <button id="archiveBtn">Check Archive</button>
+        <button id="archiveClearBtn" class="secondary">Clear</button>
+
+        <div id="archiveResults" class="results"></div>
+      </section>
+
+      <!-- PROGRAMMING -->
+      <section class="card">
+        <h2>3) Programming / Pass Reference</h2>
+
+        <label>Days Ahead</label>
+        <input id="daysAhead" type="number" min="1" max="14" value="7"/>
+
+        <button id="programBtn">Compute Passes</button>
+        <button id="programClearBtn" class="secondary">Clear</button>
+
+        <div id="programResults" class="results"></div>
+
+        <div class="footnote">
+          Pass windows are derived from public TLE + SGP4 and are
+          geometric references only.
+        </div>
+      </section>
+
+    </aside>
+
+    <!-- MAP -->
+    <section class="mapWrap">
+      <div id="map"></div>
+      <div class="hud left">Open · No Login</div>
+      <div class="hud right">Reference Only</div>
     </section>
 
-    <section id="results"></section>
   </main>
 
-  <footer>
-    <p>
-      Reference only. No imagery is hosted, stored, proxied, or distributed.
-      All links point to official public information pages.
-    </p>
-  </footer>
+</div>
 
-  <script src="./app.js"></script>
+<div id="toast"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/satellite.js@5.0.1/dist/satellite.min.js"></script>
+<script src="./app.js"></script>
 </body>
 </html>
