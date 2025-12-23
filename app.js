@@ -2,6 +2,7 @@ const $ = (id) => document.getElementById(id);
 
 function toast(msg, ms=2200){
   const t = $("toast");
+  if(!t) return;
   t.textContent = msg;
   t.classList.remove("hidden");
   clearTimeout(toast._tm);
@@ -13,6 +14,7 @@ function utcDateKey(iso){
   if (!Number.isFinite(t)) return "Unknown";
   return new Date(t).toISOString().slice(0,10);
 }
+
 function fmtByMode(iso, mode){
   if (!iso) return "Unknown";
   const t = Date.parse(iso);
@@ -20,6 +22,7 @@ function fmtByMode(iso, mode){
   if (mode === "date") return new Date(t).toISOString().slice(0,10);
   return new Date(t).toISOString().slice(0,16).replace("T"," ") + " UTC";
 }
+
 function opacityByTime(iso){
   const t = Date.parse(iso);
   if (!Number.isFinite(t)) return 0.12;
@@ -32,7 +35,7 @@ function opacityByTime(iso){
 }
 
 function parseDate(id){
-  const v = $(id).value;
+  const v = $(id)?.value;
   if (!v) return null;
   const d = new Date(v + "T00:00:00.000Z");
   return Number.isFinite(d.getTime()) ? d : null;
@@ -48,7 +51,7 @@ const map = L.map("map", {
 
 map.options.wheelPxPerZoomLevel = 120;
 
-/* Preferred tiles: CARTO dark_nolabels + labels */
+/* Preferred tiles: CARTO dark base + labels */
 const cartoNoLabels = L.tileLayer(
   "https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png",
   { subdomains:"abcd", maxZoom:19, attribution:"© OpenStreetMap © CARTO" }
@@ -56,10 +59,10 @@ const cartoNoLabels = L.tileLayer(
 
 const cartoLabels = L.tileLayer(
   "https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png",
-  { subdomains:"abcd", maxZoom:19, opacity: 0.92 }
+  { subdomains:"abcd", maxZoom:19, opacity:0.90 }
 );
 
-/* Fallback: OSM standard (if CARTO blocked/unreachable) */
+/* Fallback tiles: OSM */
 const osmFallback = L.tileLayer(
   "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
   { subdomains:"abc", maxZoom:19, attribution:"© OpenStreetMap" }
@@ -68,65 +71,38 @@ const osmFallback = L.tileLayer(
 cartoNoLabels.addTo(map);
 cartoLabels.addTo(map);
 
-map.getPane("tilePane").style.filter =
-  "brightness(1.06) contrast(1.35) saturate(2.05) hue-rotate(185deg)";
-
-
-/* Safer filter: keep neon but don’t kill the map */
+/* ---- Lock deep-blue look (IMPORTANT) ---- */
 function applyTileFilter(mode){
   try{
-    const tile = map.getPane("tilePane");
-    // 这里不动 overlayPane，避免影响 footprints 的颜色
-    if (mode === "carto") {
-      if (tile) tile.style.filter = "brightness(0.92) contrast(1.22) saturate(1.18)";
-    } else {
-      if (tile) tile.style.filter = "brightness(0.98) contrast(1.10) saturate(1.06)";
-    }
-  } catch {}
+    // deep-blue without killing map details
+    const fCarto = "brightness(1.08) contrast(1.35) saturate(1.55) hue-rotate(190deg)";
+    const fOsm   = "brightness(1.05) contrast(1.22) saturate(1.20) hue-rotate(185deg)";
+    map.getPane("tilePane").style.filter = (mode === "osm") ? fOsm : fCarto;
+  }catch(e){}
 }
 applyTileFilter("carto");
 
-/* Auto fallback on tile errors (6s rolling window) */
+/* ---- Auto fallback on tile errors ---- */
+let tileErrors = 0;
 let fallbackActivated = false;
-let errCount = 0;
-let errWindowStart = 0;
-
-function activateFallback(){
-  if (fallbackActivated) return;
-  fallbackActivated = true;
-
-  toast("Base map blocked/unreachable. Switched to fallback tiles.", 3600);
-
-  try { map.removeLayer(cartoNoLabels); } catch {}
-  try { map.removeLayer(cartoLabels); } catch {}
-
-  osmFallback.addTo(map);
-  applyTileFilter("osm");
-}
 
 function onTileError(){
+  tileErrors++;
   if (fallbackActivated) return;
+  if (tileErrors >= 8){
+    fallbackActivated = true;
+    toast("Base map unreachable. Switched to fallback tiles.", 3200);
 
-  const now = Date.now();
-  if (!errWindowStart || (now - errWindowStart) > 6000) {
-    errWindowStart = now;
-    errCount = 0;
+    map.removeLayer(cartoNoLabels);
+    map.removeLayer(cartoLabels);
+    osmFallback.addTo(map);
+
+    applyTileFilter("osm");
   }
-  errCount++;
-
-  if (errCount >= 8) activateFallback();
 }
 
 cartoNoLabels.on("tileerror", onTileError);
 cartoLabels.on("tileerror", onTileError);
-
-/* Optional: if tiles never load (e.g., blocked with no errors), fallback after 7s */
-setTimeout(() => {
-  if (fallbackActivated) return;
-  // Leaflet adds .leaflet-tile-loaded on loaded tiles
-  const anyLoaded = document.querySelector("#map .leaflet-tile-loaded");
-  if (!anyLoaded) activateFallback();
-}, 7000);
 
 /* Layers */
 const drawn = new L.FeatureGroup().addTo(map);
@@ -141,8 +117,8 @@ let sliderThresholdTime = Infinity;
 map.addControl(new L.Control.Draw({
   draw:{
     polyline:false, marker:false, circle:false, circlemarker:false,
-    rectangle:{ shapeOptions:{ color:"#77e3ff", weight:2, fillOpacity:0.06 }},
-    polygon:{ allowIntersection:false, shapeOptions:{ color:"#77e3ff", weight:2, fillOpacity:0.06 }}
+    rectangle:{ shapeOptions:{ color:"#6fe7ff", weight:2, fillOpacity:0.06 }},
+    polygon:{ allowIntersection:false, shapeOptions:{ color:"#6fe7ff", weight:2, fillOpacity:0.06 }}
   },
   edit:{ featureGroup: drawn, remove:true }
 }));
@@ -176,7 +152,7 @@ function setAOIFromLayer(layer){
   if (!gj?.geometry) return;
   aoiGeom = gj.geometry;
   aoiBounds = layer.getBounds();
-  $("aoiStatus").textContent = "AOI set";
+  const s = $("aoiStatus"); if(s) s.textContent = "AOI set";
   lockMapToAOI(aoiBounds);
 }
 
@@ -185,12 +161,12 @@ function clearAOI(){
   aoiGeom = null;
   aoiBounds = null;
   map.setMaxBounds(null);
-  $("aoiStatus").textContent = "AOI not set";
+  const s = $("aoiStatus"); if(s) s.textContent = "AOI not set";
 }
 
 /* Buttons */
-$("btnDraw").addEventListener("click", ()=>toast("Use draw tools on map (rectangle / polygon).", 2200));
-$("btnClearAOI").addEventListener("click", ()=>{
+$("btnDraw")?.addEventListener("click", ()=>toast("Use draw tools on map (rectangle / polygon).", 2200));
+$("btnClearAOI")?.addEventListener("click", ()=>{
   clearAOI();
   clearResults();
   toast("AOI cleared.", 1600);
@@ -198,31 +174,34 @@ $("btnClearAOI").addEventListener("click", ()=>{
 
 /* Point + Radius */
 let picking = false;
-$("btnPointRadius").addEventListener("click", ()=>{
+$("btnPointRadius")?.addEventListener("click", ()=>{
   picking = true;
   toast("Click on map to pick center.", 2400);
 });
+
 map.on("click", (e)=>{
   if(!picking) return;
   picking = false;
-  const km = Math.max(1, Math.min(1000, Number($("radiusKm").value || 50)));
+
+  const km = Math.max(1, Math.min(1000, Number($("radiusKm")?.value || 50)));
   const center = turf.point([e.latlng.lng, e.latlng.lat]);
   const circle = turf.circle(center, km, { units:"kilometers", steps: 72 });
 
-  const layer = L.geoJSON(circle, { style:{ color:"#77e3ff", weight:2, fillOpacity:0.06 }});
+  const layer = L.geoJSON(circle, { style:{ color:"#6fe7ff", weight:2, fillOpacity:0.06 }});
   drawn.clearLayers();
   drawn.addLayer(layer);
 
   aoiGeom = circle.geometry;
   aoiBounds = L.geoJSON(circle).getBounds();
-  $("aoiStatus").textContent = "AOI set";
+  const s = $("aoiStatus"); if(s) s.textContent = "AOI set";
   lockMapToAOI(aoiBounds);
 });
 
 /* Geocode (Nominatim) */
-$("btnGeocode").addEventListener("click", async ()=>{
-  const q = $("placeInput").value.trim();
+$("btnGeocode")?.addEventListener("click", async ()=>{
+  const q = $("placeInput")?.value?.trim();
   if(!q) return toast("Enter a place name.", 2000);
+
   try{
     const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`;
     const r = await fetch(url, { headers:{ "accept":"application/json" }});
@@ -235,12 +214,12 @@ $("btnGeocode").addEventListener("click", async ()=>{
     // convenience AOI: 10km circle
     const center = turf.point([lon, lat]);
     const circle = turf.circle(center, 10, { units:"kilometers", steps:72 });
-    const layer = L.geoJSON(circle, { style:{ color:"#77e3ff", weight:2, fillOpacity:0.06 }});
+    const layer = L.geoJSON(circle, { style:{ color:"#6fe7ff", weight:2, fillOpacity:0.06 }});
     drawn.clearLayers(); drawn.addLayer(layer);
 
     aoiGeom = circle.geometry;
     aoiBounds = L.geoJSON(circle).getBounds();
-    $("aoiStatus").textContent = "AOI set";
+    const s = $("aoiStatus"); if(s) s.textContent = "AOI set";
     lockMapToAOI(aoiBounds);
 
     toast("Located & AOI created.", 1800);
@@ -253,13 +232,14 @@ $("btnGeocode").addEventListener("click", async ()=>{
 /* ---------------- Sources ---------------- */
 const STAC_ROOT = "https://earth-search.aws.element84.com/v1";
 const SOURCES = [
-  { id:"s2", name:"Sentinel-2", collection:"sentinel-2-l2a", color:"#77e3ff" },
-  { id:"s1", name:"Sentinel-1", collection:"sentinel-1-grd", color:"#8a7bff" },
+  { id:"s2", name:"Sentinel-2", collection:"sentinel-2-l2a", color:"#6fe7ff" },
+  { id:"s1", name:"Sentinel-1", collection:"sentinel-1-grd", color:"#7a6dff" },
   { id:"ls", name:"Landsat",    collection:"landsat-c2-l2",  color:"#34d399" }
 ];
 
 function renderSources(){
   const box = $("sources");
+  if(!box) return;
   box.innerHTML = "";
   for(const s of SOURCES){
     const row = document.createElement("div");
@@ -275,17 +255,17 @@ function renderSources(){
 renderSources();
 
 function selectedSources(){
-  return SOURCES.filter(s => $(`src_${s.id}`).checked);
+  return SOURCES.filter(s => $(`src_${s.id}`)?.checked);
 }
 
 /* ---------------- Results ---------------- */
 function clearResults(){
   resultsLayer.clearLayers();
   mergedGroups = [];
-  $("results").innerHTML = "";
-  $("countPill").textContent = "0";
+  const r = $("results"); if(r) r.innerHTML = "";
+  const c = $("countPill"); if(c) c.textContent = "0";
 }
-$("btnClearResults").addEventListener("click", ()=>{ clearResults(); toast("Results cleared.", 1600); });
+$("btnClearResults")?.addEventListener("click", ()=>{ clearResults(); toast("Results cleared.", 1600); });
 
 function mergeBySatelliteAndDate(items){
   const m = new Map();
@@ -304,8 +284,9 @@ function mergeBySatelliteAndDate(items){
 }
 
 function renderList(){
-  const mode = $("timeMode").value;
+  const mode = $("timeMode")?.value || "date";
   const box = $("results");
+  if(!box) return;
   box.innerHTML = "";
 
   for(const g of mergedGroups){
@@ -350,9 +331,11 @@ function renderList(){
     box.appendChild(item);
   }
 
-  $("countPill").textContent = String(mergedGroups.length);
+  const c = $("countPill");
+  if(c) c.textContent = String(mergedGroups.length);
 }
-$("timeMode").addEventListener("change", renderList);
+
+$("timeMode")?.addEventListener("change", renderList);
 
 /* Timeline slider */
 function updateTimeThreshold(percent){
@@ -361,7 +344,8 @@ function updateTimeThreshold(percent){
   sliderThresholdTime = Date.now() - days * 86400000;
 
   const d = new Date(sliderThresholdTime);
-  $("timeLabel").textContent = (percent===100) ? "Now" : d.toISOString().slice(0,10);
+  const tl = $("timeLabel");
+  if(tl) tl.textContent = (percent===100) ? "Now" : d.toISOString().slice(0,10);
 }
 
 function applyTimelineFilterToLayer(layerGroup){
@@ -375,7 +359,7 @@ function applyTimelineFilterToLayer(layerGroup){
   });
 }
 
-$("timeSlider").addEventListener("input", (e)=>{
+$("timeSlider")?.addEventListener("input", (e)=>{
   updateTimeThreshold(Number(e.target.value));
   applyTimelineFilterToLayer(resultsLayer);
 });
@@ -394,7 +378,7 @@ async function stacSearch(collection, intersects, datetime, limit=200){
   return await r.json();
 }
 
-$("btnQuery").addEventListener("click", async ()=>{
+$("btnQuery")?.addEventListener("click", async ()=>{
   if(!aoiGeom) return toast("Set AOI first.", 2400);
 
   const start = parseDate("startDate");
@@ -448,7 +432,7 @@ $("btnQuery").addEventListener("click", async ()=>{
     mergedGroups = mergeBySatelliteAndDate(allItems);
     renderList();
 
-    updateTimeThreshold(Number($("timeSlider").value || 100));
+    updateTimeThreshold(Number($("timeSlider")?.value || 100));
     applyTimelineFilterToLayer(resultsLayer);
 
     toast(`Done · ${allItems.length} footprints`, 2400);
@@ -457,6 +441,3 @@ $("btnQuery").addEventListener("click", async ()=>{
     toast(`Query failed: ${e.message || e}`, 3200);
   }
 });
-
-/* init timeline label */
-updateTimeThreshold(Number($("timeSlider").value || 100));
