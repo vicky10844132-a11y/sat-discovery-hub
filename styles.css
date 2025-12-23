@@ -1,37 +1,200 @@
-html,body{margin:0;height:100%;background:#0b111c;color:#e6ecf5;font-family:system-ui}
+/* =========================
+   GLOBAL THEME
+========================= */
+:root{
+  --bg:#060b14;
+  --panel:#0b1220;
+  --panel-2:#0e1628;
+  --line:#1e3355;
+  --glow:#2da8ff;
+  --glow-soft:rgba(45,168,255,.35);
+  --text:#dce7f5;
+  --muted:#7f95b3;
+}
+
+html,body{
+  margin:0;
+  height:100%;
+  background:radial-gradient(circle at 30% 20%, #0b1a33, #05080f 60%);
+  color:var(--text);
+  font-family: "Segoe UI", system-ui, sans-serif;
+  letter-spacing:.2px;
+}
+
+/* =========================
+   TOP BAR (HUD)
+========================= */
 #topbar{
-  position:fixed;top:0;left:0;right:0;height:44px;
-  background:#0f1b2d;border-bottom:1px solid #1e2f48;
-  display:flex;align-items:center;justify-content:space-between;
-  padding:0 16px;z-index:999
+  position:fixed;
+  inset:0 0 auto 0;
+  height:52px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 18px;
+  background:
+    linear-gradient(180deg, rgba(20,40,80,.65), rgba(5,8,15,.95));
+  border-bottom:1px solid var(--line);
+  box-shadow:0 0 30px rgba(45,168,255,.15);
+  z-index:1000;
 }
+
+#topbar .title{
+  font-size:15px;
+  text-transform:uppercase;
+  color:#e9f2ff;
+  text-shadow:0 0 12px var(--glow-soft);
+}
+
 #topbar .badges span{
-  font-size:10px;border:1px solid #2b4a70;
-  padding:3px 8px;border-radius:999px;margin-left:6px;color:#9cc7ff
+  margin-left:8px;
+  font-size:10px;
+  padding:4px 10px;
+  border:1px solid var(--line);
+  border-radius:999px;
+  color:#9cc7ff;
+  background:linear-gradient(180deg, #0f2544, #091528);
+  box-shadow:0 0 10px rgba(45,168,255,.25);
 }
-#app{display:flex;height:100%;padding-top:44px}
+
+/* =========================
+   LAYOUT
+========================= */
+#app{
+  display:flex;
+  height:100%;
+  padding-top:52px;
+}
+
 #sidebar{
-  width:380px;background:#101726;padding:14px;overflow:auto
+  width:390px;
+  padding:16px;
+  background:
+    linear-gradient(180deg, rgba(12,20,38,.9), rgba(6,10,18,.98));
+  border-right:1px solid var(--line);
+  box-shadow:inset 0 0 40px rgba(45,168,255,.05);
+  overflow:auto;
 }
-#map{flex:1}
-section{margin-bottom:18px}
-h2{font-size:13px}
+
+/* =========================
+   PANELS
+========================= */
+section{
+  margin-bottom:18px;
+  padding:14px;
+  background:
+    linear-gradient(180deg, var(--panel-2), var(--panel));
+  border:1px solid var(--line);
+  border-radius:14px;
+  box-shadow:
+    inset 0 0 0 1px rgba(45,168,255,.05),
+    0 0 25px rgba(0,0,0,.6);
+}
+
+h2{
+  margin:0 0 10px;
+  font-size:13px;
+  text-transform:uppercase;
+  color:#cfe4ff;
+}
+
 .step{
-  background:#1c3b5f;border-radius:50%;
-  width:18px;height:18px;display:inline-block;
-  text-align:center;line-height:18px;margin-right:6px
+  display:inline-block;
+  width:18px;height:18px;
+  line-height:18px;
+  text-align:center;
+  margin-right:6px;
+  border-radius:50%;
+  font-size:11px;
+  background:linear-gradient(180deg, #1c3b66, #0b1b33);
+  box-shadow:0 0 10px var(--glow-soft);
 }
-input,button,select{
-  width:100%;margin-top:6px;
-  background:#1a2233;color:#e6ecf5;
-  border:1px solid #2a3b55;border-radius:6px;padding:6px
+
+/* =========================
+   FORM ELEMENTS
+========================= */
+input,select,button{
+  width:100%;
+  margin-top:6px;
+  padding:8px 10px;
+  background:#070d18;
+  color:var(--text);
+  border:1px solid var(--line);
+  border-radius:10px;
+  outline:none;
 }
-.row{display:flex;gap:6px}
-.results{max-height:260px;overflow:auto;border:1px solid #2a3b55}
-.result{padding:6px;border-bottom:1px solid #1f2a40;cursor:pointer}
-.result:hover{background:#1a2336}
-.timeline{margin:8px 0}
-.timeline-label{font-size:11px;color:#9aa3ad}
-.pill{margin:6px 0;font-size:11px}
-.hint{font-size:11px;color:#9aa3ad}
-footer{font-size:11px;color:#7f8792}
+
+button{
+  cursor:pointer;
+  background:
+    linear-gradient(180deg, #12284a, #0a1628);
+  box-shadow:0 0 12px rgba(45,168,255,.25);
+}
+
+button:hover{
+  box-shadow:0 0 18px rgba(45,168,255,.45);
+}
+
+.row{
+  display:flex;
+  gap:8px;
+}
+
+.hint{
+  font-size:11px;
+  color:var(--muted);
+}
+
+/* =========================
+   RESULTS LIST
+========================= */
+.results{
+  max-height:260px;
+  overflow:auto;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:#060b14;
+}
+
+.result{
+  padding:8px 10px;
+  font-size:12px;
+  border-bottom:1px solid #162745;
+  cursor:pointer;
+}
+
+.result:hover{
+  background:rgba(45,168,255,.08);
+}
+
+/* =========================
+   TIMELINE
+========================= */
+.timeline input[type=range]{
+  accent-color:#2da8ff;
+}
+
+.timeline-label{
+  font-size:11px;
+  color:var(--muted);
+  margin-top:4px;
+}
+
+/* =========================
+   MAP
+========================= */
+#map{
+  flex:1;
+  background:#05080f;
+  box-shadow:inset 0 0 60px rgba(0,0,0,.8);
+}
+
+/* =========================
+   FOOTER
+========================= */
+footer{
+  font-size:11px;
+  color:#7f95b3;
+  margin-top:10px;
+  opacity:.85;
+}
