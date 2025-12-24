@@ -560,16 +560,16 @@ input::placeholder{ color: rgba(170,190,220,.50); }
 
 /* Place search (optional) */
 #sidebar .card:nth-of-type(1) label{
-  font-size: 10px;
-  letter-spacing: .2px;
+  font-size: 8px;
+  letter-spacing: .1px;
   color: rgba(160,185,220,.78);
 }
 
 /* Uses OpenStreetMap Nominatim public geocoding. */
 #sidebar .card:nth-of-type(1) .hint,
 #sidebar .card:nth-of-type(1) .helper{
-  font-size: 10px;
-  line-height: 1.2;
+  font-size: 8px;
+  line-height: 1;
   color: rgba(145,170,205,.70);
 }
 
