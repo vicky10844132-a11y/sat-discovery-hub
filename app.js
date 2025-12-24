@@ -1,12 +1,6 @@
-/* === app.js (FINAL · MAP ALWAYS VISIBLE) === */
 const $ = (id) => document.getElementById(id);
 
-function setStatus(msg){
-  const el = $("aoiStatus");
-  if (el) el.textContent = msg;
-}
-
-function toast(msg, ms=2600){
+function toast(msg, ms=1800){
   const t = $("toast");
   if(!t) return;
   t.textContent = msg;
@@ -15,60 +9,57 @@ function toast(msg, ms=2600){
   toast._tm = setTimeout(()=>t.classList.add("hidden"), ms);
 }
 
-setStatus("JS OK · loading map…");
+/* ===== Design-only interactions ===== */
+function setStatus(msg){
+  const el = $("aoiStatus");
+  if(el) el.textContent = msg;
+}
 
-/* ---------------- Map ---------------- */
-const map = L.map("map", {
-  minZoom: 2,
-  maxZoom: 16,
-  worldCopyJump: false,
-}).setView([20,0], 2);
-
-/* tiles addTo(map) ... */
-
-setTimeout(() => {
-  map.invalidateSize();
-}, 0);
-
-
-map.options.wheelPxPerZoomLevel = 120;
-
-/* ✅ 最稳妥底图：OSM */
-const osm = L.tileLayer(
-  "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-  { subdomains:"abc", maxZoom:19 }
-).addTo(map);
-
-/* 深蓝滤镜（只作用 tilePane，不会遮） */
-try{
-  map.getPane("tilePane").style.filter =
-    "brightness(1.05) contrast(1.18) saturate(1.35) hue-rotate(195deg)";
-}catch{}
-
-/* 诊断 */
-let ok = 0, err = 0;
-osm.on("tileload", ()=>{
-  ok++;
-  if(ok === 1){
-    setStatus("✅ Map tiles loaded");
-    toast("Map OK", 1200);
-  }
-});
-osm.on("tileerror", ()=>{
-  err++;
-  setStatus("❌ Tile blocked (network / CSP)");
+document.querySelectorAll(".tab").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+    btn.classList.add("active");
+    toast(`Switched to ${btn.textContent}`, 1200);
+  });
 });
 
-/* Layers */
-const drawn = new L.FeatureGroup().addTo(map);
-const resultsLayer = L.layerGroup().addTo(map);
+/* Buttons (no map yet) */
+$("btnDraw")?.addEventListener("click", ()=>{
+  setStatus("AOI (design mode) · ready");
+  toast("Design mode: AOI tools will be added later.", 1800);
+});
 
-/* Draw tools */
-map.addControl(new L.Control.Draw({
-  draw:{
-    polyline:false, marker:false, circle:false, circlemarker:false,
-    rectangle:{ shapeOptions:{ color:"#6fe7ff", weight:2, fillOpacity:0.06 }},
-    polygon:{ allowIntersection:false, shapeOptions:{ color:"#6fe7ff", weight:2, fillOpacity:0.06 }}
-  },
-  edit:{ featureGroup: drawn, remove:true }
-}));
+$("btnClearAOI")?.addEventListener("click", ()=>{
+  setStatus("AOI not set");
+  toast("Cleared (design mode).", 1200);
+});
+
+$("btnGeocode")?.addEventListener("click", ()=>{
+  toast("Design mode: geocoding will be added later.", 1600);
+});
+
+$("btnPointRadius")?.addEventListener("click", ()=>{
+  toast("Design mode: click-to-pick will be added later.", 1600);
+});
+
+$("btnQuery")?.addEventListener("click", ()=>{
+  toast("Design mode: STAC query will be added later.", 1600);
+});
+
+$("btnClearResults")?.addEventListener("click", ()=>{
+  $("results") && ($("results").innerHTML = "");
+  $("countPill") && ($("countPill").textContent = "0");
+  toast("Results cleared.", 1200);
+});
+
+/* Timeline label */
+function updateTimeLabel(){
+  const v = Number($("timeSlider")?.value ?? 100);
+  const maxAgeDays = 365 * 10;
+  const days = maxAgeDays * (v / 100);
+  const t = Date.now() - days * 86400000;
+  const d = new Date(t);
+  $("timeLabel") && ($("timeLabel").textContent = (v === 100) ? "Now" : d.toISOString().slice(0,10));
+}
+$("timeSlider")?.addEventListener("input", updateTimeLabel);
+updateTimeLabel();

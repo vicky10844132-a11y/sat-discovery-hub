@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Satellite Discovery Index</title>
 
-  <!-- ✅ 关键：允许瓦片 img 加载（否则地图永远空） -->
+  <!-- CSP：设计阶段先放宽，避免样式/字体加载问题；等功能稳定再收紧 -->
   <meta http-equiv="Content-Security-Policy"
         content="
           default-src 'self' https: data: blob:;
@@ -21,17 +21,13 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Orbitron:wght@500;600&display=swap" rel="stylesheet">
 
-  <!-- Leaflet -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css"/>
-
   <link rel="stylesheet" href="styles.css"/>
 </head>
 
 <body>
   <header id="topbar">
     <div class="brand">
-      <span class="brandDot"></span>
+      <span class="brandDot" aria-hidden="true"></span>
       <div class="brandText">
         <div class="brandTitle">SATELLITE DISCOVERY INDEX</div>
         <div class="brandSub">Open data only · No login · Archive footprints (reference only)</div>
@@ -39,11 +35,11 @@
     </div>
 
     <nav class="tabs" aria-label="tabs">
-      <span class="tab active">AOI</span>
-      <span class="tab">Coverage</span>
-      <span class="tab">Footprints</span>
-      <span class="tab">Programming</span>
-      <span class="tab">Sources</span>
+      <button class="tab active" data-tab="aoi" type="button">AOI</button>
+      <button class="tab" data-tab="coverage" type="button">Coverage</button>
+      <button class="tab" data-tab="footprints" type="button">Footprints</button>
+      <button class="tab" data-tab="programming" type="button">Programming</button>
+      <button class="tab" data-tab="sources" type="button">Sources</button>
     </nav>
 
     <div class="rightPills">
@@ -61,28 +57,27 @@
         </div>
 
         <div class="btnRow">
-          <button id="btnDraw" class="btn primary">Draw AOI</button>
-          <button id="btnClearAOI" class="btn ghost">Clear</button>
+          <button id="btnDraw" class="btn primary" type="button">Draw AOI</button>
+          <button id="btnClearAOI" class="btn ghost" type="button">Clear</button>
         </div>
 
         <div class="field">
-          <label>Place search (optional)</label>
+          <label for="placeInput">Place search (optional)</label>
           <div class="row">
             <input id="placeInput" placeholder="Beijing / Dubai / New York"/>
-            <button id="btnGeocode" class="btn mini">Locate</button>
+            <button id="btnGeocode" class="btn mini" type="button">Locate</button>
           </div>
           <div class="hint">Uses OpenStreetMap Nominatim public geocoding.</div>
         </div>
 
         <div class="field">
-          <label>Point + Radius (km)</label>
+          <label for="radiusKm">Point + Radius (km)</label>
           <div class="row">
             <input id="radiusKm" type="number" min="1" max="1000" value="50"/>
-            <button id="btnPointRadius" class="btn mini">Pick</button>
+            <button id="btnPointRadius" class="btn mini" type="button">Pick</button>
           </div>
         </div>
 
-        <!-- ✅ 我们用它做强诊断输出 -->
         <div id="aoiStatus" class="hint strong">AOI not set</div>
       </section>
 
@@ -106,11 +101,28 @@
           <div class="cardTitle">PUBLIC ARCHIVES</div>
         </div>
 
-        <div id="sources" class="sources"></div>
+        <!-- 设计阶段先放占位（后续功能再动态渲染） -->
+        <div id="sources" class="sources">
+          <div class="source">
+            <input type="checkbox" checked />
+            <div class="name">Sentinel-2</div>
+            <div class="tag">STAC</div>
+          </div>
+          <div class="source">
+            <input type="checkbox" checked />
+            <div class="name">Sentinel-1</div>
+            <div class="tag">STAC</div>
+          </div>
+          <div class="source">
+            <input type="checkbox" checked />
+            <div class="name">Landsat</div>
+            <div class="tag">STAC</div>
+          </div>
+        </div>
 
         <div class="btnRow">
-          <button id="btnQuery" class="btn primary wide">Query Archive</button>
-          <button id="btnClearResults" class="btn ghost">Clear Results</button>
+          <button id="btnQuery" class="btn primary wide" type="button">Query Archive</button>
+          <button id="btnClearResults" class="btn ghost" type="button">Clear Results</button>
         </div>
       </section>
 
@@ -142,20 +154,27 @@
     </aside>
 
     <main id="main">
-      <div id="mapFrame">
-        <div id="map"></div>
-        <div class="gridOverlay"></div>
-        <!-- ✅ toast 一定要存在 -->
+      <div id="mapFrame" aria-label="map">
+        <!-- 设计占位：先不用 Leaflet，避免“地图丢了” -->
+        <div id="map" class="mapMock">
+          <div class="mapHudTop">
+            <span class="hudPill">OPEN · NO LOGIN</span>
+            <span class="hudPill ghost">REFERENCE ONLY</span>
+          </div>
+          <div class="mapHudLeft">
+            <div class="hudZoom">
+              <button type="button" class="hudBtn">+</button>
+              <button type="button" class="hudBtn">−</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="gridOverlay" aria-hidden="true"></div>
         <div id="toast" class="toast hidden"></div>
       </div>
     </main>
   </div>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6.5.0/turf.min.js"></script>
-
-  <!-- ✅ 路径必须对；如果你的 app.js 在 js/ 目录，改成 ./js/app.js -->
   <script src="app.js"></script>
 </body>
 </html>

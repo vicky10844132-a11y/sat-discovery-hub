@@ -1,4 +1,3 @@
-/* === styles.css（FINAL · MAP SAFE · DEEP BLUE） === */
 :root{
   --bg0:#050b18;
   --bg1:#071126;
@@ -38,7 +37,317 @@ body{
     linear-gradient(180deg, var(--bg1), var(--bg0));
 }
 
-/* ===================== Map ===================== */
+/* subtle page dust */
+body::before{
+  content:"";
+  position:fixed; inset:0;
+  pointer-events:none;
+  background:
+    radial-gradient(circle, rgba(120,200,255,.045) 0 1px, transparent 2px) 0 0/26px 26px,
+    radial-gradient(circle, rgba(120,200,255,.030) 0 1px, transparent 2px) 0 0/42px 42px;
+  opacity:.40;
+  mix-blend-mode: screen;
+}
+
+/* ===================== Topbar ===================== */
+#topbar{
+  height:64px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 16px;
+  position:relative;
+
+  background: linear-gradient(180deg, rgba(6,14,32,.80), rgba(4,10,24,.70));
+  border-bottom: 1px solid var(--borderA);
+  box-shadow: var(--shadowSoft);
+  backdrop-filter: blur(10px);
+}
+
+#topbar::after{
+  content:"";
+  position:absolute;
+  left:16px; right:16px; bottom:-1px;
+  height:1px;
+  background: linear-gradient(90deg, transparent, rgba(111,231,255,.22), transparent);
+  opacity:.9;
+  pointer-events:none;
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width: 320px;
+}
+.brandDot{
+  width:11px; height:11px; border-radius:50%;
+  background: radial-gradient(circle at 30% 30%, #fff, rgba(111,231,255,.92) 55%, rgba(63,183,255,.24) 78%, transparent 82%);
+  box-shadow: 0 0 18px rgba(111,231,255,.20);
+}
+.brandText{ display:flex; flex-direction:column; gap:2px; }
+.brandTitle{
+  font-family: Orbitron, Inter, system-ui;
+  font-size: 18px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  text-shadow: 0 0 10px rgba(63,183,255,.14);
+}
+.brandSub{
+  font-size: 11.5px;
+  color: var(--muted);
+  line-height: 1.2;
+}
+
+/* Tabs: pill group like reference */
+.tabs{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: rgba(3,8,18,.22);
+  border: 1px solid rgba(255,255,255,.06);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.25);
+}
+.tab{
+  appearance:none;
+  border:none;
+  background:transparent;
+  font-size: 13px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  color: rgba(200,215,240,.88);
+  user-select:none;
+  letter-spacing:.2px;
+  cursor:pointer;
+}
+.tab.active{
+  color: var(--text);
+  background: linear-gradient(180deg, rgba(63,183,255,.16), rgba(3,8,18,.18));
+  border: 1px solid rgba(111,231,255,.18);
+  box-shadow: 0 0 18px rgba(63,183,255,.10);
+}
+
+.rightPills{ display:flex; gap:10px; align-items:center; }
+.pill{
+  font-family: Orbitron, Inter, system-ui;
+  font-size: 10.5px;
+  letter-spacing: 1px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(130,190,255,.16);
+  background: rgba(3,8,18,.18);
+  color: rgba(234,242,255,.92);
+}
+.pill.ghost{
+  border-color: rgba(122,109,255,.18);
+  color:#dcd7ff;
+}
+
+/* ===================== Layout ===================== */
+#app{ height: calc(100% - 64px); display:flex; }
+#main{ flex: 1; padding: 14px; }
+
+#sidebar{
+  width: 410px;
+  padding: 14px;
+  overflow:auto;
+  background: linear-gradient(180deg, rgba(6,14,32,.62), rgba(4,10,24,.74));
+  border-right: 1px solid var(--borderA);
+  backdrop-filter: blur(10px);
+}
+
+/* ===================== Cards ===================== */
+.card{
+  border-radius: var(--r20);
+  background: linear-gradient(180deg, rgba(10,22,46,.52), rgba(6,14,32,.66));
+  border: 1px solid rgba(120,190,255,.16);
+  box-shadow: var(--shadowSoft);
+  padding: 14px;
+  margin-bottom: 12px;
+  position:relative;
+  overflow:hidden;
+}
+.card::before{
+  content:"";
+  position:absolute; inset:0;
+  pointer-events:none;
+  background: linear-gradient(180deg, rgba(111,231,255,.05), transparent 24%);
+}
+.cardHead{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom: 10px;
+  position:relative;
+  z-index:1;
+}
+.step{
+  width:22px; height:22px; border-radius:999px;
+  display:flex; align-items:center; justify-content:center;
+  font-family: Orbitron, Inter, system-ui;
+  font-size: 11px;
+  color: #020817;
+  background: radial-gradient(circle at 30% 30%, #fff, rgba(111,231,255,.92) 65%, rgba(63,183,255,.22));
+  box-shadow: 0 0 12px rgba(111,231,255,.14);
+}
+.cardTitle{
+  font-family: Orbitron, Inter, system-ui;
+  font-size: 12px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: rgba(234,242,255,.95);
+}
+
+/* ===================== Forms ===================== */
+label{
+  display:block;
+  margin: 10px 0 6px;
+  font-size: 11.5px;
+  color: var(--muted);
+  position:relative;
+  z-index:1;
+}
+.field{ position:relative; z-index:1; }
+.row{ display:flex; gap:10px; align-items:center; }
+
+input, .select{
+  width:100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.06);
+  background: rgba(3,8,18,.42);
+  color: var(--text);
+  outline:none;
+  font-size: 13px;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.25);
+}
+input::placeholder{ color: rgba(170,190,220,.50); }
+
+.btnRow{ display:flex; gap:10px; position:relative; z-index:1; }
+.btn{
+  width:100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.06);
+  background: rgba(3,8,18,.30);
+  color: var(--text);
+  cursor:pointer;
+  font-size: 13px;
+  transition: transform .08s ease, box-shadow .12s ease, border-color .12s ease;
+}
+.btn:hover{
+  transform: translateY(-1px);
+  border-color: rgba(111,231,255,.18);
+  box-shadow: 0 0 18px rgba(63,183,255,.10);
+}
+.btn.primary{
+  background: linear-gradient(180deg, rgba(63,183,255,.18), rgba(3,8,18,.34));
+  border-color: rgba(111,231,255,.22);
+  font-family: Orbitron, Inter, system-ui;
+  letter-spacing: .8px;
+}
+.btn.ghost{ background: rgba(3,8,18,.22); }
+.btn.mini{ width:auto; padding: 10px 14px; white-space: nowrap; }
+.btn.wide{ width:100%; }
+
+.hint{
+  font-size: 11.5px;
+  color: var(--muted2);
+  position:relative;
+  z-index:1;
+}
+.hint.strong{
+  margin-top: 10px;
+  color: rgba(234,242,255,.92);
+}
+
+/* ===================== Sources/Results ===================== */
+.sources{ display:flex; flex-direction:column; gap:10px; position:relative; z-index:1; }
+.source{
+  display:flex; align-items:center; gap:10px;
+  padding:10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.06);
+  background: rgba(3,8,18,.26);
+}
+.source input{ width:16px; height:16px; accent-color: var(--cyan2); }
+.source .name{
+  font-family: Orbitron, Inter, system-ui;
+  font-size: 12px;
+  letter-spacing: .8px;
+}
+.source .tag{
+  margin-left:auto;
+  font-size: 11.5px;
+  color: var(--muted2);
+}
+
+.count{
+  min-width:56px;
+  height:42px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.06);
+  background: rgba(3,8,18,.22);
+  font-family: Orbitron, Inter, system-ui;
+  font-size: 12px;
+  letter-spacing: .8px;
+}
+
+.timeline{ margin-top:10px; position:relative; z-index:1; }
+.timeline input[type=range]{ width:100%; accent-color: var(--cyan2); }
+.timelineLabel{ margin-top:6px; font-size:11.5px; color: var(--muted2); }
+
+.results{
+  margin-top:12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.06);
+  background: rgba(3,8,18,.22);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.25);
+  max-height:320px;
+  overflow:auto;
+  position:relative;
+  z-index:1;
+}
+.result{
+  display:flex; align-items:center; gap:10px;
+  padding:10px 12px;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+  cursor:pointer;
+}
+.result:hover{ background: rgba(63,183,255,.08); }
+.result:last-child{ border-bottom:none; }
+
+.dot{
+  width:9px; height:9px; border-radius:999px;
+  box-shadow: 0 0 12px rgba(111,231,255,.16);
+}
+.resultMain{ display:flex; flex-direction:column; gap:3px; }
+.resultSat{ font-family: Orbitron, Inter, system-ui; font-size: 12px; letter-spacing:.8px; }
+.resultTime{ font-size: 11.5px; color: var(--muted2); }
+.resultCount{
+  margin-left:auto;
+  font-family: Orbitron, Inter, system-ui;
+  font-size: 11px;
+  padding:4px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.06);
+  background: rgba(3,8,18,.18);
+  color: rgba(234,242,255,.90);
+}
+
+.foot{
+  padding: 10px 2px 0;
+  font-size: 11.5px;
+  color: var(--muted2);
+  opacity: .9;
+}
+
+/* ===================== Map Frame (DESIGN-ONLY) ===================== */
 #mapFrame{
   position:relative;
   height:100%;
@@ -46,43 +355,68 @@ body{
   border: 1px solid rgba(120,190,255,.14);
   overflow:hidden;
   box-shadow: var(--shadow);
+
   background:
     radial-gradient(1200px 720px at 55% 42%, rgba(12,58,122,.38), rgba(2,8,18,1));
 }
 
+/* “地图本体”先做成 HUD 占位（之后 Leaflet 直接用 #map 替换即可） */
 #map{
   position:absolute;
   inset:0;
   z-index:1;
 }
 
-/* 蓝色辉光 + 星点 */
-#mapFrame::before{
+/* 占位地图：深蓝 + 轻微世界轮廓感（不雾、不灰） */
+.mapMock{
+  background:
+    /* cool bloom */
+    radial-gradient(820px 520px at 62% 40%, rgba(63,183,255,.16), transparent 62%),
+    radial-gradient(720px 520px at 34% 62%, rgba(111,231,255,.10), transparent 66%),
+    radial-gradient(900px 680px at 92% 78%, rgba(122,109,255,.08), transparent 72%),
+
+    /* star layers */
+    radial-gradient(circle, rgba(130,210,255,.12) 0 1px, transparent 2px) 0 0/18px 18px,
+    radial-gradient(circle, rgba(130,210,255,.07) 0 1px, transparent 2px) 0 0/28px 28px,
+
+    /* subtle scan lines */
+    linear-gradient(rgba(255,255,255,.02) 1px, transparent 1px) 0 0/100% 6px,
+
+    /* base */
+    radial-gradient(1200px 720px at 55% 42%, rgba(12,58,122,.28), rgba(2,8,18,1));
+}
+
+/* 在设计阶段模拟“陆地轮廓”——用柔和描边/阴影假象（不追求准确，追求风格） */
+.mapMock::before{
   content:"";
   position:absolute;
   inset:0;
   pointer-events:none;
-  z-index:2;
   background:
-    radial-gradient(900px 520px at 60% 40%, rgba(63,183,255,.18), transparent 62%),
-    radial-gradient(760px 520px at 38% 62%, rgba(111,231,255,.12), transparent 65%),
-    radial-gradient(circle, rgba(130,210,255,.08) 0 1px, transparent 2px) 0 0/18px 18px;
+    radial-gradient(600px 420px at 35% 42%, rgba(63,183,255,.12), transparent 70%),
+    radial-gradient(520px 420px at 62% 44%, rgba(63,183,255,.10), transparent 72%),
+    radial-gradient(520px 380px at 78% 52%, rgba(63,183,255,.08), transparent 72%);
+  opacity:.8;
   mix-blend-mode: screen;
 }
 
-/* HUD 网格 */
+/* 网格叠加：参考图那种“点阵+主次网格” */
 .gridOverlay{
   position:absolute;
   inset:0;
   pointer-events:none;
   z-index:3;
   background:
-    linear-gradient(rgba(111,231,255,.08) 1px, transparent 1px) 0 0/200px 200px,
-    linear-gradient(90deg, rgba(111,231,255,.08) 1px, transparent 1px) 0 0/200px 200px;
-  opacity:.45;
+    radial-gradient(circle, rgba(111,231,255,.07) 0 1px, transparent 2px) 0 0/28px 28px,
+    linear-gradient(rgba(111,231,255,.09) 1px, transparent 1px) 0 0/200px 200px,
+    linear-gradient(90deg, rgba(111,231,255,.09) 1px, transparent 1px) 0 0/200px 200px,
+    linear-gradient(rgba(111,231,255,.045) 1px, transparent 1px) 0 0/50px 50px,
+    linear-gradient(90deg, rgba(111,231,255,.045) 1px, transparent 1px) 0 0/50px 50px;
+  opacity:.42;
+  mix-blend-mode: screen;
 }
 
-/* 蓝暗角 */
+/* 暗角：别把地图压黑成“煤”，只做轻微聚焦 */
 #mapFrame::after{
   content:"";
   position:absolute;
@@ -91,23 +425,87 @@ body{
   z-index:4;
   background:
     radial-gradient(ellipse at center,
-      rgba(2,8,18,0) 58%,
-      rgba(2,8,18,.25) 78%,
-      rgba(2,8,18,.75) 100%);
-}
-/* ===================== FIX LAYOUT (CRITICAL) ===================== */
-
-#app{
-  height: calc(100vh - 62px);
-  display: flex;
+      rgba(2,8,18,0) 62%,
+      rgba(2,8,18,.20) 82%,
+      rgba(2,8,18,.60) 100%);
 }
 
-#sidebar{
-  flex: 0 0 410px;
+/* HUD pills on map (top) */
+.mapHudTop{
+  position:absolute;
+  top:14px;
+  left:14px;
+  right:14px;
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  z-index:6;
+  pointer-events:none;
+}
+.hudPill{
+  pointer-events:none;
+  font-family: Orbitron, Inter, system-ui;
+  font-size: 10.5px;
+  letter-spacing: 1px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(130,190,255,.16);
+  background: rgba(3,8,18,.18);
+  color: rgba(234,242,255,.92);
+  backdrop-filter: blur(10px);
+}
+.hudPill.ghost{
+  border-color: rgba(122,109,255,.18);
+  color:#dcd7ff;
 }
 
-#main{
-  flex: 1;
-  min-width: 0; /* 防止 flex 子项溢出 */
-  padding: 14px;
+/* HUD zoom mock (left) */
+.mapHudLeft{
+  position:absolute;
+  top:74px;
+  left:14px;
+  z-index:6;
 }
+.hudZoom{
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  border-radius: 12px;
+  border: 1px solid rgba(120,190,255,.16);
+  background: rgba(6,14,32,.62);
+  box-shadow: var(--shadowSoft);
+  backdrop-filter: blur(10px);
+}
+.hudBtn{
+  width:40px;
+  height:40px;
+  border:0;
+  background: transparent;
+  color: rgba(234,242,255,.92);
+  font-size: 18px;
+  cursor:pointer;
+}
+.hudBtn + .hudBtn{
+  border-top: 1px solid rgba(255,255,255,.06);
+}
+.hudBtn:hover{
+  background: rgba(63,183,255,.12);
+}
+
+/* ===================== Toast ===================== */
+.toast{
+  position:absolute;
+  left:16px;
+  bottom:16px;
+  max-width: 560px;
+  padding:10px 12px;
+  border-radius: 12px;
+  background: rgba(6,14,32,.62);
+  border: 1px solid rgba(255,255,255,.06);
+  box-shadow: var(--shadowSoft);
+  color: rgba(234,242,255,.92);
+  font-size: 12px;
+  z-index: 30;
+  backdrop-filter: blur(10px);
+}
+.hidden{ display:none; }
