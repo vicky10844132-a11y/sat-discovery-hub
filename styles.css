@@ -531,21 +531,21 @@ input::placeholder{ color: rgba(170,190,220,.50); }
 }
 
 #sidebar .card:nth-of-type(1) .hint{
-  font-size: 10.5px;
-  line-height: 1.35;
+  font-size: 10px;
+  line-height: 1;
   color: rgba(150,175,210,.72);
 }
 
 /* “AOI not set” 这种状态字也别和字段抢 */
 #sidebar .card:nth-of-type(1) #aoiStatus{
-  font-size: 11.5px;
+  font-size: 11px;
   color: rgba(220,235,255,.90);
   opacity: .9;
 }
 #sidebar .card:nth-of-type(1) .field .hint,
 #sidebar .card:nth-of-type(1) .field .helper,
 #sidebar .card:nth-of-type(1) .field small{
-  font-size: 10.5px;
+  font-size: 10px;
   color: rgba(150,175,210,.72);
 }
 #sidebar .card:nth-of-type(1) input{
@@ -553,7 +553,7 @@ input::placeholder{ color: rgba(170,190,220,.50); }
 }
 
 #sidebar .card:nth-of-type(1) input::placeholder{
-  font-size: 12px;
+  font-size: 10px;
   color: rgba(160,185,220,.45);
 }
 /* ===== AOI: helper text to 小五 ===== */
