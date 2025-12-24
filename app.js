@@ -51,66 +51,33 @@ const map = L.map("map", {
 
 map.options.wheelPxPerZoomLevel = 120;
 
-/* Preferred tiles: CARTO dark base + labels */
-const cartoNoLabels = L.tileLayer(
-  "https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png",
-  { subdomains:"abcd", maxZoom:19, attribution:"© OpenStreetMap © CARTO" }
-);
-
-const cartoLabels = L.tileLayer(
-  "https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png",
-  { subdomains:"abcd", maxZoom:19, opacity:0.90 }
-);
-
-/* Fallback tiles: OSM */
-const osmFallback = L.tileLayer(
+/* ================= Base Map (OSM SAFE) =================
+   重点：先确保瓦片一定能加载。你之前那张“整块蓝底”就是瓦片没加载。 */
+const osmBase = L.tileLayer(
   "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-  { subdomains:"abc", maxZoom:19, attribution:"© OpenStreetMap" }
+  {
+    subdomains: "abc",
+    maxZoom: 19,
+    attribution: "© OpenStreetMap contributors"
+  }
 );
+osmBase.addTo(map);
 
-cartoNoLabels.addTo(map);
-cartoLabels.addTo(map);
-
-/* ---- Lock deep-blue look (IMPORTANT) ---- */
-function applyTileFilter(mode){
+/* ---- Optional: deep-blue filter (作用在真实瓦片上) ---- */
+function applyTileFilter(){
   try{
-    // v2：把“黑灰底”抬成“深蓝海洋”，同时把海岸/边界拉出来
-    const fCarto =
-      "brightness(1.22) contrast(1.45) saturate(1.85) hue-rotate(200deg)";
-    const fOsm   =
-      "brightness(1.18) contrast(1.30) saturate(1.55) hue-rotate(195deg)";
-    map.getPane("tilePane").style.filter = (mode === "osm") ? fOsm : fCarto;
+    // 深蓝但不吃细节：先保底能看到地图，再慢慢调
+    map.getPane("tilePane").style.filter =
+      "brightness(1.08) contrast(1.22) saturate(1.35) hue-rotate(195deg)";
   }catch(e){}
 }
+applyTileFilter();
 
-applyTileFilter("carto");
-
-/* ---- Auto fallback on tile errors ---- */
-let tileErrors = 0;
-let fallbackActivated = false;
-
-function onTileError(){
-  tileErrors++;
-  if (fallbackActivated) return;
-  if (tileErrors >= 8){
-    fallbackActivated = true;
-    toast("Base map unreachable. Switched to fallback tiles.", 3200);
-
-    map.removeLayer(cartoNoLabels);
-    map.removeLayer(cartoLabels);
-    osmFallback.addTo(map);
-
-    applyTileFilter("osm");
-  }
-}
-
-cartoNoLabels.on("tileerror", onTileError);
-cartoLabels.on("tileerror", onTileError);
-
-/* Layers */
+/* Layers（必须在 draw controls 之前定义，否则 drawn/resultsLayer 会报错） */
 const drawn = new L.FeatureGroup().addTo(map);
 const resultsLayer = L.layerGroup().addTo(map);
 
+/* State */
 let aoiGeom = null;
 let aoiBounds = null;
 let mergedGroups = [];
