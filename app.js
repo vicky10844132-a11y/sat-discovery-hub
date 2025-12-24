@@ -24,6 +24,13 @@ const map = L.map("map", {
   worldCopyJump: false,
 }).setView([20,0], 2);
 
+/* tiles addTo(map) ... */
+
+setTimeout(() => {
+  map.invalidateSize();
+}, 0);
+
+
 map.options.wheelPxPerZoomLevel = 120;
 
 /* ✅ 最稳妥底图：OSM */

@@ -95,3 +95,19 @@ body{
       rgba(2,8,18,.25) 78%,
       rgba(2,8,18,.75) 100%);
 }
+/* ===================== FIX LAYOUT (CRITICAL) ===================== */
+
+#app{
+  height: calc(100vh - 62px);
+  display: flex;
+}
+
+#sidebar{
+  flex: 0 0 410px;
+}
+
+#main{
+  flex: 1;
+  min-width: 0; /* 防止 flex 子项溢出 */
+  padding: 14px;
+}
