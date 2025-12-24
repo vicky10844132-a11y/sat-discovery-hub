@@ -1,3 +1,4 @@
+/* === styles.css（FINAL · MAP SAFE · DEEP BLUE） === */
 :root{
   --bg0:#050b18;
   --bg1:#071126;
@@ -37,317 +38,7 @@ body{
     linear-gradient(180deg, var(--bg1), var(--bg0));
 }
 
-/* subtle page dust */
-body::before{
-  content:"";
-  position:fixed; inset:0;
-  pointer-events:none;
-  background:
-    radial-gradient(circle, rgba(120,200,255,.05) 0 1px, transparent 2px) 0 0/26px 26px,
-    radial-gradient(circle, rgba(120,200,255,.035) 0 1px, transparent 2px) 0 0/38px 38px;
-  opacity:.45;
-  mix-blend-mode: screen;
-}
-
-/* ===================== Topbar ===================== */
-#topbar{
-  height:62px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:0 16px;
-  position:relative;
-
-  background: linear-gradient(180deg, rgba(6,14,32,.78), rgba(4,10,24,.68));
-  border-bottom: 1px solid var(--borderA);
-  box-shadow: var(--shadowSoft);
-  backdrop-filter: blur(10px);
-}
-
-#topbar::after{
-  content:"";
-  position:absolute;
-  left:16px; right:16px; bottom:-1px;
-  height:1px;
-  background: linear-gradient(90deg, transparent, rgba(111,231,255,.22), transparent);
-  opacity:.9;
-  pointer-events:none;
-}
-
-.brand{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  min-width: 320px;
-}
-.brandDot{
-  width:11px; height:11px; border-radius:50%;
-  background: radial-gradient(circle at 30% 30%, #fff, rgba(111,231,255,.9) 55%, rgba(63,183,255,.22) 78%, transparent 82%);
-  box-shadow: 0 0 16px rgba(111,231,255,.18);
-}
-.brandText{ display:flex; flex-direction:column; gap:2px; }
-.brandTitle{
-  font-family: Orbitron, Inter, system-ui;
-  font-size: 18px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  text-shadow: 0 0 10px rgba(63,183,255,.14);
-}
-.brandSub{
-  font-size: 11.5px;
-  color: var(--muted);
-  line-height: 1.2;
-}
-
-/* Tabs: calm capsule */
-.tabs{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  padding: 7px 10px;
-  border-radius: 999px;
-  background: rgba(3,8,18,.22);
-  border: 1px solid rgba(255,255,255,.06);
-  box-shadow: inset 0 0 0 1px rgba(0,0,0,.25);
-}
-.tab{
-  font-size: 13px;
-  padding: 7px 12px;
-  border-radius: 999px;
-  color: rgba(200,215,240,.88);
-  user-select:none;
-  letter-spacing:.2px;
-}
-.tab.active{
-  color: var(--text);
-  background: linear-gradient(180deg, rgba(63,183,255,.14), rgba(3,8,18,.18));
-  border: 1px solid rgba(111,231,255,.18);
-  box-shadow: 0 0 18px rgba(63,183,255,.10);
-}
-
-.rightPills{ display:flex; gap:10px; align-items:center; }
-.pill{
-  font-family: Orbitron, Inter, system-ui;
-  font-size: 10.5px;
-  letter-spacing: 1px;
-  padding: 8px 12px;
-  border-radius: 999px;
-  border: 1px solid rgba(130,190,255,.16);
-  background: rgba(3,8,18,.18);
-  color: rgba(234,242,255,.92);
-}
-.pill.ghost{
-  border-color: rgba(122,109,255,.18);
-  color:#dcd7ff;
-}
-
-/* ===================== Layout ===================== */
-#app{ height: calc(100% - 62px); display:flex; }
-
-#sidebar{
-  width: 410px;
-  padding: 14px;
-  overflow:auto;
-  background: linear-gradient(180deg, rgba(6,14,32,.62), rgba(4,10,24,.74));
-  border-right: 1px solid var(--borderA);
-  backdrop-filter: blur(10px);
-}
-
-/* ===================== Cards ===================== */
-.card{
-  border-radius: var(--r20);
-  background: linear-gradient(180deg, rgba(10,22,46,.52), rgba(6,14,32,.66));
-  border: 1px solid rgba(120,190,255,.16);
-  box-shadow: var(--shadowSoft);
-  padding: 14px;
-  margin-bottom: 12px;
-  position:relative;
-  overflow:hidden;
-}
-
-.card::before{
-  content:"";
-  position:absolute; inset:0;
-  pointer-events:none;
-  background: linear-gradient(180deg, rgba(111,231,255,.05), transparent 24%);
-}
-
-.cardHead{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  margin-bottom: 10px;
-  position:relative;
-  z-index:1;
-}
-
-.step{
-  width:22px; height:22px; border-radius:999px;
-  display:flex; align-items:center; justify-content:center;
-  font-family: Orbitron, Inter, system-ui;
-  font-size: 11px;
-  color: #020817;
-  background: radial-gradient(circle at 30% 30%, #fff, rgba(111,231,255,.9) 65%, rgba(63,183,255,.22));
-  box-shadow: 0 0 12px rgba(111,231,255,.14);
-}
-
-.cardTitle{
-  font-family: Orbitron, Inter, system-ui;
-  font-size: 12px;
-  letter-spacing: 1.2px;
-  text-transform: uppercase;
-  color: rgba(234,242,255,.95);
-}
-
-/* ===================== Forms ===================== */
-label{
-  display:block;
-  margin: 10px 0 6px;
-  font-size: 11.5px;
-  color: var(--muted);
-  position:relative;
-  z-index:1;
-}
-.field{ position:relative; z-index:1; }
-.row{ display:flex; gap:10px; align-items:center; }
-
-input, .select{
-  width:100%;
-  padding: 10px 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,.06);
-  background: rgba(3,8,18,.42);
-  color: var(--text);
-  outline:none;
-  font-size: 13px;
-  box-shadow: inset 0 0 0 1px rgba(0,0,0,.25);
-}
-input::placeholder{ color: rgba(170,190,220,.50); }
-
-.btnRow{ display:flex; gap:10px; position:relative; z-index:1; }
-
-.btn{
-  width:100%;
-  padding: 10px 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,.06);
-  background: rgba(3,8,18,.30);
-  color: var(--text);
-  cursor:pointer;
-  font-size: 13px;
-  transition: transform .08s ease, box-shadow .12s ease, border-color .12s ease;
-}
-.btn:hover{
-  transform: translateY(-1px);
-  border-color: rgba(111,231,255,.18);
-  box-shadow: 0 0 18px rgba(63,183,255,.10);
-}
-.btn.primary{
-  background: linear-gradient(180deg, rgba(63,183,255,.16), rgba(3,8,18,.32));
-  border-color: rgba(111,231,255,.22);
-  font-family: Orbitron, Inter, system-ui;
-  letter-spacing: .8px;
-}
-.btn.ghost{ background: rgba(3,8,18,.22); }
-.btn.mini{ width:auto; padding: 10px 14px; white-space: nowrap; }
-.btn.wide{ width:100%; }
-
-.hint{
-  font-size: 11.5px;
-  color: var(--muted2);
-  position:relative;
-  z-index:1;
-}
-.hint.strong{
-  margin-top: 10px;
-  color: rgba(234,242,255,.92);
-}
-
-/* ===================== Sources/Results ===================== */
-.sources{ display:flex; flex-direction:column; gap:10px; position:relative; z-index:1; }
-.source{
-  display:flex; align-items:center; gap:10px;
-  padding:10px 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,.06);
-  background: rgba(3,8,18,.26);
-}
-.source input{ width:16px; height:16px; accent-color: var(--cyan2); }
-.source .name{
-  font-family: Orbitron, Inter, system-ui;
-  font-size: 12px;
-  letter-spacing: .8px;
-}
-.source .tag{
-  margin-left:auto;
-  font-size: 11.5px;
-  color: var(--muted2);
-}
-
-.count{
-  min-width:56px;
-  height:42px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,.06);
-  background: rgba(3,8,18,.22);
-  font-family: Orbitron, Inter, system-ui;
-  font-size: 12px;
-  letter-spacing: .8px;
-}
-
-.timeline{ margin-top:10px; position:relative; z-index:1; }
-.timeline input[type=range]{ width:100%; accent-color: var(--cyan2); }
-.timelineLabel{ margin-top:6px; font-size:11.5px; color: var(--muted2); }
-
-.results{
-  margin-top:12px;
-  border-radius: 14px;
-  border: 1px solid rgba(255,255,255,.06);
-  background: rgba(3,8,18,.22);
-  box-shadow: inset 0 0 0 1px rgba(0,0,0,.25);
-  max-height:320px;
-  overflow:auto;
-  position:relative;
-  z-index:1;
-}
-.result{
-  display:flex; align-items:center; gap:10px;
-  padding:10px 12px;
-  border-bottom: 1px solid rgba(255,255,255,.05);
-  cursor:pointer;
-}
-.result:hover{ background: rgba(63,183,255,.08); }
-.result:last-child{ border-bottom:none; }
-
-.dot{
-  width:9px; height:9px; border-radius:999px;
-  box-shadow: 0 0 12px rgba(111,231,255,.16);
-}
-.resultMain{ display:flex; flex-direction:column; gap:3px; }
-.resultSat{ font-family: Orbitron, Inter, system-ui; font-size: 12px; letter-spacing:.8px; }
-.resultTime{ font-size: 11.5px; color: var(--muted2); }
-.resultCount{
-  margin-left:auto;
-  font-family: Orbitron, Inter, system-ui;
-  font-size: 11px;
-  padding:4px 8px;
-  border-radius: 999px;
-  border: 1px solid rgba(255,255,255,.06);
-  background: rgba(3,8,18,.18);
-  color: rgba(234,242,255,.90);
-}
-
-.foot{
-  padding: 10px 2px 0;
-  font-size: 11.5px;
-  color: var(--muted2);
-  opacity: .9;
-}
-
-/* ===================== Map (v2: deep-blue + coast glow, no fog) ===================== */
+/* ===================== Map ===================== */
 #mapFrame{
   position:relative;
   height:100%;
@@ -355,117 +46,52 @@ input::placeholder{ color: rgba(170,190,220,.50); }
   border: 1px solid rgba(120,190,255,.14);
   overflow:hidden;
   box-shadow: var(--shadow);
-
-  /* 深蓝底：不靠雾，不靠灰 */
   background:
     radial-gradient(1200px 720px at 55% 42%, rgba(12,58,122,.38), rgba(2,8,18,1));
 }
 
-/* 地图永远可见：不动 opacity */
 #map{
   position:absolute;
   inset:0;
   z-index:1;
 }
 
-/* 关键：蓝色“辉光层”（不是雾）+ 星点层次 */
+/* 蓝色辉光 + 星点 */
 #mapFrame::before{
   content:"";
   position:absolute;
   inset:0;
   pointer-events:none;
   z-index:2;
-
   background:
-    /* 蓝辉光：强化海岸与大陆边缘的“冷光感” */
     radial-gradient(900px 520px at 60% 40%, rgba(63,183,255,.18), transparent 62%),
     radial-gradient(760px 520px at 38% 62%, rgba(111,231,255,.12), transparent 65%),
-    radial-gradient(900px 680px at 92% 78%, rgba(122,109,255,.08), transparent 70%),
-
-    /* 星点：两层密度 */
-    radial-gradient(circle, rgba(130,210,255,.08) 0 1px, transparent 2px) 0 0/18px 18px,
-    radial-gradient(circle, rgba(130,210,255,.05) 0 1px, transparent 2px) 0 0/28px 28px;
-
-  opacity:.95;
+    radial-gradient(circle, rgba(130,210,255,.08) 0 1px, transparent 2px) 0 0/18px 18px;
   mix-blend-mode: screen;
 }
 
-/* 网格：减重，让地图细节透出来 */
+/* HUD 网格 */
 .gridOverlay{
   position:absolute;
   inset:0;
   pointer-events:none;
   z-index:3;
-
   background:
-    /* dotted matrix */
-    radial-gradient(circle, rgba(111,231,255,.07) 0 1px, transparent 2px) 0 0/28px 28px,
-
-    /* major grid */
-    linear-gradient(rgba(111,231,255,.09) 1px, transparent 1px) 0 0/200px 200px,
-    linear-gradient(90deg, rgba(111,231,255,.09) 1px, transparent 1px) 0 0/200px 200px,
-
-    /* minor grid */
-    linear-gradient(rgba(111,231,255,.045) 1px, transparent 1px) 0 0/50px 50px,
-    linear-gradient(90deg, rgba(111,231,255,.045) 1px, transparent 1px) 0 0/50px 50px;
-
-  opacity:.42;
-  mix-blend-mode: screen;
+    linear-gradient(rgba(111,231,255,.08) 1px, transparent 1px) 0 0/200px 200px,
+    linear-gradient(90deg, rgba(111,231,255,.08) 1px, transparent 1px) 0 0/200px 200px;
+  opacity:.45;
 }
 
-/* 暗角：变“蓝暗角”，并减弱压黑 */
+/* 蓝暗角 */
 #mapFrame::after{
   content:"";
   position:absolute;
   inset:0;
   pointer-events:none;
   z-index:4;
-
   background:
     radial-gradient(ellipse at center,
       rgba(2,8,18,0) 58%,
-      rgba(2,8,18,.18) 78%,
-      rgba(2,8,18,.70) 100%);
+      rgba(2,8,18,.25) 78%,
+      rgba(2,8,18,.75) 100%);
 }
-
-
-/* ===================== Leaflet controls ===================== */
-.leaflet-control-zoom,
-.leaflet-draw-toolbar{
-  background: rgba(6,14,32,.62) !important;
-  border: 1px solid rgba(120,190,255,.16) !important;
-  border-radius: 12px !important;
-  box-shadow: var(--shadowSoft) !important;
-  backdrop-filter: blur(10px);
-}
-
-.leaflet-control-zoom a,
-.leaflet-draw-toolbar a{
-  background: transparent !important;
-  color: rgba(234,242,255,.92) !important;
-  border-bottom: 1px solid rgba(255,255,255,.06) !important;
-}
-
-.leaflet-control-zoom a:hover,
-.leaflet-draw-toolbar a:hover{
-  background: rgba(63,183,255,.12) !important;
-}
-
-.leaflet-bar a:last-child{ border-bottom:none !important; }
-
-/* ===================== Toast ===================== */
-.toast{
-  position:absolute;
-  left:16px;
-  bottom:16px;
-  max-width: 560px;
-  padding:10px 12px;
-  border-radius: 12px;
-  background: rgba(6,14,32,.62);
-  border: 1px solid rgba(255,255,255,.06);
-  box-shadow: var(--shadowSoft);
-  color: rgba(234,242,255,.92);
-  font-size: 12px;
-  z-index: 30;
-}
-.hidden{ display:none; }
