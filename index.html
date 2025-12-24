@@ -1,180 +1,50 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Satellite Discovery Index</title>
 
-  <!-- CSP：设计阶段先放宽，避免样式/字体加载问题；等功能稳定再收紧 -->
-  <meta http-equiv="Content-Security-Policy"
-        content="
-          default-src 'self' https: data: blob:;
-          img-src 'self' https: data: blob:;
-          style-src 'self' 'unsafe-inline' https:;
-          script-src 'self' 'unsafe-inline' https:;
-          connect-src 'self' https: data: blob:;
-          font-src 'self' https: data:;
-        ">
+    
+Satellite Discovery Index
 
-  <!-- Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Orbitron:wght@500;600&display=swap" rel="stylesheet">
+    
+Demo
 
-  <link rel="stylesheet" href="styles.css"/>
-</head>
+  
 
-<body>
-  <header id="topbar">
-    <div class="brand">
-      <span class="brandDot" aria-hidden="true"></span>
-      <div class="brandText">
-        <div class="brandTitle">SATELLITE DISCOVERY INDEX</div>
-        <div class="brandSub">Open data only · No login · Archive footprints (reference only)</div>
+    
+
+      
+
+        
+Open Setup
+
+        
+
+          Phase
+          
+e.g. Locate
+
+        
+
+      
+
+
+  <div class="card">
+    <div class="cardTitle">Sources</div>
+    <div class="sources">
+      <div class="source">
+        <span class="name">Source A</span>
+        <span class="tag">LIVE</span>
+      </div>
+      <div class="source">
+        <span class="name">Source B</span>
+        <span class="tag">ARCHIVE</span>
       </div>
     </div>
-
-    <nav class="tabs" aria-label="tabs">
-      <button class="tab active" data-tab="aoi" type="button">AOI</button>
-      <button class="tab" data-tab="coverage" type="button">Coverage</button>
-      <button class="tab" data-tab="footprints" type="button">Footprints</button>
-      <button class="tab" data-tab="programming" type="button">Programming</button>
-      <button class="tab" data-tab="sources" type="button">Sources</button>
-    </nav>
-
-    <div class="rightPills">
-      <span class="pill">OPEN · NO LOGIN</span>
-      <span class="pill ghost">REFERENCE ONLY</span>
-    </div>
-  </header>
-
-  <div id="app">
-    <aside id="sidebar">
-      <section class="card">
-        <div class="cardHead">
-          <div class="step">1</div>
-          <div class="cardTitle">AOI SETUP</div>
-        </div>
-
-        <div class="btnRow">
-          <button id="btnDraw" class="btn primary" type="button">Draw AOI</button>
-          <button id="btnClearAOI" class="btn ghost" type="button">Clear</button>
-        </div>
-
-        <div class="field">
-          <label for="placeInput">Place search (optional)</label>
-          <div class="row">
-            <input id="placeInput" placeholder="Beijing / Dubai / New York"/>
-            <button id="btnGeocode" class="btn mini" type="button">Locate</button>
-          </div>
-          <div class="hint">Uses OpenStreetMap Nominatim public geocoding.</div>
-        </div>
-
-        <div class="field">
-          <label for="radiusKm">Point + Radius (km)</label>
-          <div class="row">
-            <input id="radiusKm" type="number" min="1" max="1000" value="50"/>
-            <button id="btnPointRadius" class="btn mini" type="button">Pick</button>
-          </div>
-        </div>
-
-        <div id="aoiStatus" class="hint strong">AOI not set</div>
-      </section>
-
-      <section class="card">
-        <div class="cardHead">
-          <div class="step">2</div>
-          <div class="cardTitle">TIME RANGE (UTC)</div>
-        </div>
-
-        <div class="row">
-          <input id="startDate" type="date"/>
-          <input id="endDate" type="date"/>
-        </div>
-
-        <div class="hint">Used for open STAC checks (footprints + time only).</div>
-      </section>
-
-      <section class="card">
-        <div class="cardHead">
-          <div class="step">3</div>
-          <div class="cardTitle">PUBLIC ARCHIVES</div>
-        </div>
-
-        <!-- 设计阶段先放占位（后续功能再动态渲染） -->
-        <div id="sources" class="sources">
-          <div class="source">
-            <input type="checkbox" checked />
-            <div class="name">Sentinel-2</div>
-            <div class="tag">STAC</div>
-          </div>
-          <div class="source">
-            <input type="checkbox" checked />
-            <div class="name">Sentinel-1</div>
-            <div class="tag">STAC</div>
-          </div>
-          <div class="source">
-            <input type="checkbox" checked />
-            <div class="name">Landsat</div>
-            <div class="tag">STAC</div>
-          </div>
-        </div>
-
-        <div class="btnRow">
-          <button id="btnQuery" class="btn primary wide" type="button">Query Archive</button>
-          <button id="btnClearResults" class="btn ghost" type="button">Clear Results</button>
-        </div>
-      </section>
-
-      <section class="card">
-        <div class="cardHead">
-          <div class="step">4</div>
-          <div class="cardTitle">RESULTS</div>
-        </div>
-
-        <div class="row">
-          <select id="timeMode" class="select">
-            <option value="date" selected>Date</option>
-            <option value="datetime">Date + Time (UTC)</option>
-          </select>
-          <div id="countPill" class="count">0</div>
-        </div>
-
-        <div class="timeline">
-          <input id="timeSlider" type="range" min="0" max="100" value="100"/>
-          <div class="timelineLabel">Show data up to <span id="timeLabel">Now</span></div>
-        </div>
-
-        <div id="results" class="results"></div>
-      </section>
-
-      <footer class="foot">
-        Reference only · No imagery · No proprietary APIs · No vendor inventory checks
-      </footer>
-    </aside>
-
-    <main id="main">
-      <div id="mapFrame" aria-label="map">
-        <!-- 设计占位：先不用 Leaflet，避免“地图丢了” -->
-        <div id="map" class="mapMock">
-          <div class="mapHudTop">
-            <span class="hudPill">OPEN · NO LOGIN</span>
-            <span class="hudPill ghost">REFERENCE ONLY</span>
-          </div>
-          <div class="mapHudLeft">
-            <div class="hudZoom">
-              <button type="button" class="hudBtn">+</button>
-              <button type="button" class="hudBtn">−</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="gridOverlay" aria-hidden="true"></div>
-        <div id="toast" class="toast hidden"></div>
-      </div>
-    </main>
   </div>
+</aside>
 
-  <script src="app.js"></script>
-</body>
-</html>
+<main id="main" aria-label="Main content">
+  <div id="mapFrame" aria-label="Map frame"></div>
+
+  <div class="card">
+    <div class="cardTitle">Details</div>
+    <p class="result">示例文本：这里可以放置地图信息、统计数据等。</p>
+  </div>
+</main>
