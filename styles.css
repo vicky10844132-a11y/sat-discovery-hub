@@ -347,9 +347,7 @@ input::placeholder{ color: rgba(170,190,220,.50); }
   opacity: .9;
 }
 
-/* ===================== Map Frame ===================== */
-#main{ flex:1; padding: 12px; }
-
+/* ===================== Map (v2: deep-blue + coast glow, no fog) ===================== */
 #mapFrame{
   position:relative;
   height:100%;
@@ -358,65 +356,78 @@ input::placeholder{ color: rgba(170,190,220,.50); }
   overflow:hidden;
   box-shadow: var(--shadow);
 
-  /* deep blue base (even if tiles fail) */
+  /* 深蓝底：不靠雾，不靠灰 */
   background:
-    radial-gradient(1200px 720px at 55% 40%, rgba(10,44,90,.70), rgba(2,8,18,1));
+    radial-gradient(1200px 720px at 55% 42%, rgba(12,58,122,.38), rgba(2,8,18,1));
 }
 
-/* map is always visible; do NOT touch opacity */
+/* 地图永远可见：不动 opacity */
 #map{
   position:absolute;
   inset:0;
   z-index:1;
 }
 
-/* star/dust layer */
+/* 关键：蓝色“辉光层”（不是雾）+ 星点层次 */
 #mapFrame::before{
   content:"";
   position:absolute;
   inset:0;
   pointer-events:none;
   z-index:2;
+
   background:
-    radial-gradient(circle at 18% 28%, rgba(111,231,255,.28) 0 1px, transparent 2px),
-    radial-gradient(circle at 72% 42%, rgba(63,183,255,.24) 0 1px, transparent 2px),
-    radial-gradient(circle at 44% 70%, rgba(42,109,255,.20) 0 1px, transparent 2px),
-    radial-gradient(circle at 82% 18%, rgba(122,109,255,.16) 0 1px, transparent 2px),
-    radial-gradient(circle, rgba(120,200,255,.04) 0 1px, transparent 2px) 0 0/20px 20px,
-    radial-gradient(circle, rgba(120,200,255,.03) 0 1px, transparent 2px) 0 0/32px 32px;
-  opacity:.65;
+    /* 蓝辉光：强化海岸与大陆边缘的“冷光感” */
+    radial-gradient(900px 520px at 60% 40%, rgba(63,183,255,.18), transparent 62%),
+    radial-gradient(760px 520px at 38% 62%, rgba(111,231,255,.12), transparent 65%),
+    radial-gradient(900px 680px at 92% 78%, rgba(122,109,255,.08), transparent 70%),
+
+    /* 星点：两层密度 */
+    radial-gradient(circle, rgba(130,210,255,.08) 0 1px, transparent 2px) 0 0/18px 18px,
+    radial-gradient(circle, rgba(130,210,255,.05) 0 1px, transparent 2px) 0 0/28px 28px;
+
+  opacity:.95;
   mix-blend-mode: screen;
 }
 
-/* dot matrix + grid */
+/* 网格：减重，让地图细节透出来 */
 .gridOverlay{
   position:absolute;
   inset:0;
   pointer-events:none;
   z-index:3;
+
   background:
-    radial-gradient(circle, rgba(111,231,255,.08) 0 1px, transparent 2px) 0 0/28px 28px,
-    linear-gradient(rgba(111,231,255,.10) 1px, transparent 1px) 0 0/180px 180px,
-    linear-gradient(90deg, rgba(111,231,255,.10) 1px, transparent 1px) 0 0/180px 180px,
-    linear-gradient(rgba(111,231,255,.05) 1px, transparent 1px) 0 0/45px 45px,
-    linear-gradient(90deg, rgba(111,231,255,.05) 1px, transparent 1px) 0 0/45px 45px;
-  opacity:.55;
+    /* dotted matrix */
+    radial-gradient(circle, rgba(111,231,255,.07) 0 1px, transparent 2px) 0 0/28px 28px,
+
+    /* major grid */
+    linear-gradient(rgba(111,231,255,.09) 1px, transparent 1px) 0 0/200px 200px,
+    linear-gradient(90deg, rgba(111,231,255,.09) 1px, transparent 1px) 0 0/200px 200px,
+
+    /* minor grid */
+    linear-gradient(rgba(111,231,255,.045) 1px, transparent 1px) 0 0/50px 50px,
+    linear-gradient(90deg, rgba(111,231,255,.045) 1px, transparent 1px) 0 0/50px 50px;
+
+  opacity:.42;
   mix-blend-mode: screen;
 }
 
-/* vignette */
+/* 暗角：变“蓝暗角”，并减弱压黑 */
 #mapFrame::after{
   content:"";
   position:absolute;
   inset:0;
   pointer-events:none;
   z-index:4;
+
   background:
     radial-gradient(ellipse at center,
-      rgba(2,8,18,0) 52%,
-      rgba(2,8,18,.28) 76%,
-      rgba(2,8,18,.88) 100%);
+      rgba(2,8,18,0) 58%,
+      rgba(2,8,18,.18) 78%,
+      rgba(2,8,18,.70) 100%);
 }
+
 
 /* ===================== Leaflet controls ===================== */
 .leaflet-control-zoom,

@@ -74,12 +74,15 @@ cartoLabels.addTo(map);
 /* ---- Lock deep-blue look (IMPORTANT) ---- */
 function applyTileFilter(mode){
   try{
-    // deep-blue without killing map details
-    const fCarto = "brightness(1.08) contrast(1.35) saturate(1.55) hue-rotate(190deg)";
-    const fOsm   = "brightness(1.05) contrast(1.22) saturate(1.20) hue-rotate(185deg)";
+    // v2：把“黑灰底”抬成“深蓝海洋”，同时把海岸/边界拉出来
+    const fCarto =
+      "brightness(1.22) contrast(1.45) saturate(1.85) hue-rotate(200deg)";
+    const fOsm   =
+      "brightness(1.18) contrast(1.30) saturate(1.55) hue-rotate(195deg)";
     map.getPane("tilePane").style.filter = (mode === "osm") ? fOsm : fCarto;
   }catch(e){}
 }
+
 applyTileFilter("carto");
 
 /* ---- Auto fallback on tile errors ---- */
