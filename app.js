@@ -1,6 +1,11 @@
 const $ = (id) => document.getElementById(id);
 
-function toast(msg, ms=2200){
+function setStatus(msg){
+  const el = $("aoiStatus");
+  if (el) el.textContent = msg;
+}
+
+function toast(msg, ms=2600){
   const t = $("toast");
   if(!t) return;
   t.textContent = msg;
@@ -14,7 +19,6 @@ function utcDateKey(iso){
   if (!Number.isFinite(t)) return "Unknown";
   return new Date(t).toISOString().slice(0,10);
 }
-
 function fmtByMode(iso, mode){
   if (!iso) return "Unknown";
   const t = Date.parse(iso);
@@ -22,7 +26,6 @@ function fmtByMode(iso, mode){
   if (mode === "date") return new Date(t).toISOString().slice(0,10);
   return new Date(t).toISOString().slice(0,16).replace("T"," ") + " UTC";
 }
-
 function opacityByTime(iso){
   const t = Date.parse(iso);
   if (!Number.isFinite(t)) return 0.12;
@@ -33,7 +36,6 @@ function opacityByTime(iso){
   if (days < 365*3) return 0.18;
   return 0.12;
 }
-
 function parseDate(id){
   const v = $(id)?.value;
   if (!v) return null;
@@ -41,6 +43,9 @@ function parseDate(id){
   return Number.isFinite(d.getTime()) ? d : null;
 }
 function toUtcDate(d){ return d.toISOString().slice(0,10); }
+
+/* ===================== BOOT DIAG ===================== */
+setStatus("JS OK · initializing map…");
 
 /* ---------------- Map ---------------- */
 const map = L.map("map", {
@@ -51,39 +56,55 @@ const map = L.map("map", {
 
 map.options.wheelPxPerZoomLevel = 120;
 
-/* ================= Base Map (OSM SAFE) =================
-   重点：先确保瓦片一定能加载。你之前那张“整块蓝底”就是瓦片没加载。 */
+/* ===================== Base Map (OSM SAFE) ===================== */
 const osmBase = L.tileLayer(
   "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-  {
-    subdomains: "abc",
-    maxZoom: 19,
-    attribution: "© OpenStreetMap contributors"
-  }
+  { subdomains:"abc", maxZoom:19, attribution:"© OpenStreetMap contributors" }
 );
 osmBase.addTo(map);
 
-/* ---- Optional: deep-blue filter (作用在真实瓦片上) ---- */
-function applyTileFilter(){
-  try{
-    // 深蓝但不吃细节：先保底能看到地图，再慢慢调
-    map.getPane("tilePane").style.filter =
-      "brightness(1.08) contrast(1.22) saturate(1.35) hue-rotate(195deg)";
-  }catch(e){}
-}
-applyTileFilter();
+/* 深蓝滤镜（可先开着；如果你只想先看原始地图，把这行注释掉） */
+try{
+  map.getPane("tilePane").style.filter =
+    "brightness(1.05) contrast(1.18) saturate(1.35) hue-rotate(195deg)";
+}catch{}
 
-/* Layers（必须在 draw controls 之前定义，否则 drawn/resultsLayer 会报错） */
+/* ===================== Tile diagnostics (writes to sidebar) ===================== */
+let tileOk = 0, tileErr = 0;
+
+osmBase.on("tileload", ()=>{
+  tileOk++;
+  if(tileOk === 1){
+    setStatus("✅ Tiles loading (first tile loaded)");
+    toast("✅ Tiles loaded", 1800);
+  }
+});
+
+osmBase.on("tileerror", (e)=>{
+  tileErr++;
+  if(tileErr === 1){
+    setStatus("❌ Tile blocked (CSP / Network)");
+    toast("❌ Tile blocked (check CSP / network)", 3200);
+  }
+  console.warn("tileerror:", e);
+});
+
+setTimeout(()=>{
+  const pane = map.getPane("tilePane");
+  const imgs = pane ? pane.querySelectorAll("img") : [];
+  setStatus(`JS OK · tile img:${imgs.length} · tileload:${tileOk} · tileerror:${tileErr}`);
+}, 1600);
+
+/* ===================== Layers (MUST be before draw control) ===================== */
 const drawn = new L.FeatureGroup().addTo(map);
 const resultsLayer = L.layerGroup().addTo(map);
 
-/* State */
 let aoiGeom = null;
 let aoiBounds = null;
 let mergedGroups = [];
 let sliderThresholdTime = Infinity;
 
-/* Draw controls */
+/* ===================== Draw controls ===================== */
 map.addControl(new L.Control.Draw({
   draw:{
     polyline:false, marker:false, circle:false, circlemarker:false,
@@ -122,7 +143,7 @@ function setAOIFromLayer(layer){
   if (!gj?.geometry) return;
   aoiGeom = gj.geometry;
   aoiBounds = layer.getBounds();
-  const s = $("aoiStatus"); if(s) s.textContent = "AOI set";
+  setStatus("AOI set");
   lockMapToAOI(aoiBounds);
 }
 
@@ -131,11 +152,12 @@ function clearAOI(){
   aoiGeom = null;
   aoiBounds = null;
   map.setMaxBounds(null);
-  const s = $("aoiStatus"); if(s) s.textContent = "AOI not set";
+  setStatus("AOI not set");
 }
 
-/* Buttons */
+/* ===================== Buttons ===================== */
 $("btnDraw")?.addEventListener("click", ()=>toast("Use draw tools on map (rectangle / polygon).", 2200));
+
 $("btnClearAOI")?.addEventListener("click", ()=>{
   clearAOI();
   clearResults();
@@ -163,7 +185,7 @@ map.on("click", (e)=>{
 
   aoiGeom = circle.geometry;
   aoiBounds = L.geoJSON(circle).getBounds();
-  const s = $("aoiStatus"); if(s) s.textContent = "AOI set";
+  setStatus("AOI set");
   lockMapToAOI(aoiBounds);
 });
 
@@ -189,7 +211,7 @@ $("btnGeocode")?.addEventListener("click", async ()=>{
 
     aoiGeom = circle.geometry;
     aoiBounds = L.geoJSON(circle).getBounds();
-    const s = $("aoiStatus"); if(s) s.textContent = "AOI set";
+    setStatus("AOI set");
     lockMapToAOI(aoiBounds);
 
     toast("Located & AOI created.", 1800);
@@ -232,8 +254,8 @@ function selectedSources(){
 function clearResults(){
   resultsLayer.clearLayers();
   mergedGroups = [];
-  const r = $("results"); if(r) r.innerHTML = "";
-  const c = $("countPill"); if(c) c.textContent = "0";
+  $("results") && ($("results").innerHTML = "");
+  $("countPill") && ($("countPill").textContent = "0");
 }
 $("btnClearResults")?.addEventListener("click", ()=>{ clearResults(); toast("Results cleared.", 1600); });
 
@@ -301,10 +323,8 @@ function renderList(){
     box.appendChild(item);
   }
 
-  const c = $("countPill");
-  if(c) c.textContent = String(mergedGroups.length);
+  $("countPill") && ($("countPill").textContent = String(mergedGroups.length));
 }
-
 $("timeMode")?.addEventListener("change", renderList);
 
 /* Timeline slider */
@@ -314,8 +334,7 @@ function updateTimeThreshold(percent){
   sliderThresholdTime = Date.now() - days * 86400000;
 
   const d = new Date(sliderThresholdTime);
-  const tl = $("timeLabel");
-  if(tl) tl.textContent = (percent===100) ? "Now" : d.toISOString().slice(0,10);
+  $("timeLabel") && ($("timeLabel").textContent = (percent===100) ? "Now" : d.toISOString().slice(0,10));
 }
 
 function applyTimelineFilterToLayer(layerGroup){

@@ -5,6 +5,17 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Satellite Discovery Index</title>
 
+  <!-- ✅ 关键：允许瓦片 img 加载（否则地图永远空） -->
+  <meta http-equiv="Content-Security-Policy"
+        content="
+          default-src 'self' https: data: blob:;
+          img-src 'self' https: data: blob:;
+          style-src 'self' 'unsafe-inline' https:;
+          script-src 'self' 'unsafe-inline' https:;
+          connect-src 'self' https: data: blob:;
+          font-src 'self' https: data:;
+        ">
+
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -43,7 +54,6 @@
 
   <div id="app">
     <aside id="sidebar">
-      <!-- 1 AOI -->
       <section class="card">
         <div class="cardHead">
           <div class="step">1</div>
@@ -72,10 +82,10 @@
           </div>
         </div>
 
+        <!-- ✅ 我们用它做强诊断输出 -->
         <div id="aoiStatus" class="hint strong">AOI not set</div>
       </section>
 
-      <!-- 2 TIME -->
       <section class="card">
         <div class="cardHead">
           <div class="step">2</div>
@@ -90,7 +100,6 @@
         <div class="hint">Used for open STAC checks (footprints + time only).</div>
       </section>
 
-      <!-- 3 SOURCES -->
       <section class="card">
         <div class="cardHead">
           <div class="step">3</div>
@@ -105,7 +114,6 @@
         </div>
       </section>
 
-      <!-- 4 RESULTS -->
       <section class="card">
         <div class="cardHead">
           <div class="step">4</div>
@@ -136,11 +144,8 @@
     <main id="main">
       <div id="mapFrame">
         <div id="map"></div>
-
-        <!-- ✅ Stable layer order (no JS injection) -->
-        <div class="mapColorGlow"></div>
         <div class="gridOverlay"></div>
-
+        <!-- ✅ toast 一定要存在 -->
         <div id="toast" class="toast hidden"></div>
       </div>
     </main>
@@ -149,6 +154,8 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6.5.0/turf.min.js"></script>
+
+  <!-- ✅ 路径必须对；如果你的 app.js 在 js/ 目录，改成 ./js/app.js -->
   <script src="app.js"></script>
 </body>
 </html>
