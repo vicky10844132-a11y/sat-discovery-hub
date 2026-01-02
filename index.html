@@ -3,23 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GPTM SOVEREIGN // SPATIAL SYNC</title>
+    <title>GPTM SOVEREIGN // BASELINE LOCKED</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <style>
-        /* --- THEME: DEEP SEA NAVY & SIGNAL YELLOW --- */
+        /* --- THEME: DEEP SEA BLUE & SIGNAL YELLOW --- */
         :root {
-            --bg-body: #020b16;       /* Darkest Navy */
-            --bg-panel: #051e3e;      /* Deep Sea Panel */
-            --border: #1e3a5f;        /* Border Blue */
+            --bg-body: #020b16;
+            --bg-panel: #051e3e;
+            --border: #1e3a5f;
             
-            --accent-yellow: #ffd700; /* COMMANDER GOLD */
-            --accent-green: #10b981;  /* SUCCESS */
-            --accent-amber: #f59e0b;  /* ENGINEER/WARNING */
-            --accent-data: #3b82f6;   /* DATA BLUE */
+            --accent-yellow: #ffd700; 
+            --accent-green: #10b981;
+            --accent-amber: #f59e0b;
+            --accent-data: #3b82f6;
+            --accent-lock: #64748b; /* Deep Grey for 2023 Locked Layer */
             
             --font-mono: "JetBrains Mono", monospace;
             --font-ui: "Inter", sans-serif;
@@ -36,39 +37,55 @@
 
         /* --- LOGIN --- */
         #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; background: rgba(2, 11, 22, 0.98); display: flex; justify-content: center; align-items: center; flex-direction: column; }
-        .login-box { width: 450px; padding: 40px; border: 1px solid var(--border); background: var(--bg-panel); box-shadow: 0 0 100px rgba(0,0,0,0.5); border-radius: 8px; }
+        .login-box { width: 450px; padding: 40px; border: 1px solid var(--border); background: var(--bg-panel); box-shadow: 0 0 80px rgba(0,0,0,0.8); border-radius: 8px; }
         .login-title { font-size: 24px; font-weight: 900; color: #fff; margin-bottom: 20px; letter-spacing: 2px; text-align: center; }
-        .login-input { width: 100%; background: #020b16; border: 1px solid var(--border); color: #fff; padding: 12px; font-family: var(--font-mono); font-size: 12px; margin-bottom: 15px; border-radius: 4px; }
-        .login-input:focus { border-color: var(--accent-yellow); }
-        
-        .z-title { font-size: 10px; color: #888; margin: 15px 0 5px 0; text-transform: uppercase; letter-spacing: 1px; text-align: center; }
+        .login-input { width: 100%; background: #020b16; border: 1px solid var(--border); color: #fff; padding: 12px; font-family: var(--font-mono); font-size: 12px; margin-bottom: 15px; border-radius: 4px; cursor: text; }
+        .enter-btn { width: 100%; background: var(--accent-yellow); color: #000; border: none; padding: 12px; font-weight: 800; cursor: pointer; margin-top: 10px; border-radius: 4px; letter-spacing: 1px; }
+        .enter-btn:hover { background: #fff; }
+        .reg-btn { width: 100%; background: transparent; border: 1px solid #666; color: #888; padding: 10px; font-size: 11px; cursor: pointer; margin-top: 10px; border-radius: 4px; }
+        .reg-btn:hover { border-color: #ccc; color: #ccc; }
+
+        /* ZODIAC (Compact) */
+        .z-title { font-size: 10px; color: #888; margin: 20px 0 10px 0; text-transform: uppercase; letter-spacing: 1px; text-align: center; }
         .zodiac-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 20px; }
         .z-btn { background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: #666; padding: 8px; cursor: pointer; text-align: center; border-radius: 4px; transition: 0.2s; }
         .z-btn:hover, .z-btn.selected { border-color: var(--accent-yellow); color: var(--accent-yellow); background: rgba(255, 215, 0, 0.1); }
         .z-icon { font-size: 18px; }
 
-        .enter-btn { width: 100%; background: var(--accent-yellow); color: #000; border: none; padding: 12px; font-weight: 800; cursor: pointer; border-radius: 4px; letter-spacing: 1px; }
-        .enter-btn:hover { background: #fff; }
-        .reg-btn { width: 100%; background: transparent; border: 1px solid #666; color: #888; padding: 10px; font-size: 11px; cursor: pointer; margin-top: 10px; border-radius: 4px; }
-        .reg-btn:hover { border-color: #ccc; color: #ccc; }
-
         /* --- HEADER --- */
-        header { height: 50px; background: #0a1018; border-bottom: 1px solid var(--border); display: grid; grid-template-columns: 250px 1fr 300px; align-items: center; padding: 0 20px; z-index: 500; }
+        header { 
+            height: 50px; background: #0a1018; border-bottom: 1px solid var(--border); 
+            display: grid; grid-template-columns: 250px 1fr 300px; align-items: center; padding: 0 20px; 
+            z-index: 500; position: relative;
+        }
         .brand { font-size: 16px; font-weight: 900; color: #fff; letter-spacing: 2px; display: flex; align-items: center; gap: 10px; }
         .brand span { color: var(--accent-yellow); }
 
-        .ai-topbar { display: flex; align-items: center; justify-content: center; gap: 15px; font-family: var(--font-mono); font-size: 11px; color: #888; cursor: pointer; height: 100%; }
+        .ai-topbar { 
+            display: flex; align-items: center; justify-content: center; gap: 15px; 
+            font-family: var(--font-mono); font-size: 11px; color: #888; cursor: pointer; height: 100%;
+        }
         .ai-status { display: flex; align-items: center; gap: 6px; }
         .ai-dot { width: 6px; height: 6px; border-radius: 50%; }
         
         .header-controls { display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
-        .view-switch { display: none; background: #000; border: 1px solid var(--border); border-radius: 4px; padding: 2px; }
-        .vs-btn { padding: 6px 12px; font-size: 10px; border: none; background: transparent; color: #666; cursor: pointer; font-weight: 700; font-family: var(--font-mono); border-radius: 2px; }
+        .view-switch { 
+            display: none; background: #000; border: 1px solid var(--border); border-radius: 4px; padding: 2px;
+        }
+        .vs-btn { 
+            padding: 6px 12px; font-size: 10px; border: none; background: transparent; color: #666; 
+            cursor: pointer; font-weight: 700; font-family: var(--font-mono); border-radius: 2px;
+        }
         .vs-btn.active { background: var(--accent-yellow); color: #000; }
         .user-badge { font-family: var(--font-mono); font-size: 11px; padding: 5px 10px; border: 1px solid var(--border); border-radius: 4px; color: #888; }
 
         /* --- AI DROPDOWN --- */
-        #aiDropdown { position: absolute; top: 50px; left: 50%; transform: translateX(-50%); width: 500px; background: rgba(5, 30, 62, 0.98); border: 1px solid var(--border); border-top: none; box-shadow: 0 10px 40px rgba(0,0,0,0.5); display: none; flex-direction: column; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; overflow: hidden; }
+        #aiDropdown {
+            position: absolute; top: 50px; left: 50%; transform: translateX(-50%); width: 500px;
+            background: rgba(5, 30, 62, 0.98); border: 1px solid var(--border); border-top: none;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5); display: none; flex-direction: column;
+            border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; overflow: hidden;
+        }
         .ai-body { height: 250px; overflow-y: auto; padding: 15px; font-family: var(--font-mono); font-size: 11px; }
         .chat-row { display: flex; gap: 10px; margin-bottom: 8px; align-items: flex-start; }
         .avatar { width: 24px; height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
@@ -78,22 +95,32 @@
 
         /* --- WORKSPACE --- */
         #workspace { flex: 1; display: grid; grid-template-columns: 340px 1fr; overflow: hidden; }
+
         .sidebar { background: var(--bg-panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 10; }
-        .p-head { padding: 15px; border-bottom: 1px solid var(--border); font-size: 11px; font-weight: 700; color: #fff; letter-spacing: 1px; background: rgba(0,0,0,0.2); }
+        .p-head { padding: 15px; border-bottom: 1px solid var(--border); font-size: 11px; font-weight: 700; color: #fff; letter-spacing: 1px; background: rgba(0,0,0,0.2); display: flex; justify-content: space-between; }
         .p-body { flex: 1; overflow-y: auto; padding: 20px; }
 
         /* ADMIN SIDEBAR */
         #sidebar-admin { display: none; }
-        .admin-upload-card { background: rgba(0,0,0,0.2); border: 1px solid var(--border); padding: 15px; margin-bottom: 10px; border-radius: 4px; }
+        .admin-upload-card { 
+            background: rgba(0,0,0,0.2); border: 1px solid var(--border); padding: 15px; 
+            margin-bottom: 10px; border-radius: 4px; transition: 0.2s;
+        }
         .auc-header { display: flex; justify-content: space-between; margin-bottom: 10px; color: #fff; font-weight: 700; font-size: 12px; }
         .auc-status { font-size: 9px; padding: 2px 6px; background: #000; color: #666; border-radius: 2px; font-family: var(--font-mono); }
         .auc-status.live { color: var(--accent-green); border: 1px solid var(--accent-green); }
-        .file-list { font-size: 9px; color: #666; font-family: var(--font-mono); margin-bottom: 10px; line-height: 1.4; }
-        .upload-btn-mini { width: 100%; border: 1px dashed #666; color: #888; padding: 8px; text-align: center; font-size: 10px; cursor: pointer; border-radius: 2px; }
+        .auc-status.locked { color: #fff; border: 1px solid #666; background:#333; }
+        .upload-btn-mini { 
+            width: 100%; border: 1px dashed #666; color: #888; padding: 8px; 
+            text-align: center; font-size: 10px; cursor: pointer; border-radius: 2px;
+        }
         .upload-btn-mini:hover { border-color: var(--accent-yellow); color: var(--accent-yellow); }
 
         /* USER SIDEBAR */
         #sidebar-user { display: flex; }
+        .module { margin-bottom: 25px; border-bottom: 1px dashed var(--border); padding-bottom: 20px; }
+        .mod-title { font-size: 10px; color: var(--accent-yellow); font-weight: 700; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
+        
         .step-card { border: 1px solid #333; padding: 15px; margin-bottom: 15px; background: rgba(0,0,0,0.2); border-radius: 6px; opacity: 0.5; pointer-events: none; }
         .step-card.active { opacity: 1; pointer-events: all; border-color: #666; background: rgba(255,255,255,0.02); }
         .step-card.done { border-color: var(--accent-green); opacity: 0.8; }
@@ -105,9 +132,7 @@
         .action-btn.warn { background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #ef4444; }
         .action-btn.warn:hover { background: #ef4444; color: #fff; }
 
-        /* MODULES & TOGGLES */
-        .module { margin-bottom: 25px; border-bottom: 1px dashed var(--border); padding-bottom: 20px; }
-        .mod-title { font-size: 10px; color: var(--accent-yellow); font-weight: 700; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
+        /* MISSION MODULES */
         .aoi-box { border: 1px solid #222; padding: 10px; background: #0a0a0a; margin-bottom: 10px; border-radius: 4px; }
         .sys-select { width: 100%; background: #151515; border: 1px solid #333; color: #ccc; padding: 8px; font-family: var(--font-mono); font-size: 11px; outline: none; }
         .upload-zone { border: 1px dashed #444; padding: 20px; text-align: center; cursor: pointer; transition: 0.2s; }
@@ -141,8 +166,10 @@
         <input type="text" class="login-input" id="loginCompany" placeholder="COMPANY (Admin: COMMANDER)" onkeypress="handleLoginKey(event)">
         <input type="text" class="login-input" id="loginEmail" placeholder="EMAIL" onkeypress="handleLoginKey(event)">
         <input type="text" class="login-input" id="loginCode" placeholder="VERIFICATION CODE (123456 / 000000)" onkeypress="handleLoginKey(event)">
+        
         <div class="z-title">CHOOSE MOUSE SKIN</div>
         <div class="zodiac-grid" id="zodiacGrid"></div>
+        
         <button class="enter-btn" onclick="checkLogin()">AUTHENTICATE</button>
         <button class="reg-btn" onclick="alert('Registration portal open.')">REGISTER NEW ACCOUNT</button>
     </div>
@@ -154,7 +181,7 @@
         <div class="ai-status"><div class="ai-dot" style="background:var(--accent-green)"></div> CONCIERGE</div>
         <div class="ai-status"><div class="ai-dot" style="background:var(--accent-amber)"></div> ENGINEER</div>
         <div style="width:1px; height:15px; background:#333; margin:0 10px;"></div>
-        <div class="ai-msg-preview" id="aiTicker">System Online. 2023.SHP loaded in memory.</div>
+        <div class="ai-msg-preview" id="aiTicker">System Online. 2023.SHP Baseline Active.</div>
         <i class="ph ph-caret-down"></i>
     </div>
     <div class="header-controls">
@@ -210,7 +237,7 @@
                         <div class="aoi-box">
                             <div style="font-size:9px; color:#888; margin-bottom:5px;">A) ADMIN SELECT</div>
                             <select class="sys-select" onchange="map.setView([25.05, 55.2], 10)">
-                                <option>GLOBAL</option><option>UAE (DUBAI)</option>
+                                <option>GLOBAL</option><option>NATIONAL</option><option>UAE (DUBAI)</option>
                             </select>
                         </div>
                         <div class="aoi-box" style="margin-bottom:0;">
@@ -221,12 +248,15 @@
                     <div class="module" style="border:none;">
                         <div class="mod-title">DATASET VINTAGE</div>
                         <div class="year-toggle active" onclick="toggleLayer('2023')">
-                            <div class="year-label"><span class="year-tag" style="background:#64748b"></span> 2023 ARCHIVE</div>
-                            <div class="ph ph-check"></div>
+                            <div class="year-label"><span class="year-tag" style="background:var(--accent-lock)"></span> 2023 ARCHIVE</div>
+                            <div style="font-size:9px; color:var(--accent-green)">ONLINE</div>
                         </div>
                         <div class="year-toggle active" onclick="toggleLayer('2025')">
                             <div class="year-label"><span class="year-tag" style="background:var(--accent-data)"></span> 2025 COLLECTION</div>
                             <div class="ph ph-check"></div>
+                        </div>
+                        <div class="year-toggle" onclick="toggleLayer('2024')">
+                            <div class="year-label"><span class="year-tag" style="background:#6366f1"></span> 2024 COLLECTION</div>
                         </div>
                     </div>
                 </div>
@@ -238,27 +268,31 @@
             <div class="p-body">
                 
                 <div class="admin-upload-card" style="border-color:var(--accent-green);">
-                    <div class="auc-header">2023 BASELINE <span class="auc-status live">LIVE</span></div>
-                    <div class="file-list">
-                        > 2023.shp [DETECTED]<br>
-                        > 2023.prj [WGS84 MATCH]<br>
-                        > 2023.dbf [LINKED]
+                    <div class="auc-header">
+                        2023 BASELINE <span class="auc-status locked">SYSTEM LOCKED</span>
                     </div>
-                    <div class="upload-btn-mini" style="border-color:var(--accent-green); color:var(--accent-green); cursor:default;">INTEGRITY VERIFIED</div>
+                    <div style="font-size:10px; color:#ccc; margin-bottom:5px;">SOURCE: 2023.SHP (UPLOADED)</div>
+                    <div class="upload-btn-mini" onclick="adminUpload('2023')">OVERWRITE VECTOR</div>
                 </div>
 
                 <div class="admin-upload-card">
-                    <div class="auc-header">2024 COLLECTION <span class="auc-status">OFFLINE</span></div>
+                    <div class="auc-header">
+                        2024 COLLECTION <span class="auc-status" id="st-2024">OFFLINE</span>
+                    </div>
                     <div class="upload-btn-mini" onclick="adminUpload('2024')">UPLOAD VECTOR</div>
                 </div>
 
                 <div class="admin-upload-card">
-                    <div class="auc-header">2025 COLLECTION <span class="auc-status">OFFLINE</span></div>
+                    <div class="auc-header">
+                        2025 COLLECTION <span class="auc-status" id="st-2025">OFFLINE</span>
+                    </div>
                     <div class="upload-btn-mini" onclick="adminUpload('2025')">UPLOAD VECTOR</div>
                 </div>
 
                 <div class="admin-upload-card">
-                    <div class="auc-header">2026 PREVIEW <span class="auc-status">LOCKED</span></div>
+                    <div class="auc-header">
+                        2026 PREVIEW <span class="auc-status" id="st-2026">LOCKED</span>
+                    </div>
                     <div class="upload-btn-mini" onclick="adminUpload('2026')">UPLOAD VECTOR</div>
                 </div>
 
@@ -273,9 +307,9 @@
 
 <div id="warningModal">
     <div class="warn-box">
-        <h2 style="color:#fff; margin-bottom:10px;">PROTOCOL WARNING</h2>
+        <h2 style="color:#fff; margin-bottom:10px;">MANDATORY PROTOCOL</h2>
         <p style="color:#ccc; font-size:12px; line-height:1.6; text-align:left; margin-bottom:20px;">
-            1. Report within 10 days.<br>2. Non-compliance = Blacklist.<br>3. Closed Loop System.
+            1. Report required within 10 days.<br>2. Non-compliance = Blacklist.<br>3. Closed Loop System.
         </p>
         <div style="display:flex; gap:10px; justify-content:center; margin-bottom:20px;">
             <input type="checkbox" id="warnCheck"> <label for="warnCheck" style="color:#fff; font-size:11px;">I ACCEPT</label>
@@ -289,6 +323,14 @@
         <div style="text-align:center; font-weight:bold;">NDA AGREEMENT</div>
         <br><br><br>
         <button class="action-btn" onclick="signNDA()">SIGN & SUBMIT</button>
+    </div>
+</div>
+
+<div id="reportModal">
+    <div class="doc-paper">
+        <div style="text-align:center; font-weight:bold;">FEEDBACK REPORT</div>
+        <br>
+        <button class="action-btn" onclick="document.getElementById('reportModal').style.display='none'; handleReport();">SUBMIT REPORT</button>
     </div>
 </div>
 
@@ -333,7 +375,7 @@
     function toggleAIChat() { document.getElementById('aiDropdown').style.display = document.getElementById('aiDropdown').style.display==='flex'?'none':'flex'; }
 
     function handleLoginKey(e) { if(e.key==='Enter') checkLogin(); }
-    function sendCode() { addChat('concierge', 'Code sent: 123456'); }
+    function sendCode() { addChat('concierge', 'Code sent: 123456 (Admin: 000000)'); }
     function checkLogin() {
         const comp = document.getElementById('loginCompany').value.toUpperCase();
         const code = document.getElementById('loginCode').value;
@@ -363,7 +405,7 @@
         document.getElementById('viewSwitch').style.display='flex';
         switchView('admin');
         startCursor('♛');
-        addChat('engineer', '2023.SHP integrity confirmed. CRS: WGS84.');
+        addChat('engineer', 'Commander Access Granted. 2023 Vector is LOCKED.');
     }
 
     function startCursor(char) {
@@ -403,6 +445,7 @@
         document.getElementById('emailPanel').style.display='block';
         addChat('concierge', 'NDA Signed. Email sent.');
     }
+    
     let resendCount = 0;
     function handleResend() {
         resendCount++;
@@ -410,24 +453,31 @@
         else if(resendCount === 2) addChat('engineer', 'Network lag. Rerouting...');
         else { addChat('engineer', 'Firewall issue. Bypassing.'); confirmEmailReceipt(); }
     }
+
     function confirmEmailReceipt() {
         document.getElementById('emailPanel').style.display='none';
         document.getElementById('dataTools').style.display='block';
         addChat('concierge', 'Verified. FTP Unlocked.');
     }
+
     function handleReport() {
         addChat('engineer', 'Report verified. Mission controls unlocked.');
         document.getElementById('phase-compliance').style.display='none';
         document.getElementById('phase-mission').style.display='block';
     }
 
-    // --- 4. MAP & ADMIN ---
+    // --- 4. MAP & ADMIN LOGIC ---
     function adminUpload(year) {
-        addChat('engineer', `${year} Vector layer mounted.`);
-        // Simulate
-        const b = [[20,-20],[40,20]];
-        L.rectangle(b, {color:'var(--accent-data)', fillOpacity:0.2}).addTo(layers['2025']);
+        const st = document.getElementById(`st-${year}`);
+        st.innerText = "UPLOADING..."; st.style.color = "var(--accent-amber)";
+        setTimeout(() => {
+            st.innerText = "ONLINE"; st.className = "auc-status live";
+            addChat('engineer', `${year} Vector layer mounted.`);
+            // Mock visual
+            L.rectangle([[10, 100], [20, 120]], {color: 'var(--accent-data)', fillOpacity:0.2}).addTo(layers[year]);
+        }, 1000);
     }
+
     function toggleLayer(year) {
         if(map.hasLayer(layers[year])) map.removeLayer(layers[year]); else map.addLayer(layers[year]);
     }
