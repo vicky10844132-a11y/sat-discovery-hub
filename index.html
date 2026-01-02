@@ -3,490 +3,412 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OPEN RS HUB // Aerospace Interface</title>
+    <title>GPTM SOVEREIGN // ELITE SERVICE</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <style>
-        /* --- 1. THEME: AEROSPACE GLASS (Clean, Modern, Tech) --- */
+        /* --- THEME: ELITE BLACK GOLD & AMBER --- */
         :root {
-            /* Backgrounds: Slate Blue / Grey tones instead of pure black */
-            --bg-app: #0f172a;        /* 深岩板蓝 */
-            --bg-panel: rgba(15, 23, 42, 0.85); /* 半透明磨砂 */
-            --bg-header: rgba(15, 23, 42, 0.95);
+            --bg-root: #000000;
+            --bg-panel: #050505;
+            --border: #333;
             
-            /* Accents */
-            --primary: #38bdf8;       /* 天空蓝 (Sky Blue) - 亮眼但不刺眼 */
-            --primary-dim: rgba(56, 189, 248, 0.15);
-            --border: rgba(148, 163, 184, 0.2); /* 淡淡的灰蓝边框 */
+            --accent-xiaoer: #10b981; /* Green (Service) */
+            --accent-dushe: #f59e0b;  /* Amber (Technical/Expert - Not Angry Red) */
+            --accent-admin: #ffd700;  /* Gold */
+            --accent-data: #3b82f6;   /* Blue */
             
-            /* Text */
-            --text-main: #f1f5f9;     /* 亮白 */
-            --text-sub: #94a3b8;      /* 灰蓝字 */
-            
-            /* Metrics */
-            --sidebar-w: 320px;
-            --header-h: 56px;
-            --radius: 8px;
-            --font-ui: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --font-mono: "JetBrains Mono", monospace;
+            --font-ui: "Inter", sans-serif;
         }
 
-        * { box-sizing: border-box; }
-        body { margin: 0; padding: 0; font-family: var(--font-ui); background: var(--bg-app); color: var(--text-main); overflow: hidden; height: 100vh; width: 100vw; }
+        body.god-mode { --border: #5c4d26; }
+        body.god-mode .sidebar { border-color: var(--accent-admin); }
 
-        /* --- 2. LAYOUT --- */
-        #app { display: flex; flex-direction: column; height: 100%; }
+        * { box-sizing: border-box; cursor: none; outline: none; }
+        body { margin: 0; padding: 0; font-family: var(--font-ui); background: var(--bg-root); color: #888; overflow: hidden; height: 100vh; width: 100vw; }
 
-        /* Header */
-        header {
-            height: var(--header-h); background: var(--bg-header); 
-            border-bottom: 1px solid var(--border);
-            display: flex; align-items: center; justify-content: space-between; padding: 0 24px;
-            z-index: 20; backdrop-filter: blur(12px);
-        }
-        .logo { 
-            font-size: 16px; font-weight: 700; letter-spacing: 0.5px; color: #fff; 
-            display: flex; align-items: center; gap: 12px; 
-        }
-        .logo-icon {
-            width: 32px; height: 32px; background: linear-gradient(135deg, #0ea5e9, #2563eb);
-            border-radius: 6px; display: flex; align-items: center; justify-content: center;
-            color: #fff; font-size: 18px; box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
-        }
-        .nav-pill {
-            background: rgba(255,255,255,0.05); padding: 6px 12px; border-radius: 20px;
-            font-size: 11px; color: var(--text-sub); border: 1px solid transparent; transition: 0.2s;
-            cursor: pointer; font-weight: 500;
-        }
-        .nav-pill.active { background: var(--primary-dim); color: var(--primary); border-color: rgba(56, 189, 248, 0.3); }
+        #app { display: flex; flex-direction: column; height: 100%; filter: blur(10px); transition: 0.8s; pointer-events: none; }
+        #app.unlocked { filter: blur(0); pointer-events: all; }
 
-        /* Workspace */
-        #workspace { flex: 1; display: flex; position: relative; overflow: hidden; }
+        /* --- LOGIN --- */
+        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; background: #000; display: flex; justify-content: center; align-items: center; flex-direction: column; }
+        .login-box { width: 450px; padding: 40px; border: 1px solid #333; background: #050505; box-shadow: 0 0 100px rgba(255,255,255,0.02); }
+        .login-title { font-size: 20px; font-weight: 900; color: #fff; margin-bottom: 20px; letter-spacing: 4px; text-align: center; }
+        .login-input { width: 100%; background: #000; border: 1px solid #333; color: #fff; padding: 12px; font-family: var(--font-mono); font-size: 12px; margin-bottom: 15px; }
+        .enter-btn { width: 100%; background: #fff; color: #000; border: none; padding: 15px; font-weight: 800; cursor: pointer; margin-top: 10px; }
+        .verify-btn { float: right; background: #222; color: #ccc; border: 1px solid #444; padding: 5px 10px; font-size: 10px; cursor: pointer; margin-top: -10px; margin-bottom: 10px; }
+        .zodiac-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; margin: 20px 0; }
+        .z-btn { background: #111; border: 1px solid #333; color: #666; padding: 10px; cursor: pointer; text-align: center; }
+        .z-btn.selected { border-color: #fff; color: #fff; background: #222; }
 
-        /* --- 3. MAP (CRYSTAL CLEAR) --- */
-        #map { flex: 1; height: 100%; background: #0f172a; z-index: 1; }
+        /* --- LAYOUT --- */
+        header { height: 60px; border-bottom: 1px solid var(--border); background: #050505; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; }
+        .brand { font-size: 18px; font-weight: 900; color: #fff; letter-spacing: 2px; }
+        .user-badge { font-family: var(--font-mono); font-size: 11px; padding: 4px 10px; border: 1px solid #333; border-radius: 4px; }
         
-        /* Map Controls (Bottom Left) */
-        .map-controls {
-            position: absolute; bottom: 24px; left: 24px; z-index: 400;
-            display: flex; gap: 8px; padding: 6px; background: var(--bg-panel);
-            border: 1px solid var(--border); border-radius: 8px; backdrop-filter: blur(8px);
-        }
-        .map-btn {
-            background: transparent; border: none; color: var(--text-sub);
-            padding: 6px 12px; font-size: 11px; cursor: pointer; border-radius: 4px; font-weight: 600;
-            transition: 0.2s;
-        }
-        .map-btn.active { background: #334155; color: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        #workspace { flex: 1; display: grid; grid-template-columns: 360px 1fr 320px; overflow: hidden; }
 
-        /* --- 4. SIDEBARS (GLASSMORPHISM) --- */
-        .sidebar {
-            width: var(--sidebar-w); background: var(--bg-panel);
-            border-right: 1px solid var(--border); display: flex; flex-direction: column;
-            z-index: 500; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            backdrop-filter: blur(16px); /* 核心：磨砂玻璃感 */
-            position: relative;
-        }
+        .sidebar { background: var(--bg-panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 10; }
         .sidebar.right { border-right: none; border-left: 1px solid var(--border); }
+        .p-head { padding: 20px; border-bottom: 1px solid var(--border); font-size: 12px; font-weight: 700; color: #fff; letter-spacing: 1px; }
+        .p-body { flex: 1; overflow-y: auto; padding: 20px; }
+
+        /* --- MODULES --- */
+        .step-card { border: 1px solid #333; padding: 15px; margin-bottom: 15px; background: #0e0e0e; opacity: 0.4; pointer-events: none; transition: 0.3s; position: relative; }
+        .step-card.active { opacity: 1; pointer-events: all; border-color: #555; background: #111; }
+        .step-card.done { border-color: var(--accent-xiaoer); opacity: 0.8; }
+        .step-card.done::after { content: '✓'; position: absolute; top: 10px; right: 10px; color: var(--accent-xiaoer); font-weight: bold; }
         
-        .sidebar.collapsed { transform: translateX(-100%); position: absolute; height: 100%; }
-        .sidebar.right.collapsed { transform: translateX(100%); }
-
-        /* Toggle Button (Floating) */
-        .toggle-btn {
-            position: absolute; top: 50%; width: 24px; height: 24px;
-            background: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            color: #0f172a; box-shadow: 0 2px 8px rgba(0,0,0,0.2); cursor: pointer; z-index: 501;
-            transition: 0.2s; transform: translateY(-50%); font-size: 14px;
-        }
-        .toggle-btn:hover { transform: translateY(-50%) scale(1.1); }
-        .sb-left .toggle-btn { right: -12px; }
-        .sb-right .toggle-btn { left: -12px; }
-
-        /* Sidebar Content */
-        .sb-content { flex: 1; overflow-y: auto; padding: 20px; }
+        .step-title { font-size: 11px; font-weight: 700; color: #fff; margin-bottom: 5px; }
+        .step-desc { font-size: 10px; color: #666; margin-bottom: 10px; line-height: 1.4; }
         
-        /* --- 5. MODULES (CLEAN CARDS) --- */
-        .module { margin-bottom: 24px; }
-        .mod-header {
-            display: flex; align-items: center; gap: 8px; margin-bottom: 12px;
-            color: var(--primary); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
-        }
-        .mod-header i { font-size: 14px; }
-
-        /* Input Fields (Modern) */
-        .input-box {
-            background: rgba(30, 41, 59, 0.6); border: 1px solid var(--border);
-            border-radius: var(--radius); padding: 4px; display: flex; gap: 4px;
-            transition: 0.2s;
-        }
-        .input-box:focus-within { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-dim); background: rgba(30, 41, 59, 0.9); }
+        .action-btn { width: 100%; background: #222; border: 1px solid #444; color: #ccc; padding: 10px; font-size: 10px; cursor: pointer; margin-bottom: 5px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .action-btn:hover { border-color: #fff; color: #fff; }
+        .action-btn.primary { background: #fff; color: #000; border-color: #fff; }
+        .action-btn.warn { background: rgba(245, 158, 11, 0.1); border-color: var(--accent-dushe); color: var(--accent-dushe); }
         
-        .clean-input {
-            flex: 1; background: transparent; border: none; color: #fff;
-            padding: 8px; font-size: 13px; outline: none; font-family: var(--font-ui);
-        }
-        .action-btn {
-            background: var(--primary); color: #0f172a; border: none;
-            padding: 0 16px; border-radius: 4px; font-weight: 600; font-size: 11px;
-            cursor: pointer; transition: 0.2s;
-        }
-        .action-btn:hover { background: #7dd3fc; }
+        .email-panel { background: #151515; border: 1px dashed #444; padding: 10px; margin-bottom: 10px; display: none; }
+        .email-status { font-size: 10px; color: var(--accent-data); margin-bottom: 8px; font-family: var(--font-mono); }
+        .resend-link { font-size: 9px; color: #666; text-decoration: underline; cursor: pointer; float: right; margin-top: 5px; }
+        .resend-link:hover { color: #fff; }
 
-        /* Date Inputs */
-        .date-row { display: flex; gap: 10px; margin-top: 8px; }
-        .date-input {
-            flex: 1; background: rgba(30, 41, 59, 0.6); border: 1px solid var(--border);
-            color: var(--text-main); padding: 8px; border-radius: var(--radius); font-size: 12px; outline: none;
-        }
+        /* --- MONITOR --- */
+        .monitor-card { background: #111; border: 1px solid #333; padding: 15px; margin-bottom: 10px; }
+        .monitor-label { font-size: 9px; color: #666; margin-bottom: 5px; }
+        .monitor-val { font-family: var(--font-mono); font-size: 14px; font-weight: 700; color: #fff; }
+        .monitor-val.warn { color: var(--accent-dushe); animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
-        /* Range Slider */
-        input[type=range] {
-            width: 100%; height: 4px; background: #334155; border-radius: 2px;
-            accent-color: var(--primary); margin-top: 10px;
-        }
-
-        /* Checkboxes */
-        .check-group { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
-        .check-label { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-main); cursor: pointer; }
-        .check-label input { accent-color: var(--primary); }
-
-        /* --- 6. CAPABILITY CARDS (RIGHT SIDE) --- */
-        .cap-card {
-            background: rgba(30, 41, 59, 0.4); border: 1px solid var(--border);
-            border-radius: var(--radius); padding: 12px; margin-bottom: 8px;
-            transition: 0.2s; cursor: pointer; display: flex; justify-content: space-between; align-items: center;
-        }
-        .cap-card:hover { 
-            background: rgba(56, 189, 248, 0.05); border-color: var(--primary); 
-            transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        /* --- MAP & AI --- */
+        #map { width: 100%; height: 100%; background: #0b0b0b; z-index: 1; }
+        .leaflet-tile-pane { filter: grayscale(100%) contrast(1.5) brightness(0.6); }
+        
+        /* AI WIDGET */
+        .ai-widget { 
+            position: fixed; bottom: 20px; right: 340px; width: 340px; 
+            background: rgba(0,0,0,0.95); border: 1px solid #333; z-index: 500; 
+            display: flex; flex-direction: column; border-radius: 6px; 
+            transition: border-color 0.3s;
         }
         
-        .cap-main h4 { margin: 0 0 2px 0; font-size: 13px; font-weight: 600; color: #fff; }
-        .cap-main p { margin: 0; font-size: 11px; color: var(--text-sub); }
-        .cap-tag {
-            font-size: 9px; padding: 3px 8px; border-radius: 12px; font-weight: 600; text-transform: uppercase;
-        }
-        /* Tag Colors */
-        .tag-agg { background: #3b0764; color: #d8b4fe; border: 1px solid #7e22ce; } /* Purple */
-        .tag-gov { background: #064e3b; color: #6ee7b7; border: 1px solid #059669; } /* Green */
-        .tag-com { background: #172554; color: #93c5fd; border: 1px solid #2563eb; } /* Blue */
+        /* WORKING STATE (Gentle Glow) */
+        .working { border-color: var(--accent-dushe) !important; box-shadow: 0 0 15px rgba(245, 158, 11, 0.3); }
 
-        /* --- 7. MODAL (CLEAN & SHARP) --- */
-        #infoModal {
-            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 420px; background: #1e293b; border-radius: 12px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5); z-index: 2000;
-            display: none; border: 1px solid #334155; overflow: hidden;
-        }
-        .modal-header {
-            background: #0f172a; padding: 16px 20px; border-bottom: 1px solid #334155;
-            display: flex; justify-content: space-between; align-items: center;
-        }
-        .modal-title { font-weight: 700; color: #fff; font-size: 14px; letter-spacing: 0.5px; }
+        .ai-head { padding: 8px 12px; background: #111; border-bottom: 1px solid #333; font-size: 11px; font-weight: 700; color: #fff; display: flex; justify-content: space-between; }
+        .ai-body { height: 180px; overflow-y: auto; padding: 15px; font-family: var(--font-mono); font-size: 11px; }
+        .chat-row { display: flex; gap: 10px; margin-bottom: 10px; opacity: 0; animation: fadeIn 0.3s forwards; }
+        @keyframes fadeIn { to { opacity: 1; } }
         
-        .modal-body { padding: 24px; }
-        .spec-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        .spec-table td { padding: 8px 0; border-bottom: 1px solid #334155; }
-        .spec-label { color: #94a3b8; }
-        .spec-value { text-align: right; color: #f1f5f9; font-weight: 500; }
+        .avatar { width: 24px; height: 24px; border: 1px solid #333; display: flex; align-items: center; justify-content: center; font-size: 14px; border-radius: 4px; flex-shrink: 0; position: relative; }
+        .avatar::after { content:''; position:absolute; bottom:-2px; right:-2px; width:6px; height:6px; border-radius:50%; }
         
-        .modal-footer {
-            padding: 16px; background: #0f172a; border-top: 1px solid #334155; text-align: center;
-        }
-        .primary-link {
-            display: inline-block; text-decoration: none; color: #38bdf8; font-size: 12px; font-weight: 600;
-            border-bottom: 1px solid transparent; transition: 0.2s;
-        }
-        .primary-link:hover { border-bottom-color: #38bdf8; }
+        .avatar.xiaoer { background: #06241b; border-color: var(--accent-xiaoer); color: var(--accent-xiaoer); }
+        .avatar.xiaoer::after { background: var(--accent-xiaoer); }
+        
+        /* Dushe is now AMBER (Expert) */
+        .avatar.dushe { background: #261b00; border-color: var(--accent-dushe); color: var(--accent-dushe); }
+        .avatar.dushe::after { background: var(--accent-dushe); animation: blink 1s infinite; }
+        
+        .bubble { background: #111; padding: 6px 10px; border: 1px solid #333; color: #ccc; border-radius: 4px; max-width: 240px; line-height: 1.4; }
+        
+        .typing-indicator { font-style: italic; color: #555; font-size: 9px; margin-left: 35px; display: none; }
 
-        /* Footer */
-        .disclaimer {
-            position: absolute; bottom: 8px; right: 12px; z-index: 400;
-            font-size: 10px; color: rgba(255,255,255,0.4);
-        }
+        .cursor-trail { position: fixed; pointer-events: none; z-index: 9999; font-size: 24px; opacity: 0.8; transition: 0.1s; }
+
+        /* --- MODALS --- */
+        #warningModal, #ndaModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 10000; display: none; justify-content: center; align-items: center; }
+        .doc-paper { width: 500px; max-height: 80vh; background: #fff; color: #000; padding: 40px; position: relative; overflow-y: auto; font-family: serif; }
+        .warn-box { width: 450px; background: #111; border: 1px solid var(--accent-dushe); padding: 30px; text-align: center; box-shadow: 0 0 50px rgba(245, 158, 11, 0.2); }
+        .sys-check { display: flex; align-items: center; gap: 10px; font-size: 11px; margin-top: 20px; font-family: var(--font-ui); }
 
     </style>
 </head>
 <body>
 
+<div id="loginOverlay">
+    <div class="login-box">
+        <div style="font-size:20px; font-weight:900; color:#fff; text-align:center; margin-bottom:20px; letter-spacing:4px;">GPTM GATEWAY</div>
+        <input type="text" class="login-input" id="loginCompany" placeholder="COMPANY">
+        <input type="text" class="login-input" id="loginEmail" placeholder="EMAIL">
+        <button class="verify-btn" onclick="sendCode()" id="codeBtn">SEND CODE</button>
+        <input type="text" class="login-input" id="loginCode" placeholder="VERIFICATION CODE">
+        <div style="font-size:10px; color:#666; margin-bottom:10px;">OPERATOR SIGN:</div>
+        <div class="zodiac-grid" id="zodiacGrid"></div>
+        <button class="enter-btn" onclick="checkLogin()">AUTHENTICATE</button>
+    </div>
+</div>
+
+<div id="warningModal">
+    <div class="warn-box">
+        <div style="color:var(--accent-dushe); font-size:40px; margin-bottom:10px;"><i class="ph ph-shield-check"></i></div>
+        <h2 style="color:#fff; margin-bottom:10px;">QUALITY ASSURANCE PROTOCOL</h2>
+        <p style="color:#ccc; font-size:12px; line-height:1.6; text-align:left; margin-bottom:20px;">
+            Access to GPTM Sample Data is a privilege, not a right.<br><br>
+            1. <b>Evaluation:</b> Please evaluate the sample data within <b>10 Working Days</b>.<br>
+            2. <b>Feedback:</b> Your professional feedback helps us calibrate the global grid.<br>
+            3. <b>Access:</b> Full production access is granted upon report submission.
+        </p>
+        <div class="sys-check" style="color:#fff; justify-content:center;">
+            <input type="checkbox" id="warnCheck"> 
+            <label for="warnCheck">I ACKNOWLEDGE THE PROTOCOL</label>
+        </div>
+        <button class="enter-btn" style="margin-top:20px;" onclick="acceptWarning()">PROCEED TO NDA</button>
+    </div>
+</div>
+
+<div id="ndaModal">
+    <div class="doc-paper">
+        <div style="text-align:center; font-weight:bold; font-size:16px; margin-bottom:20px;">NON-DISCLOSURE AGREEMENT (NDA)</div>
+        <p>I, the undersigned, representing <span id="ndaComp" style="font-weight:bold">[COMPANY]</span>, hereby acknowledge...</p>
+        <button class="enter-btn" style="background:#000; color:#fff; margin-top:30px;" onclick="signNDA()">SIGN & SUBMIT</button>
+    </div>
+</div>
+
 <div id="app">
     <header>
-        <div class="logo">
-            <div class="logo-icon"><i class="ph ph-planet"></i></div>
-            OPEN RS HUB
-        </div>
-        <div class="top-nav">
-            <div class="nav-pill active">Mission Planner</div>
-            <div class="nav-pill">Coverage Map</div>
-            <div class="nav-pill">Data Sources</div>
-        </div>
+        <div class="brand">GPTM <span style="color:#444">SOVEREIGN</span></div>
+        <div class="user-badge" id="headerUser">GUEST</div>
     </header>
 
     <div id="workspace">
         
-        <div class="sidebar sb-left" id="sbLeft">
-            <div class="toggle-btn" onclick="toggleSidebar('left')"><i class="ph ph-caret-left"></i></div>
-            
-            <div class="sb-content">
+        <div class="sidebar">
+            <div class="p-head">COMPLIANCE PROTOCOL</div>
+            <div class="sb-body">
                 
-                <div class="module">
-                    <div class="mod-header"><i class="ph ph-crosshair"></i> 1. Target Area (AOI)</div>
-                    <div class="input-box">
-                        <input type="text" id="aoiInput" class="clean-input" placeholder="City, Lat/Lon..." onkeypress="handleKey(event)">
-                        <button class="action-btn" onclick="executeLocate()">LOCATE</button>
-                    </div>
-                    <div style="font-size:11px; color:#648db5; margin-top:8px;">
-                        <i class="ph ph-info"></i> Supports global geocoding via OSM.
-                    </div>
+                <div class="step-card active" id="step1">
+                    <div class="step-title">STAGE 01: APPLICATION</div>
+                    <div class="step-desc">Request access to Sample Data (Dubai JVC). Verification Required.</div>
+                    <button class="action-btn warn" onclick="triggerApply()">
+                        <i class="ph ph-hand-palm"></i> APPLY FOR SAMPLE DATA
+                    </button>
                 </div>
 
-                <div class="module">
-                    <div class="mod-header"><i class="ph ph-calendar"></i> 2. Acquisition Window</div>
-                    <div class="date-row">
-                        <input type="date" class="date-input" value="2023-01-01">
-                        <input type="date" class="date-input" value="2026-01-01">
+                <div class="step-card" id="step2">
+                    <div class="step-title">STAGE 02: VERIFICATION LOOP</div>
+                    <div class="step-desc">
+                        FTP Credentials locked. Email Confirmation Required.<br>
+                        <b>STATUS:</b> <span style="color:var(--accent-data)" id="step2Status">AWAITING EMAIL CONFIRM</span>
                     </div>
-                </div>
-
-                <div class="module">
-                    <div class="mod-header"><i class="ph ph-sliders"></i> 3. Sensor Requirements</div>
                     
-                    <div style="margin-bottom:15px;">
-                        <div style="display:flex; justify-content:space-between; font-size:12px; color:#f1f5f9; margin-bottom:5px;">
-                            <span>Cloud Cover</span>
-                            <span id="cloudVal">15%</span>
+                    <div class="email-panel" id="emailPanel">
+                        <div class="email-status">
+                            <i class="ph ph-envelope-simple-open"></i> EMAIL SENT TO: <span id="dispEmail">...</span>
                         </div>
-                        <input type="range" min="0" max="100" value="15" oninput="document.getElementById('cloudVal').innerText=this.value+'%'">
+                        <button class="action-btn primary" onclick="confirmEmailReceipt()">
+                            <i class="ph ph-check"></i> I HAVE RECEIVED THE EMAIL
+                        </button>
+                        <div class="resend-link" onclick="handleResend()">Not received? Resend</div>
                     </div>
 
-                    <div class="check-group">
-                        <label class="check-label"><input type="checkbox" checked> Optical (Multispectral)</label>
-                        <label class="check-label"><input type="checkbox"> SAR (Synthetic Aperture Radar)</label>
-                        <label class="check-label"><input type="checkbox"> Thermal Infrared</label>
+                    <div id="dataTools" style="display:none;">
+                        <button class="action-btn" onclick="alert('FTP: 47.237.100.53\nUser: Dubai_DSMDTM\nPass: sdjv0$%g;fd')">
+                            <i class="ph ph-key"></i> VIEW FTP CREDENTIALS
+                        </button>
+                        <div style="margin-top:15px; border-top:1px dashed #333; padding-top:15px;">
+                            <input type="file" id="reportInput" style="display:none" onchange="handleReport()">
+                            <button class="action-btn primary" onclick="document.getElementById('reportInput').click()">
+                                <i class="ph ph-upload-simple"></i> UPLOAD FEEDBACK REPORT
+                            </button>
+                        </div>
                     </div>
+                </div>
+
+                <div class="step-card" id="step3">
+                    <div class="step-title">STAGE 03: MISSION OPS</div>
+                    <div class="step-desc">AOI Upload & Coverage Analysis.</div>
+                    <button class="action-btn" disabled>LOCKED UNTIL REPORT FILED</button>
                 </div>
 
             </div>
         </div>
 
         <div id="map"></div>
-        
-        <div class="map-controls">
-            <button class="map-btn active" onclick="setBaseLayer('dark', this)">Dark Vector</button>
-            <button class="map-btn" onclick="setBaseLayer('sat', this)">Satellite Imagery</button>
-        </div>
-        
-        <div class="disclaimer">
-            Open Source Intelligence (OSINT) Tool. Reference Use Only.
-        </div>
 
-        <div class="sidebar sb-right right" id="sbRight">
-            <div class="toggle-btn" onclick="toggleSidebar('right')"><i class="ph ph-caret-right"></i></div>
-            
-            <div class="sb-content">
-                <div style="font-size:11px; font-weight:700; color:#94a3b8; margin-bottom:16px; letter-spacing:1px;">AVAILABLE DATA SOURCES</div>
-
-                <div class="cap-card" onclick="showIntel('apollo')">
-                    <div class="cap-main">
-                        <h4>Apollo Image Hunter</h4>
-                        <p>Broadest Commercial Search</p>
-                    </div>
-                    <div class="cap-tag tag-agg">Aggregator</div>
+        <div class="sidebar right">
+            <div class="p-head">MONITOR</div>
+            <div class="sb-body">
+                <div class="monitor-card">
+                    <div class="monitor-label">CLIENT STATUS</div>
+                    <div class="monitor-val" id="monitorStatus">UNVERIFIED</div>
                 </div>
-
-                <div class="cap-card" onclick="showIntel('stac')">
-                    <div class="cap-main">
-                        <h4>STAC Index</h4>
-                        <p>Global Open Catalog</p>
-                    </div>
-                    <div class="cap-tag tag-agg">Standard</div>
+                <div class="monitor-card">
+                    <div class="monitor-label">FEEDBACK COUNTDOWN</div>
+                    <div class="monitor-val warn" id="monitorTimer">--:--:--</div>
                 </div>
-
-                <div style="height:1px; background:var(--border); margin:15px 0;"></div>
-
-                <div class="cap-card" onclick="showIntel('usgs')">
-                    <div class="cap-main">
-                        <h4>USGS EarthExplorer</h4>
-                        <p>Landsat / Declassified</p>
-                    </div>
-                    <div class="cap-tag tag-gov">Free</div>
-                </div>
-
-                <div class="cap-card" onclick="showIntel('copernicus')">
-                    <div class="cap-main">
-                        <h4>Copernicus Browser</h4>
-                        <p>Sentinel Ecosystem</p>
-                    </div>
-                    <div class="cap-tag tag-gov">Free</div>
-                </div>
-
-                <div style="height:1px; background:var(--border); margin:15px 0;"></div>
-
-                <div class="cap-card" onclick="showIntel('maxar')">
-                    <div class="cap-main">
-                        <h4>MAXAR</h4>
-                        <p>WorldView Legion (0.3m)</p>
-                    </div>
-                    <div class="cap-tag tag-com">Optical</div>
-                </div>
-
-                <div class="cap-card" onclick="showIntel('planet')">
-                    <div class="cap-main">
-                        <h4>Planet Labs</h4>
-                        <p>Daily Global Scan (3m)</p>
-                    </div>
-                    <div class="cap-tag tag-com">Daily</div>
-                </div>
-                
-                <div class="cap-card" onclick="showIntel('capella')">
-                    <div class="cap-main">
-                        <h4>Capella Space</h4>
-                        <p>X-Band SAR (Night)</p>
-                    </div>
-                    <div class="cap-tag tag-com">Radar</div>
-                </div>
-
             </div>
         </div>
 
     </div>
 </div>
 
-<div id="infoModal">
-    <div class="modal-header">
-        <span class="modal-title" id="modalTitle">TITLE</span>
-        <i class="ph ph-x" style="cursor:pointer; color:#94a3b8;" onclick="closeModal()"></i>
+<div class="ai-widget" id="aiWidget">
+    <div class="ai-head">
+        <span>SYSTEM LOG</span>
+        <div style="font-size:9px;">
+            <span style="color:var(--accent-xiaoer)">● ONLINE</span>
+            <span style="color:var(--accent-dushe); margin-left:5px;">● ENGINEER</span>
+        </div>
     </div>
-    <div class="modal-body">
-        <table class="spec-table" id="modalTable">
-            </table>
-        <div style="margin-top:20px; font-size:12px; color:#94a3b8; line-height:1.5;" id="modalDesc"></div>
-    </div>
-    <div class="modal-footer">
-        <a href="#" target="_blank" class="primary-link" id="modalLink">Access Official Portal &rarr;</a>
-    </div>
+    <div class="ai-body" id="chatBody"></div>
+    <div class="typing-indicator" id="typing">Processing request...</div>
 </div>
 
 <script>
-    // --- 1. MAP INIT ---
-    const map = L.map('map', { zoomControl: false, attributionControl: false }).setView([20, 0], 3);
-    
-    // Layers: Standard Carto Dark (Clean) & ESRI Sat
-    const layers = {
-        'dark': L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { subdomains: 'abcd', maxZoom: 20 }),
-        'sat': L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 })
-    };
-    layers.dark.addTo(map);
+    // --- 1. SETUP ---
+    const map = L.map('map', { zoomControl: false, minZoom: 2 }).setView([25.05, 55.2], 12);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
 
-    function setBaseLayer(type, btn) {
-        map.eachLayer(l => map.removeLayer(l));
-        layers[type].addTo(map);
-        document.querySelectorAll('.map-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+    // Zodiac
+    const zGrid = document.getElementById('zodiacGrid');
+    let currentSign = '♈';
+    ['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓'].forEach(z => {
+        const btn = document.createElement('div');
+        btn.className = 'z-btn'; btn.innerText = z;
+        btn.onclick = () => {
+            document.querySelectorAll('.z-btn').forEach(b=>b.classList.remove('selected'));
+            btn.classList.add('selected'); currentSign = z;
+        };
+        zGrid.appendChild(btn);
+    });
+    zGrid.children[0].classList.add('selected');
+
+    // --- 2. AI LOGIC (HIGH EQ EDITION) ---
+    function addChat(role, text) {
+        const chatBody = document.getElementById('chatBody');
+        const widget = document.getElementById('aiWidget');
+        const typing = document.getElementById('typing');
+        
+        let delay = 600; 
+        if (text.includes("路由") || text.includes("解锁")) delay = 200; // Fast technical response
+
+        // Show typing
+        typing.style.display = 'block';
+        typing.innerText = role === 'xiaoer' ? 'Xiao Er is typing...' : 'Engineer is diagnosing...';
+
+        setTimeout(() => {
+            typing.style.display = 'none';
+            
+            // Visual feedback for Dushe working
+            if (role === 'dushe') {
+                widget.classList.add('working');
+                setTimeout(() => widget.classList.remove('working'), 1000);
+            }
+
+            const d = document.createElement('div'); 
+            d.className = 'chat-row';
+            // Avatar Symbols
+            let av = role==='xiaoer'?'☺':'⚡'; // Lightning bolt for Engineer/Dushe
+            let col = role==='xiaoer'?'var(--accent-xiaoer)':'var(--accent-dushe)';
+            let name = role==='xiaoer'?'店小二':'毒舌'; // Keeping the name, changing the vibe
+
+            d.innerHTML = `<div class="avatar ${role}" style="color:${col}; border-color:${col}">${av}</div><div class="bubble"><b>[${name}]</b><br>${text}</div>`;
+            chatBody.appendChild(d); 
+            chatBody.scrollTop = 9999;
+        }, delay);
     }
 
-    // --- 2. SIDEBAR TOGGLE ---
-    function toggleSidebar(side) {
-        const el = document.getElementById(side === 'left' ? 'sbLeft' : 'sbRight');
-        const icon = el.querySelector('.toggle-btn i');
-        el.classList.toggle('collapsed');
+    // --- 3. LOGIN ---
+    function checkLogin() {
+        const comp = document.getElementById('loginCompany').value;
+        const mail = document.getElementById('loginEmail').value;
+        if(!comp || !mail) { alert("Credentials Required"); return; }
         
-        if(el.classList.contains('collapsed')) {
-            icon.className = side === 'left' ? 'ph ph-caret-right' : 'ph ph-caret-left';
+        document.getElementById('loginOverlay').style.display = 'none';
+        document.getElementById('app').classList.add('unlocked');
+        document.getElementById('headerUser').innerText = comp.toUpperCase();
+        document.getElementById('ndaComp').innerText = comp.toUpperCase();
+        document.getElementById('dispEmail').innerText = mail;
+        
+        // Cursor
+        document.addEventListener('mousemove', (e) => {
+            const el = document.createElement('div');
+            el.className = 'cursor-trail'; el.innerText = currentSign;
+            el.style.left = e.pageX+'px'; el.style.top = e.pageY+'px';
+            document.body.appendChild(el); setTimeout(() => el.remove(), 200);
+        });
+
+        addChat('xiaoer', `欢迎 ${comp}。`);
+        setTimeout(() => addChat('dushe', '系统负载正常。请按流程操作，有技术问题我来扛。'), 1500);
+    }
+
+    // --- 4. WORKFLOW & RESEND (THE NICE FIX) ---
+    let resendCount = 0;
+
+    function triggerApply() { document.getElementById('warningModal').style.display = 'flex'; }
+
+    function acceptWarning() {
+        if(!document.getElementById('warnCheck').checked) { alert("Please acknowledge."); return; }
+        document.getElementById('warningModal').style.display = 'none';
+        document.getElementById('ndaModal').style.display = 'block';
+    }
+
+    function signNDA() {
+        document.getElementById('ndaModal').style.display = 'none';
+        addChat('xiaoer', 'NDA 已签署。凭证邮件已发送。');
+        document.getElementById('step1').classList.add('done');
+        document.getElementById('step2').classList.add('active');
+        document.getElementById('emailPanel').style.display = 'block';
+    }
+
+    function handleResend() {
+        resendCount++;
+        if (resendCount === 1) {
+            addChat('xiaoer', '已为您尝试重发，请检查垃圾箱。');
+        } else if (resendCount === 2) {
+            // DUSHE: TECHNICAL DIAGNOSIS
+            addChat('dushe', '还没收到？等等...我看下后台日志...啧，国际网关又堵了。');
+            setTimeout(() => {
+                addChat('dushe', '行了，我给你切了条备用线路重发了。这次应该稳了。');
+            }, 1500);
         } else {
-            icon.className = side === 'left' ? 'ph ph-caret-left' : 'ph ph-caret-right';
+            // DUSHE: THE HEROIC BYPASS
+            addChat('dushe', '还是不行？那就是你们那边的防火墙太严了。算了，看你着急，我直接给你后台解锁吧。别到处说啊。');
+            confirmEmailReceipt(); // Force unlock
         }
-        setTimeout(() => map.invalidateSize(), 300);
     }
 
-    // --- 3. SEARCH (AOI) ---
-    function handleKey(e) { if(e.key === 'Enter') executeLocate(); }
-    function executeLocate() {
-        const val = document.getElementById('aoiInput').value;
-        if(!val) return;
-        
-        // Visual Feedback
-        const btn = document.querySelector('.action-btn');
-        btn.innerText = 'Searching...';
-        
-        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(val)}`)
-            .then(r=>r.json()).then(data => {
-                btn.innerText = 'LOCATE';
-                if(data.length) {
-                    const {lat, lon} = data[0];
-                    map.setView([lat, lon], 12);
-                    L.marker([lat, lon]).addTo(map).bindPopup(`<b>AOI LOCKED</b><br>${data[0].display_name}`).openPopup();
-                } else { alert('Location not found'); }
-            });
+    function confirmEmailReceipt() {
+        addChat('xiaoer', '确认成功。FTP 凭证已解锁。');
+        document.getElementById('emailPanel').style.display = 'none';
+        document.getElementById('dataTools').style.display = 'block';
+        document.getElementById('step2Status').innerText = "PENDING REPORT";
+        document.getElementById('step2Status').style.color = "#ef4444";
+        startTimer();
+        setTimeout(() => addChat('dushe', '数据包很大，下载慢了别怪我，那是物理带宽的限制。'), 2000);
     }
 
-    // --- 4. INTEL DATA ---
-    const db = {
-        'apollo': {
-            title: 'APOLLO IMAGE HUNTER',
-            url: 'https://imagehunter.apollomapping.com/',
-            specs: { 'Type': 'Aggregator', 'Sources': 'Maxar, Airbus, Planet, 21AT', 'Min Res': '30cm', 'Archive': 'Global Comprehensive' },
-            desc: 'The industry-standard search engine. Best starting point to see "who has what" for any AOI. Aggregates data from multiple major vendors into a single map interface.'
-        },
-        'stac': {
-            title: 'STAC INDEX',
-            url: 'https://stacindex.org/',
-            specs: { 'Standard': 'STAC v1.0.0', 'Type': 'Catalog', 'API': 'RESTful JSON', 'Access': 'Open Source' },
-            desc: 'Official catalog of SpatioTemporal Asset Catalogs. Connects to AWS open data buckets and provides a standardized way to query geospatial assets.'
-        },
-        'usgs': {
-            title: 'USGS EARTH EXPLORER',
-            url: 'https://earthexplorer.usgs.gov/',
-            specs: { 'Data': 'Landsat 1-9', 'Cost': 'Free', 'License': 'Public Domain', 'Format': 'GeoTIFF' },
-            desc: 'The definitive source for US government remote sensing data. Contains the longest continuous record of Earth observation from space (Landsat).'
-        },
-        'copernicus': {
-            title: 'COPERNICUS BROWSER',
-            url: 'https://dataspace.copernicus.eu/',
-            specs: { 'Data': 'Sentinel-1/2/3/5P', 'Revisit': '5 Days (S2)', 'Cost': 'Free', 'Format': 'SAFE / Cloud Optimized' },
-            desc: 'Access point for the European Union Earth Observation programme. Provides high-quality optical and radar data for free.'
-        },
-        'maxar': {
-            title: 'MAXAR TECHNOLOGIES',
-            url: 'https://discover.maxar.com/',
-            specs: { 'Constellation': 'WorldView / Legion', 'Res': '30cm (Native)', 'Accuracy': '<3m CE90', 'Bands': '8-Band Multispectral' },
-            desc: 'Highest resolution commercial optical imagery available. Used extensively for defense, mapping, and high-precision monitoring.'
-        },
-        'planet': {
-            title: 'PLANET LABS',
-            url: 'https://www.planet.com/explorer/',
-            specs: { 'Constellation': 'SuperDove (Flock)', 'Res': '3m (Daily)', 'Archive': 'Daily since 2017', 'Coverage': 'Global Landmass' },
-            desc: 'Always-on monitoring. Unlike other providers that point-and-shoot, Planet scans the entire landmass of Earth every single day.'
-        },
-        'capella': {
-            title: 'CAPELLA SPACE',
-            url: 'https://www.capellaspace.com/',
-            specs: { 'Sensor': 'SAR (X-Band)', 'Res': 'Sub-50cm', 'Look': 'Left/Right', 'Latency': 'Low Latency' },
-            desc: 'High-resolution radar capable of imaging at night and through clouds. Ideal for monitoring ports, military movements, and disaster response.'
-        }
-    };
-
-    function showIntel(key) {
-        const d = db[key];
-        document.getElementById('modalTitle').innerText = d.title;
-        document.getElementById('modalLink').href = d.url;
-        document.getElementById('modalDesc').innerText = d.desc;
-        
-        let html = '';
-        for(let k in d.specs) {
-            html += `<tr><td class="spec-label">${k}</td><td class="spec-value">${d.specs[k]}</td></tr>`;
-        }
-        document.getElementById('modalTable').innerHTML = html;
-        
-        document.getElementById('infoModal').style.display = 'block';
+    function handleReport() {
+        addChat('xiaoer', '收到报告，正在核验...');
+        setTimeout(() => {
+            addChat('dushe', '嗯，报告数据很详细，是个懂行的。SHP 通道给你开了，尽管用。');
+            document.getElementById('step2').classList.add('done');
+            document.getElementById('step3').classList.add('active');
+            document.getElementById('monitorStatus').innerText = "VERIFIED";
+            document.getElementById('monitorStatus').style.color = "#10b981";
+            document.getElementById('monitorTimer').innerText = "COMPLIANT";
+            document.getElementById('monitorTimer').style.color = "#10b981";
+        }, 1500);
     }
 
-    function closeModal() {
-        document.getElementById('infoModal').style.display = 'none';
+    function startTimer() {
+        let time = 864000;
+        setInterval(() => {
+            if(document.getElementById('monitorTimer').innerText === "COMPLIANT") return;
+            time--;
+            const d = Math.floor(time / 86400);
+            const h = Math.floor((time % 86400) / 3600);
+            document.getElementById('monitorTimer').innerText = `${d}D ${h}H (RISK)`;
+        }, 1000);
     }
+
+    // Init
+    addChat('dushe', '服务器状态良好。安全协议加载完毕。');
+
 </script>
 
 </body>
