@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GPTM SOVEREIGN // ELITE SERVICE</title>
+    <title>GPTM SOVEREIGN // CUSTOM SKIN</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -16,8 +16,8 @@
             --bg-panel: #050505;
             --border: #333;
             
-            --accent-xiaoer: #10b981; /* Green (Service) */
-            --accent-dushe: #f59e0b;  /* Amber (Technical/Expert - Not Angry Red) */
+            --accent-xiaoer: #10b981; /* Green */
+            --accent-dushe: #f59e0b;  /* Amber */
             --accent-admin: #ffd700;  /* Gold */
             --accent-data: #3b82f6;   /* Blue */
             
@@ -28,22 +28,39 @@
         body.god-mode { --border: #5c4d26; }
         body.god-mode .sidebar { border-color: var(--accent-admin); }
 
-        * { box-sizing: border-box; cursor: none; outline: none; }
-        body { margin: 0; padding: 0; font-family: var(--font-ui); background: var(--bg-root); color: #888; overflow: hidden; height: 100vh; width: 100vw; }
+        * { box-sizing: border-box; outline: none; }
+        /* Default cursor on login, crosshair inside */
+        body { margin: 0; padding: 0; font-family: var(--font-ui); background: var(--bg-root); color: #888; overflow: hidden; height: 100vh; width: 100vw; cursor: default; }
+        #app.unlocked { cursor: crosshair; }
 
         #app { display: flex; flex-direction: column; height: 100%; filter: blur(10px); transition: 0.8s; pointer-events: none; }
         #app.unlocked { filter: blur(0); pointer-events: all; }
 
         /* --- LOGIN --- */
         #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; background: #000; display: flex; justify-content: center; align-items: center; flex-direction: column; }
-        .login-box { width: 450px; padding: 40px; border: 1px solid #333; background: #050505; box-shadow: 0 0 100px rgba(255,255,255,0.02); }
+        .login-box { width: 500px; /* Widened slightly */ padding: 40px; border: 1px solid #333; background: #050505; box-shadow: 0 0 100px rgba(255,255,255,0.02); border-radius: 12px; }
         .login-title { font-size: 20px; font-weight: 900; color: #fff; margin-bottom: 20px; letter-spacing: 4px; text-align: center; }
-        .login-input { width: 100%; background: #000; border: 1px solid #333; color: #fff; padding: 12px; font-family: var(--font-mono); font-size: 12px; margin-bottom: 15px; }
-        .enter-btn { width: 100%; background: #fff; color: #000; border: none; padding: 15px; font-weight: 800; cursor: pointer; margin-top: 10px; }
-        .verify-btn { float: right; background: #222; color: #ccc; border: 1px solid #444; padding: 5px 10px; font-size: 10px; cursor: pointer; margin-top: -10px; margin-bottom: 10px; }
-        .zodiac-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; margin: 20px 0; }
-        .z-btn { background: #111; border: 1px solid #333; color: #666; padding: 10px; cursor: pointer; text-align: center; }
-        .z-btn.selected { border-color: #fff; color: #fff; background: #222; }
+        .login-input { width: 100%; background: #000; border: 1px solid #333; color: #fff; padding: 12px; font-family: var(--font-mono); font-size: 12px; margin-bottom: 15px; cursor: text; border-radius: 4px; }
+        .login-input:focus { border-color: #fff; }
+        .enter-btn { width: 100%; background: #fff; color: #000; border: none; padding: 15px; font-weight: 800; cursor: pointer; margin-top: 10px; transition: 0.2s; border-radius: 4px; }
+        .enter-btn:hover { background: #ccc; }
+        .verify-btn { float: right; background: #222; color: #ccc; border: 1px solid #444; padding: 5px 10px; font-size: 10px; cursor: pointer; margin-top: -10px; margin-bottom: 10px; border-radius: 4px; }
+        
+        /* --- ZODIAC SKIN SELECTOR (NEW STYLE) --- */
+        .zodiac-title { font-size: 14px; color: #fff; text-align: center; margin: 25px 0 15px 0; font-weight: 700; letter-spacing: 1px; }
+        .zodiac-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
+        .z-btn { 
+            background: #111; border: 2px solid #333; color: #666; padding: 15px 5px; 
+            cursor: pointer; text-align: center; display: flex; flex-direction: column; 
+            align-items: center; justify-content: center; border-radius: 12px; transition: 0.3s;
+        }
+        .z-btn:hover { border-color: #666; background: #1a1a1a; color: #ccc; }
+        .z-btn.selected { border-color: var(--accent-data); color: #fff; background: #1a1a1a; box-shadow: 0 0 20px rgba(59, 130, 246, 0.2); }
+        
+        .z-icon { font-size: 36px; margin-bottom: 5px; transition: 0.3s; filter: grayscale(0.8); }
+        .z-btn:hover .z-icon, .z-btn.selected .z-icon { transform: scale(1.15); filter: grayscale(0); }
+        .z-label { font-size: 9px; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.7; }
+        .z-btn.selected .z-label { opacity: 1; color: var(--accent-data); }
 
         /* --- LAYOUT --- */
         header { height: 60px; border-bottom: 1px solid var(--border); background: #050505; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; }
@@ -58,7 +75,8 @@
         .p-body { flex: 1; overflow-y: auto; padding: 20px; }
 
         /* --- MODULES --- */
-        .step-card { border: 1px solid #333; padding: 15px; margin-bottom: 15px; background: #0e0e0e; opacity: 0.4; pointer-events: none; transition: 0.3s; position: relative; }
+        #panel-mission { display: none; }
+        .step-card { border: 1px solid #333; padding: 15px; margin-bottom: 15px; background: #0e0e0e; opacity: 0.4; pointer-events: none; transition: 0.3s; position: relative; border-radius: 6px; }
         .step-card.active { opacity: 1; pointer-events: all; border-color: #555; background: #111; }
         .step-card.done { border-color: var(--accent-xiaoer); opacity: 0.8; }
         .step-card.done::after { content: '✓'; position: absolute; top: 10px; right: 10px; color: var(--accent-xiaoer); font-weight: bold; }
@@ -66,350 +84,60 @@
         .step-title { font-size: 11px; font-weight: 700; color: #fff; margin-bottom: 5px; }
         .step-desc { font-size: 10px; color: #666; margin-bottom: 10px; line-height: 1.4; }
         
-        .action-btn { width: 100%; background: #222; border: 1px solid #444; color: #ccc; padding: 10px; font-size: 10px; cursor: pointer; margin-bottom: 5px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .action-btn { width: 100%; background: #222; border: 1px solid #444; color: #ccc; padding: 10px; font-size: 10px; cursor: pointer; margin-bottom: 5px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 4px; }
         .action-btn:hover { border-color: #fff; color: #fff; }
         .action-btn.primary { background: #fff; color: #000; border-color: #fff; }
         .action-btn.warn { background: rgba(245, 158, 11, 0.1); border-color: var(--accent-dushe); color: var(--accent-dushe); }
         
-        .email-panel { background: #151515; border: 1px dashed #444; padding: 10px; margin-bottom: 10px; display: none; }
+        .email-panel { background: #151515; border: 1px dashed #444; padding: 10px; margin-bottom: 10px; display: none; border-radius: 6px; }
         .email-status { font-size: 10px; color: var(--accent-data); margin-bottom: 8px; font-family: var(--font-mono); }
         .resend-link { font-size: 9px; color: #666; text-decoration: underline; cursor: pointer; float: right; margin-top: 5px; }
         .resend-link:hover { color: #fff; }
 
+        /* --- MISSION MODULES --- */
+        .module { margin-bottom: 25px; border-bottom: 1px dashed #222; padding-bottom: 20px; }
+        .mod-title { font-size: 11px; color: #666; font-weight: 700; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .aoi-box { border: 1px solid #222; padding: 10px; background: #0a0a0a; margin-bottom: 10px; border-radius: 6px; }
+        .aoi-label { font-size: 9px; color: var(--accent-data); font-weight: 700; margin-bottom: 5px; border-bottom: 1px solid #222; padding-bottom: 2px; }
+        .sys-select { width: 100%; background: #151515; border: 1px solid #333; color: #ccc; padding: 8px; font-family: var(--font-mono); font-size: 11px; margin-bottom: 5px; outline: none; border-radius: 4px; }
+        .upload-zone { border: 1px dashed #444; padding: 20px; text-align: center; cursor: pointer; transition: 0.2s; background: rgba(255,255,255,0.01); border-radius: 6px; }
+        .upload-zone:hover { border-color: var(--accent-data); color: var(--accent-data); }
+
+        .year-toggle { display: flex; justify-content: space-between; align-items: center; background: #111; border: 1px solid #222; padding: 10px; margin-bottom: 5px; cursor: pointer; opacity: 1; transition: 0.3s; border-radius: 6px; }
+        .year-toggle.disabled { opacity: 0.3; pointer-events: none; border-style: dashed; }
+        .year-toggle.active { border-color: #fff; background: #1a1a1a; }
+        .year-tag { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+
         /* --- MONITOR --- */
-        .monitor-card { background: #111; border: 1px solid #333; padding: 15px; margin-bottom: 10px; }
+        .monitor-card { background: #111; border: 1px solid #333; padding: 15px; margin-bottom: 10px; border-radius: 6px; }
         .monitor-label { font-size: 9px; color: #666; margin-bottom: 5px; }
         .monitor-val { font-family: var(--font-mono); font-size: 14px; font-weight: 700; color: #fff; }
         .monitor-val.warn { color: var(--accent-dushe); animation: pulse 2s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        
+        .coverage-report { background: #111; padding: 15px; border: 1px solid #333; display: none; margin-top:20px; border-radius: 6px; }
+        .cov-bar { height: 4px; background: #333; margin: 8px 0; position: relative; border-radius: 2px; }
+        .cov-fill { height: 100%; background: var(--accent-data); width: 0%; transition: 1s; border-radius: 2px; }
+
+        /* --- ADMIN --- */
+        #adminPanel { display: none; }
+        body.god-mode #panel-compliance { display: none; }
+        body.god-mode #panel-mission { display: block; }
+        body.god-mode #userPanel { display: none; }
+        body.god-mode #adminPanel { display: block; }
+        .admin-card { background: #0f0f0f; border: 1px solid #333; padding: 15px; margin-bottom: 10px; border-radius: 6px; }
+        .status-select { background: #000; color: #ccc; border: 1px solid #444; padding: 4px; font-size: 10px; font-family: var(--font-mono); border-radius: 4px; }
 
         /* --- MAP & AI --- */
         #map { width: 100%; height: 100%; background: #0b0b0b; z-index: 1; }
         .leaflet-tile-pane { filter: grayscale(100%) contrast(1.5) brightness(0.6); }
-        
-        /* AI WIDGET */
+        body.god-mode .leaflet-tile-pane { filter: sepia(100%) hue-rotate(5deg) saturate(1.5) brightness(0.6); }
+
         .ai-widget { 
             position: fixed; bottom: 20px; right: 340px; width: 340px; 
             background: rgba(0,0,0,0.95); border: 1px solid #333; z-index: 500; 
             display: flex; flex-direction: column; border-radius: 6px; 
             transition: border-color 0.3s;
         }
-        
-        /* WORKING STATE (Gentle Glow) */
-        .working { border-color: var(--accent-dushe) !important; box-shadow: 0 0 15px rgba(245, 158, 11, 0.3); }
-
-        .ai-head { padding: 8px 12px; background: #111; border-bottom: 1px solid #333; font-size: 11px; font-weight: 700; color: #fff; display: flex; justify-content: space-between; }
-        .ai-body { height: 180px; overflow-y: auto; padding: 15px; font-family: var(--font-mono); font-size: 11px; }
-        .chat-row { display: flex; gap: 10px; margin-bottom: 10px; opacity: 0; animation: fadeIn 0.3s forwards; }
-        @keyframes fadeIn { to { opacity: 1; } }
-        
-        .avatar { width: 24px; height: 24px; border: 1px solid #333; display: flex; align-items: center; justify-content: center; font-size: 14px; border-radius: 4px; flex-shrink: 0; position: relative; }
-        .avatar::after { content:''; position:absolute; bottom:-2px; right:-2px; width:6px; height:6px; border-radius:50%; }
-        
-        .avatar.xiaoer { background: #06241b; border-color: var(--accent-xiaoer); color: var(--accent-xiaoer); }
-        .avatar.xiaoer::after { background: var(--accent-xiaoer); }
-        
-        /* Dushe is now AMBER (Expert) */
-        .avatar.dushe { background: #261b00; border-color: var(--accent-dushe); color: var(--accent-dushe); }
-        .avatar.dushe::after { background: var(--accent-dushe); animation: blink 1s infinite; }
-        
-        .bubble { background: #111; padding: 6px 10px; border: 1px solid #333; color: #ccc; border-radius: 4px; max-width: 240px; line-height: 1.4; }
-        
-        .typing-indicator { font-style: italic; color: #555; font-size: 9px; margin-left: 35px; display: none; }
-
-        .cursor-trail { position: fixed; pointer-events: none; z-index: 9999; font-size: 24px; opacity: 0.8; transition: 0.1s; }
-
-        /* --- MODALS --- */
-        #warningModal, #ndaModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 10000; display: none; justify-content: center; align-items: center; }
-        .doc-paper { width: 500px; max-height: 80vh; background: #fff; color: #000; padding: 40px; position: relative; overflow-y: auto; font-family: serif; }
-        .warn-box { width: 450px; background: #111; border: 1px solid var(--accent-dushe); padding: 30px; text-align: center; box-shadow: 0 0 50px rgba(245, 158, 11, 0.2); }
-        .sys-check { display: flex; align-items: center; gap: 10px; font-size: 11px; margin-top: 20px; font-family: var(--font-ui); }
-
-    </style>
-</head>
-<body>
-
-<div id="loginOverlay">
-    <div class="login-box">
-        <div style="font-size:20px; font-weight:900; color:#fff; text-align:center; margin-bottom:20px; letter-spacing:4px;">GPTM GATEWAY</div>
-        <input type="text" class="login-input" id="loginCompany" placeholder="COMPANY">
-        <input type="text" class="login-input" id="loginEmail" placeholder="EMAIL">
-        <button class="verify-btn" onclick="sendCode()" id="codeBtn">SEND CODE</button>
-        <input type="text" class="login-input" id="loginCode" placeholder="VERIFICATION CODE">
-        <div style="font-size:10px; color:#666; margin-bottom:10px;">OPERATOR SIGN:</div>
-        <div class="zodiac-grid" id="zodiacGrid"></div>
-        <button class="enter-btn" onclick="checkLogin()">AUTHENTICATE</button>
-    </div>
-</div>
-
-<div id="warningModal">
-    <div class="warn-box">
-        <div style="color:var(--accent-dushe); font-size:40px; margin-bottom:10px;"><i class="ph ph-shield-check"></i></div>
-        <h2 style="color:#fff; margin-bottom:10px;">QUALITY ASSURANCE PROTOCOL</h2>
-        <p style="color:#ccc; font-size:12px; line-height:1.6; text-align:left; margin-bottom:20px;">
-            Access to GPTM Sample Data is a privilege, not a right.<br><br>
-            1. <b>Evaluation:</b> Please evaluate the sample data within <b>10 Working Days</b>.<br>
-            2. <b>Feedback:</b> Your professional feedback helps us calibrate the global grid.<br>
-            3. <b>Access:</b> Full production access is granted upon report submission.
-        </p>
-        <div class="sys-check" style="color:#fff; justify-content:center;">
-            <input type="checkbox" id="warnCheck"> 
-            <label for="warnCheck">I ACKNOWLEDGE THE PROTOCOL</label>
-        </div>
-        <button class="enter-btn" style="margin-top:20px;" onclick="acceptWarning()">PROCEED TO NDA</button>
-    </div>
-</div>
-
-<div id="ndaModal">
-    <div class="doc-paper">
-        <div style="text-align:center; font-weight:bold; font-size:16px; margin-bottom:20px;">NON-DISCLOSURE AGREEMENT (NDA)</div>
-        <p>I, the undersigned, representing <span id="ndaComp" style="font-weight:bold">[COMPANY]</span>, hereby acknowledge...</p>
-        <button class="enter-btn" style="background:#000; color:#fff; margin-top:30px;" onclick="signNDA()">SIGN & SUBMIT</button>
-    </div>
-</div>
-
-<div id="app">
-    <header>
-        <div class="brand">GPTM <span style="color:#444">SOVEREIGN</span></div>
-        <div class="user-badge" id="headerUser">GUEST</div>
-    </header>
-
-    <div id="workspace">
-        
-        <div class="sidebar">
-            <div class="p-head">COMPLIANCE PROTOCOL</div>
-            <div class="sb-body">
-                
-                <div class="step-card active" id="step1">
-                    <div class="step-title">STAGE 01: APPLICATION</div>
-                    <div class="step-desc">Request access to Sample Data (Dubai JVC). Verification Required.</div>
-                    <button class="action-btn warn" onclick="triggerApply()">
-                        <i class="ph ph-hand-palm"></i> APPLY FOR SAMPLE DATA
-                    </button>
-                </div>
-
-                <div class="step-card" id="step2">
-                    <div class="step-title">STAGE 02: VERIFICATION LOOP</div>
-                    <div class="step-desc">
-                        FTP Credentials locked. Email Confirmation Required.<br>
-                        <b>STATUS:</b> <span style="color:var(--accent-data)" id="step2Status">AWAITING EMAIL CONFIRM</span>
-                    </div>
-                    
-                    <div class="email-panel" id="emailPanel">
-                        <div class="email-status">
-                            <i class="ph ph-envelope-simple-open"></i> EMAIL SENT TO: <span id="dispEmail">...</span>
-                        </div>
-                        <button class="action-btn primary" onclick="confirmEmailReceipt()">
-                            <i class="ph ph-check"></i> I HAVE RECEIVED THE EMAIL
-                        </button>
-                        <div class="resend-link" onclick="handleResend()">Not received? Resend</div>
-                    </div>
-
-                    <div id="dataTools" style="display:none;">
-                        <button class="action-btn" onclick="alert('FTP: 47.237.100.53\nUser: Dubai_DSMDTM\nPass: sdjv0$%g;fd')">
-                            <i class="ph ph-key"></i> VIEW FTP CREDENTIALS
-                        </button>
-                        <div style="margin-top:15px; border-top:1px dashed #333; padding-top:15px;">
-                            <input type="file" id="reportInput" style="display:none" onchange="handleReport()">
-                            <button class="action-btn primary" onclick="document.getElementById('reportInput').click()">
-                                <i class="ph ph-upload-simple"></i> UPLOAD FEEDBACK REPORT
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="step-card" id="step3">
-                    <div class="step-title">STAGE 03: MISSION OPS</div>
-                    <div class="step-desc">AOI Upload & Coverage Analysis.</div>
-                    <button class="action-btn" disabled>LOCKED UNTIL REPORT FILED</button>
-                </div>
-
-            </div>
-        </div>
-
-        <div id="map"></div>
-
-        <div class="sidebar right">
-            <div class="p-head">MONITOR</div>
-            <div class="sb-body">
-                <div class="monitor-card">
-                    <div class="monitor-label">CLIENT STATUS</div>
-                    <div class="monitor-val" id="monitorStatus">UNVERIFIED</div>
-                </div>
-                <div class="monitor-card">
-                    <div class="monitor-label">FEEDBACK COUNTDOWN</div>
-                    <div class="monitor-val warn" id="monitorTimer">--:--:--</div>
-                </div>
-            </div>
-        </div>
-
-    </div>
-</div>
-
-<div class="ai-widget" id="aiWidget">
-    <div class="ai-head">
-        <span>SYSTEM LOG</span>
-        <div style="font-size:9px;">
-            <span style="color:var(--accent-xiaoer)">● ONLINE</span>
-            <span style="color:var(--accent-dushe); margin-left:5px;">● ENGINEER</span>
-        </div>
-    </div>
-    <div class="ai-body" id="chatBody"></div>
-    <div class="typing-indicator" id="typing">Processing request...</div>
-</div>
-
-<script>
-    // --- 1. SETUP ---
-    const map = L.map('map', { zoomControl: false, minZoom: 2 }).setView([25.05, 55.2], 12);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
-
-    // Zodiac
-    const zGrid = document.getElementById('zodiacGrid');
-    let currentSign = '♈';
-    ['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓'].forEach(z => {
-        const btn = document.createElement('div');
-        btn.className = 'z-btn'; btn.innerText = z;
-        btn.onclick = () => {
-            document.querySelectorAll('.z-btn').forEach(b=>b.classList.remove('selected'));
-            btn.classList.add('selected'); currentSign = z;
-        };
-        zGrid.appendChild(btn);
-    });
-    zGrid.children[0].classList.add('selected');
-
-    // --- 2. AI LOGIC (HIGH EQ EDITION) ---
-    function addChat(role, text) {
-        const chatBody = document.getElementById('chatBody');
-        const widget = document.getElementById('aiWidget');
-        const typing = document.getElementById('typing');
-        
-        let delay = 600; 
-        if (text.includes("路由") || text.includes("解锁")) delay = 200; // Fast technical response
-
-        // Show typing
-        typing.style.display = 'block';
-        typing.innerText = role === 'xiaoer' ? 'Xiao Er is typing...' : 'Engineer is diagnosing...';
-
-        setTimeout(() => {
-            typing.style.display = 'none';
-            
-            // Visual feedback for Dushe working
-            if (role === 'dushe') {
-                widget.classList.add('working');
-                setTimeout(() => widget.classList.remove('working'), 1000);
-            }
-
-            const d = document.createElement('div'); 
-            d.className = 'chat-row';
-            // Avatar Symbols
-            let av = role==='xiaoer'?'☺':'⚡'; // Lightning bolt for Engineer/Dushe
-            let col = role==='xiaoer'?'var(--accent-xiaoer)':'var(--accent-dushe)';
-            let name = role==='xiaoer'?'店小二':'毒舌'; // Keeping the name, changing the vibe
-
-            d.innerHTML = `<div class="avatar ${role}" style="color:${col}; border-color:${col}">${av}</div><div class="bubble"><b>[${name}]</b><br>${text}</div>`;
-            chatBody.appendChild(d); 
-            chatBody.scrollTop = 9999;
-        }, delay);
-    }
-
-    // --- 3. LOGIN ---
-    function checkLogin() {
-        const comp = document.getElementById('loginCompany').value;
-        const mail = document.getElementById('loginEmail').value;
-        if(!comp || !mail) { alert("Credentials Required"); return; }
-        
-        document.getElementById('loginOverlay').style.display = 'none';
-        document.getElementById('app').classList.add('unlocked');
-        document.getElementById('headerUser').innerText = comp.toUpperCase();
-        document.getElementById('ndaComp').innerText = comp.toUpperCase();
-        document.getElementById('dispEmail').innerText = mail;
-        
-        // Cursor
-        document.addEventListener('mousemove', (e) => {
-            const el = document.createElement('div');
-            el.className = 'cursor-trail'; el.innerText = currentSign;
-            el.style.left = e.pageX+'px'; el.style.top = e.pageY+'px';
-            document.body.appendChild(el); setTimeout(() => el.remove(), 200);
-        });
-
-        addChat('xiaoer', `欢迎 ${comp}。`);
-        setTimeout(() => addChat('dushe', '系统负载正常。请按流程操作，有技术问题我来扛。'), 1500);
-    }
-
-    // --- 4. WORKFLOW & RESEND (THE NICE FIX) ---
-    let resendCount = 0;
-
-    function triggerApply() { document.getElementById('warningModal').style.display = 'flex'; }
-
-    function acceptWarning() {
-        if(!document.getElementById('warnCheck').checked) { alert("Please acknowledge."); return; }
-        document.getElementById('warningModal').style.display = 'none';
-        document.getElementById('ndaModal').style.display = 'block';
-    }
-
-    function signNDA() {
-        document.getElementById('ndaModal').style.display = 'none';
-        addChat('xiaoer', 'NDA 已签署。凭证邮件已发送。');
-        document.getElementById('step1').classList.add('done');
-        document.getElementById('step2').classList.add('active');
-        document.getElementById('emailPanel').style.display = 'block';
-    }
-
-    function handleResend() {
-        resendCount++;
-        if (resendCount === 1) {
-            addChat('xiaoer', '已为您尝试重发，请检查垃圾箱。');
-        } else if (resendCount === 2) {
-            // DUSHE: TECHNICAL DIAGNOSIS
-            addChat('dushe', '还没收到？等等...我看下后台日志...啧，国际网关又堵了。');
-            setTimeout(() => {
-                addChat('dushe', '行了，我给你切了条备用线路重发了。这次应该稳了。');
-            }, 1500);
-        } else {
-            // DUSHE: THE HEROIC BYPASS
-            addChat('dushe', '还是不行？那就是你们那边的防火墙太严了。算了，看你着急，我直接给你后台解锁吧。别到处说啊。');
-            confirmEmailReceipt(); // Force unlock
-        }
-    }
-
-    function confirmEmailReceipt() {
-        addChat('xiaoer', '确认成功。FTP 凭证已解锁。');
-        document.getElementById('emailPanel').style.display = 'none';
-        document.getElementById('dataTools').style.display = 'block';
-        document.getElementById('step2Status').innerText = "PENDING REPORT";
-        document.getElementById('step2Status').style.color = "#ef4444";
-        startTimer();
-        setTimeout(() => addChat('dushe', '数据包很大，下载慢了别怪我，那是物理带宽的限制。'), 2000);
-    }
-
-    function handleReport() {
-        addChat('xiaoer', '收到报告，正在核验...');
-        setTimeout(() => {
-            addChat('dushe', '嗯，报告数据很详细，是个懂行的。SHP 通道给你开了，尽管用。');
-            document.getElementById('step2').classList.add('done');
-            document.getElementById('step3').classList.add('active');
-            document.getElementById('monitorStatus').innerText = "VERIFIED";
-            document.getElementById('monitorStatus').style.color = "#10b981";
-            document.getElementById('monitorTimer').innerText = "COMPLIANT";
-            document.getElementById('monitorTimer').style.color = "#10b981";
-        }, 1500);
-    }
-
-    function startTimer() {
-        let time = 864000;
-        setInterval(() => {
-            if(document.getElementById('monitorTimer').innerText === "COMPLIANT") return;
-            time--;
-            const d = Math.floor(time / 86400);
-            const h = Math.floor((time % 86400) / 3600);
-            document.getElementById('monitorTimer').innerText = `${d}D ${h}H (RISK)`;
-        }, 1000);
-    }
-
-    // Init
-    addChat('dushe', '服务器状态良好。安全协议加载完毕。');
-
-</script>
-
-</body>
-</html>
+        .working { border-color: var(--accent-dushe) !important; box-shadow
