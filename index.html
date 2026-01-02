@@ -3,24 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GPTM SOVEREIGN // BASELINE LOCKED</title>
+    <title>GPTM SOVEREIGN // SPATIAL SYNC</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <style>
-        /* --- THEME: DEEP SEA BLUE & SIGNAL YELLOW --- */
+        /* --- THEME: DEEP SEA NAVY & SIGNAL YELLOW --- */
         :root {
-            --bg-body: #020b16;
-            --bg-panel: #051e3e;
-            --border: #1e3a5f;
+            --bg-body: #020b16;       /* Darkest Navy */
+            --bg-panel: #051e3e;      /* Deep Sea Panel */
+            --border: #1e3a5f;        /* Border Blue */
             
-            --accent-yellow: #ffd700; 
-            --accent-green: #10b981;
-            --accent-amber: #f59e0b;
-            --accent-data-23: #64748b; /* Grey/Silver for 2023 Baseline */
-            --accent-data-25: #3b82f6; /* Blue for 2025 */
+            --accent-yellow: #ffd700; /* COMMANDER GOLD */
+            --accent-green: #10b981;  /* SUCCESS */
+            --accent-amber: #f59e0b;  /* ENGINEER/WARNING */
+            --accent-data: #3b82f6;   /* DATA BLUE */
             
             --font-mono: "JetBrains Mono", monospace;
             --font-ui: "Inter", sans-serif;
@@ -36,88 +35,101 @@
         #app.unlocked { filter: blur(0); pointer-events: all; }
 
         /* --- LOGIN --- */
-        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; background: rgba(2, 11, 22, 0.95); display: flex; justify-content: center; align-items: center; flex-direction: column; }
-        .login-box { width: 420px; padding: 30px; border: 1px solid var(--border); background: var(--bg-panel); box-shadow: 0 0 50px rgba(0,0,0,0.5); border-radius: 8px; }
-        .login-title { font-size: 24px; font-weight: 900; color: #fff; margin-bottom: 20px; letter-spacing: 2px; text-align: center; text-transform: uppercase; }
-        .login-input { width: 100%; background: #020b16; border: 1px solid var(--border); color: #fff; padding: 10px; font-family: var(--font-mono); font-size: 12px; margin-bottom: 10px; border-radius: 4px; cursor: text; }
-        .enter-btn { width: 100%; background: var(--accent-yellow); color: #000; border: none; padding: 12px; font-weight: 800; cursor: pointer; margin-top: 15px; border-radius: 4px; transition: 0.2s; letter-spacing: 1px; }
-        .enter-btn:hover { background: #fff; }
-        .verify-btn { float: right; background: transparent; color: var(--accent-yellow); border: 1px solid var(--accent-yellow); padding: 4px 8px; font-size: 10px; cursor: pointer; margin-top: -5px; margin-bottom: 10px; border-radius: 2px; }
-
-        /* ZODIAC */
-        .z-title { font-size: 10px; color: #888; margin: 15px 0 5px 0; text-transform: uppercase; letter-spacing: 1px; }
-        .zodiac-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; margin-bottom: 10px; }
-        .z-btn { background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: #666; padding: 5px; cursor: pointer; text-align: center; border-radius: 4px; transition: 0.2s; }
+        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; background: rgba(2, 11, 22, 0.98); display: flex; justify-content: center; align-items: center; flex-direction: column; }
+        .login-box { width: 450px; padding: 40px; border: 1px solid var(--border); background: var(--bg-panel); box-shadow: 0 0 100px rgba(0,0,0,0.5); border-radius: 8px; }
+        .login-title { font-size: 24px; font-weight: 900; color: #fff; margin-bottom: 20px; letter-spacing: 2px; text-align: center; }
+        .login-input { width: 100%; background: #020b16; border: 1px solid var(--border); color: #fff; padding: 12px; font-family: var(--font-mono); font-size: 12px; margin-bottom: 15px; border-radius: 4px; }
+        .login-input:focus { border-color: var(--accent-yellow); }
+        
+        .z-title { font-size: 10px; color: #888; margin: 15px 0 5px 0; text-transform: uppercase; letter-spacing: 1px; text-align: center; }
+        .zodiac-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 20px; }
+        .z-btn { background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: #666; padding: 8px; cursor: pointer; text-align: center; border-radius: 4px; transition: 0.2s; }
         .z-btn:hover, .z-btn.selected { border-color: var(--accent-yellow); color: var(--accent-yellow); background: rgba(255, 215, 0, 0.1); }
-        .z-icon { font-size: 16px; }
+        .z-icon { font-size: 18px; }
 
-        /* --- APP HEADER --- */
-        header { height: 50px; border-bottom: 1px solid var(--border); background: var(--bg-panel); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; }
+        .enter-btn { width: 100%; background: var(--accent-yellow); color: #000; border: none; padding: 12px; font-weight: 800; cursor: pointer; border-radius: 4px; letter-spacing: 1px; }
+        .enter-btn:hover { background: #fff; }
+        .reg-btn { width: 100%; background: transparent; border: 1px solid #666; color: #888; padding: 10px; font-size: 11px; cursor: pointer; margin-top: 10px; border-radius: 4px; }
+        .reg-btn:hover { border-color: #ccc; color: #ccc; }
+
+        /* --- HEADER --- */
+        header { height: 50px; background: #0a1018; border-bottom: 1px solid var(--border); display: grid; grid-template-columns: 250px 1fr 300px; align-items: center; padding: 0 20px; z-index: 500; }
         .brand { font-size: 16px; font-weight: 900; color: #fff; letter-spacing: 2px; display: flex; align-items: center; gap: 10px; }
         .brand span { color: var(--accent-yellow); }
-        .admin-btn { font-family: var(--font-mono); font-size: 10px; padding: 5px 12px; border: 1px solid var(--accent-yellow); color: var(--accent-yellow); border-radius: 4px; cursor: pointer; display: none; background: rgba(255, 215, 0, 0.1); }
-        .admin-btn:hover { background: var(--accent-yellow); color: #000; }
 
-        #workspace { flex: 1; display: grid; grid-template-columns: 320px 1fr; overflow: hidden; }
+        .ai-topbar { display: flex; align-items: center; justify-content: center; gap: 15px; font-family: var(--font-mono); font-size: 11px; color: #888; cursor: pointer; height: 100%; }
+        .ai-status { display: flex; align-items: center; gap: 6px; }
+        .ai-dot { width: 6px; height: 6px; border-radius: 50%; }
+        
+        .header-controls { display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
+        .view-switch { display: none; background: #000; border: 1px solid var(--border); border-radius: 4px; padding: 2px; }
+        .vs-btn { padding: 6px 12px; font-size: 10px; border: none; background: transparent; color: #666; cursor: pointer; font-weight: 700; font-family: var(--font-mono); border-radius: 2px; }
+        .vs-btn.active { background: var(--accent-yellow); color: #000; }
+        .user-badge { font-family: var(--font-mono); font-size: 11px; padding: 5px 10px; border: 1px solid var(--border); border-radius: 4px; color: #888; }
 
-        /* --- SIDEBAR --- */
-        .sidebar { background: var(--bg-panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 10; box-shadow: 5px 0 20px rgba(0,0,0,0.2); }
+        /* --- AI DROPDOWN --- */
+        #aiDropdown { position: absolute; top: 50px; left: 50%; transform: translateX(-50%); width: 500px; background: rgba(5, 30, 62, 0.98); border: 1px solid var(--border); border-top: none; box-shadow: 0 10px 40px rgba(0,0,0,0.5); display: none; flex-direction: column; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; overflow: hidden; }
+        .ai-body { height: 250px; overflow-y: auto; padding: 15px; font-family: var(--font-mono); font-size: 11px; }
+        .chat-row { display: flex; gap: 10px; margin-bottom: 8px; align-items: flex-start; }
+        .avatar { width: 24px; height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+        .avatar.concierge { border: 1px solid var(--accent-green); color: var(--accent-green); background: rgba(16, 185, 129, 0.1); }
+        .avatar.engineer { border: 1px solid var(--accent-amber); color: var(--accent-amber); background: rgba(245, 158, 11, 0.1); }
+        .bubble { background: rgba(0,0,0,0.3); padding: 8px 12px; border-radius: 4px; color: #ddd; line-height: 1.4; border: 1px solid rgba(255,255,255,0.05); }
+
+        /* --- WORKSPACE --- */
+        #workspace { flex: 1; display: grid; grid-template-columns: 340px 1fr; overflow: hidden; }
+        .sidebar { background: var(--bg-panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 10; }
         .p-head { padding: 15px; border-bottom: 1px solid var(--border); font-size: 11px; font-weight: 700; color: #fff; letter-spacing: 1px; background: rgba(0,0,0,0.2); }
-        .p-body { flex: 1; overflow-y: auto; padding: 15px; }
+        .p-body { flex: 1; overflow-y: auto; padding: 20px; }
 
-        .module { margin-bottom: 20px; border-bottom: 1px dashed var(--border); padding-bottom: 15px; }
-        .mod-title { font-size: 10px; color: var(--accent-yellow); font-weight: 700; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
-        
-        .aoi-box { border: 1px solid var(--border); padding: 10px; background: rgba(0,0,0,0.2); margin-bottom: 8px; border-radius: 4px; }
-        .aoi-label { font-size: 9px; color: #ccc; font-weight: 700; margin-bottom: 5px; }
-        .sys-select { width: 100%; background: #020b16; border: 1px solid var(--border); color: #fff; padding: 6px; font-family: var(--font-mono); font-size: 10px; outline: none; border-radius: 2px; }
-        .upload-zone { border: 1px dashed #666; padding: 15px; text-align: center; cursor: pointer; transition: 0.2s; background: rgba(255,255,255,0.02); border-radius: 4px; }
-        .upload-zone:hover { border-color: var(--accent-yellow); color: var(--accent-yellow); }
+        /* ADMIN SIDEBAR */
+        #sidebar-admin { display: none; }
+        .admin-upload-card { background: rgba(0,0,0,0.2); border: 1px solid var(--border); padding: 15px; margin-bottom: 10px; border-radius: 4px; }
+        .auc-header { display: flex; justify-content: space-between; margin-bottom: 10px; color: #fff; font-weight: 700; font-size: 12px; }
+        .auc-status { font-size: 9px; padding: 2px 6px; background: #000; color: #666; border-radius: 2px; font-family: var(--font-mono); }
+        .auc-status.live { color: var(--accent-green); border: 1px solid var(--accent-green); }
+        .file-list { font-size: 9px; color: #666; font-family: var(--font-mono); margin-bottom: 10px; line-height: 1.4; }
+        .upload-btn-mini { width: 100%; border: 1px dashed #666; color: #888; padding: 8px; text-align: center; font-size: 10px; cursor: pointer; border-radius: 2px; }
+        .upload-btn-mini:hover { border-color: var(--accent-yellow); color: var(--accent-yellow); }
 
-        /* --- TOGGLES --- */
-        .vintage-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border: 1px solid transparent; border-radius: 4px; cursor: pointer; transition: 0.2s; margin-bottom: 4px; background: rgba(0,0,0,0.2); }
-        .vintage-row:hover { background: rgba(255,255,255,0.05); }
-        .vintage-row.active { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.1); }
-        .vintage-row.disabled { opacity: 0.4; cursor: not-allowed; }
+        /* USER SIDEBAR */
+        #sidebar-user { display: flex; }
+        .step-card { border: 1px solid #333; padding: 15px; margin-bottom: 15px; background: rgba(0,0,0,0.2); border-radius: 6px; opacity: 0.5; pointer-events: none; }
+        .step-card.active { opacity: 1; pointer-events: all; border-color: #666; background: rgba(255,255,255,0.02); }
+        .step-card.done { border-color: var(--accent-green); opacity: 0.8; }
         
-        .v-label { font-size: 11px; display: flex; align-items: center; gap: 8px; color: #aaa; }
-        .v-dot { width: 8px; height: 8px; border-radius: 2px; }
-        .v-status { font-size: 9px; font-family: var(--font-mono); color: #666; }
-        
-        /* Checkbox styling */
-        .v-check { width: 14px; height: 14px; border: 1px solid #666; border-radius: 2px; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
-        .vintage-row.active .v-check { background: var(--accent-yellow); border-color: var(--accent-yellow); }
-        .vintage-row.active .v-check::after { content:'✓'; font-size: 10px; color: #000; font-weight: bold; }
+        .action-btn { width: 100%; background: var(--accent-yellow); color: #000; border: none; padding: 10px; font-weight: 800; cursor: pointer; border-radius: 4px; font-size: 11px; margin-bottom: 5px; }
+        .action-btn:hover { background: #fff; }
+        .action-btn.secondary { background: transparent; border: 1px solid #666; color: #ccc; }
+        .action-btn.secondary:hover { border-color: #fff; color: #fff; }
+        .action-btn.warn { background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #ef4444; }
+        .action-btn.warn:hover { background: #ef4444; color: #fff; }
 
-        /* --- MAP --- */
+        /* MODULES & TOGGLES */
+        .module { margin-bottom: 25px; border-bottom: 1px dashed var(--border); padding-bottom: 20px; }
+        .mod-title { font-size: 10px; color: var(--accent-yellow); font-weight: 700; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
+        .aoi-box { border: 1px solid #222; padding: 10px; background: #0a0a0a; margin-bottom: 10px; border-radius: 4px; }
+        .sys-select { width: 100%; background: #151515; border: 1px solid #333; color: #ccc; padding: 8px; font-family: var(--font-mono); font-size: 11px; outline: none; }
+        .upload-zone { border: 1px dashed #444; padding: 20px; text-align: center; cursor: pointer; transition: 0.2s; }
+        .upload-zone:hover { border-color: var(--accent-data); color: var(--accent-data); }
+
+        .year-toggle { display: flex; justify-content: space-between; align-items: center; background: #111; border: 1px solid #222; padding: 10px; margin-bottom: 5px; cursor: pointer; opacity: 1; transition: 0.3s; }
+        .year-toggle.active { border-color: #fff; background: #1a1a1a; }
+        .year-tag { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+
+        .email-panel { background: #111; border: 1px dashed #666; padding: 10px; border-radius: 4px; display: none; margin-bottom: 10px; }
+        .resend-link { font-size: 9px; color: #666; text-decoration: underline; cursor: pointer; float: right; margin-top: 5px; }
+
+        /* MAP */
         #map { width: 100%; height: 100%; background: #ffffff; z-index: 1; }
 
-        /* --- ADMIN MODAL --- */
-        #adminModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(2, 11, 22, 0.9); z-index: 20000; justify-content: center; align-items: center; }
-        .admin-panel { width: 800px; height: 600px; background: var(--bg-panel); border: 2px solid var(--accent-yellow); border-radius: 8px; display: flex; flex-direction: column; box-shadow: 0 0 100px rgba(0,0,0,0.8); }
-        .admin-header { padding: 20px; background: var(--accent-yellow); color: #000; font-weight: 900; font-size: 18px; letter-spacing: 2px; display: flex; justify-content: space-between; align-items: center; }
-        .close-btn { cursor: pointer; font-size: 24px; font-weight: bold; }
-        .admin-body { padding: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; overflow-y: auto; }
-        
-        .year-card { background: rgba(0,0,0,0.3); border: 1px solid var(--border); padding: 20px; border-radius: 6px; }
-        .year-title { color: #fff; font-weight: 700; margin-bottom: 10px; font-size: 14px; border-bottom: 1px solid var(--border); padding-bottom: 5px; }
-        .year-status { float: right; font-size: 10px; padding: 2px 6px; border-radius: 2px; background: #000; color: #666; }
-        .year-status.live { color: var(--accent-green); border: 1px solid var(--accent-green); }
-        
-        .admin-upload { width: 100%; border: 1px dashed #666; color: #888; padding: 15px; text-align: center; font-size: 11px; cursor: pointer; margin-top: 10px; border-radius: 4px; }
-        .admin-upload:hover { border-color: var(--accent-yellow); color: var(--accent-yellow); background: rgba(255, 215, 0, 0.05); }
-
-        /* --- AI WIDGET --- */
-        .ai-widget { position: fixed; bottom: 20px; right: 20px; width: 320px; background: rgba(5, 30, 62, 0.95); border: 1px solid var(--border); z-index: 500; display: flex; flex-direction: column; border-radius: 6px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
-        .ai-head { padding: 10px; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--border); font-size: 11px; font-weight: 700; color: #fff; display: flex; justify-content: space-between; }
-        .ai-body { height: 160px; overflow-y: auto; padding: 10px; font-family: var(--font-mono); font-size: 11px; }
-        .chat-row { display: flex; gap: 10px; margin-bottom: 8px; align-items: flex-start; opacity: 0; animation: fadeIn 0.3s forwards; }
-        @keyframes fadeIn { to { opacity: 1; } }
-        .avatar { width: 24px; height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
-        .avatar.concierge { background: #064e3b; color: var(--accent-green); border: 1px solid var(--accent-green); }
-        .avatar.engineer { background: #451a03; color: var(--accent-amber); border: 1px solid var(--accent-amber); }
-        .bubble { background: rgba(0,0,0,0.4); padding: 6px 10px; border-radius: 4px; color: #ddd; line-height: 1.4; border: 1px solid rgba(255,255,255,0.1); }
+        /* CURSOR */
         .cursor-trail { position: fixed; pointer-events: none; z-index: 9999; font-size: 24px; opacity: 0.8; transition: 0.1s; }
+
+        /* MODALS */
+        #warningModal, #ndaModal, #reportModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(2, 11, 22, 0.95); z-index: 10000; display: none; justify-content: center; align-items: center; }
+        .doc-paper { width: 500px; background: #fff; color: #000; padding: 40px; border-radius: 8px; font-family: serif; max-height: 80vh; overflow-y: auto; }
+        .warn-box { width: 450px; background: #051e3e; border: 1px solid var(--accent-amber); padding: 30px; text-align: center; border-radius: 8px; box-shadow: 0 0 50px rgba(245, 158, 11, 0.2); }
 
     </style>
 </head>
@@ -128,144 +140,171 @@
         <div class="login-title">GPTM <span style="color:var(--accent-yellow)">GATEWAY</span></div>
         <input type="text" class="login-input" id="loginCompany" placeholder="COMPANY (Admin: COMMANDER)" onkeypress="handleLoginKey(event)">
         <input type="text" class="login-input" id="loginEmail" placeholder="EMAIL" onkeypress="handleLoginKey(event)">
-        <button class="verify-btn" onclick="sendCode()" id="codeBtn">SEND CODE</button>
         <input type="text" class="login-input" id="loginCode" placeholder="VERIFICATION CODE (123456 / 000000)" onkeypress="handleLoginKey(event)">
-        <div class="z-title">CURSOR SKIN SELECTOR</div>
+        <div class="z-title">CHOOSE MOUSE SKIN</div>
         <div class="zodiac-grid" id="zodiacGrid"></div>
         <button class="enter-btn" onclick="checkLogin()">AUTHENTICATE</button>
+        <button class="reg-btn" onclick="alert('Registration portal open.')">REGISTER NEW ACCOUNT</button>
     </div>
 </div>
 
-<div id="adminModal">
-    <div class="admin-panel">
-        <div class="admin-header">
-            <span>COMMANDER CONSOLE</span>
-            <span class="close-btn" onclick="toggleAdminPanel()">×</span>
-        </div>
-        <div class="admin-body">
-            <div class="year-card" style="border-color:var(--accent-green);">
-                <div class="year-title">2023 ARCHIVE (BASE) <span class="year-status live">LIVE</span></div>
-                <div style="font-size:10px; color:#fff; margin-bottom:5px;">SOURCE: 2023.SHP (LOCKED)</div>
-                <div class="admin-upload" style="border-color:var(--accent-green); color:var(--accent-green); cursor:default;">
-                    <i class="ph ph-check-circle"></i> BASELINE ACTIVE
-                </div>
-            </div>
-            <div class="year-card">
-                <div class="year-title">2024 COLLECTION <span class="year-status" id="st-2024">OFFLINE</span></div>
-                <div class="admin-upload" onclick="adminUpload('2024')"><i class="ph ph-upload-simple"></i> UPLOAD VECTOR</div>
-            </div>
-            <div class="year-card">
-                <div class="year-title">2025 COLLECTION <span class="year-status" id="st-2025">OFFLINE</span></div>
-                <div class="admin-upload" onclick="adminUpload('2025')"><i class="ph ph-upload-simple"></i> UPLOAD VECTOR</div>
-            </div>
-            <div class="year-card">
-                <div class="year-title">2026 PREVIEW <span class="year-status" id="st-2026">LOCKED</span></div>
-                <div class="admin-upload" onclick="adminUpload('2026')"><i class="ph ph-upload-simple"></i> UPLOAD VECTOR</div>
-            </div>
-        </div>
+<header>
+    <div class="brand"><i class="ph ph-globe-hemisphere-east"></i> GPTM <span>SOVEREIGN</span></div>
+    <div class="ai-topbar" onclick="toggleAIChat()">
+        <div class="ai-status"><div class="ai-dot" style="background:var(--accent-green)"></div> CONCIERGE</div>
+        <div class="ai-status"><div class="ai-dot" style="background:var(--accent-amber)"></div> ENGINEER</div>
+        <div style="width:1px; height:15px; background:#333; margin:0 10px;"></div>
+        <div class="ai-msg-preview" id="aiTicker">System Online. 2023.SHP loaded in memory.</div>
+        <i class="ph ph-caret-down"></i>
     </div>
+    <div class="header-controls">
+        <div class="view-switch" id="viewSwitch">
+            <button class="vs-btn" id="btnViewUser" onclick="switchView('user')">USER VIEW</button>
+            <button class="vs-btn active" id="btnViewAdmin" onclick="switchView('admin')">ADMIN VIEW</button>
+        </div>
+        <div class="user-badge" id="headerUser">GUEST</div>
+    </div>
+</header>
+
+<div id="aiDropdown">
+    <div class="ai-body" id="chatBody"></div>
 </div>
 
-<div id="app">
-    <header>
-        <div class="brand"><i class="ph ph-globe-hemisphere-east"></i> GPTM <span>SOVEREIGN</span></div>
-        <div style="display:flex; gap:10px; align-items:center;">
-            <div class="admin-btn" id="adminBtn" onclick="toggleAdminPanel()">COMMAND CENTER</div>
-            <div class="user-badge" id="headerUser">GUEST</div>
-        </div>
-    </header>
-
-    <div id="workspace">
-        <div class="sidebar">
-            <div id="panel-compliance">
+<div id="workspace">
+    
+    <div class="sidebar">
+        
+        <div id="sidebar-user">
+            <div id="phase-compliance">
                 <div class="p-head">COMPLIANCE PROTOCOL</div>
                 <div class="p-body">
-                    <div class="module">
-                        <div class="mod-title">STEP 1: APPLICATION</div>
-                        <div style="font-size:10px; color:#ccc; margin-bottom:10px;">Request access to Dubai JVC Sample.</div>
-                        <button class="enter-btn" style="margin-top:0;" onclick="startWorkflow()">APPLY FOR DATA</button>
+                    <div class="step-card active" id="step1">
+                        <div class="step-title">SAMPLE REQUEST</div>
+                        <div class="step-desc">Access to Dubai JVC Sample.</div>
+                        <button class="action-btn warn" onclick="triggerApply()">APPLY FOR SAMPLE DATA</button>
+                    </div>
+                    <div class="step-card" id="step2">
+                        <div class="step-title">VERIFICATION LOOP</div>
+                        <div class="step-desc">Confirm Email Receipt to unlock FTP.</div>
+                        <div class="email-panel" id="emailPanel">
+                            <div style="font-size:10px; color:#fff; margin-bottom:5px;">SENT TO: <span id="dispEmail">...</span></div>
+                            <button class="action-btn primary" onclick="confirmEmailReceipt()">I RECEIVED THE EMAIL</button>
+                            <div class="resend-link" onclick="handleResend()">Not received? Resend</div>
+                        </div>
+                        <div id="dataTools" style="display:none;">
+                            <button class="action-btn" onclick="alert('FTP: 47.237.100.53 | Dubai_DSMDTM | sdjv0$%g;fd')">VIEW FTP CREDENTIALS</button>
+                            <div style="margin-top:10px; border-top:1px dashed #444; padding-top:10px;">
+                                <input type="file" id="reportInput" style="display:none" onchange="handleReport()">
+                                <button class="action-btn primary" onclick="document.getElementById('reportInput').click()">UPLOAD REPORT</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div id="panel-mission" style="display:none;">
+            <div id="phase-mission" style="display:none;">
                 <div class="p-head">COVERAGE SCOPE</div>
                 <div class="p-body">
                     <div class="module">
-                        <div class="mod-title">1. TARGET DEFINITION</div>
+                        <div class="mod-title">TARGET DEFINITION</div>
                         <div class="aoi-box">
-                            <div class="aoi-label">ADMINISTRATIVE SELECT</div>
+                            <div style="font-size:9px; color:#888; margin-bottom:5px;">A) ADMIN SELECT</div>
                             <select class="sys-select" onchange="map.setView([25.05, 55.2], 10)">
-                                <option>GLOBAL</option><option>NATIONAL</option><option>UAE (DUBAI)</option>
+                                <option>GLOBAL</option><option>UAE (DUBAI)</option>
                             </select>
                         </div>
-                        <div class="aoi-box">
-                            <div class="aoi-label">CUSTOM UPLOAD</div>
-                            <div class="upload-zone" onclick="alert('Upload Dialog Open')"><i class="ph ph-file-arrow-up"></i> UPLOAD .ZIP / .KML</div>
+                        <div class="aoi-box" style="margin-bottom:0;">
+                            <div style="font-size:9px; color:#888; margin-bottom:5px;">B) UPLOAD AOI</div>
+                            <div class="upload-zone" onclick="alert('Upload .ZIP/KML')"><i class="ph ph-upload-simple"></i> UPLOAD</div>
                         </div>
                     </div>
-
                     <div class="module" style="border:none;">
-                        <div class="mod-title">2. VINTAGE SELECTION</div>
-                        <div class="vintage-row active" id="row-2023" onclick="toggleLayer('2023')">
-                            <div class="v-label">
-                                <div class="v-check"></div>
-                                <div class="v-dot" style="background:var(--accent-data-23)"></div>
-                                2023 ARCHIVE
-                            </div>
-                            <div class="v-status" style="color:var(--accent-green)">ONLINE</div>
+                        <div class="mod-title">DATASET VINTAGE</div>
+                        <div class="year-toggle active" onclick="toggleLayer('2023')">
+                            <div class="year-label"><span class="year-tag" style="background:#64748b"></span> 2023 ARCHIVE</div>
+                            <div class="ph ph-check"></div>
                         </div>
-
-                        <div class="vintage-row disabled" id="row-2024" onclick="toggleLayer('2024')">
-                            <div class="v-label"><div class="v-check"></div><div class="v-dot" style="background:#6366f1"></div> 2024 COLLECTION</div>
-                            <div class="v-status">OFFLINE</div>
-                        </div>
-
-                        <div class="vintage-row disabled" id="row-2025" onclick="toggleLayer('2025')">
-                            <div class="v-label"><div class="v-check"></div><div class="v-dot" style="background:var(--accent-data-25)"></div> 2025 COLLECTION</div>
-                            <div class="v-status">OFFLINE</div>
-                        </div>
-                        
-                        <div class="vintage-row disabled" id="row-2026">
-                            <div class="v-label"><div class="v-check"></div><div class="v-dot" style="background:var(--accent-amber)"></div> 2026 PREVIEW</div>
-                            <div class="v-status">LOCKED</div>
+                        <div class="year-toggle active" onclick="toggleLayer('2025')">
+                            <div class="year-label"><span class="year-tag" style="background:var(--accent-data)"></span> 2025 COLLECTION</div>
+                            <div class="ph ph-check"></div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div id="map"></div>
+
+        <div id="sidebar-admin">
+            <div class="p-head" style="color:var(--accent-yellow)">DATA MANAGEMENT HUB</div>
+            <div class="p-body">
+                
+                <div class="admin-upload-card" style="border-color:var(--accent-green);">
+                    <div class="auc-header">2023 BASELINE <span class="auc-status live">LIVE</span></div>
+                    <div class="file-list">
+                        > 2023.shp [DETECTED]<br>
+                        > 2023.prj [WGS84 MATCH]<br>
+                        > 2023.dbf [LINKED]
+                    </div>
+                    <div class="upload-btn-mini" style="border-color:var(--accent-green); color:var(--accent-green); cursor:default;">INTEGRITY VERIFIED</div>
+                </div>
+
+                <div class="admin-upload-card">
+                    <div class="auc-header">2024 COLLECTION <span class="auc-status">OFFLINE</span></div>
+                    <div class="upload-btn-mini" onclick="adminUpload('2024')">UPLOAD VECTOR</div>
+                </div>
+
+                <div class="admin-upload-card">
+                    <div class="auc-header">2025 COLLECTION <span class="auc-status">OFFLINE</span></div>
+                    <div class="upload-btn-mini" onclick="adminUpload('2025')">UPLOAD VECTOR</div>
+                </div>
+
+                <div class="admin-upload-card">
+                    <div class="auc-header">2026 PREVIEW <span class="auc-status">LOCKED</span></div>
+                    <div class="upload-btn-mini" onclick="adminUpload('2026')">UPLOAD VECTOR</div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <div id="map"></div>
+
+</div>
+
+<div id="warningModal">
+    <div class="warn-box">
+        <h2 style="color:#fff; margin-bottom:10px;">PROTOCOL WARNING</h2>
+        <p style="color:#ccc; font-size:12px; line-height:1.6; text-align:left; margin-bottom:20px;">
+            1. Report within 10 days.<br>2. Non-compliance = Blacklist.<br>3. Closed Loop System.
+        </p>
+        <div style="display:flex; gap:10px; justify-content:center; margin-bottom:20px;">
+            <input type="checkbox" id="warnCheck"> <label for="warnCheck" style="color:#fff; font-size:11px;">I ACCEPT</label>
+        </div>
+        <button class="action-btn" onclick="acceptWarning()">PROCEED TO NDA</button>
     </div>
 </div>
 
-<div class="ai-widget">
-    <div class="ai-head"><span>SYSTEM LOG</span><div style="font-size:9px; color:#888;">GPTM AI v43.0</div></div>
-    <div class="ai-body" id="chatBody"></div>
+<div id="ndaModal">
+    <div class="doc-paper">
+        <div style="text-align:center; font-weight:bold;">NDA AGREEMENT</div>
+        <br><br><br>
+        <button class="action-btn" onclick="signNDA()">SIGN & SUBMIT</button>
+    </div>
 </div>
 
 <script>
     // --- 1. SETUP ---
     const map = L.map('map', { zoomControl: false, minZoom: 2 }).setView([20, 0], 2);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
-    
-    // LAYERS
-    const layers = {
-        '2023': L.featureGroup().addTo(map), // 2023 LOADED BY DEFAULT
-        '2024': L.featureGroup(),
-        '2025': L.featureGroup(),
-        '2026': L.featureGroup()
-    };
+    const layers = { '2023': L.featureGroup().addTo(map), '2024': L.featureGroup(), '2025': L.featureGroup() };
 
-    // GENERATE MOCK 2023 DATA (Simulating the 2023.shp load)
-    function load2023Baseline() {
-        // Create some global polygons to represent 2023 data
-        const coords = [
-            [[30, -90], [40, -80]], [[35, 100], [45, 110]], [[-20, -60], [-10, -50]], [[10, 20], [20, 30]]
-        ];
-        coords.forEach(b => L.rectangle(b, { color: '#64748b', weight: 1, fillOpacity: 0.3 }).addTo(layers['2023']));
-        console.log("2023.shp loaded.");
+    // LOAD 2023 BASELINE (Simulated from 2023.shp)
+    function loadBaseline() {
+        // Global Grid representation
+        const grid = [[[30,-100],[45,-80]], [[-20,-60],[-5,-45]], [[10,20],[30,40]], [[35,100],[50,140]]];
+        grid.forEach(b => L.rectangle(b, { color:'#64748b', weight:1, fillOpacity:0.2 }).addTo(layers['2023']));
     }
-    load2023Baseline();
+    loadBaseline();
 
     // ZODIAC
     const zodiacs = ['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓'];
@@ -282,45 +321,51 @@
     });
     zGrid.children[0].classList.add('selected');
 
-    // --- 2. AI LOGIC ---
+    // --- 2. AI & LOGIN ---
     function addChat(role, text) {
+        document.getElementById('aiTicker').innerText = `${role==='concierge'?'Concierge':'Engineer'}: ${text}`;
         const body = document.getElementById('chatBody');
         const row = document.createElement('div'); row.className = 'chat-row';
-        let av = role === 'concierge' ? '☺' : '⚡';
-        let name = role === 'concierge' ? 'Concierge' : 'Lead Engineer';
-        row.innerHTML = `<div class="avatar ${role}">${av}</div><div class="bubble"><b>${name}:</b><br>${text}</div>`;
+        let av = role==='concierge'?'☺':'⚡'; let cls = role;
+        row.innerHTML = `<div class="avatar ${cls}">${av}</div><div class="bubble"><b>${role.toUpperCase()}:</b> ${text}</div>`;
         body.appendChild(row); body.scrollTop = 9999;
     }
+    function toggleAIChat() { document.getElementById('aiDropdown').style.display = document.getElementById('aiDropdown').style.display==='flex'?'none':'flex'; }
 
-    // --- 3. LOGIN ---
     function handleLoginKey(e) { if(e.key==='Enter') checkLogin(); }
     function sendCode() { addChat('concierge', 'Code sent: 123456'); }
     function checkLogin() {
         const comp = document.getElementById('loginCompany').value.toUpperCase();
         const code = document.getElementById('loginCode').value;
         if(comp==='COMMANDER' && code==='000000') { activateGodMode(); return; }
-        if(code!=='123456') { addChat('engineer', 'Code invalid.'); return; }
+        if(code!=='123456') { addChat('engineer', 'Wrong code.'); return; }
         loginUser(comp);
     }
+
     function loginUser(name) {
         document.getElementById('loginOverlay').style.display='none';
         document.getElementById('app').classList.add('unlocked');
         document.getElementById('headerUser').innerText = name;
+        document.getElementById('viewSwitch').style.display='none';
+        switchView('user');
+        document.getElementById('dispEmail').innerText = document.getElementById('loginEmail').value;
+        addChat('concierge', `Welcome ${name}. Please start compliance.`);
         startCursor(currentCursor);
-        addChat('concierge', `Welcome ${name}. 2023 Baseline is active.`);
     }
+
     function activateGodMode() {
         document.body.classList.add('god-mode');
         document.getElementById('loginOverlay').style.display='none';
         document.getElementById('app').classList.add('unlocked');
-        document.getElementById('headerUser').innerText="COMMANDER";
-        document.getElementById('headerUser').style.color="var(--accent-yellow)";
-        document.getElementById('adminBtn').style.display="block";
-        document.getElementById('panel-compliance').style.display='none';
-        document.getElementById('panel-mission').style.display='block';
+        document.getElementById('headerUser').innerText = "COMMANDER";
+        document.getElementById('headerUser').style.color = "var(--accent-yellow)";
+        document.getElementById('headerUser').style.borderColor = "var(--accent-yellow)";
+        document.getElementById('viewSwitch').style.display='flex';
+        switchView('admin');
         startCursor('♛');
-        addChat('engineer', 'Commander logged in. 2023 Vector is locked and live.');
+        addChat('engineer', '2023.SHP integrity confirmed. CRS: WGS84.');
     }
+
     function startCursor(char) {
         document.addEventListener('mousemove', (e) => {
             const el = document.createElement('div'); el.className = 'cursor-trail'; el.innerText = char;
@@ -330,42 +375,65 @@
         });
     }
 
-    // --- 4. LAYER TOGGLE LOGIC ---
-    function toggleLayer(year) {
-        const row = document.getElementById(`row-${year}`);
-        if(row.classList.contains('disabled')) return;
-        row.classList.toggle('active');
-        if(row.classList.contains('active')) {
-            map.addLayer(layers[year]);
-            addChat('engineer', `Layer ${year} enabled.`);
+    function switchView(mode) {
+        const u = document.getElementById('sidebar-user');
+        const a = document.getElementById('sidebar-admin');
+        if(mode === 'admin') {
+            u.style.display='none'; a.style.display='block';
+            document.getElementById('btnViewUser').classList.remove('active');
+            document.getElementById('btnViewAdmin').classList.add('active');
         } else {
-            map.removeLayer(layers[year]);
+            u.style.display='flex'; u.style.flexDirection='column'; a.style.display='none';
+            document.getElementById('btnViewUser').classList.add('active');
+            document.getElementById('btnViewAdmin').classList.remove('active');
         }
     }
 
-    // --- 5. ADMIN & WORKFLOW ---
-    function toggleAdminPanel() { const el=document.getElementById('adminModal'); el.style.display=el.style.display==='flex'?'none':'flex'; }
-    function adminUpload(year) {
-        const st = document.getElementById(`st-${year}`);
-        st.innerText="UPLOADING..."; st.style.color="var(--accent-amber)";
-        setTimeout(()=>{
-            st.innerText="ONLINE"; st.className="year-status live";
-            addChat('engineer', `${year} Vector uploaded. Layer activated.`);
-            // Unlock UI
-            const row = document.getElementById(`row-${year}`);
-            row.classList.remove('disabled');
-            row.querySelector('.v-status').innerText = "ONLINE";
-            row.querySelector('.v-status').style.color = "var(--accent-green)";
-        }, 1000);
+    // --- 3. WORKFLOW ---
+    function triggerApply() { document.getElementById('warningModal').style.display='flex'; }
+    function acceptWarning() {
+        if(!document.getElementById('warnCheck').checked) { alert("Ack Required"); return; }
+        document.getElementById('warningModal').style.display='none';
+        document.getElementById('ndaModal').style.display='flex';
     }
-    function startWorkflow() {
-        document.getElementById('panel-compliance').style.display='none';
-        document.getElementById('panel-mission').style.display='block';
-        addChat('concierge', 'Access granted. 2023 Baseline visible.');
+    function signNDA() {
+        document.getElementById('ndaModal').style.display='none';
+        document.getElementById('step1').classList.add('done');
+        document.getElementById('step2').classList.add('active');
+        document.getElementById('emailPanel').style.display='block';
+        addChat('concierge', 'NDA Signed. Email sent.');
+    }
+    let resendCount = 0;
+    function handleResend() {
+        resendCount++;
+        if(resendCount === 1) addChat('concierge', 'Resending...');
+        else if(resendCount === 2) addChat('engineer', 'Network lag. Rerouting...');
+        else { addChat('engineer', 'Firewall issue. Bypassing.'); confirmEmailReceipt(); }
+    }
+    function confirmEmailReceipt() {
+        document.getElementById('emailPanel').style.display='none';
+        document.getElementById('dataTools').style.display='block';
+        addChat('concierge', 'Verified. FTP Unlocked.');
+    }
+    function handleReport() {
+        addChat('engineer', 'Report verified. Mission controls unlocked.');
+        document.getElementById('phase-compliance').style.display='none';
+        document.getElementById('phase-mission').style.display='block';
+    }
+
+    // --- 4. MAP & ADMIN ---
+    function adminUpload(year) {
+        addChat('engineer', `${year} Vector layer mounted.`);
+        // Simulate
+        const b = [[20,-20],[40,20]];
+        L.rectangle(b, {color:'var(--accent-data)', fillOpacity:0.2}).addTo(layers['2025']);
+    }
+    function toggleLayer(year) {
+        if(map.hasLayer(layers[year])) map.removeLayer(layers[year]); else map.addLayer(layers[year]);
     }
 
     // Init
-    addChat('concierge', 'System Online. 2023.shp loaded.');
+    addChat('engineer', 'System Online. 2023.shp Verified.');
 
 </script>
 
