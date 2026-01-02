@@ -1,520 +1,502 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <meta http-equiv="Content-Style-Type" content="text/css">
-  <title></title>
-  <meta name="Generator" content="Cocoa HTML Writer">
-  <meta name="CocoaVersion" content="2575.7">
-  <style type="text/css">
-    body {background-color: #011326}
-    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 24.0px Helvetica; color: #1ce0ff; -webkit-text-stroke: #1ce0ff; background-color: #011326; background-color: rgba(1, 19, 38, 0.98)}
-    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 24.0px Helvetica; color: #1ce0ff; -webkit-text-stroke: #1ce0ff; background-color: #011326; background-color: rgba(1, 19, 38, 0.98); min-height: 29.0px}
-    span.s1 {font-kerning: none; text-shadow: 0.0px -0.0px 10.0px rgba(255, 255, 255, 0)}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OPEN RS HUB // Final Command</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/satellite.js/4.0.0/satellite.min.js"></script>
+
+    <style>
+        /* --- 1. CORE VARIABLES (DEEP SEA THEME) --- */
+        :root {
+            --bg: #001a33; 
+            --panel: rgba(0, 30, 60, 0.95); 
+            --border: #00e5ff; 
+            --accent: #00e5ff;
+            --accent-glow: rgba(0, 229, 255, 0.4);
+            --text: #d0e8ff; 
+            --text-mute: #6b9cc6; 
+            --font-mono: 'SF Mono', 'Consolas', monospace;
+            --cursor-default: auto;
+            --cursor-pointer: pointer;
+        }
+
+        body { 
+            margin: 0; background: var(--bg); color: var(--text); 
+            font-family: "Segoe UI", Roboto, sans-serif; 
+            height: 100vh; overflow: hidden; 
+            cursor: var(--cursor-default); 
+        }
+
+        * { cursor: inherit; }
+        button, a, .toggle, .ai-avatar-btn, .entry-card, .list-item, .help-btn, .copy-btn, .aoi-btn, .launch-btn-trigger {
+            cursor: var(--cursor-pointer) !important;
+        }
+
+        /* --- 2. ENTRY OVERLAY --- */
+        #entryOverlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0, 26, 51, 0.98); z-index: 9999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            transition: opacity 0.6s ease; backdrop-filter: blur(15px);
+        }
+        .entry-title { font-size: 24px; font-weight: 800; letter-spacing: 4px; color: var(--accent); margin-bottom: 5px; text-shadow: 0 0 10px var(--accent-glow); }
+        .entry-sub { font-family: var(--font-mono); font-size: 11px; color: var(--text-mute); margin-bottom: 30px; letter-spacing: 2px; }
+        .legal-box {
+            max-width: 600px; font-size: 10px; color: var(--text-mute); line-height: 1.6;
+            margin-bottom: 30px; padding: 15px; background: rgba(0, 229, 255, 0.03);
+            border: 1px solid rgba(0, 229, 255, 0.2); border-left: 2px solid var(--accent); font-family: var(--font-mono);
+        }
+        .cursor-selection-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; max-width: 700px; }
+        .entry-card {
+            width: 80px; height: 90px; background: rgba(0, 40, 80, 0.6);
+            border: 1px solid rgba(0, 229, 255, 0.15); border-radius: 8px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.2s;
+        }
+        .entry-card:hover { transform: translateY(-3px); border-color: var(--accent); background: rgba(0, 229, 255, 0.1); box-shadow: 0 0 15px var(--accent-glow); }
+        .entry-icon { font-size: 28px; margin-bottom: 8px; filter: drop-shadow(0 0 2px var(--accent)); }
+        .entry-label { font-size: 9px; font-weight: 600; color: var(--text-mute); text-transform: uppercase; letter-spacing: 0.5px; }
+        .entry-card:hover .entry-label { color: var(--accent); }
+
+        /* --- 3. MAP (DEEP SEA) --- */
+        #map { 
+            width: 100vw; height: 100vh; z-index: 1; 
+            background: #001a33; 
+            filter: sepia(100%) hue-rotate(190deg) saturate(180%) brightness(70%) contrast(110%);
+        }
+
+        /* --- 4. PANEL STYLES --- */
+        .panel-base {
+            position: absolute; background: var(--panel); 
+            border: 1px solid rgba(0, 229, 255, 0.25); border-radius: 6px;
+            backdrop-filter: blur(12px); z-index: 10;
+            box-shadow: 0 4px 25px rgba(0, 20, 40, 0.6);
+        }
+        .header-base {
+            padding: 10px 15px; background: rgba(0, 229, 255, 0.05);
+            border-bottom: 1px solid rgba(0, 229, 255, 0.15);
+            border-radius: 6px 6px 0 0;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .title-base { font-weight: 800; font-size: 11px; letter-spacing: 1px; color: var(--accent); text-transform: uppercase; }
+        .section-header {
+            font-size: 10px; color: var(--accent); opacity: 0.9; margin: 15px 0 8px 0; 
+            letter-spacing: 1px; font-weight: 700; padding-left: 5px; 
+            border-left: 3px solid var(--accent); text-transform: uppercase;
+        }
+
+        /* --- 5. LEFT SIDEBAR --- */
+        .sidebar { top: 20px; left: 20px; width: 260px; max-height: 85vh; overflow-y: auto; }
+        .sidebar::-webkit-scrollbar { width: 0; }
+
+        .aoi-module { padding: 15px; border-bottom: 1px solid rgba(0, 229, 255, 0.1); }
+        .aoi-input-group { display: flex; gap: 5px; margin-bottom: 5px; }
+        .aoi-input {
+            flex: 1; background: rgba(0, 20, 40, 0.4); border: 1px solid rgba(0, 229, 255, 0.2);
+            color: var(--text); padding: 6px; font-size: 11px; border-radius: 4px; outline: none;
+            font-family: var(--font-mono); transition: 0.2s;
+        }
+        .aoi-input:focus { border-color: var(--accent); box-shadow: 0 0 5px var(--accent-glow); }
+        .aoi-btn {
+            background: rgba(0, 229, 255, 0.1); border: 1px solid var(--accent);
+            color: var(--accent); font-size: 10px; font-weight: bold; padding: 0 10px;
+            border-radius: 4px; transition: 0.2s;
+        }
+        .aoi-btn:hover { background: var(--accent); color: #000; box-shadow: 0 0 10px var(--accent-glow); }
+        .aoi-note { font-size: 8px; color: var(--text-mute); font-style: italic; }
+
+        .layer-list { padding: 0 15px 15px 15px; }
+        .layer-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .layer-name { font-size: 11px; font-weight: 500; color: var(--text); }
+        .layer-src { font-size: 9px; color: var(--text-mute); display: block; }
+        .toggle { appearance: none; width: 30px; height: 16px; background: #003366; border-radius: 8px; position: relative; transition: 0.3s; }
+        .toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; background: #6b9cc6; border-radius: 50%; transition: 0.3s; }
+        .toggle:checked { background: rgba(0, 229, 255, 0.2); border: 1px solid var(--accent); }
+        .toggle:checked::after { transform: translateX(14px); background: var(--accent); box-shadow: 0 0 5px var(--accent); }
+        .sidebar-footer { padding: 12px 15px; border-top: 1px solid rgba(0, 229, 255, 0.1); font-size: 8px; color: var(--text-mute); line-height: 1.4; font-family: var(--font-mono); }
+
+        /* --- 6. RIGHT SIDEBAR (INDEX) --- */
+        .portal-sidebar { top: 20px; right: 20px; width: 280px; }
+        .portal-content { padding: 0 15px 15px 15px; }
+        .list-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 10px; background: rgba(255, 255, 255, 0.02); margin-bottom: 5px;
+            border-radius: 4px; border: 1px solid transparent; transition: 0.2s;
+        }
+        .list-item:hover { border-color: var(--accent); background: rgba(0, 229, 255, 0.08); }
+        .li-main { flex: 1; }
+        .li-title { font-size: 11px; color: var(--text); font-weight: 600; }
+        .li-desc { font-size: 9px; color: var(--text-mute); font-family: var(--font-mono); }
+        .help-btn {
+            width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--text-mute);
+            color: var(--text-mute); font-size: 10px; display: flex; justify-content: center; align-items: center;
+            margin-left: 10px; font-family: var(--font-mono); transition: 0.2s; z-index: 5;
+        }
+        .help-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(0,229,255,0.1); }
+
+        /* --- 7. NEWBIE PANEL (RESTORED!) --- */
+        .launch-btn-trigger {
+            position: absolute; bottom: 20px; left: 20px;
+            width: 50px; height: 50px;
+            background: var(--panel); border: 1px solid var(--border);
+            border-radius: 50%; display: flex; justify-content: center; align-items: center;
+            z-index: 1000; font-size: 24px; box-shadow: 0 0 20px rgba(0, 229, 255, 0.2);
+            transition: 0.3s;
+        }
+        .launch-btn-trigger:hover { transform: translateY(-3px) scale(1.1); background: var(--accent); color: #001a33; }
+        
+        .launch-panel {
+            position: absolute; bottom: 80px; left: 20px;
+            width: 340px; display: none; flex-direction: column;
+            animation: slideUp 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+        }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
+        .lp-body { padding: 0; max-height: 300px; overflow-y: auto; }
+        .mission-card { padding: 15px; border-bottom: 1px solid rgba(0, 229, 255, 0.1); position: relative; transition: 0.2s; }
+        .mission-card:hover { background: rgba(0, 229, 255, 0.05); }
+        .m-name { font-weight: bold; color: var(--accent); font-size: 13px; margin-bottom: 4px; }
+        .m-rocket { color: var(--text-mute); font-size: 11px; display: flex; align-items: center; gap: 5px; margin-top: 5px; }
+        .m-timer { font-family: var(--font-mono); font-size: 11px; color: var(--text); margin-top: 8px; font-weight: bold; }
+        .m-tag { position: absolute; top: 15px; right: 15px; font-size: 9px; background: rgba(0, 229, 255, 0.1); border: 1px solid var(--accent); padding: 2px 6px; border-radius: 4px; color: var(--accent); }
+
+        /* --- 8. PLANNER MODAL --- */
+        #plannerModal {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.9);
+            width: 480px; background: #001a33; border: 1px solid var(--accent); border-radius: 8px;
+            box-shadow: 0 0 60px rgba(0, 40, 80, 0.8), 0 0 15px var(--accent-glow);
+            z-index: 2000; display: none; opacity: 0; transition: 0.2s; font-family: var(--font-mono);
+        }
+        #plannerModal.active { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        .pm-header { padding: 15px; background: rgba(0, 229, 255, 0.08); border-bottom: 1px solid var(--accent); display: flex; justify-content: space-between; align-items: center;}
+        .pm-title { color: var(--accent); font-weight: bold; font-size: 12px; letter-spacing: 1px; }
+        .pm-body { padding: 20px; color: var(--text); max-height: 450px; overflow-y: auto; }
+        
+        .sim-box { background: rgba(0, 30, 60, 0.4); border: 1px dashed rgba(0, 229, 255, 0.3); padding: 10px; margin-bottom: 15px; border-radius: 4px; }
+        .sim-title { font-size: 10px; color: var(--text-mute); margin-bottom: 8px; text-transform: uppercase; }
+        .sim-row { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px; }
+        .spec-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 11px; }
+        .copy-block { background: rgba(0, 229, 255, 0.03); padding: 12px; border: 1px solid rgba(0, 229, 255, 0.2); border-radius: 4px; position: relative; margin-top: 15px; }
+        .copy-content { font-size: 10px; color: var(--text); white-space: pre-wrap; line-height: 1.4; opacity: 0.9; }
+        .copy-btn { position: absolute; top: 5px; right: 5px; background: rgba(0, 229, 255, 0.2); color: var(--accent); border: 1px solid var(--accent); border-radius: 2px; padding: 2px 6px; font-size: 9px; font-weight: bold; }
+        .copy-btn:hover { background: var(--accent); color: #001a33; }
+        .note-text { font-size: 9px; color: var(--text-mute); margin-top: 15px; text-align: center; line-height: 1.4; font-style: italic; }
+        .url-link { color: var(--text-mute); text-decoration: none; border-bottom: 1px dotted var(--text-mute); }
+        .url-link:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+        /* --- 9. AI & CHAT --- */
+        .ai-avatar-btn {
+            position: absolute; bottom: 20px; right: 20px;
+            width: 50px; height: 50px; background: var(--panel);
+            border: 1px solid var(--accent); border-radius: 12px;
+            box-shadow: 0 0 20px rgba(0, 229, 255, 0.2); z-index: 1000;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .bot-face { width: 26px; height: 18px; background: #001a33; border-radius: 2px; position: relative; border: 2px solid var(--accent); }
+        .bot-eye { position: absolute; top: 4px; width: 4px; height: 4px; background: var(--accent); animation: blink 4s infinite; }
+        .eye-l { left: 4px; } .eye-r { right: 4px; }
+        .bot-mouth { position: absolute; bottom: 3px; left: 6px; right: 6px; height: 1px; background: var(--accent); }
+        @keyframes blink { 0%, 96%, 100% { height: 4px; } 98% { height: 1px; top: 4px; } }
+        .chat-terminal { position: absolute; bottom: 85px; right: 20px; width: 320px; height: 400px; display: none; flex-direction: column; }
+        .chat-body { flex: 1; padding: 15px; overflow-y: auto; font-size: 11px; }
+        .msg-ai { padding: 8px 10px; background: rgba(0, 229, 255, 0.05); border-left: 2px solid var(--accent); margin-bottom: 8px; color: var(--text); }
+        .msg-user { padding: 8px 10px; background: rgba(0, 60, 120, 0.3); text-align: right; margin-bottom: 8px; color: var(--text); }
+        .input-area { padding: 10px; border-top: 1px solid rgba(0, 229, 255, 0.1); }
+        .input-field { width: 100%; background: transparent; border: none; color: var(--text); outline: none; font-family: var(--font-mono); font-size: 11px; }
+
+    </style>
 </head>
 <body>
-<p class="p1"><span class="s1"><b>&lt;!DOCTYPE html&gt;</b></span></p>
-<p class="p1"><span class="s1"><b>&lt;html lang="en"&gt;</b></span></p>
-<p class="p1"><span class="s1"><b>&lt;head&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">    </span>&lt;meta charset="UTF-8"&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">    </span>&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">    </span>&lt;title&gt;OPEN RS HUB // Final Command&lt;/title&gt;</b></span></p>
-<p class="p2"><span class="s1"><b><span class="Apple-converted-space">    </span></b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">    </span>&lt;link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" /&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">    </span>&lt;script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"&gt;&lt;/script&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">    </span>&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/satellite.js/4.0.0/satellite.min.js"&gt;&lt;/script&gt;</b></span></p>
-<p class="p2"><span class="s1"><b></b></span><br></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">    </span>&lt;style&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>/* --- 1. CORE VARIABLES (DEEP SEA THEME) --- */</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>:root {</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>--bg: #001a33;<span class="Apple-converted-space"> </span></b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>--panel: rgba(0, 30, 60, 0.95);<span class="Apple-converted-space"> </span></b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>--border: #00e5ff;<span class="Apple-converted-space"> </span></b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>--accent: #00e5ff;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>--accent-glow: rgba(0, 229, 255, 0.4);</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>--text: #d0e8ff;<span class="Apple-converted-space"> </span></b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>--text-mute: #6b9cc6;<span class="Apple-converted-space"> </span></b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>--font-mono: 'SF Mono', 'Consolas', monospace;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>--cursor-default: auto;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>--cursor-pointer: pointer;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>}</b></span></p>
-<p class="p2"><span class="s1"><b></b></span><br></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>body {<span class="Apple-converted-space"> </span></b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>margin: 0; background: var(--bg); color: var(--text);<span class="Apple-converted-space"> </span></b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>font-family: "Segoe UI", Roboto, sans-serif;<span class="Apple-converted-space"> </span></b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>height: 100vh; overflow: hidden;<span class="Apple-converted-space"> </span></b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>cursor: var(--cursor-default);<span class="Apple-converted-space"> </span></b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>}</b></span></p>
-<p class="p2"><span class="s1"><b></b></span><br></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>* { cursor: inherit; }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>button, a, .toggle, .ai-avatar-btn, .entry-card, .list-item, .help-btn, .copy-btn, .aoi-btn, .launch-btn-trigger {</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>cursor: var(--cursor-pointer) !important;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>}</b></span></p>
-<p class="p2"><span class="s1"><b></b></span><br></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>/* --- 2. ENTRY OVERLAY --- */</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>#entryOverlay {</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>background: rgba(0, 26, 51, 0.98); z-index: 9999;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>display: flex; flex-direction: column; justify-content: center; align-items: center;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>transition: opacity 0.6s ease; backdrop-filter: blur(15px);</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>}</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.entry-title { font-size: 24px; font-weight: 800; letter-spacing: 4px; color: var(--accent); margin-bottom: 5px; text-shadow: 0 0 10px var(--accent-glow); }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.entry-sub { font-family: var(--font-mono); font-size: 11px; color: var(--text-mute); margin-bottom: 30px; letter-spacing: 2px; }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.legal-box {</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>max-width: 600px; font-size: 10px; color: var(--text-mute); line-height: 1.6;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>margin-bottom: 30px; padding: 15px; background: rgba(0, 229, 255, 0.03);</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>border: 1px solid rgba(0, 229, 255, 0.2); border-left: 2px solid var(--accent); font-family: var(--font-mono);</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>}</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.cursor-selection-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; max-width: 700px; }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.entry-card {</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>width: 80px; height: 90px; background: rgba(0, 40, 80, 0.6);</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>border: 1px solid rgba(0, 229, 255, 0.15); border-radius: 8px;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.2s;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>}</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.entry-card:hover { transform: translateY(-3px); border-color: var(--accent); background: rgba(0, 229, 255, 0.1); box-shadow: 0 0 15px var(--accent-glow); }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.entry-icon { font-size: 28px; margin-bottom: 8px; filter: drop-shadow(0 0 2px var(--accent)); }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.entry-label { font-size: 9px; font-weight: 600; color: var(--text-mute); text-transform: uppercase; letter-spacing: 0.5px; }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.entry-card:hover .entry-label { color: var(--accent); }</b></span></p>
-<p class="p2"><span class="s1"><b></b></span><br></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>/* --- 3. MAP (DEEP SEA) --- */</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>#map {<span class="Apple-converted-space"> </span></b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>width: 100vw; height: 100vh; z-index: 1;<span class="Apple-converted-space"> </span></b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>background: #001a33;<span class="Apple-converted-space"> </span></b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>filter: sepia(100%) hue-rotate(190deg) saturate(180%) brightness(70%) contrast(110%);</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>}</b></span></p>
-<p class="p2"><span class="s1"><b></b></span><br></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>/* --- 4. PANEL STYLES --- */</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.panel-base {</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>position: absolute; background: var(--panel);<span class="Apple-converted-space"> </span></b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>border: 1px solid rgba(0, 229, 255, 0.25); border-radius: 6px;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>backdrop-filter: blur(12px); z-index: 10;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>box-shadow: 0 4px 25px rgba(0, 20, 40, 0.6);</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>}</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.header-base {</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>padding: 10px 15px; background: rgba(0, 229, 255, 0.05);</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>border-bottom: 1px solid rgba(0, 229, 255, 0.15);</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>border-radius: 6px 6px 0 0;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>display: flex; justify-content: space-between; align-items: center;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>}</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.title-base { font-weight: 800; font-size: 11px; letter-spacing: 1px; color: var(--accent); text-transform: uppercase; }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.section-header {</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>font-size: 10px; color: var(--accent); opacity: 0.9; margin: 15px 0 8px 0;<span class="Apple-converted-space"> </span></b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>letter-spacing: 1px; font-weight: 700; padding-left: 5px;<span class="Apple-converted-space"> </span></b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>border-left: 3px solid var(--accent); text-transform: uppercase;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>}</b></span></p>
-<p class="p2"><span class="s1"><b></b></span><br></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>/* --- 5. LEFT SIDEBAR --- */</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.sidebar { top: 20px; left: 20px; width: 260px; max-height: 85vh; overflow-y: auto; }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.sidebar::-webkit-scrollbar { width: 0; }</b></span></p>
-<p class="p2"><span class="s1"><b></b></span><br></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.aoi-module { padding: 15px; border-bottom: 1px solid rgba(0, 229, 255, 0.1); }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.aoi-input-group { display: flex; gap: 5px; margin-bottom: 5px; }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.aoi-input {</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>flex: 1; background: rgba(0, 20, 40, 0.4); border: 1px solid rgba(0, 229, 255, 0.2);</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>color: var(--text); padding: 6px; font-size: 11px; border-radius: 4px; outline: none;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>font-family: var(--font-mono); transition: 0.2s;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>}</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.aoi-input:focus { border-color: var(--accent); box-shadow: 0 0 5px var(--accent-glow); }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.aoi-btn {</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>background: rgba(0, 229, 255, 0.1); border: 1px solid var(--accent);</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>color: var(--accent); font-size: 10px; font-weight: bold; padding: 0 10px;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>border-radius: 4px; transition: 0.2s;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>}</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.aoi-btn:hover { background: var(--accent); color: #000; box-shadow: 0 0 10px var(--accent-glow); }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.aoi-note { font-size: 8px; color: var(--text-mute); font-style: italic; }</b></span></p>
-<p class="p2"><span class="s1"><b></b></span><br></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.layer-list { padding: 0 15px 15px 15px; }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.layer-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.layer-name { font-size: 11px; font-weight: 500; color: var(--text); }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.layer-src { font-size: 9px; color: var(--text-mute); display: block; }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.toggle { appearance: none; width: 30px; height: 16px; background: #003366; border-radius: 8px; position: relative; transition: 0.3s; }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; background: #6b9cc6; border-radius: 50%; transition: 0.3s; }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.toggle:checked { background: rgba(0, 229, 255, 0.2); border: 1px solid var(--accent); }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.toggle:checked::after { transform: translateX(14px); background: var(--accent); box-shadow: 0 0 5px var(--accent); }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.sidebar-footer { padding: 12px 15px; border-top: 1px solid rgba(0, 229, 255, 0.1); font-size: 8px; color: var(--text-mute); line-height: 1.4; font-family: var(--font-mono); }</b></span></p>
-<p class="p2"><span class="s1"><b></b></span><br></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>/* --- 6. RIGHT SIDEBAR (INDEX) --- */</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.portal-sidebar { top: 20px; right: 20px; width: 280px; }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.portal-content { padding: 0 15px 15px 15px; }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.list-item {</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>display: flex; justify-content: space-between; align-items: center;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>padding: 8px 10px; background: rgba(255, 255, 255, 0.02); margin-bottom: 5px;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>border-radius: 4px; border: 1px solid transparent; transition: 0.2s;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>}</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.list-item:hover { border-color: var(--accent); background: rgba(0, 229, 255, 0.08); }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.li-main { flex: 1; }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.li-title { font-size: 11px; color: var(--text); font-weight: 600; }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.li-desc { font-size: 9px; color: var(--text-mute); font-family: var(--font-mono); }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.help-btn {</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--text-mute);</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>color: var(--text-mute); font-size: 10px; display: flex; justify-content: center; align-items: center;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>margin-left: 10px; font-family: var(--font-mono); transition: 0.2s; z-index: 5;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>}</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.help-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(0,229,255,0.1); }</b></span></p>
-<p class="p2"><span class="s1"><b></b></span><br></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>/* --- 7. NEWBIE PANEL (RESTORED!) --- */</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.launch-btn-trigger {</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>position: absolute; bottom: 20px; left: 20px;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>width: 50px; height: 50px;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>background: var(--panel); border: 1px solid var(--border);</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>border-radius: 50%; display: flex; justify-content: center; align-items: center;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>z-index: 1000; font-size: 24px; box-shadow: 0 0 20px rgba(0, 229, 255, 0.2);</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>transition: 0.3s;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>}</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.launch-btn-trigger:hover { transform: translateY(-3px) scale(1.1); background: var(--accent); color: #001a33; }</b></span></p>
-<p class="p2"><span class="s1"><b><span class="Apple-converted-space">        </span></b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.launch-panel {</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>position: absolute; bottom: 80px; left: 20px;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>width: 340px; display: none; flex-direction: column;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>animation: slideUp 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>}</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }</b></span></p>
-<p class="p2"><span class="s1"><b><span class="Apple-converted-space">        </span></b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.lp-body { padding: 0; max-height: 300px; overflow-y: auto; }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.mission-card { padding: 15px; border-bottom: 1px solid rgba(0, 229, 255, 0.1); position: relative; transition: 0.2s; }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.mission-card:hover { background: rgba(0, 229, 255, 0.05); }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.m-name { font-weight: bold; color: var(--accent); font-size: 13px; margin-bottom: 4px; }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.m-rocket { color: var(--text-mute); font-size: 11px; display: flex; align-items: center; gap: 5px; margin-top: 5px; }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.m-timer { font-family: var(--font-mono); font-size: 11px; color: var(--text); margin-top: 8px; font-weight: bold; }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.m-tag { position: absolute; top: 15px; right: 15px; font-size: 9px; background: rgba(0, 229, 255, 0.1); border: 1px solid var(--accent); padding: 2px 6px; border-radius: 4px; color: var(--accent); }</b></span></p>
-<p class="p2"><span class="s1"><b></b></span><br></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>/* --- 8. PLANNER MODAL --- */</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>#plannerModal {</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.9);</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>width: 480px; background: #001a33; border: 1px solid var(--accent); border-radius: 8px;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>box-shadow: 0 0 60px rgba(0, 40, 80, 0.8), 0 0 15px var(--accent-glow);</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>z-index: 2000; display: none; opacity: 0; transition: 0.2s; font-family: var(--font-mono);</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>}</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>#plannerModal.active { transform: translate(-50%, -50%) scale(1); opacity: 1; }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.pm-header { padding: 15px; background: rgba(0, 229, 255, 0.08); border-bottom: 1px solid var(--accent); display: flex; justify-content: space-between; align-items: center;}</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.pm-title { color: var(--accent); font-weight: bold; font-size: 12px; letter-spacing: 1px; }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.pm-body { padding: 20px; color: var(--text); max-height: 450px; overflow-y: auto; }</b></span></p>
-<p class="p2"><span class="s1"><b><span class="Apple-converted-space">        </span></b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.sim-box { background: rgba(0, 30, 60, 0.4); border: 1px dashed rgba(0, 229, 255, 0.3); padding: 10px; margin-bottom: 15px; border-radius: 4px; }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.sim-title { font-size: 10px; color: var(--text-mute); margin-bottom: 8px; text-transform: uppercase; }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.sim-row { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px; }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.spec-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 11px; }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.copy-block { background: rgba(0, 229, 255, 0.03); padding: 12px; border: 1px solid rgba(0, 229, 255, 0.2); border-radius: 4px; position: relative; margin-top: 15px; }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.copy-content { font-size: 10px; color: var(--text); white-space: pre-wrap; line-height: 1.4; opacity: 0.9; }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.copy-btn { position: absolute; top: 5px; right: 5px; background: rgba(0, 229, 255, 0.2); color: var(--accent); border: 1px solid var(--accent); border-radius: 2px; padding: 2px 6px; font-size: 9px; font-weight: bold; }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.copy-btn:hover { background: var(--accent); color: #001a33; }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.note-text { font-size: 9px; color: var(--text-mute); margin-top: 15px; text-align: center; line-height: 1.4; font-style: italic; }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.url-link { color: var(--text-mute); text-decoration: none; border-bottom: 1px dotted var(--text-mute); }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.url-link:hover { color: var(--accent); border-bottom-color: var(--accent); }</b></span></p>
-<p class="p2"><span class="s1"><b></b></span><br></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>/* --- 9. AI &amp; CHAT --- */</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.ai-avatar-btn {</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>position: absolute; bottom: 20px; right: 20px;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>width: 50px; height: 50px; background: var(--panel);</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>border: 1px solid var(--accent); border-radius: 12px;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>box-shadow: 0 0 20px rgba(0, 229, 255, 0.2); z-index: 1000;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>display: flex; justify-content: center; align-items: center;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>}</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.bot-face { width: 26px; height: 18px; background: #001a33; border-radius: 2px; position: relative; border: 2px solid var(--accent); }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.bot-eye { position: absolute; top: 4px; width: 4px; height: 4px; background: var(--accent); animation: blink 4s infinite; }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.eye-l { left: 4px; } .eye-r { right: 4px; }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.bot-mouth { position: absolute; bottom: 3px; left: 6px; right: 6px; height: 1px; background: var(--accent); }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>@keyframes blink { 0%, 96%, 100% { height: 4px; } 98% { height: 1px; top: 4px; } }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.chat-terminal { position: absolute; bottom: 85px; right: 20px; width: 320px; height: 400px; display: none; flex-direction: column; }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.chat-body { flex: 1; padding: 15px; overflow-y: auto; font-size: 11px; }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.msg-ai { padding: 8px 10px; background: rgba(0, 229, 255, 0.05); border-left: 2px solid var(--accent); margin-bottom: 8px; color: var(--text); }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.msg-user { padding: 8px 10px; background: rgba(0, 60, 120, 0.3); text-align: right; margin-bottom: 8px; color: var(--text); }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.input-area { padding: 10px; border-top: 1px solid rgba(0, 229, 255, 0.1); }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>.input-field { width: 100%; background: transparent; border: none; color: var(--text); outline: none; font-family: var(--font-mono); font-size: 11px; }</b></span></p>
-<p class="p2"><span class="s1"><b></b></span><br></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">    </span>&lt;/style&gt;</b></span></p>
-<p class="p1"><span class="s1"><b>&lt;/head&gt;</b></span></p>
-<p class="p1"><span class="s1"><b>&lt;body&gt;</b></span></p>
-<p class="p2"><span class="s1"><b></b></span><br></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">    </span>&lt;div id="entryOverlay"&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>&lt;div class="entry-title"&gt;OPEN RS HUB&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>&lt;div class="entry-sub"&gt;SATELLITE MISSION PLANNER // V13.0&lt;/div&gt;</b></span></p>
-<p class="p2"><span class="s1"><b><span class="Apple-converted-space">        </span></b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>&lt;div class="legal-box"&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>[ COMPLIANCE NOTICE ]&lt;br&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>// System provides orbital simulation &amp; coverage planning only.&lt;br&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>// NO commercial transactions or data transfer capabilities.&lt;br&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>// NO personal geolocation data stored. (GDPR Compliant)</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>&lt;/div&gt;</b></span></p>
-<p class="p2"><span class="s1"><b></b></span><br></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>&lt;div style="font-size:10px; margin-bottom:10px; color:var(--accent); font-family:var(--font-mono);"&gt;[ SELECT OPERATOR ID ]&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>&lt;div class="cursor-selection-grid"&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>&lt;div class="entry-card" onclick="startGame('aries')"&gt;&lt;div class="entry-icon"&gt;🐏&lt;/div&gt;&lt;div class="entry-label"&gt;Aries&lt;/div&gt;&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>&lt;div class="entry-card" onclick="startGame('taurus')"&gt;&lt;div class="entry-icon"&gt;🐂&lt;/div&gt;&lt;div class="entry-label"&gt;Taurus&lt;/div&gt;&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>&lt;div class="entry-card" onclick="startGame('gemini')"&gt;&lt;div class="entry-icon"&gt;👯&lt;/div&gt;&lt;div class="entry-label"&gt;Gemini&lt;/div&gt;&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>&lt;div class="entry-card" onclick="startGame('cancer')"&gt;&lt;div class="entry-icon"&gt;🦀&lt;/div&gt;&lt;div class="entry-label"&gt;Cancer&lt;/div&gt;&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>&lt;div class="entry-card" onclick="startGame('leo')"&gt;&lt;div class="entry-icon"&gt;🦁&lt;/div&gt;&lt;div class="entry-label"&gt;Leo&lt;/div&gt;&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>&lt;div class="entry-card" onclick="startGame('virgo')"&gt;&lt;div class="entry-icon"&gt;🧚&lt;/div&gt;&lt;div class="entry-label"&gt;Virgo&lt;/div&gt;&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>&lt;div class="entry-card" onclick="startGame('libra')"&gt;&lt;div class="entry-icon"&gt;⚖️&lt;/div&gt;&lt;div class="entry-label"&gt;Libra&lt;/div&gt;&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>&lt;div class="entry-card" onclick="startGame('scorpio')"&gt;&lt;div class="entry-icon"&gt;🦂&lt;/div&gt;&lt;div class="entry-label"&gt;Scorpio&lt;/div&gt;&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>&lt;div class="entry-card" onclick="startGame('sagittarius')"&gt;&lt;div class="entry-icon"&gt;🏹&lt;/div&gt;&lt;div class="entry-label"&gt;Sagittarius&lt;/div&gt;&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>&lt;div class="entry-card" onclick="startGame('capricorn')"&gt;&lt;div class="entry-icon"&gt;🐐&lt;/div&gt;&lt;div class="entry-label"&gt;Capricorn&lt;/div&gt;&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>&lt;div class="entry-card" onclick="startGame('aquarius')"&gt;&lt;div class="entry-icon"&gt;🏺&lt;/div&gt;&lt;div class="entry-label"&gt;Aquarius&lt;/div&gt;&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>&lt;div class="entry-card" onclick="startGame('pisces')"&gt;&lt;div class="entry-icon"&gt;🐟&lt;/div&gt;&lt;div class="entry-label"&gt;Pisces&lt;/div&gt;&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">    </span>&lt;/div&gt;</b></span></p>
-<p class="p2"><span class="s1"><b></b></span><br></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">    </span>&lt;div id="map"&gt;&lt;/div&gt;</b></span></p>
-<p class="p2"><span class="s1"><b></b></span><br></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">    </span>&lt;aside class="sidebar panel-base"&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>&lt;div class="header-base"&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>&lt;div class="title-base"&gt;OPEN RS HUB&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>&lt;/div&gt;</b></span></p>
-<p class="p2"><span class="s1"><b><span class="Apple-converted-space">        </span></b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>&lt;div class="aoi-module"&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>&lt;div class="section-header" style="margin-top:0;"&gt;1) AOI TARGETING&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>&lt;div class="aoi-input-group"&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">                </span>&lt;input type="text" id="aoiInput" class="aoi-input" placeholder="City / Coordinates..." onkeypress="handleAoiKey(event)"&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">                </span>&lt;button class="aoi-btn" onclick="executeLocate()"&gt;LOCATE&lt;/button&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>&lt;div class="aoi-note"&gt;Locks target coordinates for mission planning.&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>&lt;/div&gt;</b></span></p>
-<p class="p2"><span class="s1"><b></b></span><br></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>&lt;div class="layer-list"&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>&lt;div class="section-header"&gt;2) OPTICAL FEED (STAC)&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>&lt;div class="layer-row"&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">                </span>&lt;div&gt;&lt;div class="layer-name"&gt;Sentinel-2 (ESA)&lt;/div&gt;&lt;span class="layer-src"&gt;STAC: earth-search-aws&lt;/span&gt;&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">                </span>&lt;input type="checkbox" class="toggle" checked&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>&lt;div class="layer-row"&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">                </span>&lt;div&gt;&lt;div class="layer-name"&gt;Landsat 8/9 (USGS)&lt;/div&gt;&lt;span class="layer-src"&gt;STAC: usgs-landsat-c2&lt;/span&gt;&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">                </span>&lt;input type="checkbox" class="toggle"&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>&lt;/div&gt;</b></span></p>
-<p class="p2"><span class="s1"><b><span class="Apple-converted-space">            </span></b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>&lt;div class="section-header"&gt;3) ENVIRONMENTAL&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>&lt;div class="layer-row"&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">                </span>&lt;div&gt;&lt;div class="layer-name"&gt;VIIRS Night Lights&lt;/div&gt;&lt;span class="layer-src"&gt;NASA GIBS&lt;/span&gt;&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">                </span>&lt;input type="checkbox" class="toggle"&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>&lt;div class="layer-row"&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">                </span>&lt;div&gt;&lt;div class="layer-name"&gt;Active Fires&lt;/div&gt;&lt;span class="layer-src"&gt;FIRMS Real-time&lt;/span&gt;&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">                </span>&lt;input type="checkbox" class="toggle"&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>&lt;/div&gt;</b></span></p>
-<p class="p2"><span class="s1"><b></b></span><br></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>&lt;div class="sidebar-footer"&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>[ SYSTEM ATTRIBUTION ]&lt;br&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>Index aligned with STAC v1.0.0 Spec.&lt;br&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>Data courtesy of ESA, USGS, NASA.</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">    </span>&lt;/aside&gt;</b></span></p>
-<p class="p2"><span class="s1"><b></b></span><br></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">    </span>&lt;div class="portal-sidebar panel-base"&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>&lt;div class="header-base"&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>&lt;div class="title-base"&gt;RESOURCE DIRECTORY&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>&lt;div class="portal-content"&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>&lt;div class="section-header"&gt;A) MULTI-SOURCE AGGREGATORS&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>&lt;div class="list-item" onclick="openPlanner('apollo', 'archive')"&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">                </span>&lt;div class="li-main"&gt;&lt;div class="li-title"&gt;Apollo Image Hunter&lt;/div&gt;&lt;div class="li-desc"&gt;Broadest Commercial Search&lt;/div&gt;&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">                </span>&lt;div class="help-btn" onclick="event.stopPropagation(); showHelp('apollo')"&gt;?&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>&lt;div class="list-item" onclick="openPlanner('stac', 'archive')"&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">                </span>&lt;div class="li-main"&gt;&lt;div class="li-title"&gt;STAC Index&lt;/div&gt;&lt;div class="li-desc"&gt;Global Open Source Catalog&lt;/div&gt;&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">                </span>&lt;div class="help-btn" onclick="event.stopPropagation(); showHelp('stac')"&gt;?&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>&lt;/div&gt;</b></span></p>
-<p class="p2"><span class="s1"><b></b></span><br></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>&lt;div class="section-header"&gt;B) COMMERCIAL CONSTELLATIONS&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>&lt;div class="list-item" onclick="openPlanner('maxar', 'archive')"&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">                </span>&lt;div class="li-main"&gt;&lt;div class="li-title"&gt;MAXAR Discover&lt;/div&gt;&lt;div class="li-desc"&gt;High-Res Optical (30cm)&lt;/div&gt;&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">                </span>&lt;div class="help-btn" onclick="event.stopPropagation(); showHelp('maxar')"&gt;?&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>&lt;div class="list-item" onclick="openPlanner('planet', 'archive')"&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">                </span>&lt;div class="li-main"&gt;&lt;div class="li-title"&gt;Planet Explorer&lt;/div&gt;&lt;div class="li-desc"&gt;Daily Global Scan (3m)&lt;/div&gt;&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">                </span>&lt;div class="help-btn" onclick="event.stopPropagation(); showHelp('planet')"&gt;?&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">    </span>&lt;/div&gt;</b></span></p>
-<p class="p2"><span class="s1"><b></b></span><br></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">    </span>&lt;div class="launch-btn-trigger" onclick="toggleLaunch()" title="Incoming Manifest"&gt;🐣&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">    </span>&lt;div class="launch-panel panel-base" id="launchPanel"&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>&lt;div class="header-base" style="display: flex; justify-content: space-between; align-items: center;"&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>&lt;span class="title-base"&gt;ORBIT NEWBIES CHECK-IN&lt;/span&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>&lt;span style="font-size:16px; cursor:pointer; color:var(--accent);" onclick="toggleLaunch()"&gt;×&lt;/span&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>&lt;div class="lp-body" id="launchList"&gt;&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>&lt;div style="padding:10px; font-size:9px; color:var(--text-mute); text-align:center; border-top:1px solid rgba(0,229,255,0.2); font-family:var(--font-mono);"&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>[ DATA SYNCED WITH PUBLIC LAUNCH MANIFESTS ]</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">    </span>&lt;/div&gt;</b></span></p>
-<p class="p2"><span class="s1"><b></b></span><br></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">    </span>&lt;div id="plannerModal" class="panel-base"&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>&lt;div class="pm-header"&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>&lt;div class="pm-title" id="pmTitle"&gt;MISSION SIMULATION&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>&lt;div style="cursor:pointer;" onclick="closePlanner()"&gt;[x]&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>&lt;div class="pm-body" id="pmBody"&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">    </span>&lt;/div&gt;</b></span></p>
-<p class="p2"><span class="s1"><b></b></span><br></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">    </span>&lt;div class="ai-avatar-btn" onclick="toggleChat()"&gt;&lt;div class="bot-face"&gt;&lt;div class="bot-eye eye-l"&gt;&lt;/div&gt;&lt;div class="bot-eye eye-r"&gt;&lt;/div&gt;&lt;div class="bot-mouth"&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;</b></span></p>
-<p class="p2"><span class="s1"><b><span class="Apple-converted-space">    </span></b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">    </span>&lt;div class="chat-terminal panel-base" id="terminal"&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>&lt;div class="header-base"&gt;&lt;span class="title-base"&gt;CO-PILOT // LOG&lt;/span&gt;&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>&lt;div class="chat-body" id="chatBody"&gt;&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>&lt;div class="input-area"&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>&lt;input type="text" class="input-field" id="userInput" placeholder="Command..." onkeypress="handleKey(event)"&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">    </span>&lt;/div&gt;</b></span></p>
-<p class="p2"><span class="s1"><b></b></span><br></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">    </span>&lt;script&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>// --- 1. MAP SETUP ---</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>const map = L.map('map', { zoomControl: false, minZoom: 3, maxBounds: [[-90, -180], [90, 180]], attributionControl: false }).setView([20, 0], 3);</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { subdomains: 'abcd', maxZoom: 19 }).addTo(map);</b></span></p>
-<p class="p2"><span class="s1"><b></b></span><br></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>let currentAOI = { name: "GLOBAL_VIEW", lat: 0, lon: 0 };<span class="Apple-converted-space"> </span></b></span></p>
-<p class="p2"><span class="s1"><b></b></span><br></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>// --- 2. CURSOR LOGIC ---</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>const cursorSVG = (emoji) =&gt; `url("data:image/svg+xml;utf8,&lt;svg xmlns='http://www.w3.org/2000/svg' width='36' height='36' style='font-size:24px; filter:drop-shadow(0 0 3px cyan);'&gt;&lt;text x='50%' y='60%' dominant-baseline='middle' text-anchor='middle'&gt;${emoji}&lt;/text&gt;&lt;/svg&gt;") 18 18, auto`;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>const cursors = { 'aries': cursorSVG('🐏'), 'taurus': cursorSVG('🐂'), 'gemini': cursorSVG('👯'), 'cancer': cursorSVG('🦀'), 'leo': cursorSVG('🦁'), 'virgo': cursorSVG('🧚'), 'libra': cursorSVG('⚖️'), 'scorpio': cursorSVG('🦂'), 'sagittarius':cursorSVG('🏹'), 'capricorn':cursorSVG('🐐'), 'aquarius': cursorSVG('🏺'), 'pisces': cursorSVG('🐟') };</b></span></p>
-<p class="p2"><span class="s1"><b></b></span><br></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>function startGame(choice) {</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>document.documentElement.style.setProperty('--cursor-default', cursors[choice]);</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>document.documentElement.style.setProperty('--cursor-pointer', cursors[choice]);</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>const overlay = document.getElementById('entryOverlay');</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>overlay.style.opacity = '0';</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>setTimeout(() =&gt; { overlay.style.display = 'none'; }, 600);</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>addMsg(`[SYSTEM] Interface initialized. Operator sign: ${choice.toUpperCase()}.`);</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>}</b></span></p>
-<p class="p2"><span class="s1"><b></b></span><br></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>// --- 3. AOI LOGIC ---</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>function handleAoiKey(e) { if(e.key === 'Enter') executeLocate(); }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>function executeLocate() {</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>const query = document.getElementById('aoiInput').value.trim();</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>if(!query) return;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>addMsg(`[SEARCH] Locating "${query}"...`);</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>fetch(`https://nominatim.openstreetmap.org/search?format=json&amp;q=${encodeURIComponent(query)}`)</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">                </span>.then(r =&gt; r.json()).then(data =&gt; {</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">                    </span>if (data &amp;&amp; data.length &gt; 0) {</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">                        </span>const lat = parseFloat(data[0].lat); const lon = parseFloat(data[0].lon);</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">                        </span>map.setView([lat, lon], 10);</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">                        </span>L.marker([lat, lon]).addTo(map).bindPopup(`&lt;b&gt;AOI LOCKED:&lt;/b&gt;&lt;br&gt;${data[0].display_name}`).openPopup();</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">                        </span>currentAOI = { name: query.toUpperCase(), lat: lat.toFixed(4), lon: lon.toFixed(4) };</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">                        </span>addMsg(`[SUCCESS] Locked: ${currentAOI.name} (${lat.toFixed(4)}, ${lon.toFixed(4)})`);</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">                    </span>} else { addMsg(`[ERROR] Location not found.`); }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">                </span>}).catch(err =&gt; { addMsg(`[ERROR] Connection failed.`); });</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>}</b></span></p>
-<p class="p2"><span class="s1"><b></b></span><br></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>// --- 4. DATA INDEX ---</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>const satData = {</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>'apollo': { name: 'APOLLO IMAGE HUNTER', site: 'imagehunter.apollomapping.com', specs: {'Source': 'Multi-Vendor', 'Type': 'Aggregator', 'Access': 'Search Engine'}, desc: 'The industry standard search engine for almost all commercial satellite imagery.' },</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>'stac': { name: 'STAC INDEX', site: 'stacindex.org', specs: {'Standard': 'STAC v1.0.0', 'API': 'RESTful', 'Type': 'Catalog'}, desc: 'The official catalog of all SpatioTemporal Asset Catalogs available online.' },</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>'maxar': { name: 'MAXAR TECHNOLOGIES', site: 'discover.maxar.com', specs: {'Res': '0.3m', 'Swath': '13km'}, desc: 'High-resolution optical archive.' },</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>'planet': { name: 'PLANET LABS', site: 'planet.com', specs: {'Res': '3m', 'Revisit': 'Daily'}, desc: 'Daily global monitoring.' }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>};</b></span></p>
-<p class="p2"><span class="s1"><b></b></span><br></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>function getSimulatedParams(type) {</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>const now = new Date();</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>const future = new Date(now.getTime() + 86400000);</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>return `SEARCH PARAMETERS:\n-------------------------\nTARGET: ${currentAOI.name}\nCOORDS: ${currentAOI.lat}, ${currentAOI.lon}\nDATE_RANGE: 2024-01-01 TO ${now.toISOString().split('T')[0]}\nCLOUD_COVER: &lt; 15%\nFORMAT: STAC-COMPLIANT JSON`;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>}</b></span></p>
-<p class="p2"><span class="s1"><b></b></span><br></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>function openPlanner(key, type) {</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>const data = satData[key];</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>const modal = document.getElementById('plannerModal');</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>const title = document.getElementById('pmTitle');</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>const body = document.getElementById('pmBody');</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>title.innerText = `QUERY GENERATOR // ${data.name}`;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>let html = `&lt;div class="sim-box"&gt;&lt;div class="sim-title"&gt;AOI STATUS&lt;/div&gt;`;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>html += `&lt;div class="sim-row"&gt;&lt;span&gt;TARGET:&lt;/span&gt;&lt;span style="color:var(--text)"&gt;${currentAOI.name}&lt;/span&gt;&lt;/div&gt;`;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>html += `&lt;div class="sim-row"&gt;&lt;span&gt;COORDINATES:&lt;/span&gt;&lt;span style="color:var(--text)"&gt;${currentAOI.lat}, ${currentAOI.lon}&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;`;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>const params = getSimulatedParams(type);</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>html += `&lt;div class="copy-block"&gt;&lt;button class="copy-btn" onclick="copyText(this)"&gt;COPY&lt;/button&gt;&lt;div class="copy-content" id="paramText"&gt;${params}&lt;/div&gt;&lt;/div&gt;`;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>html += `&lt;div class="note-text"&gt;* Use these parameters to search on the external portal.&lt;br&gt;Click '?' in the sidebar to find the official URL.&lt;/div&gt;`;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>body.innerHTML = html;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>modal.style.display = 'block';</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>setTimeout(() =&gt; modal.classList.add('active'), 10);</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>addMsg(`[PLANNER] Generated params for ${data.name}.`);</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>}</b></span></p>
-<p class="p2"><span class="s1"><b></b></span><br></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>function showHelp(key) {</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>const data = satData[key];</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>const modal = document.getElementById('plannerModal');</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>const title = document.getElementById('pmTitle');</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>const body = document.getElementById('pmBody');</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>title.innerText = `SPECS // ${data.name}`;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>let html = `&lt;div class="sim-box"&gt;&lt;div class="sim-title"&gt;CAPABILITIES&lt;/div&gt;`;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>for (const [k, v] of Object.entries(data.specs)) html += `&lt;div class="spec-row"&gt;&lt;span style="color:var(--text-mute)"&gt;${k}:&lt;/span&gt;&lt;span style="color:var(--text)"&gt;${v}&lt;/span&gt;&lt;/div&gt;`;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>html += `&lt;/div&gt;&lt;div class="sim-box"&gt;&lt;div class="sim-title"&gt;ACCESS POINT&lt;/div&gt;`;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>html += `&lt;div style="font-size:10px; color:var(--text);"&gt;URL: &lt;a href="https://${data.site}" target="_blank" class="url-link"&gt;${data.site}&lt;/a&gt;&lt;/div&gt;&lt;/div&gt;`;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>html += `&lt;div class="note-text"&gt;"${data.desc}"&lt;/div&gt;`;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>body.innerHTML = html;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>modal.style.display = 'block';</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>setTimeout(() =&gt; modal.classList.add('active'), 10);</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>}</b></span></p>
-<p class="p2"><span class="s1"><b></b></span><br></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>function closePlanner() {</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>document.getElementById('plannerModal').classList.remove('active');</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>setTimeout(() =&gt; document.getElementById('plannerModal').style.display = 'none', 200);</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>}</b></span></p>
-<p class="p2"><span class="s1"><b></b></span><br></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>function copyText(btn) {</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>const text = document.getElementById('paramText').innerText;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>navigator.clipboard.writeText(text);</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>const original = btn.innerText;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>btn.innerText = "COPIED!";</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>setTimeout(() =&gt; btn.innerText = original, 2000);</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>}</b></span></p>
-<p class="p2"><span class="s1"><b></b></span><br></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>// --- 5. NEWBIE LAUNCH LOGIC (RESTORED) ---</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>const launches = [</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>{ name: "Albedo Space", rocket: "Falcon 9", tag: "🔥 0.1m Res", desc: "VLEO Constellation", time: new Date(Date.now() + 1000 * 60 * 60 * 24 * 15) },</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>{ name: "MethaneSAT", rocket: "Transporter", tag: "🌿 Climate", desc: "Methane Monitoring", time: new Date(Date.now() + 1000 * 60 * 60 * 48) },</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>{ name: "Jilin-1", rocket: "Ceres-1", tag: "🚀 Revisit", desc: "High-Freq Monitor", time: new Date(Date.now() + 1000 * 60 * 60 * 5) }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>];</b></span></p>
-<p class="p2"><span class="s1"><b></b></span><br></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>function renderLaunches() {</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>const container = document.getElementById('launchList');</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>container.innerHTML = "";</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>launches.forEach(m =&gt; {</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">                </span>const diff = m.time - Date.now();</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">                </span>const days = Math.floor(diff / (1000 * 60 * 60 * 24));</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">                </span>const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">                </span>const html = `</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">                    </span>&lt;div class="mission-card" style="border-left: 3px solid ${m.name.includes('Albedo') ? 'var(--accent)' : 'var(--text-mute)'}"&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">                        </span>&lt;div class="m-tag" style="border-color:${m.name.includes('Albedo') ? 'var(--accent)' : 'var(--text-mute)'}; color:${m.name.includes('Albedo') ? 'var(--accent)' : 'var(--text-mute)'}"&gt;${m.tag}&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">                        </span>&lt;div class="m-name" style="color:${m.name.includes('Albedo') ? 'var(--accent)' : 'var(--text)'}"&gt;${m.name}&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">                        </span>&lt;div style="font-size:11px; color:var(--text-mute); margin-bottom:5px;"&gt;"${m.desc}"&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">                        </span>&lt;div class="m-rocket"&gt;📦 ${m.rocket}&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">                        </span>&lt;div class="m-timer"&gt;🐣 ETA: ${days}d ${hours}h&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">                    </span>&lt;/div&gt;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">                </span>`;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">                </span>container.innerHTML += html;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>});</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>}</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>setInterval(renderLaunches, 60000); renderLaunches();</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>function toggleLaunch() {<span class="Apple-converted-space"> </span></b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>const p = document.getElementById('launchPanel');</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>p.style.display = p.style.display === 'flex' ? 'none' : 'flex';<span class="Apple-converted-space"> </span></b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>}</b></span></p>
-<p class="p2"><span class="s1"><b></b></span><br></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>// --- 6. CHAT LOGIC ---</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>const chatBody = document.getElementById('chatBody');</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>const input = document.getElementById('userInput');</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>function handleKey(e) { if(e.key === 'Enter') sendMsg(); }</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>function sendMsg() {</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>const txt = input.value.trim();</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>if(!txt) return;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>addMsg(txt, 'user');</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>input.value = "";</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>setTimeout(() =&gt; { addMsg("System ready. Select a feed or search AOI."); }, 500);</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>}</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>function addMsg(text, type='ai') {</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>const d = document.createElement('div');</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>d.className = type === 'ai' ? 'msg-ai' : 'msg-user';</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>d.innerText = text;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>chatBody.appendChild(d);</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>chatBody.scrollTop = chatBody.scrollHeight;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>}</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>let isChatOpen = false;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>function toggleChat() {</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>const t = document.getElementById('terminal');</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>isChatOpen = !isChatOpen;</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">            </span>t.style.display = isChatOpen ? 'flex' : 'none';</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">        </span>}</b></span></p>
-<p class="p1"><span class="s1"><b><span class="Apple-converted-space">    </span>&lt;/script&gt;</b></span></p>
-<p class="p1"><span class="s1"><b>&lt;/body&gt;</b></span></p>
-<p class="p1"><span class="s1"><b>&lt;/html&gt;</b></span></p>
+
+    <div id="entryOverlay">
+        <div class="entry-title">OPEN RS HUB</div>
+        <div class="entry-sub">SATELLITE MISSION PLANNER // V13.0</div>
+        
+        <div class="legal-box">
+            [ COMPLIANCE NOTICE ]<br>
+            // System provides orbital simulation & coverage planning only.<br>
+            // NO commercial transactions or data transfer capabilities.<br>
+            // NO personal geolocation data stored. (GDPR Compliant)
+        </div>
+
+        <div style="font-size:10px; margin-bottom:10px; color:var(--accent); font-family:var(--font-mono);">[ SELECT OPERATOR ID ]</div>
+        <div class="cursor-selection-grid">
+            <div class="entry-card" onclick="startGame('aries')"><div class="entry-icon">🐏</div><div class="entry-label">Aries</div></div>
+            <div class="entry-card" onclick="startGame('taurus')"><div class="entry-icon">🐂</div><div class="entry-label">Taurus</div></div>
+            <div class="entry-card" onclick="startGame('gemini')"><div class="entry-icon">👯</div><div class="entry-label">Gemini</div></div>
+            <div class="entry-card" onclick="startGame('cancer')"><div class="entry-icon">🦀</div><div class="entry-label">Cancer</div></div>
+            <div class="entry-card" onclick="startGame('leo')"><div class="entry-icon">🦁</div><div class="entry-label">Leo</div></div>
+            <div class="entry-card" onclick="startGame('virgo')"><div class="entry-icon">🧚</div><div class="entry-label">Virgo</div></div>
+            <div class="entry-card" onclick="startGame('libra')"><div class="entry-icon">⚖️</div><div class="entry-label">Libra</div></div>
+            <div class="entry-card" onclick="startGame('scorpio')"><div class="entry-icon">🦂</div><div class="entry-label">Scorpio</div></div>
+            <div class="entry-card" onclick="startGame('sagittarius')"><div class="entry-icon">🏹</div><div class="entry-label">Sagittarius</div></div>
+            <div class="entry-card" onclick="startGame('capricorn')"><div class="entry-icon">🐐</div><div class="entry-label">Capricorn</div></div>
+            <div class="entry-card" onclick="startGame('aquarius')"><div class="entry-icon">🏺</div><div class="entry-label">Aquarius</div></div>
+            <div class="entry-card" onclick="startGame('pisces')"><div class="entry-icon">🐟</div><div class="entry-label">Pisces</div></div>
+        </div>
+    </div>
+
+    <div id="map"></div>
+
+    <aside class="sidebar panel-base">
+        <div class="header-base">
+            <div class="title-base">OPEN RS HUB</div>
+        </div>
+        
+        <div class="aoi-module">
+            <div class="section-header" style="margin-top:0;">1) AOI TARGETING</div>
+            <div class="aoi-input-group">
+                <input type="text" id="aoiInput" class="aoi-input" placeholder="City / Coordinates..." onkeypress="handleAoiKey(event)">
+                <button class="aoi-btn" onclick="executeLocate()">LOCATE</button>
+            </div>
+            <div class="aoi-note">Locks target coordinates for mission planning.</div>
+        </div>
+
+        <div class="layer-list">
+            <div class="section-header">2) OPTICAL FEED (STAC)</div>
+            <div class="layer-row">
+                <div><div class="layer-name">Sentinel-2 (ESA)</div><span class="layer-src">STAC: earth-search-aws</span></div>
+                <input type="checkbox" class="toggle" checked>
+            </div>
+            <div class="layer-row">
+                <div><div class="layer-name">Landsat 8/9 (USGS)</div><span class="layer-src">STAC: usgs-landsat-c2</span></div>
+                <input type="checkbox" class="toggle">
+            </div>
+            
+            <div class="section-header">3) ENVIRONMENTAL</div>
+            <div class="layer-row">
+                <div><div class="layer-name">VIIRS Night Lights</div><span class="layer-src">NASA GIBS</span></div>
+                <input type="checkbox" class="toggle">
+            </div>
+            <div class="layer-row">
+                <div><div class="layer-name">Active Fires</div><span class="layer-src">FIRMS Real-time</span></div>
+                <input type="checkbox" class="toggle">
+            </div>
+        </div>
+
+        <div class="sidebar-footer">
+            [ SYSTEM ATTRIBUTION ]<br>
+            Index aligned with STAC v1.0.0 Spec.<br>
+            Data courtesy of ESA, USGS, NASA.
+        </div>
+    </aside>
+
+    <div class="portal-sidebar panel-base">
+        <div class="header-base">
+            <div class="title-base">RESOURCE DIRECTORY</div>
+        </div>
+        <div class="portal-content">
+            <div class="section-header">A) MULTI-SOURCE AGGREGATORS</div>
+            <div class="list-item" onclick="openPlanner('apollo', 'archive')">
+                <div class="li-main"><div class="li-title">Apollo Image Hunter</div><div class="li-desc">Broadest Commercial Search</div></div>
+                <div class="help-btn" onclick="event.stopPropagation(); showHelp('apollo')">?</div>
+            </div>
+            <div class="list-item" onclick="openPlanner('stac', 'archive')">
+                <div class="li-main"><div class="li-title">STAC Index</div><div class="li-desc">Global Open Source Catalog</div></div>
+                <div class="help-btn" onclick="event.stopPropagation(); showHelp('stac')">?</div>
+            </div>
+
+            <div class="section-header">B) COMMERCIAL CONSTELLATIONS</div>
+            <div class="list-item" onclick="openPlanner('maxar', 'archive')">
+                <div class="li-main"><div class="li-title">MAXAR Discover</div><div class="li-desc">High-Res Optical (30cm)</div></div>
+                <div class="help-btn" onclick="event.stopPropagation(); showHelp('maxar')">?</div>
+            </div>
+            <div class="list-item" onclick="openPlanner('planet', 'archive')">
+                <div class="li-main"><div class="li-title">Planet Explorer</div><div class="li-desc">Daily Global Scan (3m)</div></div>
+                <div class="help-btn" onclick="event.stopPropagation(); showHelp('planet')">?</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="launch-btn-trigger" onclick="toggleLaunch()" title="Incoming Manifest">🐣</div>
+    <div class="launch-panel panel-base" id="launchPanel">
+        <div class="header-base" style="display: flex; justify-content: space-between; align-items: center;">
+            <span class="title-base">ORBIT NEWBIES CHECK-IN</span>
+            <span style="font-size:16px; cursor:pointer; color:var(--accent);" onclick="toggleLaunch()">×</span>
+        </div>
+        <div class="lp-body" id="launchList"></div>
+        <div style="padding:10px; font-size:9px; color:var(--text-mute); text-align:center; border-top:1px solid rgba(0,229,255,0.2); font-family:var(--font-mono);">
+            [ DATA SYNCED WITH PUBLIC LAUNCH MANIFESTS ]
+        </div>
+    </div>
+
+    <div id="plannerModal" class="panel-base">
+        <div class="pm-header">
+            <div class="pm-title" id="pmTitle">MISSION SIMULATION</div>
+            <div style="cursor:pointer;" onclick="closePlanner()">[x]</div>
+        </div>
+        <div class="pm-body" id="pmBody">
+            </div>
+    </div>
+
+    <div class="ai-avatar-btn" onclick="toggleChat()"><div class="bot-face"><div class="bot-eye eye-l"></div><div class="bot-eye eye-r"></div><div class="bot-mouth"></div></div></div>
+    
+    <div class="chat-terminal panel-base" id="terminal">
+        <div class="header-base"><span class="title-base">CO-PILOT // LOG</span></div>
+        <div class="chat-body" id="chatBody"></div>
+        <div class="input-area">
+            <input type="text" class="input-field" id="userInput" placeholder="Command..." onkeypress="handleKey(event)">
+        </div>
+    </div>
+
+    <script>
+        // --- 1. MAP SETUP ---
+        const map = L.map('map', { zoomControl: false, minZoom: 3, maxBounds: [[-90, -180], [90, 180]], attributionControl: false }).setView([20, 0], 3);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { subdomains: 'abcd', maxZoom: 19 }).addTo(map);
+
+        let currentAOI = { name: "GLOBAL_VIEW", lat: 0, lon: 0 }; 
+
+        // --- 2. CURSOR LOGIC ---
+        const cursorSVG = (emoji) => `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='36' height='36' style='font-size:24px; filter:drop-shadow(0 0 3px cyan);'><text x='50%' y='60%' dominant-baseline='middle' text-anchor='middle'>${emoji}</text></svg>") 18 18, auto`;
+        const cursors = { 'aries': cursorSVG('🐏'), 'taurus': cursorSVG('🐂'), 'gemini': cursorSVG('👯'), 'cancer': cursorSVG('🦀'), 'leo': cursorSVG('🦁'), 'virgo': cursorSVG('🧚'), 'libra': cursorSVG('⚖️'), 'scorpio': cursorSVG('🦂'), 'sagittarius':cursorSVG('🏹'), 'capricorn':cursorSVG('🐐'), 'aquarius': cursorSVG('🏺'), 'pisces': cursorSVG('🐟') };
+
+        function startGame(choice) {
+            document.documentElement.style.setProperty('--cursor-default', cursors[choice]);
+            document.documentElement.style.setProperty('--cursor-pointer', cursors[choice]);
+            const overlay = document.getElementById('entryOverlay');
+            overlay.style.opacity = '0';
+            setTimeout(() => { overlay.style.display = 'none'; }, 600);
+            addMsg(`[SYSTEM] Interface initialized. Operator sign: ${choice.toUpperCase()}.`);
+        }
+
+        // --- 3. AOI LOGIC ---
+        function handleAoiKey(e) { if(e.key === 'Enter') executeLocate(); }
+        function executeLocate() {
+            const query = document.getElementById('aoiInput').value.trim();
+            if(!query) return;
+            addMsg(`[SEARCH] Locating "${query}"...`);
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`)
+                .then(r => r.json()).then(data => {
+                    if (data && data.length > 0) {
+                        const lat = parseFloat(data[0].lat); const lon = parseFloat(data[0].lon);
+                        map.setView([lat, lon], 10);
+                        L.marker([lat, lon]).addTo(map).bindPopup(`<b>AOI LOCKED:</b><br>${data[0].display_name}`).openPopup();
+                        currentAOI = { name: query.toUpperCase(), lat: lat.toFixed(4), lon: lon.toFixed(4) };
+                        addMsg(`[SUCCESS] Locked: ${currentAOI.name} (${lat.toFixed(4)}, ${lon.toFixed(4)})`);
+                    } else { addMsg(`[ERROR] Location not found.`); }
+                }).catch(err => { addMsg(`[ERROR] Connection failed.`); });
+        }
+
+        // --- 4. DATA INDEX ---
+        const satData = {
+            'apollo': { name: 'APOLLO IMAGE HUNTER', site: 'imagehunter.apollomapping.com', specs: {'Source': 'Multi-Vendor', 'Type': 'Aggregator', 'Access': 'Search Engine'}, desc: 'The industry standard search engine for almost all commercial satellite imagery.' },
+            'stac': { name: 'STAC INDEX', site: 'stacindex.org', specs: {'Standard': 'STAC v1.0.0', 'API': 'RESTful', 'Type': 'Catalog'}, desc: 'The official catalog of all SpatioTemporal Asset Catalogs available online.' },
+            'maxar': { name: 'MAXAR TECHNOLOGIES', site: 'discover.maxar.com', specs: {'Res': '0.3m', 'Swath': '13km'}, desc: 'High-resolution optical archive.' },
+            'planet': { name: 'PLANET LABS', site: 'planet.com', specs: {'Res': '3m', 'Revisit': 'Daily'}, desc: 'Daily global monitoring.' }
+        };
+
+        function getSimulatedParams(type) {
+            const now = new Date();
+            const future = new Date(now.getTime() + 86400000);
+            return `SEARCH PARAMETERS:\n-------------------------\nTARGET: ${currentAOI.name}\nCOORDS: ${currentAOI.lat}, ${currentAOI.lon}\nDATE_RANGE: 2024-01-01 TO ${now.toISOString().split('T')[0]}\nCLOUD_COVER: < 15%\nFORMAT: STAC-COMPLIANT JSON`;
+        }
+
+        function openPlanner(key, type) {
+            const data = satData[key];
+            const modal = document.getElementById('plannerModal');
+            const title = document.getElementById('pmTitle');
+            const body = document.getElementById('pmBody');
+            title.innerText = `QUERY GENERATOR // ${data.name}`;
+            let html = `<div class="sim-box"><div class="sim-title">AOI STATUS</div>`;
+            html += `<div class="sim-row"><span>TARGET:</span><span style="color:var(--text)">${currentAOI.name}</span></div>`;
+            html += `<div class="sim-row"><span>COORDINATES:</span><span style="color:var(--text)">${currentAOI.lat}, ${currentAOI.lon}</span></div></div>`;
+            const params = getSimulatedParams(type);
+            html += `<div class="copy-block"><button class="copy-btn" onclick="copyText(this)">COPY</button><div class="copy-content" id="paramText">${params}</div></div>`;
+            html += `<div class="note-text">* Use these parameters to search on the external portal.<br>Click '?' in the sidebar to find the official URL.</div>`;
+            body.innerHTML = html;
+            modal.style.display = 'block';
+            setTimeout(() => modal.classList.add('active'), 10);
+            addMsg(`[PLANNER] Generated params for ${data.name}.`);
+        }
+
+        function showHelp(key) {
+            const data = satData[key];
+            const modal = document.getElementById('plannerModal');
+            const title = document.getElementById('pmTitle');
+            const body = document.getElementById('pmBody');
+            title.innerText = `SPECS // ${data.name}`;
+            let html = `<div class="sim-box"><div class="sim-title">CAPABILITIES</div>`;
+            for (const [k, v] of Object.entries(data.specs)) html += `<div class="spec-row"><span style="color:var(--text-mute)">${k}:</span><span style="color:var(--text)">${v}</span></div>`;
+            html += `</div><div class="sim-box"><div class="sim-title">ACCESS POINT</div>`;
+            html += `<div style="font-size:10px; color:var(--text);">URL: <a href="https://${data.site}" target="_blank" class="url-link">${data.site}</a></div></div>`;
+            html += `<div class="note-text">"${data.desc}"</div>`;
+            body.innerHTML = html;
+            modal.style.display = 'block';
+            setTimeout(() => modal.classList.add('active'), 10);
+        }
+
+        function closePlanner() {
+            document.getElementById('plannerModal').classList.remove('active');
+            setTimeout(() => document.getElementById('plannerModal').style.display = 'none', 200);
+        }
+
+        function copyText(btn) {
+            const text = document.getElementById('paramText').innerText;
+            navigator.clipboard.writeText(text);
+            const original = btn.innerText;
+            btn.innerText = "COPIED!";
+            setTimeout(() => btn.innerText = original, 2000);
+        }
+
+        // --- 5. NEWBIE LAUNCH LOGIC (RESTORED) ---
+        const launches = [
+            { name: "Albedo Space", rocket: "Falcon 9", tag: "🔥 0.1m Res", desc: "VLEO Constellation", time: new Date(Date.now() + 1000 * 60 * 60 * 24 * 15) },
+            { name: "MethaneSAT", rocket: "Transporter", tag: "🌿 Climate", desc: "Methane Monitoring", time: new Date(Date.now() + 1000 * 60 * 60 * 48) },
+            { name: "Jilin-1", rocket: "Ceres-1", tag: "🚀 Revisit", desc: "High-Freq Monitor", time: new Date(Date.now() + 1000 * 60 * 60 * 5) }
+        ];
+
+        function renderLaunches() {
+            const container = document.getElementById('launchList');
+            container.innerHTML = "";
+            launches.forEach(m => {
+                const diff = m.time - Date.now();
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const html = `
+                    <div class="mission-card" style="border-left: 3px solid ${m.name.includes('Albedo') ? 'var(--accent)' : 'var(--text-mute)'}">
+                        <div class="m-tag" style="border-color:${m.name.includes('Albedo') ? 'var(--accent)' : 'var(--text-mute)'}; color:${m.name.includes('Albedo') ? 'var(--accent)' : 'var(--text-mute)'}">${m.tag}</div>
+                        <div class="m-name" style="color:${m.name.includes('Albedo') ? 'var(--accent)' : 'var(--text)'}">${m.name}</div>
+                        <div style="font-size:11px; color:var(--text-mute); margin-bottom:5px;">"${m.desc}"</div>
+                        <div class="m-rocket">📦 ${m.rocket}</div>
+                        <div class="m-timer">🐣 ETA: ${days}d ${hours}h</div>
+                    </div>
+                `;
+                container.innerHTML += html;
+            });
+        }
+        setInterval(renderLaunches, 60000); renderLaunches();
+        function toggleLaunch() { 
+            const p = document.getElementById('launchPanel');
+            p.style.display = p.style.display === 'flex' ? 'none' : 'flex'; 
+        }
+
+        // --- 6. CHAT LOGIC ---
+        const chatBody = document.getElementById('chatBody');
+        const input = document.getElementById('userInput');
+        function handleKey(e) { if(e.key === 'Enter') sendMsg(); }
+        function sendMsg() {
+            const txt = input.value.trim();
+            if(!txt) return;
+            addMsg(txt, 'user');
+            input.value = "";
+            setTimeout(() => { addMsg("System ready. Select a feed or search AOI."); }, 500);
+        }
+        function addMsg(text, type='ai') {
+            const d = document.createElement('div');
+            d.className = type === 'ai' ? 'msg-ai' : 'msg-user';
+            d.innerText = text;
+            chatBody.appendChild(d);
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+        let isChatOpen = false;
+        function toggleChat() {
+            const t = document.getElementById('terminal');
+            isChatOpen = !isChatOpen;
+            t.style.display = isChatOpen ? 'flex' : 'none';
+        }
+    </script>
 </body>
 </html>
