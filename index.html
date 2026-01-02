@@ -1,50 +1,471 @@
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OPEN RS HUB // Global Monitor</title>
     
-Satellite Discovery Index
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-    
-Demo
+    <style>
+        /* --- 1. CORE VARIABLES --- */
+        :root {
+            --bg: #0f1115;
+            --panel: rgba(22, 27, 34, 0.98); /* 稍微加深一点背景，显得更严肃 */
+            --border: #30363d;
+            --accent: #58a6ff;
+            --night-accent: #ff79c6;
+            --birth-accent: #00e676;
+            --text: #c9d1d9;
+            --text-mute: #8b949e;
+            --font-mono: 'SF Mono', 'Consolas', monospace;
+            --cursor-default: auto;
+            --cursor-pointer: pointer;
+        }
 
-  
+        body { 
+            margin: 0; background: var(--bg); color: var(--text); 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            height: 100vh; overflow: hidden; 
+            cursor: var(--cursor-default); 
+            transition: background 0.5s;
+        }
 
-    
+        button, a, .toggle, .ai-avatar-btn, .astro-btn, .cursor-option, .music-btn, .launch-btn-trigger, .role-btn, .entry-card {
+            cursor: var(--cursor-pointer) !important;
+        }
 
-      
-
+        /* --- 2. ENTRY OVERLAY (合规盾牌) --- */
+        #entryOverlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(11, 13, 17, 0.95); /* 深色背景，遮挡地图 */
+            backdrop-filter: blur(15px);
+            z-index: 9999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            transition: opacity 0.5s ease;
+            padding: 20px; text-align: center;
+        }
         
-Open Setup
-
+        .entry-title { font-size: 28px; font-weight: 800; letter-spacing: 2px; color: #fff; margin-bottom: 5px; }
+        .entry-sub { font-family: var(--font-mono); font-size: 12px; color: var(--accent); margin-bottom: 30px; letter-spacing: 1px; }
         
+        /* 法律声明文本框 */
+        .legal-box {
+            max-width: 600px;
+            font-size: 10px; color: #666; line-height: 1.6;
+            margin-bottom: 40px; border-top: 1px solid #333; padding-top: 15px;
+            font-family: var(--font-mono);
+        }
 
-          Phase
-          
-e.g. Locate
-
+        .cursor-selection-grid { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
         
+        .entry-card {
+            width: 100px; height: 120px;
+            background: #161b22; border: 1px solid #30363d; border-radius: 12px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: 0.3s;
+        }
+        .entry-card:hover { transform: translateY(-5px); border-color: var(--accent); background: #21262d; box-shadow: 0 10px 30px rgba(88, 166, 255, 0.1); }
+        .entry-icon { font-size: 32px; margin-bottom: 15px; }
+        .entry-label { font-size: 11px; font-weight: bold; color: var(--text); }
 
-      
+        /* --- 3. MAP --- */
+        #map { width: 100vw; height: 100vh; z-index: 1; filter: grayscale(1) contrast(1.1) brightness(0.8); transition: filter 1s; }
 
+        /* --- 4. SIDEBAR --- */
+        .sidebar {
+            position: absolute; top: 20px; left: 20px; width: 260px;
+            background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
+            display: flex; flex-direction: column; z-index: 10;
+            backdrop-filter: blur(10px);
+        }
+        .header { padding: 20px; border-bottom: 1px solid var(--border); }
+        .title { font-weight: 800; font-size: 16px; letter-spacing: 1px; color: #fff; }
+        .subtitle { font-size: 11px; color: var(--text-mute); margin-top: 5px; }
+        
+        .layer-list { padding: 15px; }
+        .layer-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .layer-name { font-size: 13px; font-weight: 600; }
+        .layer-src { font-size: 10px; color: var(--text-mute); display: block; }
+        
+        .toggle { appearance: none; width: 32px; height: 18px; background: #333; border-radius: 9px; position: relative; transition: 0.3s; }
+        .toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; background: #888; border-radius: 50%; transition: 0.3s; }
+        .toggle:checked { background: var(--accent); }
+        .toggle:checked::after { transform: translateX(14px); background: #fff; }
 
-  <div class="card">
-    <div class="cardTitle">Sources</div>
-    <div class="sources">
-      <div class="source">
-        <span class="name">Source A</span>
-        <span class="tag">LIVE</span>
-      </div>
-      <div class="source">
-        <span class="name">Source B</span>
-        <span class="tag">ARCHIVE</span>
-      </div>
+        /* Sidebar Footer (版权声明) */
+        .sidebar-footer {
+            padding: 15px; border-top: 1px solid var(--border);
+            font-size: 9px; color: #555; line-height: 1.4;
+        }
+
+        .cursor-station { padding: 15px; border-top: 1px solid var(--border); }
+        .section-title { font-size: 10px; color: var(--text-mute); text-transform: uppercase; margin-bottom: 10px; letter-spacing: 1px; }
+        .cursor-grid { display: flex; gap: 10px; justify-content: space-between; }
+        .cursor-option {
+            width: 30px; height: 30px; background: #21262d; border-radius: 6px;
+            display: flex; justify-content: center; align-items: center;
+            border: 1px solid transparent; transition: 0.2s; font-size: 16px;
+        }
+        .cursor-option:hover { background: #30363d; transform: scale(1.1); }
+        .cursor-option.active { border-color: var(--accent); background: rgba(88, 166, 255, 0.2); }
+
+        /* Other UI Elements */
+        .launch-btn-trigger {
+            position: absolute; bottom: 20px; left: 20px;
+            width: 50px; height: 50px;
+            background: #21262d; border: 1px solid var(--border);
+            border-radius: 50%; display: flex; justify-content: center; align-items: center;
+            z-index: 1000; font-size: 24px; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            transition: 0.3s;
+        }
+        .launch-btn-trigger:hover { transform: translateY(-3px) scale(1.1); border-color: var(--birth-accent); }
+
+        .launch-panel {
+            position: absolute; bottom: 80px; left: 20px;
+            width: 340px; background: var(--panel); border: 1px solid var(--birth-accent);
+            border-radius: 12px; z-index: 1000; display: none; flex-direction: column;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+            animation: slideUp 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+        }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        .lp-header { padding: 15px; background: #1a1a1a; border-bottom: 1px solid #333; border-radius: 12px 12px 0 0; display: flex; justify-content: space-between; align-items: center; }
+        .lp-title { font-weight: bold; color: var(--birth-accent); font-family: var(--font-mono); letter-spacing: 0.5px; }
+        .lp-body { padding: 0; max-height: 300px; overflow-y: auto; }
+        .mission-card { padding: 15px; border-bottom: 1px solid #333; position: relative; transition: 0.2s; }
+        .mission-card:hover { background: rgba(0, 230, 118, 0.05); }
+        .m-name { font-weight: bold; color: #fff; font-size: 15px; margin-bottom: 4px; }
+        .m-rocket { color: #888; font-size: 12px; display: flex; align-items: center; gap: 5px; margin-top: 5px; }
+        .m-timer { font-family: var(--font-mono); font-size: 13px; color: var(--birth-accent); margin-top: 8px; font-weight: bold; }
+        .m-tag { position: absolute; top: 15px; right: 15px; font-size: 10px; background: #333; padding: 2px 6px; border-radius: 4px; color: #fff; }
+
+        .chat-terminal {
+            position: absolute; bottom: 90px; right: 20px;
+            width: 380px; height: 500px;
+            background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6); z-index: 999;
+            display: none; flex-direction: column;
+        }
+
+        .chat-header { padding: 12px 15px; background: #0d1117; border-bottom: 1px solid var(--border); border-radius: 12px 12px 0 0; display: flex; justify-content: space-between; align-items: center; }
+        .chat-body { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; font-size: 13px; }
+        .msg { padding: 10px 14px; border-radius: 8px; max-width: 85%; line-height: 1.5; animation: fadeIn 0.3s; }
+        .msg-ai { align-self: flex-start; background: #21262d; border-left: 3px solid var(--accent); }
+        .msg-user { align-self: flex-end; background: var(--accent); color: #000; font-weight: 600; }
+        .tag-sys { font-size: 10px; opacity: 0.6; display: block; margin-bottom: 4px; font-family: var(--font-mono); }
+        .roast-card { margin-top: 8px; padding: 8px; background: rgba(0,0,0,0.3); border-radius: 4px; border: 1px dashed #444; font-family: var(--font-mono); font-size: 11px; color: var(--text-mute); }
+
+        .input-area { padding: 12px; background: #0d1117; border-top: 1px solid var(--border); border-radius: 0 0 12px 12px; display: flex; gap: 8px; }
+        .input-field { flex: 1; background: #161b22; border: 1px solid #30363d; padding: 8px; color: #fff; border-radius: 4px; outline: none; }
+
+        .ai-avatar-btn {
+            position: absolute; bottom: 20px; right: 20px;
+            width: 60px; height: 60px; background: #21262d;
+            border: 2px solid var(--accent); border-radius: 14px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5); z-index: 1000;
+            display: flex; justify-content: center; align-items: center;
+            transition: transform 0.2s;
+        }
+        .ai-avatar-btn:hover { transform: rotate(-5deg) scale(1.05); }
+        
+        .bot-face { width: 32px; height: 22px; background: #000; border-radius: 4px; position: relative; border: 2px solid var(--accent); }
+        .bot-eye { position: absolute; top: 6px; width: 4px; height: 4px; background: var(--accent); animation: blink 4s infinite; }
+        .eye-l { left: 6px; } .eye-r { right: 6px; }
+        .bot-mouth { position: absolute; bottom: 5px; left: 8px; right: 8px; height: 2px; background: var(--accent); }
+        @keyframes blink { 0%, 96%, 100% { height: 4px; } 98% { height: 1px; top: 8px; } }
+        .astro-btn { width: 24px; height: 24px; fill: #8b949e; cursor: pointer; transition: 0.3s; }
+        .astro-btn:hover { fill: #fff; transform: rotate(15deg); }
+        .music-panel { display: none; padding: 10px; background: #000; border-bottom: 1px solid #333; gap: 10px; font-size: 11px; align-items: center; }
+
+        body.night-mode { --accent: var(--night-accent); }
+        body.night-mode .ai-avatar-btn, body.night-mode .bot-face { border-color: var(--night-accent); }
+        body.night-mode .bot-eye, body.night-mode .bot-mouth { background: var(--night-accent); }
+        body.night-mode .msg-ai { border-color: var(--night-accent); border-left-color: var(--night-accent); }
+
+    </style>
+</head>
+<body>
+
+    <div id="entryOverlay">
+        <div class="entry-title">OPEN RS HUB</div>
+        <div class="entry-sub">GLOBAL MONITORING INTERFACE</div>
+        
+        <div class="legal-box">
+            <b>COMPLIANCE & ATTRIBUTION NOTICE:</b><br>
+            This platform serves as an open-source index for remote sensing data.<br>
+            All satellite imagery references (Sentinel-2, Landsat) are the property of their respective agencies (ESA, NASA, USGS).<br>
+            We operate in strict compliance with international open data policies.<br>
+            <span style="color:#888;">No personal geolocation data is stored on our servers. (GDPR Compliant)</span>
+        </div>
+
+        <div style="font-size:10px; margin-bottom:10px; color:#58a6ff;">SELECT FLIGHT INTERFACE TO INITIALIZE:</div>
+        
+        <div class="cursor-selection-grid">
+            <div class="entry-card" onclick="startGame('default')">
+                <div class="entry-icon">➤</div>
+                <div class="entry-label">STANDARD</div>
+            </div>
+            <div class="entry-card" onclick="startGame('pika')">
+                <div class="entry-icon">⚡️</div>
+                <div class="entry-label">ELECTRIC</div>
+            </div>
+            <div class="entry-card" onclick="startGame('dog')">
+                <div class="entry-icon">🐶</div>
+                <div class="entry-label">BEAGLE</div>
+            </div>
+            <div class="entry-card" onclick="startGame('rocket')">
+                <div class="entry-icon">🚀</div>
+                <div class="entry-label">TURBO</div>
+            </div>
+        </div>
     </div>
-  </div>
-</aside>
 
-<main id="main" aria-label="Main content">
-  <div id="mapFrame" aria-label="Map frame"></div>
+    <div id="map"></div>
 
-  <div class="card">
-    <div class="cardTitle">Details</div>
-    <p class="result">示例文本：这里可以放置地图信息、统计数据等。</p>
-  </div>
-</main>
+    <aside class="sidebar">
+        <div class="header">
+            <div class="title">OPEN RS HUB</div>
+            <div class="subtitle">Global Monitor</div>
+        </div>
+        <div class="layer-list">
+            <div class="section-title">LIVE FEEDS (OPEN SOURCE)</div>
+            <div class="layer-row">
+                <div><div class="layer-name">Sentinel-2</div><span class="layer-src">Source: ESA Copernicus</span></div>
+                <input type="checkbox" class="toggle" checked>
+            </div>
+            <div class="layer-row">
+                <div><div class="layer-name">Landsat 8/9</div><span class="layer-src">Source: USGS / NASA</span></div>
+                <input type="checkbox" class="toggle">
+            </div>
+        </div>
+        
+        <div class="cursor-station">
+            <div class="section-title">CURSOR WARDROBE</div>
+            <div class="cursor-grid">
+                <div class="cursor-option" id="opt-default" onclick="setCursor('default')" title="Standard">➤</div>
+                <div class="cursor-option" id="opt-pika" onclick="setCursor('pika')" title="Electric">⚡️</div>
+                <div class="cursor-option" id="opt-dog" onclick="setCursor('dog')" title="Beagle">🐶</div>
+                <div class="cursor-option" id="opt-rocket" onclick="setCursor('rocket')" title="Turbo">🚀</div>
+            </div>
+        </div>
+
+        <div class="sidebar-footer">
+            <b>Legal Attribution:</b><br>
+            Contains modified Copernicus Sentinel data [2024].<br>
+            USGS/NASA Landsat Program data.<br>
+            System is for visualization purposes only.
+        </div>
+    </aside>
+
+    <div class="launch-btn-trigger" onclick="toggleLaunch()" title="Incoming Newbies">🐣</div>
+    
+    <div class="launch-panel" id="launchPanel">
+        <div class="lp-header">
+            <span class="lp-title">ORBIT NEWBIES CHECK-IN</span>
+            <span style="font-size:16px; cursor:pointer;" onclick="toggleLaunch()">×</span>
+        </div>
+        <div class="lp-body" id="launchList"></div>
+        <div style="padding:10px; font-size:9px; color:#555; text-align:center; border-top:1px solid #333;">
+            Data synced with Public Launch Manifests.
+        </div>
+    </div>
+
+    <div class="ai-avatar-btn" onclick="toggleChat()"><div class="bot-face"><div class="bot-eye eye-l"></div><div class="bot-eye eye-r"></div><div class="bot-mouth"></div></div></div>
+    
+    <div class="chat-terminal" id="terminal">
+        <div class="chat-header">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <canvas id="visualizer" style="width:40px; height:20px; opacity:0.5;"></canvas>
+                <span style="font-weight:bold; font-size:12px;">CO-PILOT v2.0</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:15px;">
+                <span style="cursor:pointer;" onclick="toggleNightMode()" title="Night/Chill Mode">🌙</span>
+                <div title="Call Human (Station Master)" onclick="callHuman()">
+                     <svg class="astro-btn" viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12C20,14.4 18.9,16.55 17.16,18L16.56,17.2C16.16,16.63 15.54,16.27 14.85,16.19C15.56,15.53 16,14.62 16,13.63C16,12.04 14.54,10.79 12.85,11.03C11.5,11.23 10.5,12.39 10.5,13.75C10.5,14.71 10.96,15.56 11.66,16.12C11,16.23 10.42,16.61 10.05,17.15L9.36,18.09C7.03,16.35 5.5,13.62 5.5,10.5A6.5,6.5 0 0,1 12,4M12,6A4.5,4.5 0 0,0 7.5,10.5C7.5,12.18 8.41,13.66 9.77,14.45L10.55,13.38L10.57,13.35C10.68,13.2 11.28,12.38 12,12.38C12.72,12.38 13.32,13.2 13.43,13.35L13.45,13.38L14.23,14.45C15.59,13.66 16.5,12.18 16.5,10.5A4.5,4.5 0 0,0 12,6Z"/></svg>
+                </div>
+            </div>
+        </div>
+        <div class="music-panel" id="musicPanel">
+            <input type="file" id="audioInput" style="display:none" accept="audio/*" onchange="playMusic(this)">
+            <button onclick="document.getElementById('audioInput').click()" style="background:#333; color:#fff; border:none; padding:4px 8px; border-radius:4px;">📂 Load MP3</button>
+            <span id="songTitle" style="color:#666;">No Track</span>
+            <audio id="player" loop></audio>
+        </div>
+        <div class="chat-body" id="chatBody"></div>
+        <div class="input-area">
+            <input type="text" class="input-field" id="userInput" placeholder="Type a command..." onkeypress="handleKey(event)">
+        </div>
+    </div>
+
+    <script>
+        // 1. MAP
+        const map = L.map('map', {zoomControl: false}).setView([20, 0], 3);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
+
+        // 2. ENTRY & CURSOR LOGIC
+        const cursors = {
+            'default': 'auto',
+            'pika': `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' style='font-size:24px;'><text y='24'>⚡️</text></svg>") 16 16, auto`,
+            'dog': `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' style='font-size:24px;'><text y='24'>🐶</text></svg>") 16 16, auto`,
+            'rocket': `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' style='font-size:24px;'><text y='24'>🚀</text></svg>") 16 16, auto`
+        };
+
+        function startGame(choice) {
+            setCursor(choice);
+            const overlay = document.getElementById('entryOverlay');
+            overlay.style.opacity = '0';
+            setTimeout(() => { overlay.style.display = 'none'; }, 500);
+            
+            const chatBody = document.getElementById('chatBody');
+            chatBody.innerHTML = `
+                <div class="msg msg-ai">
+                    <span class="tag-sys" style="color:#00e676">[SYSTEM_READY]</span><br>
+                    Welcome aboard, Commander.<br>
+                    Flight Interface: <b>${choice.toUpperCase()}</b> loaded.<br>
+                    <span style="font-size:10px; color:#666; font-style:italic;">(Secure uplink established with open source catalogs.)</span>
+                </div>
+            `;
+        }
+
+        function setCursor(type) {
+            document.documentElement.style.setProperty('--cursor-default', cursors[type]);
+            document.documentElement.style.setProperty('--cursor-pointer', cursors[type]);
+            document.querySelectorAll('.cursor-option').forEach(d => d.classList.remove('active'));
+            const activeBtn = document.getElementById('opt-'+type);
+            if(activeBtn) activeBtn.classList.add('active');
+        }
+
+        // 3. NEWBIE DATA
+        const launches = [
+            { name: "Albedo Space", rocket: "Falcon 9", tag: "🔥 0.1m Res", desc: "The new King of Clarity?", time: new Date(Date.now() + 1000 * 60 * 60 * 24 * 15) },
+            { name: "MethaneSAT", rocket: "Transporter", tag: "🌿 AI+Climate", desc: "Watching planet breathe.", time: new Date(Date.now() + 1000 * 60 * 60 * 48) },
+            { name: "Jilin-1", rocket: "Ceres-1", tag: "🚀 Daily Revisit", desc: "Faster than delivery.", time: new Date(Date.now() + 1000 * 60 * 60 * 5) }
+        ];
+
+        function renderLaunches() {
+            const container = document.getElementById('launchList');
+            container.innerHTML = "";
+            launches.forEach(m => {
+                const diff = m.time - Date.now();
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                
+                const html = `
+                    <div class="mission-card" style="border-left: 3px solid ${m.name.includes('Albedo') ? '#ff0055' : '#00e676'}">
+                        <div class="m-tag" style="background:${m.name.includes('Albedo') ? '#ff0055' : '#333'}">${m.tag}</div>
+                        <div class="m-name">${m.name}</div>
+                        <div style="font-size:11px; color:#888; margin-bottom:5px;">"${m.desc}"</div>
+                        <div class="m-rocket">📦 Delivery: ${m.rocket}</div>
+                        <div class="m-timer">🐣 ETA: ${days}d ${hours}h to orbit</div>
+                    </div>
+                `;
+                container.innerHTML += html;
+            });
+        }
+        setInterval(renderLaunches, 60000); renderLaunches();
+        function toggleLaunch() { 
+            const p = document.getElementById('launchPanel');
+            p.style.display = p.style.display === 'flex' ? 'none' : 'flex'; 
+        }
+
+        // 4. CHAT LOGIC
+        const chatBody = document.getElementById('chatBody');
+        const input = document.getElementById('userInput');
+        let isNight = false;
+
+        function handleKey(e) { if(e.key === 'Enter') sendMsg(); }
+
+        function sendMsg() {
+            const txt = input.value.trim();
+            if(!txt) return;
+            chatBody.innerHTML += `<div class="msg msg-user">${txt}</div>`;
+            input.value = "";
+            chatBody.scrollTop = chatBody.scrollHeight;
+            
+            const loaders = isNight ? 
+                ["Listening to the void...", "Watching stars...", "Just you and me..."] : 
+                ["Querying open catalogs...", "Checking license agreements...", "Filtering optimism..."];
+            const rndLoad = loaders[Math.floor(Math.random()*loaders.length)];
+            const thinkingId = "think-"+Date.now();
+            
+            chatBody.innerHTML += `<div id="${thinkingId}" style="margin-top:10px; font-size:11px; color:#666; font-style:italic;">> ${rndLoad}</div>`;
+            chatBody.scrollTop = chatBody.scrollHeight;
+            setTimeout(() => { document.getElementById(thinkingId).remove(); reply(txt); }, 1000);
+        }
+
+        function reply(txt) {
+            let msg = "";
+            let roast = "";
+            txt = txt.toLowerCase();
+
+            // Legal/Compliance trigger
+            if(txt.includes("legal") || txt.includes("rules") || txt.includes("compliance")) {
+                 msg = "System operates under Open Source Protocols.";
+                 roast = "<b>⚖️ COMPLIANCE LOG</b><br>Data sources: ESA, USGS, NASA.<br>Privacy: No user data stored.<br>Status: Green.";
+            }
+            else if(isNight) {
+                if(txt.includes("free")) msg = "We'll do our best with Sentinel. It's beautiful too.";
+                else if(txt.includes("contact")) msg = "It's late. Email ceo@constellport.com and rest.";
+                else if(txt.includes("cloud")) msg = "Take a break. Clouds will pass.";
+                else msg = "I'm listening. The music is nice.";
+            } else {
+                if(txt.includes("free") && (txt.includes("hd") || txt.includes("0.5"))) {
+                    msg = "I detect optimism.";
+                    roast = "<b>⚠️ REALITY CHECK</b><br>You want: 0.5m HD (Free)<br>Physics allows: 10m (Sentinel)<br>Suggestion: Lower standards.";
+                }
+                else if(txt.includes("contact") || txt.includes("email")) { callHuman(); return; }
+                else if(txt.includes("cloud")) { msg = "Clouds block sensors."; roast = "<b>☁️ PHYSICS ERROR</b><br>Try SAR or pray for wind."; }
+                else if(txt.includes("singapore")) { map.setView([1.35, 103.8], 12); msg = "Teleporting to Singapore."; }
+                else if(txt.includes("launch") || txt.includes("newbie")) { toggleLaunch(); msg = "Opening the Nursery."; }
+                else { msg = "Command not recognized."; roast = "<b>🤖 ERROR</b><br>Try 'Launch', 'Cloud', 'Free'."; }
+            }
+
+            const html = `
+                <div class="msg msg-ai">
+                    <span class="tag-sys">${isNight ? '♥ [COMPANION]' : '[SYSTEM_LOG]'}</span>
+                    ${msg}
+                    ${roast ? `<div class="roast-card">${roast}</div>` : ''}
+                </div>
+            `;
+            chatBody.innerHTML += html;
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+
+        function appendAiMsg(html) {
+            chatBody.innerHTML += `<div class="msg msg-ai">${html}</div>`;
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+
+        function callHuman() {
+            appendAiMsg(`<b>👨‍🚀 STATION MASTER</b><br>Email: <span style="color:${isNight?'#ff79c6':'#58a6ff'}">ceo@constellport.com</span>`);
+        }
+
+        function toggleNightMode() {
+            isNight = !isNight;
+            document.body.classList.toggle('night-mode', isNight);
+            document.getElementById('musicPanel').style.display = isNight ? 'flex' : 'none';
+            if(!isNight) document.getElementById('player').pause();
+            appendAiMsg(`<span style="color:${isNight?'#ff79c6':'inherit'}">${isNight ? '♥ NIGHT MODE ACTIVE' : 'WORK MODE ACTIVE'}</span>`);
+        }
+
+        function playMusic(el) {
+            const file = el.files[0];
+            if(file) {
+                document.getElementById('songTitle').innerText = file.name;
+                const p = document.getElementById('player');
+                p.src = URL.createObjectURL(file);
+                p.play();
+            }
+        }
+
+        let isChatOpen = false;
+        function toggleChat() {
+            const t = document.getElementById('terminal');
+            isChatOpen = !isChatOpen;
+            t.style.display = isChatOpen ? 'flex' : 'none';
+        }
+    </script>
+</body>
+</html>
