@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GPTM SOVEREIGN // ZENITH CONSOLE</title>
+    <title>GPTM SOVEREIGN // ZENITH</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -12,64 +12,77 @@
     <style>
         /* --- THEME: DEEP SEA NAVY & SIGNAL YELLOW --- */
         :root {
-            --bg-body: #020b16;       /* Darkest Navy */
-            --bg-panel: #051e3e;      /* Deep Sea Panel */
-            --border: #1e3a5f;        /* Border Blue */
-            
-            --accent-yellow: #ffd700; /* COMMANDER GOLD */
-            --accent-green: #10b981;  /* SUCCESS */
-            --accent-amber: #f59e0b;  /* ENGINEER/WARNING */
-            --accent-data: #3b82f6;   /* DATA BLUE */
-            --accent-lock: #64748b;   /* 2023 LOCKED */
-            
-            --font-mono: "JetBrains Mono", monospace;
-            --font-ui: "Inter", sans-serif;
+            --bg-body: #020b16; --bg-panel: #051e3e; --border: #1e3a5f;
+            --accent-yellow: #ffd700; --accent-green: #10b981; --accent-amber: #f59e0b;
+            --accent-data: #3b82f6; --accent-lock: #64748b;
+            --font-mono: "JetBrains Mono", monospace; --font-ui: "Inter", sans-serif;
         }
-
         body.god-mode { --border: var(--accent-yellow); }
         body.god-mode .sidebar { border-right: 1px solid var(--accent-yellow); }
-
         * { box-sizing: border-box; outline: none; }
         body { margin: 0; padding: 0; font-family: var(--font-ui); background: var(--bg-body); color: #ccc; overflow: hidden; height: 100vh; width: 100vw; cursor: default; }
-        
         #app { display: flex; flex-direction: column; height: 100%; filter: blur(10px); transition: 0.8s; pointer-events: none; }
         #app.unlocked { filter: blur(0); pointer-events: all; }
 
-        /* --- LOGIN --- */
+        /* LOGIN */
         #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; background: rgba(2, 11, 22, 0.98); display: flex; justify-content: center; align-items: center; flex-direction: column; }
-        .login-box { width: 450px; padding: 40px; border: 1px solid var(--border); background: var(--bg-panel); box-shadow: 0 0 100px rgba(0,0,0,0.5); border-radius: 8px; }
+        .login-box { width: 450px; padding: 40px; border: 1px solid var(--border); background: var(--bg-panel); box-shadow: 0 0 80px rgba(0,0,0,0.8); border-radius: 8px; }
         .login-title { font-size: 24px; font-weight: 900; color: #fff; margin-bottom: 20px; letter-spacing: 2px; text-align: center; }
         .login-input { width: 100%; background: #020b16; border: 1px solid var(--border); color: #fff; padding: 12px; font-family: var(--font-mono); font-size: 12px; margin-bottom: 15px; border-radius: 4px; }
         .login-input:focus { border-color: var(--accent-yellow); }
-        
-        .z-title { font-size: 10px; color: #888; margin: 15px 0 5px 0; text-transform: uppercase; letter-spacing: 1px; text-align: center; }
-        .zodiac-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 20px; }
-        .z-btn { background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: #666; padding: 8px; cursor: pointer; text-align: center; border-radius: 4px; transition: 0.2s; }
-        .z-btn:hover, .z-btn.selected { border-color: var(--accent-yellow); color: var(--accent-yellow); background: rgba(255, 215, 0, 0.1); }
-        .z-icon { font-size: 18px; }
-
         .enter-btn { width: 100%; background: var(--accent-yellow); color: #000; border: none; padding: 12px; font-weight: 800; cursor: pointer; margin-top: 10px; border-radius: 4px; letter-spacing: 1px; }
-        .enter-btn:hover { background: #fff; }
         .reg-btn { width: 100%; background: transparent; border: 1px solid #666; color: #888; padding: 10px; font-size: 11px; cursor: pointer; margin-top: 10px; border-radius: 4px; }
-        .reg-btn:hover { border-color: #ccc; color: #ccc; }
+        .z-title { font-size: 10px; color: #888; margin: 15px 0 5px 0; text-align: center; }
+        .zodiac-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 20px; }
+        .z-btn { background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: #666; padding: 8px; cursor: pointer; text-align: center; border-radius: 4px; }
+        .z-btn.selected { border-color: var(--accent-yellow); color: var(--accent-yellow); background: rgba(255, 215, 0, 0.1); }
 
-        /* --- HEADER --- */
+        /* HEADER */
         header { height: 50px; background: #0a1018; border-bottom: 1px solid var(--border); display: grid; grid-template-columns: 250px 1fr 300px; align-items: center; padding: 0 20px; z-index: 500; }
         .brand { font-size: 16px; font-weight: 900; color: #fff; letter-spacing: 2px; display: flex; align-items: center; gap: 10px; }
         .brand span { color: var(--accent-yellow); }
-
         .ai-topbar { display: flex; align-items: center; justify-content: center; gap: 15px; font-family: var(--font-mono); font-size: 11px; color: #888; cursor: pointer; height: 100%; }
         .ai-status { display: flex; align-items: center; gap: 6px; }
         .ai-dot { width: 6px; height: 6px; border-radius: 50%; }
-        .ai-msg-preview { max-width: 400px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #ccc; }
-        
-        .header-controls { display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
         .view-switch { display: none; background: #000; border: 1px solid var(--border); border-radius: 4px; padding: 2px; }
-        .vs-btn { padding: 6px 12px; font-size: 10px; border: none; background: transparent; color: #666; cursor: pointer; font-weight: 700; font-family: var(--font-mono); border-radius: 2px; }
+        .vs-btn { padding: 6px 12px; font-size: 10px; border: none; background: transparent; color: #666; cursor: pointer; font-weight: 700; border-radius: 2px; }
         .vs-btn.active { background: var(--accent-yellow); color: #000; }
         .user-badge { font-family: var(--font-mono); font-size: 11px; padding: 5px 10px; border: 1px solid var(--border); border-radius: 4px; color: #888; }
 
-        /* --- AI DROPDOWN --- */
+        /* WORKSPACE & PANELS */
+        #workspace { flex: 1; display: grid; grid-template-columns: 340px 1fr; overflow: hidden; }
+        .sidebar { background: var(--bg-panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 10; }
+        .p-head { padding: 15px; border-bottom: 1px solid var(--border); font-size: 11px; font-weight: 700; color: #fff; letter-spacing: 1px; background: rgba(0,0,0,0.2); display: flex; justify-content: space-between; }
+        .p-body { flex: 1; overflow-y: auto; padding: 20px; }
+        
+        .admin-upload-card { background: rgba(0,0,0,0.2); border: 1px solid var(--border); padding: 15px; margin-bottom: 10px; border-radius: 4px; }
+        .auc-header { display: flex; justify-content: space-between; margin-bottom: 10px; color: #fff; font-weight: 700; font-size: 12px; }
+        .auc-status { font-size: 9px; padding: 2px 6px; background: #000; color: #666; border-radius: 2px; }
+        .auc-status.live { color: var(--accent-green); border: 1px solid var(--accent-green); }
+        .upload-btn-mini { width: 100%; border: 1px dashed #666; color: #888; padding: 8px; text-align: center; font-size: 10px; cursor: pointer; border-radius: 2px; }
+        .upload-btn-mini:hover { border-color: var(--accent-yellow); color: var(--accent-yellow); }
+
+        .step-card { border: 1px solid #333; padding: 15px; margin-bottom: 15px; background: rgba(0,0,0,0.2); border-radius: 6px; opacity: 0.5; pointer-events: none; }
+        .step-card.active { opacity: 1; pointer-events: all; border-color: #666; background: rgba(255,255,255,0.02); }
+        .step-card.done { border-color: var(--accent-green); opacity: 0.8; }
+        .action-btn { width: 100%; background: var(--accent-yellow); color: #000; border: none; padding: 10px; font-weight: 800; cursor: pointer; border-radius: 4px; font-size: 11px; margin-bottom: 5px; }
+        .action-btn.warn { background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #ef4444; }
+        
+        .module { margin-bottom: 25px; border-bottom: 1px dashed var(--border); padding-bottom: 20px; }
+        .mod-title { font-size: 10px; color: var(--accent-yellow); font-weight: 700; margin-bottom: 10px; }
+        .aoi-box { border: 1px solid #222; padding: 10px; background: #0a0a0a; margin-bottom: 10px; border-radius: 4px; }
+        .sys-select { width: 100%; background: #151515; border: 1px solid #333; color: #ccc; padding: 8px; font-family: var(--font-mono); font-size: 11px; outline: none; }
+        .upload-zone { border: 1px dashed #444; padding: 20px; text-align: center; cursor: pointer; }
+        .year-toggle { display: flex; justify-content: space-between; align-items: center; background: #111; border: 1px solid #222; padding: 10px; margin-bottom: 5px; cursor: pointer; opacity: 1; }
+        .year-toggle.active { border-color: #fff; background: #1a1a1a; }
+        .year-tag { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+
+        .email-panel { background: #111; border: 1px dashed #666; padding: 10px; border-radius: 4px; display: none; margin-bottom: 10px; }
+        .resend-link { font-size: 9px; color: #666; text-decoration: underline; cursor: pointer; float: right; margin-top: 5px; }
+
+        #map { width: 100%; height: 100%; background: #ffffff; z-index: 1; }
+        
+        /* AI POPUP */
         #aiDropdown { position: absolute; top: 50px; left: 50%; transform: translateX(-50%); width: 500px; background: rgba(5, 30, 62, 0.98); border: 1px solid var(--border); border-top: none; box-shadow: 0 10px 40px rgba(0,0,0,0.5); display: none; flex-direction: column; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; overflow: hidden; }
         .ai-body { height: 250px; overflow-y: auto; padding: 15px; font-family: var(--font-mono); font-size: 11px; }
         .chat-row { display: flex; gap: 10px; margin-bottom: 8px; align-items: flex-start; }
@@ -78,66 +91,11 @@
         .avatar.engineer { border: 1px solid var(--accent-amber); color: var(--accent-amber); background: rgba(245, 158, 11, 0.1); }
         .bubble { background: rgba(0,0,0,0.3); padding: 8px 12px; border-radius: 4px; color: #ddd; line-height: 1.4; border: 1px solid rgba(255,255,255,0.05); }
 
-        /* --- WORKSPACE --- */
-        #workspace { flex: 1; display: grid; grid-template-columns: 340px 1fr; overflow: hidden; }
-        .sidebar { background: var(--bg-panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 10; }
-        .p-head { padding: 15px; border-bottom: 1px solid var(--border); font-size: 11px; font-weight: 700; color: #fff; letter-spacing: 1px; background: rgba(0,0,0,0.2); display: flex; justify-content: space-between; }
-        .p-body { flex: 1; overflow-y: auto; padding: 20px; }
-
-        /* ADMIN SIDEBAR */
-        #sidebar-admin { display: none; }
-        .admin-upload-card { background: rgba(0,0,0,0.2); border: 1px solid var(--border); padding: 15px; margin-bottom: 10px; border-radius: 4px; }
-        .auc-header { display: flex; justify-content: space-between; margin-bottom: 10px; color: #fff; font-weight: 700; font-size: 12px; }
-        .auc-status { font-size: 9px; padding: 2px 6px; background: #000; color: #666; border-radius: 2px; font-family: var(--font-mono); }
-        .auc-status.live { color: var(--accent-green); border: 1px solid var(--accent-green); }
-        .auc-status.locked { color: var(--accent-lock); border: 1px solid var(--accent-lock); background:#222; }
-        .file-list { font-size: 9px; color: #888; font-family: var(--font-mono); line-height: 1.4; margin-bottom: 10px; }
-        .upload-btn-mini { width: 100%; border: 1px dashed #666; color: #888; padding: 8px; text-align: center; font-size: 10px; cursor: pointer; border-radius: 2px; }
-        .upload-btn-mini:hover { border-color: var(--accent-yellow); color: var(--accent-yellow); }
-
-        /* USER SIDEBAR */
-        #sidebar-user { display: flex; flex-direction: column; }
-        .step-card { border: 1px solid #333; padding: 15px; margin-bottom: 15px; background: rgba(0,0,0,0.2); border-radius: 6px; opacity: 0.5; pointer-events: none; }
-        .step-card.active { opacity: 1; pointer-events: all; border-color: #666; background: rgba(255,255,255,0.02); }
-        .step-card.done { border-color: var(--accent-green); opacity: 0.8; position:relative; }
-        .step-card.done::after { content: '✓'; position: absolute; top: 10px; right: 10px; color: var(--accent-green); }
-        
-        .step-title { font-size: 11px; font-weight: 700; color: #fff; margin-bottom: 5px; }
-        .step-desc { font-size: 10px; color: #666; margin-bottom: 10px; line-height: 1.4; }
-
-        .action-btn { width: 100%; background: var(--accent-yellow); color: #000; border: none; padding: 10px; font-weight: 800; cursor: pointer; border-radius: 4px; font-size: 11px; margin-bottom: 5px; }
-        .action-btn:hover { background: #fff; }
-        .action-btn.secondary { background: transparent; border: 1px solid #666; color: #ccc; }
-        .action-btn.secondary:hover { border-color: #fff; color: #fff; }
-        .action-btn.warn { background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #ef4444; }
-        .action-btn.warn:hover { background: #ef4444; color: #fff; }
-
-        /* MODULES & TOGGLES */
-        .module { margin-bottom: 25px; border-bottom: 1px dashed var(--border); padding-bottom: 20px; }
-        .mod-title { font-size: 10px; color: var(--accent-yellow); font-weight: 700; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
-        .aoi-box { border: 1px solid #222; padding: 10px; background: #0a0a0a; margin-bottom: 10px; border-radius: 4px; }
-        .sys-select { width: 100%; background: #151515; border: 1px solid #333; color: #ccc; padding: 8px; font-family: var(--font-mono); font-size: 11px; outline: none; }
-        .upload-zone { border: 1px dashed #444; padding: 20px; text-align: center; cursor: pointer; transition: 0.2s; }
-        .upload-zone:hover { border-color: var(--accent-data); color: var(--accent-data); }
-
-        .year-toggle { display: flex; justify-content: space-between; align-items: center; background: #111; border: 1px solid #222; padding: 10px; margin-bottom: 5px; cursor: pointer; opacity: 1; transition: 0.3s; }
-        .year-toggle.active { border-color: #fff; background: #1a1a1a; }
-        .year-tag { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 8px; }
-
-        .email-panel { background: #111; border: 1px dashed #666; padding: 10px; border-radius: 4px; display: none; margin-bottom: 10px; }
-        .resend-link { font-size: 9px; color: #666; text-decoration: underline; cursor: pointer; float: right; margin-top: 5px; }
-
-        /* MAP */
-        #map { width: 100%; height: 100%; background: #ffffff; z-index: 1; }
-
-        /* CURSOR */
-        .cursor-trail { position: fixed; pointer-events: none; z-index: 9999; font-size: 24px; opacity: 0.8; transition: 0.1s; }
-
         /* MODALS */
         #warningModal, #ndaModal, #reportModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(2, 11, 22, 0.95); z-index: 10000; display: none; justify-content: center; align-items: center; }
         .doc-paper { width: 500px; background: #fff; color: #000; padding: 40px; border-radius: 8px; font-family: serif; max-height: 80vh; overflow-y: auto; }
         .warn-box { width: 450px; background: #051e3e; border: 1px solid var(--accent-amber); padding: 30px; text-align: center; border-radius: 8px; box-shadow: 0 0 50px rgba(245, 158, 11, 0.2); }
-
+        .cursor-trail { position: fixed; pointer-events: none; z-index: 9999; font-size: 24px; opacity: 0.8; transition: 0.1s; }
     </style>
 </head>
 <body>
@@ -159,6 +117,7 @@
 
 <header>
     <div class="brand"><i class="ph ph-globe-hemisphere-east"></i> GPTM <span>SOVEREIGN</span></div>
+    
     <div class="ai-topbar" onclick="toggleAIChat()">
         <div class="ai-status"><div class="ai-dot" style="background:var(--accent-green)"></div> CONCIERGE</div>
         <div class="ai-status"><div class="ai-dot" style="background:var(--accent-amber)"></div> ENGINEER</div>
@@ -166,6 +125,7 @@
         <div class="ai-msg-preview" id="aiTicker">System Online. 2023.SHP Baseline Active.</div>
         <i class="ph ph-caret-down"></i>
     </div>
+
     <div class="header-controls">
         <div class="view-switch" id="viewSwitch">
             <button class="vs-btn" id="btnViewUser" onclick="switchView('user')">USER VIEW</button>
@@ -175,9 +135,7 @@
     </div>
 </header>
 
-<div id="aiDropdown">
-    <div class="ai-body" id="chatBody"></div>
-</div>
+<div id="aiDropdown"><div class="ai-body" id="chatBody"></div></div>
 
 <div id="workspace">
     
@@ -215,9 +173,9 @@
                 <div class="p-head">COVERAGE SCOPE</div>
                 <div class="p-body">
                     <div class="module">
-                        <div class="mod-title">TARGET DEFINITION (DUAL TRACK)</div>
+                        <div class="mod-title">TARGET DEFINITION</div>
                         <div class="aoi-box">
-                            <div style="font-size:9px; color:#888; margin-bottom:5px;">A) ADMINISTRATIVE SELECT</div>
+                            <div style="font-size:9px; color:#888; margin-bottom:5px;">A) ADMIN SELECT</div>
                             <select class="sys-select" onchange="map.setView([25.05, 55.2], 10)">
                                 <option>GLOBAL</option><option>NATIONAL</option><option>UAE (DUBAI)</option>
                             </select>
@@ -248,40 +206,23 @@
         <div id="sidebar-admin">
             <div class="p-head" style="color:var(--accent-yellow)">DATA MANAGEMENT HUB</div>
             <div class="p-body">
-                
                 <div class="admin-upload-card" style="border-color:var(--accent-green);">
-                    <div class="auc-header">
-                        2023 BASELINE <span class="auc-status live">LIVE</span>
-                    </div>
-                    <div class="file-list">
-                        > 2023.shp [DETECTED]<br>
-                        > 2023.prj [WGS84]<br>
-                        > 2023.dbf [LINKED]
-                    </div>
+                    <div class="auc-header">2023 BASELINE <span class="auc-status live">LIVE</span></div>
+                    <div class="file-list">> 2023.shp [DETECTED]<br>> 2023.prj [WGS84]</div>
                     <div class="upload-btn-mini" onclick="adminUpload('2023')">OVERWRITE / UPDATE</div>
                 </div>
-
                 <div class="admin-upload-card">
-                    <div class="auc-header">
-                        2024 COLLECTION <span class="auc-status" id="st-2024">OFFLINE</span>
-                    </div>
+                    <div class="auc-header">2024 COLLECTION <span class="auc-status" id="st-2024">OFFLINE</span></div>
                     <div class="upload-btn-mini" onclick="adminUpload('2024')">UPLOAD VECTOR</div>
                 </div>
-
                 <div class="admin-upload-card">
-                    <div class="auc-header">
-                        2025 COLLECTION <span class="auc-status" id="st-2025">OFFLINE</span>
-                    </div>
+                    <div class="auc-header">2025 COLLECTION <span class="auc-status" id="st-2025">OFFLINE</span></div>
                     <div class="upload-btn-mini" onclick="adminUpload('2025')">UPLOAD VECTOR</div>
                 </div>
-
                 <div class="admin-upload-card">
-                    <div class="auc-header">
-                        2026 PREVIEW <span class="auc-status" id="st-2026">LOCKED</span>
-                    </div>
+                    <div class="auc-header">2026 PREVIEW <span class="auc-status" id="st-2026">LOCKED</span></div>
                     <div class="upload-btn-mini" onclick="adminUpload('2026')">UPLOAD VECTOR</div>
                 </div>
-
             </div>
         </div>
 
@@ -325,8 +266,9 @@
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
     const layers = { '2023': L.featureGroup().addTo(map), '2024': L.featureGroup(), '2025': L.featureGroup() };
 
-    // LOAD 2023 BASELINE (Simulated from 2023.shp)
+    // LOAD 2023 BASELINE
     function loadBaseline() {
+        // Mock 2023 Grid
         const grid = [[[30,-100],[45,-80]], [[-20,-60],[-5,-45]], [[10,20],[30,40]], [[35,100],[50,140]]];
         grid.forEach(b => L.rectangle(b, { color:'#64748b', weight:1, fillOpacity:0.2 }).addTo(layers['2023']));
     }
@@ -448,18 +390,12 @@
         document.getElementById('phase-mission').style.display='block';
     }
 
-    // --- 4. MAP & ADMIN LOGIC ---
+    // --- 4. MAP & ADMIN ---
     function adminUpload(year) {
-        const st = document.getElementById(`st-${year}`);
-        st.innerText = "UPLOADING..."; st.style.color = "var(--accent-amber)";
-        setTimeout(() => {
-            st.innerText = "ONLINE"; st.className = "auc-status live";
-            addChat('engineer', `${year} Vector layer mounted.`);
-            // Mock visual
-            L.rectangle([[10, 100], [20, 120]], {color: 'var(--accent-data)', fillOpacity:0.2}).addTo(layers[year]);
-        }, 1000);
+        addChat('engineer', `${year} Vector layer mounted.`);
+        const b = [[20,-20],[40,20]];
+        L.rectangle(b, {color:'var(--accent-data)', fillOpacity:0.2}).addTo(layers['2025']);
     }
-
     function toggleLayer(year) {
         if(map.hasLayer(layers[year])) map.removeLayer(layers[year]); else map.addLayer(layers[year]);
     }
