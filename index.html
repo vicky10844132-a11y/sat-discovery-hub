@@ -3,24 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GPTM SOVEREIGN // BASELINE LOCKED</title>
+    <title>GPTM SOVEREIGN // ZENITH CONSOLE</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <style>
-        /* --- THEME: DEEP SEA BLUE & SIGNAL YELLOW --- */
+        /* --- THEME: DEEP SEA NAVY & SIGNAL YELLOW --- */
         :root {
-            --bg-body: #020b16;
-            --bg-panel: #051e3e;
-            --border: #1e3a5f;
+            --bg-body: #020b16;       /* Darkest Navy */
+            --bg-panel: #051e3e;      /* Deep Sea Panel */
+            --border: #1e3a5f;        /* Border Blue */
             
-            --accent-yellow: #ffd700; 
-            --accent-green: #10b981;
-            --accent-amber: #f59e0b;
-            --accent-data: #3b82f6;
-            --accent-lock: #64748b; /* Deep Grey for 2023 Locked Layer */
+            --accent-yellow: #ffd700; /* COMMANDER GOLD */
+            --accent-green: #10b981;  /* SUCCESS */
+            --accent-amber: #f59e0b;  /* ENGINEER/WARNING */
+            --accent-data: #3b82f6;   /* DATA BLUE */
+            --accent-lock: #64748b;   /* 2023 LOCKED */
             
             --font-mono: "JetBrains Mono", monospace;
             --font-ui: "Inter", sans-serif;
@@ -37,55 +37,40 @@
 
         /* --- LOGIN --- */
         #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; background: rgba(2, 11, 22, 0.98); display: flex; justify-content: center; align-items: center; flex-direction: column; }
-        .login-box { width: 450px; padding: 40px; border: 1px solid var(--border); background: var(--bg-panel); box-shadow: 0 0 80px rgba(0,0,0,0.8); border-radius: 8px; }
+        .login-box { width: 450px; padding: 40px; border: 1px solid var(--border); background: var(--bg-panel); box-shadow: 0 0 100px rgba(0,0,0,0.5); border-radius: 8px; }
         .login-title { font-size: 24px; font-weight: 900; color: #fff; margin-bottom: 20px; letter-spacing: 2px; text-align: center; }
-        .login-input { width: 100%; background: #020b16; border: 1px solid var(--border); color: #fff; padding: 12px; font-family: var(--font-mono); font-size: 12px; margin-bottom: 15px; border-radius: 4px; cursor: text; }
-        .enter-btn { width: 100%; background: var(--accent-yellow); color: #000; border: none; padding: 12px; font-weight: 800; cursor: pointer; margin-top: 10px; border-radius: 4px; letter-spacing: 1px; }
-        .enter-btn:hover { background: #fff; }
-        .reg-btn { width: 100%; background: transparent; border: 1px solid #666; color: #888; padding: 10px; font-size: 11px; cursor: pointer; margin-top: 10px; border-radius: 4px; }
-        .reg-btn:hover { border-color: #ccc; color: #ccc; }
-
-        /* ZODIAC (Compact) */
-        .z-title { font-size: 10px; color: #888; margin: 20px 0 10px 0; text-transform: uppercase; letter-spacing: 1px; text-align: center; }
+        .login-input { width: 100%; background: #020b16; border: 1px solid var(--border); color: #fff; padding: 12px; font-family: var(--font-mono); font-size: 12px; margin-bottom: 15px; border-radius: 4px; }
+        .login-input:focus { border-color: var(--accent-yellow); }
+        
+        .z-title { font-size: 10px; color: #888; margin: 15px 0 5px 0; text-transform: uppercase; letter-spacing: 1px; text-align: center; }
         .zodiac-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 20px; }
         .z-btn { background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: #666; padding: 8px; cursor: pointer; text-align: center; border-radius: 4px; transition: 0.2s; }
         .z-btn:hover, .z-btn.selected { border-color: var(--accent-yellow); color: var(--accent-yellow); background: rgba(255, 215, 0, 0.1); }
         .z-icon { font-size: 18px; }
 
+        .enter-btn { width: 100%; background: var(--accent-yellow); color: #000; border: none; padding: 12px; font-weight: 800; cursor: pointer; margin-top: 10px; border-radius: 4px; letter-spacing: 1px; }
+        .enter-btn:hover { background: #fff; }
+        .reg-btn { width: 100%; background: transparent; border: 1px solid #666; color: #888; padding: 10px; font-size: 11px; cursor: pointer; margin-top: 10px; border-radius: 4px; }
+        .reg-btn:hover { border-color: #ccc; color: #ccc; }
+
         /* --- HEADER --- */
-        header { 
-            height: 50px; background: #0a1018; border-bottom: 1px solid var(--border); 
-            display: grid; grid-template-columns: 250px 1fr 300px; align-items: center; padding: 0 20px; 
-            z-index: 500; position: relative;
-        }
+        header { height: 50px; background: #0a1018; border-bottom: 1px solid var(--border); display: grid; grid-template-columns: 250px 1fr 300px; align-items: center; padding: 0 20px; z-index: 500; }
         .brand { font-size: 16px; font-weight: 900; color: #fff; letter-spacing: 2px; display: flex; align-items: center; gap: 10px; }
         .brand span { color: var(--accent-yellow); }
 
-        .ai-topbar { 
-            display: flex; align-items: center; justify-content: center; gap: 15px; 
-            font-family: var(--font-mono); font-size: 11px; color: #888; cursor: pointer; height: 100%;
-        }
+        .ai-topbar { display: flex; align-items: center; justify-content: center; gap: 15px; font-family: var(--font-mono); font-size: 11px; color: #888; cursor: pointer; height: 100%; }
         .ai-status { display: flex; align-items: center; gap: 6px; }
         .ai-dot { width: 6px; height: 6px; border-radius: 50%; }
+        .ai-msg-preview { max-width: 400px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #ccc; }
         
         .header-controls { display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
-        .view-switch { 
-            display: none; background: #000; border: 1px solid var(--border); border-radius: 4px; padding: 2px;
-        }
-        .vs-btn { 
-            padding: 6px 12px; font-size: 10px; border: none; background: transparent; color: #666; 
-            cursor: pointer; font-weight: 700; font-family: var(--font-mono); border-radius: 2px;
-        }
+        .view-switch { display: none; background: #000; border: 1px solid var(--border); border-radius: 4px; padding: 2px; }
+        .vs-btn { padding: 6px 12px; font-size: 10px; border: none; background: transparent; color: #666; cursor: pointer; font-weight: 700; font-family: var(--font-mono); border-radius: 2px; }
         .vs-btn.active { background: var(--accent-yellow); color: #000; }
         .user-badge { font-family: var(--font-mono); font-size: 11px; padding: 5px 10px; border: 1px solid var(--border); border-radius: 4px; color: #888; }
 
         /* --- AI DROPDOWN --- */
-        #aiDropdown {
-            position: absolute; top: 50px; left: 50%; transform: translateX(-50%); width: 500px;
-            background: rgba(5, 30, 62, 0.98); border: 1px solid var(--border); border-top: none;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.5); display: none; flex-direction: column;
-            border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; overflow: hidden;
-        }
+        #aiDropdown { position: absolute; top: 50px; left: 50%; transform: translateX(-50%); width: 500px; background: rgba(5, 30, 62, 0.98); border: 1px solid var(--border); border-top: none; box-shadow: 0 10px 40px rgba(0,0,0,0.5); display: none; flex-direction: column; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; overflow: hidden; }
         .ai-body { height: 250px; overflow-y: auto; padding: 15px; font-family: var(--font-mono); font-size: 11px; }
         .chat-row { display: flex; gap: 10px; margin-bottom: 8px; align-items: flex-start; }
         .avatar { width: 24px; height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
@@ -95,36 +80,31 @@
 
         /* --- WORKSPACE --- */
         #workspace { flex: 1; display: grid; grid-template-columns: 340px 1fr; overflow: hidden; }
-
         .sidebar { background: var(--bg-panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 10; }
         .p-head { padding: 15px; border-bottom: 1px solid var(--border); font-size: 11px; font-weight: 700; color: #fff; letter-spacing: 1px; background: rgba(0,0,0,0.2); display: flex; justify-content: space-between; }
         .p-body { flex: 1; overflow-y: auto; padding: 20px; }
 
         /* ADMIN SIDEBAR */
         #sidebar-admin { display: none; }
-        .admin-upload-card { 
-            background: rgba(0,0,0,0.2); border: 1px solid var(--border); padding: 15px; 
-            margin-bottom: 10px; border-radius: 4px; transition: 0.2s;
-        }
+        .admin-upload-card { background: rgba(0,0,0,0.2); border: 1px solid var(--border); padding: 15px; margin-bottom: 10px; border-radius: 4px; }
         .auc-header { display: flex; justify-content: space-between; margin-bottom: 10px; color: #fff; font-weight: 700; font-size: 12px; }
         .auc-status { font-size: 9px; padding: 2px 6px; background: #000; color: #666; border-radius: 2px; font-family: var(--font-mono); }
         .auc-status.live { color: var(--accent-green); border: 1px solid var(--accent-green); }
-        .auc-status.locked { color: #fff; border: 1px solid #666; background:#333; }
-        .upload-btn-mini { 
-            width: 100%; border: 1px dashed #666; color: #888; padding: 8px; 
-            text-align: center; font-size: 10px; cursor: pointer; border-radius: 2px;
-        }
+        .auc-status.locked { color: var(--accent-lock); border: 1px solid var(--accent-lock); background:#222; }
+        .file-list { font-size: 9px; color: #888; font-family: var(--font-mono); line-height: 1.4; margin-bottom: 10px; }
+        .upload-btn-mini { width: 100%; border: 1px dashed #666; color: #888; padding: 8px; text-align: center; font-size: 10px; cursor: pointer; border-radius: 2px; }
         .upload-btn-mini:hover { border-color: var(--accent-yellow); color: var(--accent-yellow); }
 
         /* USER SIDEBAR */
-        #sidebar-user { display: flex; }
-        .module { margin-bottom: 25px; border-bottom: 1px dashed var(--border); padding-bottom: 20px; }
-        .mod-title { font-size: 10px; color: var(--accent-yellow); font-weight: 700; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
-        
+        #sidebar-user { display: flex; flex-direction: column; }
         .step-card { border: 1px solid #333; padding: 15px; margin-bottom: 15px; background: rgba(0,0,0,0.2); border-radius: 6px; opacity: 0.5; pointer-events: none; }
         .step-card.active { opacity: 1; pointer-events: all; border-color: #666; background: rgba(255,255,255,0.02); }
-        .step-card.done { border-color: var(--accent-green); opacity: 0.8; }
+        .step-card.done { border-color: var(--accent-green); opacity: 0.8; position:relative; }
+        .step-card.done::after { content: '✓'; position: absolute; top: 10px; right: 10px; color: var(--accent-green); }
         
+        .step-title { font-size: 11px; font-weight: 700; color: #fff; margin-bottom: 5px; }
+        .step-desc { font-size: 10px; color: #666; margin-bottom: 10px; line-height: 1.4; }
+
         .action-btn { width: 100%; background: var(--accent-yellow); color: #000; border: none; padding: 10px; font-weight: 800; cursor: pointer; border-radius: 4px; font-size: 11px; margin-bottom: 5px; }
         .action-btn:hover { background: #fff; }
         .action-btn.secondary { background: transparent; border: 1px solid #666; color: #ccc; }
@@ -132,7 +112,9 @@
         .action-btn.warn { background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #ef4444; }
         .action-btn.warn:hover { background: #ef4444; color: #fff; }
 
-        /* MISSION MODULES */
+        /* MODULES & TOGGLES */
+        .module { margin-bottom: 25px; border-bottom: 1px dashed var(--border); padding-bottom: 20px; }
+        .mod-title { font-size: 10px; color: var(--accent-yellow); font-weight: 700; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
         .aoi-box { border: 1px solid #222; padding: 10px; background: #0a0a0a; margin-bottom: 10px; border-radius: 4px; }
         .sys-select { width: 100%; background: #151515; border: 1px solid #333; color: #ccc; padding: 8px; font-family: var(--font-mono); font-size: 11px; outline: none; }
         .upload-zone { border: 1px dashed #444; padding: 20px; text-align: center; cursor: pointer; transition: 0.2s; }
@@ -233,16 +215,16 @@
                 <div class="p-head">COVERAGE SCOPE</div>
                 <div class="p-body">
                     <div class="module">
-                        <div class="mod-title">TARGET DEFINITION</div>
+                        <div class="mod-title">TARGET DEFINITION (DUAL TRACK)</div>
                         <div class="aoi-box">
-                            <div style="font-size:9px; color:#888; margin-bottom:5px;">A) ADMIN SELECT</div>
+                            <div style="font-size:9px; color:#888; margin-bottom:5px;">A) ADMINISTRATIVE SELECT</div>
                             <select class="sys-select" onchange="map.setView([25.05, 55.2], 10)">
                                 <option>GLOBAL</option><option>NATIONAL</option><option>UAE (DUBAI)</option>
                             </select>
                         </div>
                         <div class="aoi-box" style="margin-bottom:0;">
-                            <div style="font-size:9px; color:#888; margin-bottom:5px;">B) UPLOAD AOI</div>
-                            <div class="upload-zone" onclick="alert('Upload .ZIP/KML')"><i class="ph ph-upload-simple"></i> UPLOAD</div>
+                            <div style="font-size:9px; color:#888; margin-bottom:5px;">B) CUSTOM UPLOAD</div>
+                            <div class="upload-zone" onclick="alert('Upload .ZIP/KML')"><i class="ph ph-upload-simple"></i> UPLOAD AOI</div>
                         </div>
                     </div>
                     <div class="module" style="border:none;">
@@ -269,10 +251,14 @@
                 
                 <div class="admin-upload-card" style="border-color:var(--accent-green);">
                     <div class="auc-header">
-                        2023 BASELINE <span class="auc-status locked">SYSTEM LOCKED</span>
+                        2023 BASELINE <span class="auc-status live">LIVE</span>
                     </div>
-                    <div style="font-size:10px; color:#ccc; margin-bottom:5px;">SOURCE: 2023.SHP (UPLOADED)</div>
-                    <div class="upload-btn-mini" onclick="adminUpload('2023')">OVERWRITE VECTOR</div>
+                    <div class="file-list">
+                        > 2023.shp [DETECTED]<br>
+                        > 2023.prj [WGS84]<br>
+                        > 2023.dbf [LINKED]
+                    </div>
+                    <div class="upload-btn-mini" onclick="adminUpload('2023')">OVERWRITE / UPDATE</div>
                 </div>
 
                 <div class="admin-upload-card">
@@ -333,7 +319,6 @@
         <button class="action-btn" onclick="document.getElementById('reportModal').style.display='none'; handleReport();">SUBMIT REPORT</button>
     </div>
 </div>
-
 <script>
     // --- 1. SETUP ---
     const map = L.map('map', { zoomControl: false, minZoom: 2 }).setView([20, 0], 2);
@@ -342,7 +327,6 @@
 
     // LOAD 2023 BASELINE (Simulated from 2023.shp)
     function loadBaseline() {
-        // Global Grid representation
         const grid = [[[30,-100],[45,-80]], [[-20,-60],[-5,-45]], [[10,20],[30,40]], [[35,100],[50,140]]];
         grid.forEach(b => L.rectangle(b, { color:'#64748b', weight:1, fillOpacity:0.2 }).addTo(layers['2023']));
     }
@@ -453,13 +437,11 @@
         else if(resendCount === 2) addChat('engineer', 'Network lag. Rerouting...');
         else { addChat('engineer', 'Firewall issue. Bypassing.'); confirmEmailReceipt(); }
     }
-
     function confirmEmailReceipt() {
         document.getElementById('emailPanel').style.display='none';
         document.getElementById('dataTools').style.display='block';
         addChat('concierge', 'Verified. FTP Unlocked.');
     }
-
     function handleReport() {
         addChat('engineer', 'Report verified. Mission controls unlocked.');
         document.getElementById('phase-compliance').style.display='none';
