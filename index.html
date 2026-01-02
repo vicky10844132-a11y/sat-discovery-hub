@@ -3,21 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OPEN RS HUB // Command Center</title>
+    <title>OPEN RS HUB // Final Command</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/satellite.js/4.0.0/satellite.min.js"></script>
 
     <style>
-        /* --- 1. CORE VARIABLES (SCI-FI BLUE THEME) --- */
+        /* --- 1. CORE VARIABLES (DEEP SEA THEME) --- */
         :root {
-            --bg: #0b1016;                      /* 稍微提亮一点的深色背景 */
-            --panel: rgba(11, 19, 30, 0.95);    /* 深蓝面板 */
-            --border: #00e5ff;                  /* 荧光青 */
-            --accent: #00e5ff;                  
-            --accent-glow: rgba(0, 229, 255, 0.4); 
-            --text: #e0f7ff;                    
-            --text-mute: #6b8caf;               
+            --bg: #001a33; 
+            --panel: rgba(0, 30, 60, 0.95); 
+            --border: #00e5ff; 
+            --accent: #00e5ff;
+            --accent-glow: rgba(0, 229, 255, 0.4);
+            --text: #d0e8ff; 
+            --text-mute: #6b9cc6; 
             --font-mono: 'SF Mono', 'Consolas', monospace;
             --cursor-default: auto;
             --cursor-pointer: pointer;
@@ -30,158 +31,181 @@
             cursor: var(--cursor-default); 
         }
 
-        /* 强制自定义光标 */
-        button, a, .toggle, .ai-avatar-btn, .entry-card, .portal-item, .close-btn {
+        * { cursor: inherit; }
+        button, a, .toggle, .ai-avatar-btn, .entry-card, .list-item, .help-btn, .copy-btn, .aoi-btn, .launch-btn-trigger {
             cursor: var(--cursor-pointer) !important;
         }
 
-        /* --- 2. ENTRY OVERLAY (字体调优版) --- */
+        /* --- 2. ENTRY OVERLAY --- */
         #entryOverlay {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(8, 12, 18, 0.98);
-            z-index: 9999;
+            background: rgba(0, 26, 51, 0.98); z-index: 9999;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
-            transition: opacity 0.6s ease;
-            backdrop-filter: blur(15px);
+            transition: opacity 0.6s ease; backdrop-filter: blur(15px);
         }
-        
-        /* 修正：字体调小，更精致 */
-        .entry-title { 
-            font-size: 24px; font-weight: 800; letter-spacing: 4px; color: var(--accent); 
-            margin-bottom: 5px; text-shadow: 0 0 10px var(--accent-glow);
-        }
-        .entry-sub { 
-            font-family: var(--font-mono); font-size: 11px; color: var(--text-mute); 
-            margin-bottom: 30px; letter-spacing: 2px;
-        }
-        
+        .entry-title { font-size: 24px; font-weight: 800; letter-spacing: 4px; color: var(--accent); margin-bottom: 5px; text-shadow: 0 0 10px var(--accent-glow); }
+        .entry-sub { font-family: var(--font-mono); font-size: 11px; color: var(--text-mute); margin-bottom: 30px; letter-spacing: 2px; }
         .legal-box {
-            max-width: 550px;
-            font-size: 10px; color: var(--text-mute); line-height: 1.5;
-            margin-bottom: 30px; padding: 15px;
-            background: rgba(0, 229, 255, 0.03);
-            border: 1px solid rgba(0, 229, 255, 0.2);
-            border-left: 2px solid var(--accent);
-            font-family: var(--font-mono);
+            max-width: 600px; font-size: 10px; color: var(--text-mute); line-height: 1.6;
+            margin-bottom: 30px; padding: 15px; background: rgba(0, 229, 255, 0.03);
+            border: 1px solid rgba(0, 229, 255, 0.2); border-left: 2px solid var(--accent); font-family: var(--font-mono);
         }
-
-        .cursor-selection-grid { 
-            display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; 
-            max-width: 700px;
-        }
+        .cursor-selection-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; max-width: 700px; }
         .entry-card {
-            width: 80px; height: 90px; /* 尺寸调小 */
-            background: rgba(16, 27, 45, 0.6);
-            border: 1px solid rgba(0, 229, 255, 0.15);
-            border-radius: 8px;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            transition: 0.2s;
+            width: 80px; height: 90px; background: rgba(0, 40, 80, 0.6);
+            border: 1px solid rgba(0, 229, 255, 0.15); border-radius: 8px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.2s;
         }
-        .entry-card:hover { 
-            transform: translateY(-3px); 
-            border-color: var(--accent); 
-            background: rgba(0, 229, 255, 0.1);
-            box-shadow: 0 0 15px var(--accent-glow); 
-        }
+        .entry-card:hover { transform: translateY(-3px); border-color: var(--accent); background: rgba(0, 229, 255, 0.1); box-shadow: 0 0 15px var(--accent-glow); }
         .entry-icon { font-size: 28px; margin-bottom: 8px; filter: drop-shadow(0 0 2px var(--accent)); }
-        /* 修正：星座文字极小化 */
         .entry-label { font-size: 9px; font-weight: 600; color: var(--text-mute); text-transform: uppercase; letter-spacing: 0.5px; }
         .entry-card:hover .entry-label { color: var(--accent); }
 
-        /* --- 3. MAP (VISUAL FIX - 亮度恢复) --- */
+        /* --- 3. MAP (DEEP SEA) --- */
         #map { 
             width: 100vw; height: 100vh; z-index: 1; 
-            /* 修正：移除重滤镜，只保留轻微的对比度增强，让地图清晰可见 */
-            filter: contrast(1.1) brightness(1.1) saturate(1.1);
-            background: #0b1d2e; /* 匹配瓦片底色，防止拖拽白边 */
+            background: #001a33; 
+            filter: sepia(100%) hue-rotate(190deg) saturate(180%) brightness(70%) contrast(110%);
         }
 
-        /* --- 4. PANEL BASE STYLES --- */
+        /* --- 4. PANEL STYLES --- */
         .panel-base {
             position: absolute; background: var(--panel); 
-            border: 1px solid rgba(0, 229, 255, 0.3); border-radius: 6px;
-            backdrop-filter: blur(8px); z-index: 10;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            border: 1px solid rgba(0, 229, 255, 0.25); border-radius: 6px;
+            backdrop-filter: blur(12px); z-index: 10;
+            box-shadow: 0 4px 25px rgba(0, 20, 40, 0.6);
         }
         .header-base {
-            padding: 12px 15px; background: rgba(0, 229, 255, 0.05);
-            border-bottom: 1px solid rgba(0, 229, 255, 0.2);
+            padding: 10px 15px; background: rgba(0, 229, 255, 0.05);
+            border-bottom: 1px solid rgba(0, 229, 255, 0.15);
             border-radius: 6px 6px 0 0;
             display: flex; justify-content: space-between; align-items: center;
         }
-        .title-base { font-weight: 800; font-size: 12px; letter-spacing: 1px; color: var(--accent); }
-        .section-title { font-size: 10px; color: var(--accent); opacity: 0.8; margin-bottom: 10px; letter-spacing: 1px; font-weight: 700; padding-left: 5px; border-left: 2px solid var(--accent); }
+        .title-base { font-weight: 800; font-size: 11px; letter-spacing: 1px; color: var(--accent); text-transform: uppercase; }
+        .section-header {
+            font-size: 10px; color: var(--accent); opacity: 0.9; margin: 15px 0 8px 0; 
+            letter-spacing: 1px; font-weight: 700; padding-left: 5px; 
+            border-left: 3px solid var(--accent); text-transform: uppercase;
+        }
 
-        /* --- 5. LEFT SIDEBAR (No Zodiacs) --- */
-        .sidebar { top: 20px; left: 20px; width: 260px; }
-        .layer-list { padding: 15px; }
-        .layer-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .layer-name { font-size: 13px; font-weight: 500; color: var(--text); }
-        .layer-src { font-size: 10px; color: var(--text-mute); display: block; margin-top: 2px;}
-        
-        .toggle { appearance: none; width: 32px; height: 16px; background: #233044; border-radius: 8px; position: relative; transition: 0.3s; cursor: pointer; }
-        .toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; background: #6b8caf; border-radius: 50%; transition: 0.3s; }
+        /* --- 5. LEFT SIDEBAR --- */
+        .sidebar { top: 20px; left: 20px; width: 260px; max-height: 85vh; overflow-y: auto; }
+        .sidebar::-webkit-scrollbar { width: 0; }
+
+        .aoi-module { padding: 15px; border-bottom: 1px solid rgba(0, 229, 255, 0.1); }
+        .aoi-input-group { display: flex; gap: 5px; margin-bottom: 5px; }
+        .aoi-input {
+            flex: 1; background: rgba(0, 20, 40, 0.4); border: 1px solid rgba(0, 229, 255, 0.2);
+            color: var(--text); padding: 6px; font-size: 11px; border-radius: 4px; outline: none;
+            font-family: var(--font-mono); transition: 0.2s;
+        }
+        .aoi-input:focus { border-color: var(--accent); box-shadow: 0 0 5px var(--accent-glow); }
+        .aoi-btn {
+            background: rgba(0, 229, 255, 0.1); border: 1px solid var(--accent);
+            color: var(--accent); font-size: 10px; font-weight: bold; padding: 0 10px;
+            border-radius: 4px; transition: 0.2s;
+        }
+        .aoi-btn:hover { background: var(--accent); color: #000; box-shadow: 0 0 10px var(--accent-glow); }
+        .aoi-note { font-size: 8px; color: var(--text-mute); font-style: italic; }
+
+        .layer-list { padding: 0 15px 15px 15px; }
+        .layer-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .layer-name { font-size: 11px; font-weight: 500; color: var(--text); }
+        .layer-src { font-size: 9px; color: var(--text-mute); display: block; }
+        .toggle { appearance: none; width: 30px; height: 16px; background: #003366; border-radius: 8px; position: relative; transition: 0.3s; }
+        .toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; background: #6b9cc6; border-radius: 50%; transition: 0.3s; }
         .toggle:checked { background: rgba(0, 229, 255, 0.2); border: 1px solid var(--accent); }
-        .toggle:checked::after { transform: translateX(16px); background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+        .toggle:checked::after { transform: translateX(14px); background: var(--accent); box-shadow: 0 0 5px var(--accent); }
+        .sidebar-footer { padding: 12px 15px; border-top: 1px solid rgba(0, 229, 255, 0.1); font-size: 8px; color: var(--text-mute); line-height: 1.4; font-family: var(--font-mono); }
 
-        .sidebar-footer { padding: 15px; border-top: 1px solid rgba(0, 229, 255, 0.2); font-size: 9px; color: var(--text-mute); line-height: 1.4; font-family: var(--font-mono); }
-
-        /* --- 6. RIGHT SIDEBAR (INTELLIGENCE DIRECTORY - NO JUMP) --- */
-        .portal-sidebar { top: 20px; right: 20px; width: 240px; }
-        .portal-list { padding: 10px; }
-        .portal-item {
+        /* --- 6. RIGHT SIDEBAR (INDEX) --- */
+        .portal-sidebar { top: 20px; right: 20px; width: 280px; }
+        .portal-content { padding: 0 15px 15px 15px; }
+        .list-item {
             display: flex; justify-content: space-between; align-items: center;
-            padding: 10px; background: rgba(255, 255, 255, 0.03); margin-bottom: 6px;
+            padding: 8px 10px; background: rgba(255, 255, 255, 0.02); margin-bottom: 5px;
             border-radius: 4px; border: 1px solid transparent; transition: 0.2s;
         }
-        .portal-item:hover { border-color: var(--accent); background: rgba(0, 229, 255, 0.1); transform: translateX(-3px); }
-        .p-name { font-size: 12px; color: #fff; }
-        .p-tag { font-size: 9px; color: var(--text-mute); display: block; }
-        .p-icon { font-size: 10px; color: var(--accent); opacity: 0.5; }
-
-        /* --- 7. INTEL POPUP (替代跳转的弹窗) --- */
-        #intelModal {
-            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.9);
-            width: 400px; background: #0b1219;
-            border: 1px solid var(--accent); border-radius: 8px;
-            box-shadow: 0 0 50px rgba(0,0,0,0.8), 0 0 10px var(--accent-glow);
-            z-index: 2000; display: none; opacity: 0;
-            transition: 0.2s; font-family: var(--font-mono);
+        .list-item:hover { border-color: var(--accent); background: rgba(0, 229, 255, 0.08); }
+        .li-main { flex: 1; }
+        .li-title { font-size: 11px; color: var(--text); font-weight: 600; }
+        .li-desc { font-size: 9px; color: var(--text-mute); font-family: var(--font-mono); }
+        .help-btn {
+            width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--text-mute);
+            color: var(--text-mute); font-size: 10px; display: flex; justify-content: center; align-items: center;
+            margin-left: 10px; font-family: var(--font-mono); transition: 0.2s; z-index: 5;
         }
-        #intelModal.active { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-        
-        .intel-header { padding: 15px; background: rgba(0, 229, 255, 0.1); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--accent); }
-        .intel-title { color: var(--accent); font-weight: bold; font-size: 14px; letter-spacing: 1px; }
-        .intel-body { padding: 20px; color: var(--text); font-size: 12px; line-height: 1.6; }
-        .intel-row { display: flex; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px dashed #333; padding-bottom: 4px; }
-        .intel-label { color: var(--text-mute); }
-        .intel-val { color: #fff; font-weight: bold; }
-        .intel-desc { margin-top: 15px; color: var(--text-mute); font-style: italic; font-size: 11px; }
+        .help-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(0,229,255,0.1); }
 
-        /* --- 8. AI & NEWBIE (UI TWEAKS) --- */
+        /* --- 7. NEWBIE PANEL (RESTORED!) --- */
+        .launch-btn-trigger {
+            position: absolute; bottom: 20px; left: 20px;
+            width: 50px; height: 50px;
+            background: var(--panel); border: 1px solid var(--border);
+            border-radius: 50%; display: flex; justify-content: center; align-items: center;
+            z-index: 1000; font-size: 24px; box-shadow: 0 0 20px rgba(0, 229, 255, 0.2);
+            transition: 0.3s;
+        }
+        .launch-btn-trigger:hover { transform: translateY(-3px) scale(1.1); background: var(--accent); color: #001a33; }
+        
+        .launch-panel {
+            position: absolute; bottom: 80px; left: 20px;
+            width: 340px; display: none; flex-direction: column;
+            animation: slideUp 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+        }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
+        .lp-body { padding: 0; max-height: 300px; overflow-y: auto; }
+        .mission-card { padding: 15px; border-bottom: 1px solid rgba(0, 229, 255, 0.1); position: relative; transition: 0.2s; }
+        .mission-card:hover { background: rgba(0, 229, 255, 0.05); }
+        .m-name { font-weight: bold; color: var(--accent); font-size: 13px; margin-bottom: 4px; }
+        .m-rocket { color: var(--text-mute); font-size: 11px; display: flex; align-items: center; gap: 5px; margin-top: 5px; }
+        .m-timer { font-family: var(--font-mono); font-size: 11px; color: var(--text); margin-top: 8px; font-weight: bold; }
+        .m-tag { position: absolute; top: 15px; right: 15px; font-size: 9px; background: rgba(0, 229, 255, 0.1); border: 1px solid var(--accent); padding: 2px 6px; border-radius: 4px; color: var(--accent); }
+
+        /* --- 8. PLANNER MODAL --- */
+        #plannerModal {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.9);
+            width: 480px; background: #001a33; border: 1px solid var(--accent); border-radius: 8px;
+            box-shadow: 0 0 60px rgba(0, 40, 80, 0.8), 0 0 15px var(--accent-glow);
+            z-index: 2000; display: none; opacity: 0; transition: 0.2s; font-family: var(--font-mono);
+        }
+        #plannerModal.active { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        .pm-header { padding: 15px; background: rgba(0, 229, 255, 0.08); border-bottom: 1px solid var(--accent); display: flex; justify-content: space-between; align-items: center;}
+        .pm-title { color: var(--accent); font-weight: bold; font-size: 12px; letter-spacing: 1px; }
+        .pm-body { padding: 20px; color: var(--text); max-height: 450px; overflow-y: auto; }
+        
+        .sim-box { background: rgba(0, 30, 60, 0.4); border: 1px dashed rgba(0, 229, 255, 0.3); padding: 10px; margin-bottom: 15px; border-radius: 4px; }
+        .sim-title { font-size: 10px; color: var(--text-mute); margin-bottom: 8px; text-transform: uppercase; }
+        .sim-row { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px; }
+        .spec-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 11px; }
+        .copy-block { background: rgba(0, 229, 255, 0.03); padding: 12px; border: 1px solid rgba(0, 229, 255, 0.2); border-radius: 4px; position: relative; margin-top: 15px; }
+        .copy-content { font-size: 10px; color: var(--text); white-space: pre-wrap; line-height: 1.4; opacity: 0.9; }
+        .copy-btn { position: absolute; top: 5px; right: 5px; background: rgba(0, 229, 255, 0.2); color: var(--accent); border: 1px solid var(--accent); border-radius: 2px; padding: 2px 6px; font-size: 9px; font-weight: bold; }
+        .copy-btn:hover { background: var(--accent); color: #001a33; }
+        .note-text { font-size: 9px; color: var(--text-mute); margin-top: 15px; text-align: center; line-height: 1.4; font-style: italic; }
+        .url-link { color: var(--text-mute); text-decoration: none; border-bottom: 1px dotted var(--text-mute); }
+        .url-link:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+        /* --- 9. AI & CHAT --- */
         .ai-avatar-btn {
             position: absolute; bottom: 20px; right: 20px;
             width: 50px; height: 50px; background: var(--panel);
             border: 1px solid var(--accent); border-radius: 12px;
-            box-shadow: 0 0 15px rgba(0,0,0,0.5); z-index: 1000;
+            box-shadow: 0 0 20px rgba(0, 229, 255, 0.2); z-index: 1000;
             display: flex; justify-content: center; align-items: center;
         }
-        .bot-face { width: 26px; height: 18px; background: #000; border-radius: 2px; position: relative; border: 2px solid var(--accent); }
+        .bot-face { width: 26px; height: 18px; background: #001a33; border-radius: 2px; position: relative; border: 2px solid var(--accent); }
         .bot-eye { position: absolute; top: 4px; width: 4px; height: 4px; background: var(--accent); animation: blink 4s infinite; }
         .eye-l { left: 4px; } .eye-r { right: 4px; }
         .bot-mouth { position: absolute; bottom: 3px; left: 6px; right: 6px; height: 1px; background: var(--accent); }
         @keyframes blink { 0%, 96%, 100% { height: 4px; } 98% { height: 1px; top: 4px; } }
-
-        .chat-terminal {
-            position: absolute; bottom: 85px; right: 20px;
-            width: 350px; height: 450px; display: none; flex-direction: column;
-        }
-        .chat-body { flex: 1; padding: 15px; overflow-y: auto; font-size: 12px; }
-        .msg-ai { padding: 8px 12px; background: rgba(0, 229, 255, 0.05); border-left: 2px solid var(--accent); margin-bottom: 10px; border-radius: 0 8px 8px 0; }
-        .msg-user { padding: 8px 12px; background: rgba(255, 255, 255, 0.05); text-align: right; margin-bottom: 10px; border-radius: 8px 0 0 8px; }
-
-        .input-area { padding: 10px; border-top: 1px solid rgba(255,255,255,0.1); }
-        .input-field { width: 100%; background: transparent; border: none; color: #fff; outline: none; font-family: var(--font-mono); font-size: 12px; }
+        .chat-terminal { position: absolute; bottom: 85px; right: 20px; width: 320px; height: 400px; display: none; flex-direction: column; }
+        .chat-body { flex: 1; padding: 15px; overflow-y: auto; font-size: 11px; }
+        .msg-ai { padding: 8px 10px; background: rgba(0, 229, 255, 0.05); border-left: 2px solid var(--accent); margin-bottom: 8px; color: var(--text); }
+        .msg-user { padding: 8px 10px; background: rgba(0, 60, 120, 0.3); text-align: right; margin-bottom: 8px; color: var(--text); }
+        .input-area { padding: 10px; border-top: 1px solid rgba(0, 229, 255, 0.1); }
+        .input-field { width: 100%; background: transparent; border: none; color: var(--text); outline: none; font-family: var(--font-mono); font-size: 11px; }
 
     </style>
 </head>
@@ -189,17 +213,16 @@
 
     <div id="entryOverlay">
         <div class="entry-title">OPEN RS HUB</div>
-        <div class="entry-sub">SATELLITE COMMAND INTERFACE // V5.0</div>
+        <div class="entry-sub">SATELLITE MISSION PLANNER // V13.0</div>
         
         <div class="legal-box">
             [ COMPLIANCE NOTICE ]<br>
-            // Operating under Open Source Intelligence (OSINT) protocols.<br>
-            // No personal geolocation data stored. (GDPR Compliant)<br>
-            // Imagery references belong to ESA, NASA, USGS.
+            // System provides orbital simulation & coverage planning only.<br>
+            // NO commercial transactions or data transfer capabilities.<br>
+            // NO personal geolocation data stored. (GDPR Compliant)
         </div>
 
         <div style="font-size:10px; margin-bottom:10px; color:var(--accent); font-family:var(--font-mono);">[ SELECT OPERATOR ID ]</div>
-        
         <div class="cursor-selection-grid">
             <div class="entry-card" onclick="startGame('aries')"><div class="entry-icon">🐏</div><div class="entry-label">Aries</div></div>
             <div class="entry-card" onclick="startGame('taurus')"><div class="entry-icon">🐂</div><div class="entry-label">Taurus</div></div>
@@ -223,75 +246,96 @@
             <div class="title-base">OPEN RS HUB</div>
         </div>
         
+        <div class="aoi-module">
+            <div class="section-header" style="margin-top:0;">1) AOI TARGETING</div>
+            <div class="aoi-input-group">
+                <input type="text" id="aoiInput" class="aoi-input" placeholder="City / Coordinates..." onkeypress="handleAoiKey(event)">
+                <button class="aoi-btn" onclick="executeLocate()">LOCATE</button>
+            </div>
+            <div class="aoi-note">Locks target coordinates for mission planning.</div>
+        </div>
+
         <div class="layer-list">
-            <div class="section-title">OPTICAL FEEDS</div>
+            <div class="section-header">2) OPTICAL FEED (STAC)</div>
             <div class="layer-row">
-                <div><div class="layer-name">Sentinel-2 (ESA)</div><span class="layer-src">10m Multispectral</span></div>
+                <div><div class="layer-name">Sentinel-2 (ESA)</div><span class="layer-src">STAC: earth-search-aws</span></div>
                 <input type="checkbox" class="toggle" checked>
             </div>
             <div class="layer-row">
-                <div><div class="layer-name">Landsat 8/9 (USGS)</div><span class="layer-src">30m OLI/TIRS</span></div>
+                <div><div class="layer-name">Landsat 8/9 (USGS)</div><span class="layer-src">STAC: usgs-landsat-c2</span></div>
                 <input type="checkbox" class="toggle">
             </div>
             
-            <div class="section-title" style="margin-top:20px;">ENVIRONMENTAL</div>
+            <div class="section-header">3) ENVIRONMENTAL</div>
             <div class="layer-row">
-                <div><div class="layer-name">VIIRS Night Lights</div><span class="layer-src">Suomi NPP</span></div>
+                <div><div class="layer-name">VIIRS Night Lights</div><span class="layer-src">NASA GIBS</span></div>
                 <input type="checkbox" class="toggle">
             </div>
             <div class="layer-row">
-                <div><div class="layer-name">Active Fires</div><span class="layer-src">FIRMS / MODIS</span></div>
+                <div><div class="layer-name">Active Fires</div><span class="layer-src">FIRMS Real-time</span></div>
                 <input type="checkbox" class="toggle">
             </div>
         </div>
 
         <div class="sidebar-footer">
             [ SYSTEM ATTRIBUTION ]<br>
-            Contains modified Copernicus Sentinel data [2025].<br>
-            USGS/NASA Landsat Program data.
+            Index aligned with STAC v1.0.0 Spec.<br>
+            Data courtesy of ESA, USGS, NASA.
         </div>
     </aside>
 
     <div class="portal-sidebar panel-base">
         <div class="header-base">
-            <div class="title-base">DIRECTORY // INTEL</div>
+            <div class="title-base">RESOURCE DIRECTORY</div>
         </div>
-        <div class="portal-list">
-            <div class="section-title">COMMERCIAL OPTICAL</div>
-            <div class="portal-item" onclick="showIntel('maxar')">
-                <div><div class="p-name">MAXAR</div><span class="p-tag">WorldView Legion (0.3m)</span></div><div class="p-icon">DETAILS</div>
+        <div class="portal-content">
+            <div class="section-header">A) MULTI-SOURCE AGGREGATORS</div>
+            <div class="list-item" onclick="openPlanner('apollo', 'archive')">
+                <div class="li-main"><div class="li-title">Apollo Image Hunter</div><div class="li-desc">Broadest Commercial Search</div></div>
+                <div class="help-btn" onclick="event.stopPropagation(); showHelp('apollo')">?</div>
             </div>
-            <div class="portal-item" onclick="showIntel('planet')">
-                <div><div class="p-name">Planet</div><span class="p-tag">SuperDove (3m Daily)</span></div><div class="p-icon">DETAILS</div>
-            </div>
-            <div class="portal-item" onclick="showIntel('airbus')">
-                <div><div class="p-name">Airbus</div><span class="p-tag">Pleiades Neo (0.3m)</span></div><div class="p-icon">DETAILS</div>
+            <div class="list-item" onclick="openPlanner('stac', 'archive')">
+                <div class="li-main"><div class="li-title">STAC Index</div><div class="li-desc">Global Open Source Catalog</div></div>
+                <div class="help-btn" onclick="event.stopPropagation(); showHelp('stac')">?</div>
             </div>
 
-            <div class="section-title" style="margin-top:10px;">SAR & SPECIALTY</div>
-            <div class="portal-item" onclick="showIntel('capella')">
-                <div><div class="p-name">Capella Space</div><span class="p-tag">X-Band SAR</span></div><div class="p-icon">DETAILS</div>
+            <div class="section-header">B) COMMERCIAL CONSTELLATIONS</div>
+            <div class="list-item" onclick="openPlanner('maxar', 'archive')">
+                <div class="li-main"><div class="li-title">MAXAR Discover</div><div class="li-desc">High-Res Optical (30cm)</div></div>
+                <div class="help-btn" onclick="event.stopPropagation(); showHelp('maxar')">?</div>
             </div>
-            <div class="portal-item" onclick="showIntel('iceye')">
-                <div><div class="p-name">ICEYE</div><span class="p-tag">Persistent Monitoring</span></div><div class="p-icon">DETAILS</div>
+            <div class="list-item" onclick="openPlanner('planet', 'archive')">
+                <div class="li-main"><div class="li-title">Planet Explorer</div><div class="li-desc">Daily Global Scan (3m)</div></div>
+                <div class="help-btn" onclick="event.stopPropagation(); showHelp('planet')">?</div>
             </div>
         </div>
     </div>
 
-    <div id="intelModal" class="panel-base">
-        <div class="intel-header">
-            <div class="intel-title" id="modalTitle">TARGET ID</div>
-            <div style="cursor:pointer;" onclick="closeIntel()">[x]</div>
+    <div class="launch-btn-trigger" onclick="toggleLaunch()" title="Incoming Manifest">🐣</div>
+    <div class="launch-panel panel-base" id="launchPanel">
+        <div class="header-base" style="display: flex; justify-content: space-between; align-items: center;">
+            <span class="title-base">ORBIT NEWBIES CHECK-IN</span>
+            <span style="font-size:16px; cursor:pointer; color:var(--accent);" onclick="toggleLaunch()">×</span>
         </div>
-        <div class="intel-body" id="modalBody"></div>
+        <div class="lp-body" id="launchList"></div>
+        <div style="padding:10px; font-size:9px; color:var(--text-mute); text-align:center; border-top:1px solid rgba(0,229,255,0.2); font-family:var(--font-mono);">
+            [ DATA SYNCED WITH PUBLIC LAUNCH MANIFESTS ]
+        </div>
+    </div>
+
+    <div id="plannerModal" class="panel-base">
+        <div class="pm-header">
+            <div class="pm-title" id="pmTitle">MISSION SIMULATION</div>
+            <div style="cursor:pointer;" onclick="closePlanner()">[x]</div>
+        </div>
+        <div class="pm-body" id="pmBody">
+            </div>
     </div>
 
     <div class="ai-avatar-btn" onclick="toggleChat()"><div class="bot-face"><div class="bot-eye eye-l"></div><div class="bot-eye eye-r"></div><div class="bot-mouth"></div></div></div>
     
     <div class="chat-terminal panel-base" id="terminal">
-        <div class="header-base">
-            <span class="title-base">CO-PILOT // LOG</span>
-        </div>
+        <div class="header-base"><span class="title-base">CO-PILOT // LOG</span></div>
         <div class="chat-body" id="chatBody"></div>
         <div class="input-area">
             <input type="text" class="input-field" id="userInput" placeholder="Command..." onkeypress="handleKey(event)">
@@ -299,124 +343,154 @@
     </div>
 
     <script>
-        // --- 1. MAP SETUP (Brightened) ---
-        const map = L.map('map', {
-            zoomControl: false,
-            minZoom: 3, 
-            maxBounds: [[-90, -180], [90, 180]],
-            attributionControl: false
-        }).setView([20, 0], 3);
+        // --- 1. MAP SETUP ---
+        const map = L.map('map', { zoomControl: false, minZoom: 3, maxBounds: [[-90, -180], [90, 180]], attributionControl: false }).setView([20, 0], 3);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { subdomains: 'abcd', maxZoom: 19 }).addTo(map);
 
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-            subdomains: 'abcd',
-            maxZoom: 19
-        }).addTo(map);
+        let currentAOI = { name: "GLOBAL_VIEW", lat: 0, lon: 0 }; 
 
         // --- 2. CURSOR LOGIC ---
         const cursorSVG = (emoji) => `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='36' height='36' style='font-size:24px; filter:drop-shadow(0 0 3px cyan);'><text x='50%' y='60%' dominant-baseline='middle' text-anchor='middle'>${emoji}</text></svg>") 18 18, auto`;
-        
-        const cursors = {
-            'aries':    cursorSVG('🐏'), 'taurus':   cursorSVG('🐂'),
-            'gemini':   cursorSVG('👯'), 'cancer':   cursorSVG('🦀'),
-            'leo':      cursorSVG('🦁'), 'virgo':    cursorSVG('🧚'),
-            'libra':    cursorSVG('⚖️'), 'scorpio':  cursorSVG('🦂'),
-            'sagittarius':cursorSVG('🏹'),'capricorn':cursorSVG('🐐'),
-            'aquarius': cursorSVG('🏺'), 'pisces':   cursorSVG('🐟')
-        };
+        const cursors = { 'aries': cursorSVG('🐏'), 'taurus': cursorSVG('🐂'), 'gemini': cursorSVG('👯'), 'cancer': cursorSVG('🦀'), 'leo': cursorSVG('🦁'), 'virgo': cursorSVG('🧚'), 'libra': cursorSVG('⚖️'), 'scorpio': cursorSVG('🦂'), 'sagittarius':cursorSVG('🏹'), 'capricorn':cursorSVG('🐐'), 'aquarius': cursorSVG('🏺'), 'pisces': cursorSVG('🐟') };
 
         function startGame(choice) {
             document.documentElement.style.setProperty('--cursor-default', cursors[choice]);
             document.documentElement.style.setProperty('--cursor-pointer', cursors[choice]);
-            
             const overlay = document.getElementById('entryOverlay');
             overlay.style.opacity = '0';
             setTimeout(() => { overlay.style.display = 'none'; }, 600);
-            
             addMsg(`[SYSTEM] Interface initialized. Operator sign: ${choice.toUpperCase()}.`);
         }
 
-        // --- 3. INTEL DATA (The "No Jump" Solution) ---
-        const intelDB = {
-            'maxar': {
-                title: 'MAXAR TECHNOLOGIES',
-                data: { 'Constellation': 'WorldView Legion', 'Res': '30cm (Native)', 'Revisit': 'Up to 15x/day', 'Band': '8-Band Multispectral' },
-                desc: 'Primary provider for high-resolution defense and intelligence imagery. Features industry-leading accuracy.'
-            },
-            'planet': {
-                title: 'PLANET LABS',
-                data: { 'Constellation': 'SuperDove / SkySat', 'Res': '3m (Dove) / 50cm (SkySat)', 'Revisit': 'Daily (Global)', 'Archive': 'Daily since 2017' },
-                desc: 'Operates the largest earth observation fleet. "Scanner" philosophy: Image the whole world, every day.'
-            },
-            'airbus': {
-                title: 'AIRBUS INTELLIGENCE',
-                data: { 'Constellation': 'Pléiades Neo', 'Res': '30cm', 'Swath': '14km', 'Tasking': 'Reactive (Intraday)' },
-                desc: 'European leader in high-res optical. Offers specialized "OneAtlas" living library access.'
-            },
-            'capella': {
-                title: 'CAPELLA SPACE',
-                data: { 'Sensor': 'Synthetic Aperture Radar', 'Band': 'X-Band', 'Res': 'Sub-50cm', 'Capability': 'All-weather / Night' },
-                desc: 'US-based SAR provider. High-resolution radar imagery capable of penetrating clouds and smoke.'
-            },
-            'iceye': {
-                title: 'ICEYE',
-                data: { 'Sensor': 'SAR Microsats', 'Res': 'Spotlight mode', 'Revisit': 'High frequency', 'Orbit': 'Inclined & Sun-sync' },
-                desc: 'Finnish microsatellite manufacturer. Focuses on persistent monitoring and rapid revisit SAR.'
-            }
+        // --- 3. AOI LOGIC ---
+        function handleAoiKey(e) { if(e.key === 'Enter') executeLocate(); }
+        function executeLocate() {
+            const query = document.getElementById('aoiInput').value.trim();
+            if(!query) return;
+            addMsg(`[SEARCH] Locating "${query}"...`);
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`)
+                .then(r => r.json()).then(data => {
+                    if (data && data.length > 0) {
+                        const lat = parseFloat(data[0].lat); const lon = parseFloat(data[0].lon);
+                        map.setView([lat, lon], 10);
+                        L.marker([lat, lon]).addTo(map).bindPopup(`<b>AOI LOCKED:</b><br>${data[0].display_name}`).openPopup();
+                        currentAOI = { name: query.toUpperCase(), lat: lat.toFixed(4), lon: lon.toFixed(4) };
+                        addMsg(`[SUCCESS] Locked: ${currentAOI.name} (${lat.toFixed(4)}, ${lon.toFixed(4)})`);
+                    } else { addMsg(`[ERROR] Location not found.`); }
+                }).catch(err => { addMsg(`[ERROR] Connection failed.`); });
+        }
+
+        // --- 4. DATA INDEX ---
+        const satData = {
+            'apollo': { name: 'APOLLO IMAGE HUNTER', site: 'imagehunter.apollomapping.com', specs: {'Source': 'Multi-Vendor', 'Type': 'Aggregator', 'Access': 'Search Engine'}, desc: 'The industry standard search engine for almost all commercial satellite imagery.' },
+            'stac': { name: 'STAC INDEX', site: 'stacindex.org', specs: {'Standard': 'STAC v1.0.0', 'API': 'RESTful', 'Type': 'Catalog'}, desc: 'The official catalog of all SpatioTemporal Asset Catalogs available online.' },
+            'maxar': { name: 'MAXAR TECHNOLOGIES', site: 'discover.maxar.com', specs: {'Res': '0.3m', 'Swath': '13km'}, desc: 'High-resolution optical archive.' },
+            'planet': { name: 'PLANET LABS', site: 'planet.com', specs: {'Res': '3m', 'Revisit': 'Daily'}, desc: 'Daily global monitoring.' }
         };
 
-        function showIntel(key) {
-            const info = intelDB[key];
-            if(!info) return;
-
-            document.getElementById('modalTitle').innerText = info.title;
-            let html = '';
-            for (const [k, v] of Object.entries(info.data)) {
-                html += `<div class="intel-row"><span class="intel-label">${k}</span><span class="intel-val">${v}</span></div>`;
-            }
-            html += `<div class="intel-desc">${info.desc}</div>`;
-            document.getElementById('modalBody').innerHTML = html;
-            
-            document.getElementById('intelModal').style.display = 'block';
-            setTimeout(() => document.getElementById('intelModal').classList.add('active'), 10);
-            
-            addMsg(`[QUERY] Retrieved tech specs for: ${info.title}.`);
+        function getSimulatedParams(type) {
+            const now = new Date();
+            const future = new Date(now.getTime() + 86400000);
+            return `SEARCH PARAMETERS:\n-------------------------\nTARGET: ${currentAOI.name}\nCOORDS: ${currentAOI.lat}, ${currentAOI.lon}\nDATE_RANGE: 2024-01-01 TO ${now.toISOString().split('T')[0]}\nCLOUD_COVER: < 15%\nFORMAT: STAC-COMPLIANT JSON`;
         }
 
-        function closeIntel() {
-            document.getElementById('intelModal').classList.remove('active');
-            setTimeout(() => document.getElementById('intelModal').style.display = 'none', 200);
+        function openPlanner(key, type) {
+            const data = satData[key];
+            const modal = document.getElementById('plannerModal');
+            const title = document.getElementById('pmTitle');
+            const body = document.getElementById('pmBody');
+            title.innerText = `QUERY GENERATOR // ${data.name}`;
+            let html = `<div class="sim-box"><div class="sim-title">AOI STATUS</div>`;
+            html += `<div class="sim-row"><span>TARGET:</span><span style="color:var(--text)">${currentAOI.name}</span></div>`;
+            html += `<div class="sim-row"><span>COORDINATES:</span><span style="color:var(--text)">${currentAOI.lat}, ${currentAOI.lon}</span></div></div>`;
+            const params = getSimulatedParams(type);
+            html += `<div class="copy-block"><button class="copy-btn" onclick="copyText(this)">COPY</button><div class="copy-content" id="paramText">${params}</div></div>`;
+            html += `<div class="note-text">* Use these parameters to search on the external portal.<br>Click '?' in the sidebar to find the official URL.</div>`;
+            body.innerHTML = html;
+            modal.style.display = 'block';
+            setTimeout(() => modal.classList.add('active'), 10);
+            addMsg(`[PLANNER] Generated params for ${data.name}.`);
         }
 
-        // --- 4. CHAT LOGIC ---
+        function showHelp(key) {
+            const data = satData[key];
+            const modal = document.getElementById('plannerModal');
+            const title = document.getElementById('pmTitle');
+            const body = document.getElementById('pmBody');
+            title.innerText = `SPECS // ${data.name}`;
+            let html = `<div class="sim-box"><div class="sim-title">CAPABILITIES</div>`;
+            for (const [k, v] of Object.entries(data.specs)) html += `<div class="spec-row"><span style="color:var(--text-mute)">${k}:</span><span style="color:var(--text)">${v}</span></div>`;
+            html += `</div><div class="sim-box"><div class="sim-title">ACCESS POINT</div>`;
+            html += `<div style="font-size:10px; color:var(--text);">URL: <a href="https://${data.site}" target="_blank" class="url-link">${data.site}</a></div></div>`;
+            html += `<div class="note-text">"${data.desc}"</div>`;
+            body.innerHTML = html;
+            modal.style.display = 'block';
+            setTimeout(() => modal.classList.add('active'), 10);
+        }
+
+        function closePlanner() {
+            document.getElementById('plannerModal').classList.remove('active');
+            setTimeout(() => document.getElementById('plannerModal').style.display = 'none', 200);
+        }
+
+        function copyText(btn) {
+            const text = document.getElementById('paramText').innerText;
+            navigator.clipboard.writeText(text);
+            const original = btn.innerText;
+            btn.innerText = "COPIED!";
+            setTimeout(() => btn.innerText = original, 2000);
+        }
+
+        // --- 5. NEWBIE LAUNCH LOGIC (RESTORED) ---
+        const launches = [
+            { name: "Albedo Space", rocket: "Falcon 9", tag: "🔥 0.1m Res", desc: "VLEO Constellation", time: new Date(Date.now() + 1000 * 60 * 60 * 24 * 15) },
+            { name: "MethaneSAT", rocket: "Transporter", tag: "🌿 Climate", desc: "Methane Monitoring", time: new Date(Date.now() + 1000 * 60 * 60 * 48) },
+            { name: "Jilin-1", rocket: "Ceres-1", tag: "🚀 Revisit", desc: "High-Freq Monitor", time: new Date(Date.now() + 1000 * 60 * 60 * 5) }
+        ];
+
+        function renderLaunches() {
+            const container = document.getElementById('launchList');
+            container.innerHTML = "";
+            launches.forEach(m => {
+                const diff = m.time - Date.now();
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const html = `
+                    <div class="mission-card" style="border-left: 3px solid ${m.name.includes('Albedo') ? 'var(--accent)' : 'var(--text-mute)'}">
+                        <div class="m-tag" style="border-color:${m.name.includes('Albedo') ? 'var(--accent)' : 'var(--text-mute)'}; color:${m.name.includes('Albedo') ? 'var(--accent)' : 'var(--text-mute)'}">${m.tag}</div>
+                        <div class="m-name" style="color:${m.name.includes('Albedo') ? 'var(--accent)' : 'var(--text)'}">${m.name}</div>
+                        <div style="font-size:11px; color:var(--text-mute); margin-bottom:5px;">"${m.desc}"</div>
+                        <div class="m-rocket">📦 ${m.rocket}</div>
+                        <div class="m-timer">🐣 ETA: ${days}d ${hours}h</div>
+                    </div>
+                `;
+                container.innerHTML += html;
+            });
+        }
+        setInterval(renderLaunches, 60000); renderLaunches();
+        function toggleLaunch() { 
+            const p = document.getElementById('launchPanel');
+            p.style.display = p.style.display === 'flex' ? 'none' : 'flex'; 
+        }
+
+        // --- 6. CHAT LOGIC ---
         const chatBody = document.getElementById('chatBody');
         const input = document.getElementById('userInput');
-
         function handleKey(e) { if(e.key === 'Enter') sendMsg(); }
-
         function sendMsg() {
             const txt = input.value.trim();
             if(!txt) return;
             addMsg(txt, 'user');
             input.value = "";
-            setTimeout(() => reply(txt), 600);
+            setTimeout(() => { addMsg("System ready. Select a feed or search AOI."); }, 500);
         }
-
-        function reply(txt) {
-            const t = txt.toLowerCase();
-            let resp = "Command not recognized. Try 'status', 'scan', or 'visuals'.";
-            if(t.includes('hello')) resp = "Systems online. Ready for tasking.";
-            if(t.includes('status')) resp = "All constellations nominal. Data links secure.";
-            addMsg(resp);
-        }
-
         function addMsg(text, type='ai') {
-            const div = document.createElement('div');
-            div.className = type === 'ai' ? 'msg-ai' : 'msg-user';
-            div.innerText = text;
-            chatBody.appendChild(div);
+            const d = document.createElement('div');
+            d.className = type === 'ai' ? 'msg-ai' : 'msg-user';
+            d.innerText = text;
+            chatBody.appendChild(d);
             chatBody.scrollTop = chatBody.scrollHeight;
         }
-
         let isChatOpen = false;
         function toggleChat() {
             const t = document.getElementById('terminal');
