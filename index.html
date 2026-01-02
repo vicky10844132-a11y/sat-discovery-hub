@@ -3,167 +3,121 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GPTM SOVEREIGN // CUSTOM SKIN</title>
+    <title>GPTM SOVEREIGN // BASELINE LOCKED</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <style>
-        /* --- THEME: ELITE BLACK GOLD & AMBER --- */
+        /* --- THEME: DEEP SEA BLUE & SIGNAL YELLOW --- */
         :root {
-            --bg-root: #000000;
-            --bg-panel: #050505;
-            --border: #333;
+            --bg-body: #020b16;
+            --bg-panel: #051e3e;
+            --border: #1e3a5f;
             
-            --accent-xiaoer: #10b981; /* Green */
-            --accent-dushe: #f59e0b;  /* Amber */
-            --accent-admin: #ffd700;  /* Gold */
-            --accent-data: #3b82f6;   /* Blue */
+            --accent-yellow: #ffd700; 
+            --accent-green: #10b981;
+            --accent-amber: #f59e0b;
+            --accent-data-23: #64748b; /* Grey/Silver for 2023 Baseline */
+            --accent-data-25: #3b82f6; /* Blue for 2025 */
             
             --font-mono: "JetBrains Mono", monospace;
             --font-ui: "Inter", sans-serif;
         }
 
-        body.god-mode { --border: #5c4d26; }
-        body.god-mode .sidebar { border-color: var(--accent-admin); }
+        body.god-mode { --border: var(--accent-yellow); }
+        body.god-mode .sidebar { border-right: 1px solid var(--accent-yellow); }
 
         * { box-sizing: border-box; outline: none; }
-        /* Default cursor on login, crosshair inside */
-        body { margin: 0; padding: 0; font-family: var(--font-ui); background: var(--bg-root); color: #888; overflow: hidden; height: 100vh; width: 100vw; cursor: default; }
-        #app.unlocked { cursor: crosshair; }
-
+        body { margin: 0; padding: 0; font-family: var(--font-ui); background: var(--bg-body); color: #ccc; overflow: hidden; height: 100vh; width: 100vw; cursor: default; }
+        
         #app { display: flex; flex-direction: column; height: 100%; filter: blur(10px); transition: 0.8s; pointer-events: none; }
         #app.unlocked { filter: blur(0); pointer-events: all; }
 
         /* --- LOGIN --- */
-        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; background: #000; display: flex; justify-content: center; align-items: center; flex-direction: column; }
-        .login-box { width: 500px; /* Widened slightly */ padding: 40px; border: 1px solid #333; background: #050505; box-shadow: 0 0 100px rgba(255,255,255,0.02); border-radius: 12px; }
-        .login-title { font-size: 20px; font-weight: 900; color: #fff; margin-bottom: 20px; letter-spacing: 4px; text-align: center; }
-        .login-input { width: 100%; background: #000; border: 1px solid #333; color: #fff; padding: 12px; font-family: var(--font-mono); font-size: 12px; margin-bottom: 15px; cursor: text; border-radius: 4px; }
-        .login-input:focus { border-color: #fff; }
-        .enter-btn { width: 100%; background: #fff; color: #000; border: none; padding: 15px; font-weight: 800; cursor: pointer; margin-top: 10px; transition: 0.2s; border-radius: 4px; }
-        .enter-btn:hover { background: #ccc; }
-        .verify-btn { float: right; background: #222; color: #ccc; border: 1px solid #444; padding: 5px 10px; font-size: 10px; cursor: pointer; margin-top: -10px; margin-bottom: 10px; border-radius: 4px; }
+        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; background: rgba(2, 11, 22, 0.95); display: flex; justify-content: center; align-items: center; flex-direction: column; }
+        .login-box { width: 420px; padding: 30px; border: 1px solid var(--border); background: var(--bg-panel); box-shadow: 0 0 50px rgba(0,0,0,0.5); border-radius: 8px; }
+        .login-title { font-size: 24px; font-weight: 900; color: #fff; margin-bottom: 20px; letter-spacing: 2px; text-align: center; text-transform: uppercase; }
+        .login-input { width: 100%; background: #020b16; border: 1px solid var(--border); color: #fff; padding: 10px; font-family: var(--font-mono); font-size: 12px; margin-bottom: 10px; border-radius: 4px; cursor: text; }
+        .enter-btn { width: 100%; background: var(--accent-yellow); color: #000; border: none; padding: 12px; font-weight: 800; cursor: pointer; margin-top: 15px; border-radius: 4px; transition: 0.2s; letter-spacing: 1px; }
+        .enter-btn:hover { background: #fff; }
+        .verify-btn { float: right; background: transparent; color: var(--accent-yellow); border: 1px solid var(--accent-yellow); padding: 4px 8px; font-size: 10px; cursor: pointer; margin-top: -5px; margin-bottom: 10px; border-radius: 2px; }
+
+        /* ZODIAC */
+        .z-title { font-size: 10px; color: #888; margin: 15px 0 5px 0; text-transform: uppercase; letter-spacing: 1px; }
+        .zodiac-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; margin-bottom: 10px; }
+        .z-btn { background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: #666; padding: 5px; cursor: pointer; text-align: center; border-radius: 4px; transition: 0.2s; }
+        .z-btn:hover, .z-btn.selected { border-color: var(--accent-yellow); color: var(--accent-yellow); background: rgba(255, 215, 0, 0.1); }
+        .z-icon { font-size: 16px; }
+
+        /* --- APP HEADER --- */
+        header { height: 50px; border-bottom: 1px solid var(--border); background: var(--bg-panel); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; }
+        .brand { font-size: 16px; font-weight: 900; color: #fff; letter-spacing: 2px; display: flex; align-items: center; gap: 10px; }
+        .brand span { color: var(--accent-yellow); }
+        .admin-btn { font-family: var(--font-mono); font-size: 10px; padding: 5px 12px; border: 1px solid var(--accent-yellow); color: var(--accent-yellow); border-radius: 4px; cursor: pointer; display: none; background: rgba(255, 215, 0, 0.1); }
+        .admin-btn:hover { background: var(--accent-yellow); color: #000; }
+
+        #workspace { flex: 1; display: grid; grid-template-columns: 320px 1fr; overflow: hidden; }
+
+        /* --- SIDEBAR --- */
+        .sidebar { background: var(--bg-panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 10; box-shadow: 5px 0 20px rgba(0,0,0,0.2); }
+        .p-head { padding: 15px; border-bottom: 1px solid var(--border); font-size: 11px; font-weight: 700; color: #fff; letter-spacing: 1px; background: rgba(0,0,0,0.2); }
+        .p-body { flex: 1; overflow-y: auto; padding: 15px; }
+
+        .module { margin-bottom: 20px; border-bottom: 1px dashed var(--border); padding-bottom: 15px; }
+        .mod-title { font-size: 10px; color: var(--accent-yellow); font-weight: 700; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
         
-        /* --- ZODIAC SKIN SELECTOR (NEW STYLE) --- */
-        .zodiac-title { font-size: 14px; color: #fff; text-align: center; margin: 25px 0 15px 0; font-weight: 700; letter-spacing: 1px; }
-        .zodiac-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
-        .z-btn { 
-            background: #111; border: 2px solid #333; color: #666; padding: 15px 5px; 
-            cursor: pointer; text-align: center; display: flex; flex-direction: column; 
-            align-items: center; justify-content: center; border-radius: 12px; transition: 0.3s;
-        }
-        .z-btn:hover { border-color: #666; background: #1a1a1a; color: #ccc; }
-        .z-btn.selected { border-color: var(--accent-data); color: #fff; background: #1a1a1a; box-shadow: 0 0 20px rgba(59, 130, 246, 0.2); }
+        .aoi-box { border: 1px solid var(--border); padding: 10px; background: rgba(0,0,0,0.2); margin-bottom: 8px; border-radius: 4px; }
+        .aoi-label { font-size: 9px; color: #ccc; font-weight: 700; margin-bottom: 5px; }
+        .sys-select { width: 100%; background: #020b16; border: 1px solid var(--border); color: #fff; padding: 6px; font-family: var(--font-mono); font-size: 10px; outline: none; border-radius: 2px; }
+        .upload-zone { border: 1px dashed #666; padding: 15px; text-align: center; cursor: pointer; transition: 0.2s; background: rgba(255,255,255,0.02); border-radius: 4px; }
+        .upload-zone:hover { border-color: var(--accent-yellow); color: var(--accent-yellow); }
+
+        /* --- TOGGLES --- */
+        .vintage-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border: 1px solid transparent; border-radius: 4px; cursor: pointer; transition: 0.2s; margin-bottom: 4px; background: rgba(0,0,0,0.2); }
+        .vintage-row:hover { background: rgba(255,255,255,0.05); }
+        .vintage-row.active { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.1); }
+        .vintage-row.disabled { opacity: 0.4; cursor: not-allowed; }
         
-        .z-icon { font-size: 36px; margin-bottom: 5px; transition: 0.3s; filter: grayscale(0.8); }
-        .z-btn:hover .z-icon, .z-btn.selected .z-icon { transform: scale(1.15); filter: grayscale(0); }
-        .z-label { font-size: 9px; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.7; }
-        .z-btn.selected .z-label { opacity: 1; color: var(--accent-data); }
-
-        /* --- LAYOUT --- */
-        header { height: 60px; border-bottom: 1px solid var(--border); background: #050505; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; }
-        .brand { font-size: 18px; font-weight: 900; color: #fff; letter-spacing: 2px; }
-        .user-badge { font-family: var(--font-mono); font-size: 11px; padding: 4px 10px; border: 1px solid #333; border-radius: 4px; }
+        .v-label { font-size: 11px; display: flex; align-items: center; gap: 8px; color: #aaa; }
+        .v-dot { width: 8px; height: 8px; border-radius: 2px; }
+        .v-status { font-size: 9px; font-family: var(--font-mono); color: #666; }
         
-        #workspace { flex: 1; display: grid; grid-template-columns: 360px 1fr 320px; overflow: hidden; }
+        /* Checkbox styling */
+        .v-check { width: 14px; height: 14px; border: 1px solid #666; border-radius: 2px; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .vintage-row.active .v-check { background: var(--accent-yellow); border-color: var(--accent-yellow); }
+        .vintage-row.active .v-check::after { content:'✓'; font-size: 10px; color: #000; font-weight: bold; }
 
-        .sidebar { background: var(--bg-panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 10; }
-        .sidebar.right { border-right: none; border-left: 1px solid var(--border); }
-        .p-head { padding: 20px; border-bottom: 1px solid var(--border); font-size: 12px; font-weight: 700; color: #fff; letter-spacing: 1px; }
-        .p-body { flex: 1; overflow-y: auto; padding: 20px; }
+        /* --- MAP --- */
+        #map { width: 100%; height: 100%; background: #ffffff; z-index: 1; }
 
-        /* --- MODULES --- */
-        #panel-mission { display: none; }
-        .step-card { border: 1px solid #333; padding: 15px; margin-bottom: 15px; background: #0e0e0e; opacity: 0.4; pointer-events: none; transition: 0.3s; position: relative; border-radius: 6px; }
-        .step-card.active { opacity: 1; pointer-events: all; border-color: #555; background: #111; }
-        .step-card.done { border-color: var(--accent-xiaoer); opacity: 0.8; }
-        .step-card.done::after { content: '✓'; position: absolute; top: 10px; right: 10px; color: var(--accent-xiaoer); font-weight: bold; }
+        /* --- ADMIN MODAL --- */
+        #adminModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(2, 11, 22, 0.9); z-index: 20000; justify-content: center; align-items: center; }
+        .admin-panel { width: 800px; height: 600px; background: var(--bg-panel); border: 2px solid var(--accent-yellow); border-radius: 8px; display: flex; flex-direction: column; box-shadow: 0 0 100px rgba(0,0,0,0.8); }
+        .admin-header { padding: 20px; background: var(--accent-yellow); color: #000; font-weight: 900; font-size: 18px; letter-spacing: 2px; display: flex; justify-content: space-between; align-items: center; }
+        .close-btn { cursor: pointer; font-size: 24px; font-weight: bold; }
+        .admin-body { padding: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; overflow-y: auto; }
         
-        .step-title { font-size: 11px; font-weight: 700; color: #fff; margin-bottom: 5px; }
-        .step-desc { font-size: 10px; color: #666; margin-bottom: 10px; line-height: 1.4; }
+        .year-card { background: rgba(0,0,0,0.3); border: 1px solid var(--border); padding: 20px; border-radius: 6px; }
+        .year-title { color: #fff; font-weight: 700; margin-bottom: 10px; font-size: 14px; border-bottom: 1px solid var(--border); padding-bottom: 5px; }
+        .year-status { float: right; font-size: 10px; padding: 2px 6px; border-radius: 2px; background: #000; color: #666; }
+        .year-status.live { color: var(--accent-green); border: 1px solid var(--accent-green); }
         
-        .action-btn { width: 100%; background: #222; border: 1px solid #444; color: #ccc; padding: 10px; font-size: 10px; cursor: pointer; margin-bottom: 5px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 4px; }
-        .action-btn:hover { border-color: #fff; color: #fff; }
-        .action-btn.primary { background: #fff; color: #000; border-color: #fff; }
-        .action-btn.warn { background: rgba(245, 158, 11, 0.1); border-color: var(--accent-dushe); color: var(--accent-dushe); }
-        
-        .email-panel { background: #151515; border: 1px dashed #444; padding: 10px; margin-bottom: 10px; display: none; border-radius: 6px; }
-        .email-status { font-size: 10px; color: var(--accent-data); margin-bottom: 8px; font-family: var(--font-mono); }
-        .resend-link { font-size: 9px; color: #666; text-decoration: underline; cursor: pointer; float: right; margin-top: 5px; }
-        .resend-link:hover { color: #fff; }
+        .admin-upload { width: 100%; border: 1px dashed #666; color: #888; padding: 15px; text-align: center; font-size: 11px; cursor: pointer; margin-top: 10px; border-radius: 4px; }
+        .admin-upload:hover { border-color: var(--accent-yellow); color: var(--accent-yellow); background: rgba(255, 215, 0, 0.05); }
 
-        /* --- MISSION MODULES --- */
-        .module { margin-bottom: 25px; border-bottom: 1px dashed #222; padding-bottom: 20px; }
-        .mod-title { font-size: 11px; color: #666; font-weight: 700; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
-        
-        .aoi-box { border: 1px solid #222; padding: 10px; background: #0a0a0a; margin-bottom: 10px; border-radius: 6px; }
-        .aoi-label { font-size: 9px; color: var(--accent-data); font-weight: 700; margin-bottom: 5px; border-bottom: 1px solid #222; padding-bottom: 2px; }
-        .sys-select { width: 100%; background: #151515; border: 1px solid #333; color: #ccc; padding: 8px; font-family: var(--font-mono); font-size: 11px; margin-bottom: 5px; outline: none; border-radius: 4px; }
-        .upload-zone { border: 1px dashed #444; padding: 20px; text-align: center; cursor: pointer; transition: 0.2s; background: rgba(255,255,255,0.01); border-radius: 6px; }
-        .upload-zone:hover { border-color: var(--accent-data); color: var(--accent-data); }
-
-        .year-toggle { display: flex; justify-content: space-between; align-items: center; background: #111; border: 1px solid #222; padding: 10px; margin-bottom: 5px; cursor: pointer; opacity: 1; transition: 0.3s; border-radius: 6px; }
-        .year-toggle.disabled { opacity: 0.3; pointer-events: none; border-style: dashed; }
-        .year-toggle.active { border-color: #fff; background: #1a1a1a; }
-        .year-tag { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 8px; }
-
-        /* --- MONITOR --- */
-        .monitor-card { background: #111; border: 1px solid #333; padding: 15px; margin-bottom: 10px; border-radius: 6px; }
-        .monitor-label { font-size: 9px; color: #666; margin-bottom: 5px; }
-        .monitor-val { font-family: var(--font-mono); font-size: 14px; font-weight: 700; color: #fff; }
-        .monitor-val.warn { color: var(--accent-dushe); animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-        
-        .coverage-report { background: #111; padding: 15px; border: 1px solid #333; display: none; margin-top:20px; border-radius: 6px; }
-        .cov-bar { height: 4px; background: #333; margin: 8px 0; position: relative; border-radius: 2px; }
-        .cov-fill { height: 100%; background: var(--accent-data); width: 0%; transition: 1s; border-radius: 2px; }
-
-        /* --- ADMIN --- */
-        #adminPanel { display: none; }
-        body.god-mode #panel-compliance { display: none; }
-        body.god-mode #panel-mission { display: block; }
-        body.god-mode #userPanel { display: none; }
-        body.god-mode #adminPanel { display: block; }
-        .admin-card { background: #0f0f0f; border: 1px solid #333; padding: 15px; margin-bottom: 10px; border-radius: 6px; }
-        .status-select { background: #000; color: #ccc; border: 1px solid #444; padding: 4px; font-size: 10px; font-family: var(--font-mono); border-radius: 4px; }
-
-        /* --- MAP & AI --- */
-        #map { width: 100%; height: 100%; background: #0b0b0b; z-index: 1; }
-        .leaflet-tile-pane { filter: grayscale(100%) contrast(1.5) brightness(0.6); }
-        body.god-mode .leaflet-tile-pane { filter: sepia(100%) hue-rotate(5deg) saturate(1.5) brightness(0.6); }
-
-        .ai-widget { 
-            position: fixed; bottom: 20px; right: 340px; width: 340px; 
-            background: rgba(0,0,0,0.95); border: 1px solid #333; z-index: 500; 
-            display: flex; flex-direction: column; border-radius: 6px; 
-            transition: border-color 0.3s;
-        }
-        .working { border-color: var(--accent-dushe) !important; box-shadow: 0 0 15px rgba(245, 158, 11, 0.3); }
-
-        .ai-head { padding: 8px 12px; background: #111; border-bottom: 1px solid #333; font-size: 11px; font-weight: 700; color: #fff; display: flex; justify-content: space-between; }
-        .ai-body { height: 180px; overflow-y: auto; padding: 15px; font-family: var(--font-mono); font-size: 11px; }
-        .chat-row { display: flex; gap: 10px; margin-bottom: 10px; opacity: 0; animation: fadeIn 0.3s forwards; }
+        /* --- AI WIDGET --- */
+        .ai-widget { position: fixed; bottom: 20px; right: 20px; width: 320px; background: rgba(5, 30, 62, 0.95); border: 1px solid var(--border); z-index: 500; display: flex; flex-direction: column; border-radius: 6px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .ai-head { padding: 10px; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--border); font-size: 11px; font-weight: 700; color: #fff; display: flex; justify-content: space-between; }
+        .ai-body { height: 160px; overflow-y: auto; padding: 10px; font-family: var(--font-mono); font-size: 11px; }
+        .chat-row { display: flex; gap: 10px; margin-bottom: 8px; align-items: flex-start; opacity: 0; animation: fadeIn 0.3s forwards; }
         @keyframes fadeIn { to { opacity: 1; } }
-        
-        .avatar { width: 24px; height: 24px; border: 1px solid #333; display: flex; align-items: center; justify-content: center; font-size: 14px; border-radius: 4px; flex-shrink: 0; position: relative; }
-        .avatar::after { content:''; position:absolute; bottom:-2px; right:-2px; width:6px; height:6px; border-radius:50%; }
-        .avatar.xiaoer { background: #06241b; border-color: var(--accent-xiaoer); color: var(--accent-xiaoer); }
-        .avatar.xiaoer::after { background: var(--accent-xiaoer); }
-        .avatar.dushe { background: #261b00; border-color: var(--accent-dushe); color: var(--accent-dushe); }
-        .avatar.dushe::after { background: var(--accent-dushe); animation: blink 1s infinite; }
-        .bubble { background: #111; padding: 6px 10px; border: 1px solid #333; color: #ccc; border-radius: 4px; max-width: 240px; line-height: 1.4; }
-        .typing-indicator { font-style: italic; color: #555; font-size: 9px; margin-left: 35px; display: none; }
-
-        /* Custom Cursor Trail */
+        .avatar { width: 24px; height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+        .avatar.concierge { background: #064e3b; color: var(--accent-green); border: 1px solid var(--accent-green); }
+        .avatar.engineer { background: #451a03; color: var(--accent-amber); border: 1px solid var(--accent-amber); }
+        .bubble { background: rgba(0,0,0,0.4); padding: 6px 10px; border-radius: 4px; color: #ddd; line-height: 1.4; border: 1px solid rgba(255,255,255,0.1); }
         .cursor-trail { position: fixed; pointer-events: none; z-index: 9999; font-size: 24px; opacity: 0.8; transition: 0.1s; }
-
-        /* --- MODALS --- */
-        #warningModal, #ndaModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 10000; display: none; justify-content: center; align-items: center; }
-        .doc-paper { width: 500px; max-height: 80vh; background: #fff; color: #000; padding: 40px; position: relative; overflow-y: auto; font-family: serif; border-radius: 8px; }
-        .warn-box { width: 450px; background: #111; border: 1px solid var(--accent-dushe); padding: 30px; text-align: center; box-shadow: 0 0 50px rgba(245, 158, 11, 0.2); border-radius: 12px; }
-        .sys-check { display: flex; align-items: center; gap: 10px; font-size: 11px; margin-top: 20px; font-family: var(--font-ui); }
 
     </style>
 </head>
@@ -171,424 +125,247 @@
 
 <div id="loginOverlay">
     <div class="login-box">
-        <div class="login-title">GPTM GATEWAY</div>
+        <div class="login-title">GPTM <span style="color:var(--accent-yellow)">GATEWAY</span></div>
         <input type="text" class="login-input" id="loginCompany" placeholder="COMPANY (Admin: COMMANDER)" onkeypress="handleLoginKey(event)">
         <input type="text" class="login-input" id="loginEmail" placeholder="EMAIL" onkeypress="handleLoginKey(event)">
         <button class="verify-btn" onclick="sendCode()" id="codeBtn">SEND CODE</button>
-        <input type="text" class="login-input" id="loginCode" placeholder="VERIFICATION CODE (Use: 123456 or 000000)" onkeypress="handleLoginKey(event)">
-        
-        <div class="zodiac-title">给鼠标换装 (CHOOSE CURSOR SKIN)</div>
+        <input type="text" class="login-input" id="loginCode" placeholder="VERIFICATION CODE (123456 / 000000)" onkeypress="handleLoginKey(event)">
+        <div class="z-title">CURSOR SKIN SELECTOR</div>
         <div class="zodiac-grid" id="zodiacGrid"></div>
-        
         <button class="enter-btn" onclick="checkLogin()">AUTHENTICATE</button>
     </div>
 </div>
 
-<div id="warningModal">
-    <div class="warn-box">
-        <div style="color:var(--accent-dushe); font-size:40px; margin-bottom:10px;"><i class="ph ph-shield-check"></i></div>
-        <h2 style="color:#fff; margin-bottom:10px;">QUALITY ASSURANCE PROTOCOL</h2>
-        <p style="color:#ccc; font-size:12px; line-height:1.6; text-align:left; margin-bottom:20px;">
-            Access to GPTM Sample Data is a privilege, not a right.<br><br>
-            1. <b>Evaluation:</b> Please evaluate the sample data within <b>10 Working Days</b>.<br>
-            2. <b>Feedback:</b> Your professional feedback helps us calibrate the global grid.<br>
-            3. <b>Access:</b> Full production access is granted upon report submission.
-        </p>
-        <div class="sys-check" style="color:#fff; justify-content:center;">
-            <input type="checkbox" id="warnCheck"> 
-            <label for="warnCheck">I ACKNOWLEDGE THE PROTOCOL</label>
+<div id="adminModal">
+    <div class="admin-panel">
+        <div class="admin-header">
+            <span>COMMANDER CONSOLE</span>
+            <span class="close-btn" onclick="toggleAdminPanel()">×</span>
         </div>
-        <button class="enter-btn" style="margin-top:20px;" onclick="acceptWarning()">PROCEED TO NDA</button>
-    </div>
-</div>
-
-<div id="ndaModal">
-    <div class="doc-paper">
-        <div style="text-align:center; font-weight:bold; font-size:16px; margin-bottom:20px;">NON-DISCLOSURE AGREEMENT (NDA)</div>
-        <p>I, the undersigned, representing <span id="ndaComp" style="font-weight:bold">[COMPANY]</span>, hereby acknowledge...</p>
-        <button class="enter-btn" style="background:#000; color:#fff; margin-top:30px;" onclick="signNDA()">SIGN & SUBMIT</button>
+        <div class="admin-body">
+            <div class="year-card" style="border-color:var(--accent-green);">
+                <div class="year-title">2023 ARCHIVE (BASE) <span class="year-status live">LIVE</span></div>
+                <div style="font-size:10px; color:#fff; margin-bottom:5px;">SOURCE: 2023.SHP (LOCKED)</div>
+                <div class="admin-upload" style="border-color:var(--accent-green); color:var(--accent-green); cursor:default;">
+                    <i class="ph ph-check-circle"></i> BASELINE ACTIVE
+                </div>
+            </div>
+            <div class="year-card">
+                <div class="year-title">2024 COLLECTION <span class="year-status" id="st-2024">OFFLINE</span></div>
+                <div class="admin-upload" onclick="adminUpload('2024')"><i class="ph ph-upload-simple"></i> UPLOAD VECTOR</div>
+            </div>
+            <div class="year-card">
+                <div class="year-title">2025 COLLECTION <span class="year-status" id="st-2025">OFFLINE</span></div>
+                <div class="admin-upload" onclick="adminUpload('2025')"><i class="ph ph-upload-simple"></i> UPLOAD VECTOR</div>
+            </div>
+            <div class="year-card">
+                <div class="year-title">2026 PREVIEW <span class="year-status" id="st-2026">LOCKED</span></div>
+                <div class="admin-upload" onclick="adminUpload('2026')"><i class="ph ph-upload-simple"></i> UPLOAD VECTOR</div>
+            </div>
+        </div>
     </div>
 </div>
 
 <div id="app">
     <header>
-        <div class="brand">GPTM <span id="brandSub" style="color:#444">SOVEREIGN</span></div>
-        <div class="user-badge" id="headerUser">GUEST</div>
+        <div class="brand"><i class="ph ph-globe-hemisphere-east"></i> GPTM <span>SOVEREIGN</span></div>
+        <div style="display:flex; gap:10px; align-items:center;">
+            <div class="admin-btn" id="adminBtn" onclick="toggleAdminPanel()">COMMAND CENTER</div>
+            <div class="user-badge" id="headerUser">GUEST</div>
+        </div>
     </header>
 
     <div id="workspace">
-        
         <div class="sidebar">
-            
             <div id="panel-compliance">
                 <div class="p-head">COMPLIANCE PROTOCOL</div>
-                <div class="sb-body">
-                    <div class="step-card active" id="step1">
-                        <div class="step-title">STAGE 01: APPLICATION</div>
-                        <div class="step-desc">Request access to Sample Data (Dubai JVC). Verification Required.</div>
-                        <button class="action-btn warn" onclick="triggerApply()">
-                            <i class="ph ph-hand-palm"></i> APPLY FOR SAMPLE DATA
-                        </button>
-                    </div>
-
-                    <div class="step-card" id="step2">
-                        <div class="step-title">STAGE 02: VERIFICATION LOOP</div>
-                        <div class="step-desc">
-                            FTP Credentials locked. Email Confirmation Required.<br>
-                            <b>STATUS:</b> <span style="color:var(--accent-data)" id="step2Status">AWAITING EMAIL CONFIRM</span>
-                        </div>
-                        <div class="email-panel" id="emailPanel">
-                            <div class="email-status">
-                                <i class="ph ph-envelope-simple-open"></i> EMAIL SENT TO: <span id="dispEmail">...</span>
-                            </div>
-                            <button class="action-btn primary" onclick="confirmEmailReceipt()">
-                                <i class="ph ph-check"></i> I HAVE RECEIVED THE EMAIL
-                            </button>
-                            <div class="resend-link" onclick="handleResend()">Not received? Resend</div>
-                        </div>
-                        <div id="dataTools" style="display:none;">
-                            <button class="action-btn" onclick="alert('FTP: 47.237.100.53\nUser: Dubai_DSMDTM\nPass: sdjv0$%g;fd')">
-                                <i class="ph ph-key"></i> VIEW FTP CREDENTIALS
-                            </button>
-                            <div style="margin-top:15px; border-top:1px dashed #333; padding-top:15px;">
-                                <input type="file" id="reportInput" style="display:none" onchange="handleReport()">
-                                <button class="action-btn primary" onclick="document.getElementById('reportInput').click()">
-                                    <i class="ph ph-upload-simple"></i> UPLOAD FEEDBACK REPORT
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="step-card" id="step3">
-                        <div class="step-title">STAGE 03: MISSION OPS</div>
-                        <div class="step-desc">AOI Upload & Coverage Analysis.</div>
-                        <button class="action-btn" disabled>LOCKED UNTIL REPORT FILED</button>
+                <div class="p-body">
+                    <div class="module">
+                        <div class="mod-title">STEP 1: APPLICATION</div>
+                        <div style="font-size:10px; color:#ccc; margin-bottom:10px;">Request access to Dubai JVC Sample.</div>
+                        <button class="enter-btn" style="margin-top:0;" onclick="startWorkflow()">APPLY FOR DATA</button>
                     </div>
                 </div>
             </div>
 
-            <div id="panel-mission">
+            <div id="panel-mission" style="display:none;">
                 <div class="p-head">COVERAGE SCOPE</div>
-                <div class="sb-body">
+                <div class="p-body">
                     <div class="module">
-                        <div class="mod-title">1. TARGET AOI (DUAL TRACK)</div>
+                        <div class="mod-title">1. TARGET DEFINITION</div>
                         <div class="aoi-box">
-                            <div class="aoi-label">A) ADMINISTRATIVE SELECT</div>
-                            <select class="sys-select" id="selScope" onchange="updateSubSelect()">
-                                <option value="global">GLOBAL (WORLD)</option>
-                                <option value="national" selected>NATIONAL (STATE)</option>
-                                <option value="regional">REGIONAL (ADMIN 1)</option>
-                            </select>
-                            <select class="sys-select" id="selTarget" onchange="handleSelection()">
-                                <option disabled selected>-- SELECT TARGET --</option>
+                            <div class="aoi-label">ADMINISTRATIVE SELECT</div>
+                            <select class="sys-select" onchange="map.setView([25.05, 55.2], 10)">
+                                <option>GLOBAL</option><option>NATIONAL</option><option>UAE (DUBAI)</option>
                             </select>
                         </div>
-                        <div class="aoi-box" style="margin-bottom:0;">
-                            <div class="aoi-label">B) CUSTOM UPLOAD</div>
-                            <div class="upload-zone" onclick="document.getElementById('shpInput').click()">
-                                <i class="ph ph-file-arrow-up" style="font-size:20px; color:#666; margin-bottom:5px;"></i><br>
-                                <span style="font-size:9px; color:#ccc;">UPLOAD .ZIP(SHP) / .KML</span>
+                        <div class="aoi-box">
+                            <div class="aoi-label">CUSTOM UPLOAD</div>
+                            <div class="upload-zone" onclick="alert('Upload Dialog Open')"><i class="ph ph-file-arrow-up"></i> UPLOAD .ZIP / .KML</div>
+                        </div>
+                    </div>
+
+                    <div class="module" style="border:none;">
+                        <div class="mod-title">2. VINTAGE SELECTION</div>
+                        <div class="vintage-row active" id="row-2023" onclick="toggleLayer('2023')">
+                            <div class="v-label">
+                                <div class="v-check"></div>
+                                <div class="v-dot" style="background:var(--accent-data-23)"></div>
+                                2023 ARCHIVE
                             </div>
-                            <input type="file" id="shpInput" style="display:none" onchange="handleShp(this)">
+                            <div class="v-status" style="color:var(--accent-green)">ONLINE</div>
                         </div>
-                    </div>
-                    <div class="module">
-                        <div class="mod-title">2. DATASET VINTAGE</div>
-                        <div class="year-toggle disabled" id="toggle-2026"><div class="year-label"><span class="year-tag" style="background:#f59e0b"></span> 2026 PREVIEW</div><div style="font-size:9px;">LOCKED</div></div>
-                        <div class="year-toggle active" id="toggle-2025" onclick="toggleLayer('2025')"><div class="year-label"><span class="year-tag" style="background:#3b82f6"></span> 2025 COLLECTION</div><div class="ph ph-check"></div></div>
-                        <div class="year-toggle" id="toggle-2024" onclick="toggleLayer('2024')"><div class="year-label"><span class="year-tag" style="background:#6366f1"></span> 2024 COLLECTION</div><div class="ph ph-check" style="opacity:0"></div></div>
-                        <div class="year-toggle" id="toggle-2023" onclick="toggleLayer('2023')"><div class="year-label"><span class="year-tag" style="background:#64748b"></span> 2023 ARCHIVE</div><div class="ph ph-check" style="opacity:0"></div></div>
+
+                        <div class="vintage-row disabled" id="row-2024" onclick="toggleLayer('2024')">
+                            <div class="v-label"><div class="v-check"></div><div class="v-dot" style="background:#6366f1"></div> 2024 COLLECTION</div>
+                            <div class="v-status">OFFLINE</div>
+                        </div>
+
+                        <div class="vintage-row disabled" id="row-2025" onclick="toggleLayer('2025')">
+                            <div class="v-label"><div class="v-check"></div><div class="v-dot" style="background:var(--accent-data-25)"></div> 2025 COLLECTION</div>
+                            <div class="v-status">OFFLINE</div>
+                        </div>
+                        
+                        <div class="vintage-row disabled" id="row-2026">
+                            <div class="v-label"><div class="v-check"></div><div class="v-dot" style="background:var(--accent-amber)"></div> 2026 PREVIEW</div>
+                            <div class="v-status">LOCKED</div>
+                        </div>
                     </div>
                 </div>
             </div>
-
         </div>
-
         <div id="map"></div>
-
-        <div class="sidebar right">
-            <div id="userPanel">
-                <div class="p-head">MONITOR</div>
-                <div class="sb-body">
-                    <div class="monitor-card">
-                        <div class="monitor-label">CLIENT STATUS</div>
-                        <div class="monitor-val" id="monitorStatus">UNVERIFIED</div>
-                    </div>
-                    <div class="monitor-card">
-                        <div class="monitor-label">FEEDBACK COUNTDOWN</div>
-                        <div class="monitor-val warn" id="monitorTimer">--:--:--</div>
-                    </div>
-                    
-                    <div class="coverage-report" id="covReport">
-                        <div class="mod-title">AOI INTERSECTION</div>
-                        <div style="font-size:24px; font-weight:900; color:#fff; margin-bottom:5px;">98.4%</div>
-                        <div style="font-size:9px; color:#666; margin-bottom:10px;">EFFECTIVE COVERAGE</div>
-                        <div style="font-size:9px; color:#ccc;">2025 VINTAGE (60%)</div><div class="cov-bar"><div class="cov-fill" style="width:60%; background:#3b82f6"></div></div>
-                        <div style="font-size:9px; color:#ccc;">2024 VINTAGE (30%)</div><div class="cov-bar"><div class="cov-fill" style="width:30%; background:#6366f1"></div></div>
-                        <button style="width:100%; background:#fff; color:#000; border:none; padding:8px; font-weight:800; margin-top:10px; cursor:pointer;" onclick="alert('PDF Generated.')">EXPORT PDF</button>
-                    </div>
-                </div>
-            </div>
-
-            <div id="adminPanel">
-                <div class="p-head" style="color:var(--accent-admin)">COMMANDER CONSOLE</div>
-                <div class="sb-body">
-                    <div class="mod-title" style="color:var(--accent-admin)">DATASET CONTROL</div>
-                    <div class="admin-card">
-                        <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-                            <span style="color:#fff; font-weight:700; font-size:11px;">DATA_2026_PRE</span>
-                            <select class="status-select" onchange="updateStatus('2026', this.value)"><option value="locked">LOCKED</option><option value="live">GO LIVE</option></select>
-                        </div>
-                    </div>
-                    <div class="admin-card">
-                        <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-                            <span style="color:#fff; font-weight:700; font-size:11px;">DATA_2025_Q4</span>
-                            <select class="status-select" onchange="updateStatus('2025', this.value)"><option value="live">ONLINE</option><option value="offline">OFFLINE</option></select>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
     </div>
 </div>
 
-<div class="ai-widget" id="aiWidget">
-    <div class="ai-head">
-        <span>SYSTEM LOG</span>
-        <div style="font-size:9px;">
-            <span style="color:var(--accent-xiaoer)">● ONLINE</span>
-            <span style="color:var(--accent-dushe); margin-left:5px;">● ENGINEER</span>
-        </div>
-    </div>
+<div class="ai-widget">
+    <div class="ai-head"><span>SYSTEM LOG</span><div style="font-size:9px; color:#888;">GPTM AI v43.0</div></div>
     <div class="ai-body" id="chatBody"></div>
-    <div class="typing-indicator" id="typing">Processing request...</div>
 </div>
 
 <script>
     // --- 1. SETUP ---
-    const map = L.map('map', { zoomControl: false, minZoom: 2, maxBounds: [[-90, -180], [90, 180]] }).setView([25.05, 55.2], 12);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
-    const layers = { '2025': L.featureGroup().addTo(map), '2024': L.featureGroup(), '2023': L.featureGroup(), 'user': L.featureGroup().addTo(map) };
+    const map = L.map('map', { zoomControl: false, minZoom: 2 }).setView([20, 0], 2);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
+    
+    // LAYERS
+    const layers = {
+        '2023': L.featureGroup().addTo(map), // 2023 LOADED BY DEFAULT
+        '2024': L.featureGroup(),
+        '2025': L.featureGroup(),
+        '2026': L.featureGroup()
+    };
 
-    // NEW ZODIAC DATA & GENERATION
-    const zodiacData = [
-        {i:'♈', n:'白羊 Aries'}, {i:'♉', n:'金牛 Taurus'}, {i:'♊', n:'双子 Gemini'}, {i:'♋', n:'巨蟹 Cancer'},
-        {i:'♌', n:'狮子 Leo'}, {i:'♍', n:'处女 Virgo'}, {i:'♎', n:'天秤 Libra'}, {i:'♏', n:'天蝎 Scorpio'},
-        {i:'♐', n:'射手 Sagit'}, {i:'♑', n:'摩羯 Capri'}, {i:'♒', n:'水瓶 Aquar'}, {i:'♓', n:'双鱼 Pisces'}
-    ];
+    // GENERATE MOCK 2023 DATA (Simulating the 2023.shp load)
+    function load2023Baseline() {
+        // Create some global polygons to represent 2023 data
+        const coords = [
+            [[30, -90], [40, -80]], [[35, 100], [45, 110]], [[-20, -60], [-10, -50]], [[10, 20], [20, 30]]
+        ];
+        coords.forEach(b => L.rectangle(b, { color: '#64748b', weight: 1, fillOpacity: 0.3 }).addTo(layers['2023']));
+        console.log("2023.shp loaded.");
+    }
+    load2023Baseline();
+
+    // ZODIAC
+    const zodiacs = ['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓'];
     const zGrid = document.getElementById('zodiacGrid');
-    let currentSign = zodiacData[0].i;
-    zodiacData.forEach(z => {
+    let currentCursor = '♈';
+    zodiacs.forEach(z => {
         const btn = document.createElement('div');
-        btn.className = 'z-btn';
-        btn.innerHTML = `<div class="z-icon">${z.i}</div><div class="z-label">${z.n}</div>`;
+        btn.className = 'z-btn'; btn.innerHTML = `<div class="z-icon">${z}</div>`;
         btn.onclick = () => {
-            document.querySelectorAll('.z-btn').forEach(b=>b.classList.remove('selected'));
-            btn.classList.add('selected'); currentSign = z.i;
+            document.querySelectorAll('.z-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected'); currentCursor = z;
         };
         zGrid.appendChild(btn);
     });
     zGrid.children[0].classList.add('selected');
 
-    // AOI Targets
-    const targets = { 'global': ['EARTH'], 'national': ['UAE', 'SAUDI ARABIA', 'CHINA'], 'regional': ['DUBAI', 'RIYADH'] };
-    function updateSubSelect() {
-        const scope = document.getElementById('selScope').value;
-        const tgt = document.getElementById('selTarget');
-        tgt.innerHTML = '<option disabled selected>-- SELECT --</option>';
-        targets[scope].forEach(t => {
-            const opt = document.createElement('option'); opt.value = t; opt.innerText = t; tgt.appendChild(opt);
-        });
-    }
-    updateSubSelect();
-
-    // --- 2. AI LOGIC (HIGH EQ) ---
+    // --- 2. AI LOGIC ---
     function addChat(role, text) {
-        const chatBody = document.getElementById('chatBody');
-        const widget = document.getElementById('aiWidget');
-        const typing = document.getElementById('typing');
-        
-        let delay = 600; 
-        if (text.includes("路由") || text.includes("解锁")) delay = 200; 
-
-        if (role === 'xiaoer') typing.style.display = 'block';
-
-        setTimeout(() => {
-            if(role === 'xiaoer') typing.style.display = 'none';
-            if (role === 'dushe') {
-                widget.classList.add('working');
-                setTimeout(() => widget.classList.remove('working'), 1000);
-            }
-            const d = document.createElement('div'); d.className = 'chat-row';
-            let av = role==='xiaoer'?'☺':'⚡'; let col = role==='xiaoer'?'var(--accent-xiaoer)':'var(--accent-dushe)';
-            let name = role==='xiaoer'?'店小二':'毒舌工程师';
-            d.innerHTML = `<div class="avatar ${role}" style="color:${col}; border-color:${col}">${av}</div><div class="bubble"><b>[${name}]</b><br>${text}</div>`;
-            chatBody.appendChild(d); chatBody.scrollTop = 9999;
-        }, delay);
+        const body = document.getElementById('chatBody');
+        const row = document.createElement('div'); row.className = 'chat-row';
+        let av = role === 'concierge' ? '☺' : '⚡';
+        let name = role === 'concierge' ? 'Concierge' : 'Lead Engineer';
+        row.innerHTML = `<div class="avatar ${role}">${av}</div><div class="bubble"><b>${name}:</b><br>${text}</div>`;
+        body.appendChild(row); body.scrollTop = 9999;
     }
 
-    // --- 3. LOGIN & GOD MODE ---
-    function handleLoginKey(e) { if(e.key === 'Enter') checkLogin(); }
-    
-    function sendCode() { addChat('xiaoer', '验证码: 123456 (Admin: 000000)'); }
-
+    // --- 3. LOGIN ---
+    function handleLoginKey(e) { if(e.key==='Enter') checkLogin(); }
+    function sendCode() { addChat('concierge', 'Code sent: 123456'); }
     function checkLogin() {
-        const comp = document.getElementById('loginCompany').value.trim().toUpperCase();
-        const code = document.getElementById('loginCode').value.trim();
-        
-        if(comp === 'COMMANDER' && code === '000000') { activateGodMode(); return; }
-        if(code !== '123456') { addChat('dushe', '验证码不匹配。请检查输入法大小写。'); return; }
-        
-        loginSuccess(comp);
+        const comp = document.getElementById('loginCompany').value.toUpperCase();
+        const code = document.getElementById('loginCode').value;
+        if(comp==='COMMANDER' && code==='000000') { activateGodMode(); return; }
+        if(code!=='123456') { addChat('engineer', 'Code invalid.'); return; }
+        loginUser(comp);
     }
-
-    function loginSuccess(name) {
-        document.getElementById('loginOverlay').style.display = 'none';
+    function loginUser(name) {
+        document.getElementById('loginOverlay').style.display='none';
         document.getElementById('app').classList.add('unlocked');
         document.getElementById('headerUser').innerText = name;
-        document.getElementById('ndaComp').innerText = name;
-        // Cursor
-        document.addEventListener('mousemove', (e) => {
-            const el = document.createElement('div');
-            el.className = 'cursor-trail'; el.innerText = currentSign;
-            el.style.left = e.pageX+'px'; el.style.top = e.pageY+'px';
-            document.body.appendChild(el); setTimeout(() => el.remove(), 200);
-        });
-        addChat('xiaoer', `欢迎 ${name}。`);
-        setTimeout(() => addChat('dushe', '服务器负载正常。请按流程操作，技术问题我来扛。'), 1500);
+        startCursor(currentCursor);
+        addChat('concierge', `Welcome ${name}. 2023 Baseline is active.`);
     }
-
     function activateGodMode() {
         document.body.classList.add('god-mode');
-        document.getElementById('loginOverlay').style.display = 'none';
+        document.getElementById('loginOverlay').style.display='none';
         document.getElementById('app').classList.add('unlocked');
-        document.getElementById('brandSub').innerText = "COMMANDER CONSOLE";
-        document.getElementById('brandSub').style.color = "#ffd700";
-        document.getElementById('headerUser').innerText = "ADMIN";
-        document.getElementById('headerUser').style.color = "#ffd700";
-        document.getElementById('headerUser').style.borderColor = "#ffd700";
-        
+        document.getElementById('headerUser').innerText="COMMANDER";
+        document.getElementById('headerUser').style.color="var(--accent-yellow)";
+        document.getElementById('adminBtn').style.display="block";
+        document.getElementById('panel-compliance').style.display='none';
+        document.getElementById('panel-mission').style.display='block';
+        startCursor('♛');
+        addChat('engineer', 'Commander logged in. 2023 Vector is locked and live.');
+    }
+    function startCursor(char) {
         document.addEventListener('mousemove', (e) => {
-            const el = document.createElement('div');
-            el.className = 'cursor-trail'; el.innerText = '♛';
+            const el = document.createElement('div'); el.className = 'cursor-trail'; el.innerText = char;
             el.style.left = e.pageX+'px'; el.style.top = e.pageY+'px';
-            if(document.body.classList.contains('god-mode')) el.style.color = '#ffd700';
-            document.body.appendChild(el); setTimeout(() => el.remove(), 200);
+            if(document.body.classList.contains('god-mode')) el.style.color='#ffd700'; else el.style.color='#333';
+            document.body.appendChild(el); setTimeout(()=>el.remove(), 200);
         });
-
-        addChat('dushe', '指挥官已登录。系统已最高权限解锁。');
     }
 
-    // --- 4. WORKFLOW ---
-    let resendCount = 0;
-    function triggerApply() { document.getElementById('warningModal').style.display = 'flex'; }
-    function acceptWarning() {
-        if(!document.getElementById('warnCheck').checked) { alert("Acknowledgement Required"); return; }
-        document.getElementById('warningModal').style.display = 'none';
-        document.getElementById('ndaModal').style.display = 'block';
-    }
-    function signNDA() {
-        document.getElementById('ndaModal').style.display = 'none';
-        addChat('xiaoer', 'NDA 已签署。凭证邮件已发送。');
-        document.getElementById('step1').classList.add('done');
-        document.getElementById('step2').classList.add('active');
-        document.getElementById('emailPanel').style.display = 'block';
-    }
-    
-    function handleResend() {
-        resendCount++;
-        if (resendCount === 1) {
-            addChat('xiaoer', '已为您尝试重发，请检查垃圾箱。');
-        } else if (resendCount === 2) {
-            addChat('dushe', '还没收到？后台日志显示国际网关拥堵。正在为您切换备用线路...');
-            setTimeout(() => addChat('dushe', '已切换线路并重发。请再试一次。'), 2000);
-        } else {
-            addChat('dushe', '看来是贵公司的防火墙拦截了外部邮件。算了，我直接给您后台解锁了。下不为例。');
-            confirmEmailReceipt();
-        }
-    }
-
-    function confirmEmailReceipt() {
-        addChat('xiaoer', '确认成功。FTP 凭证已显示。');
-        document.getElementById('emailPanel').style.display = 'none';
-        document.getElementById('dataTools').style.display = 'block';
-        document.getElementById('step2Status').innerText = "PENDING REPORT";
-        document.getElementById('step2Status').style.color = "#ef4444";
-        startTimer();
-    }
-
-    function handleReport() {
-        addChat('xiaoer', '收到报告，正在核验...');
-        setTimeout(() => {
-            addChat('dushe', '报告数据详实，是个行家。AOI 任务通道已为您开启。');
-            document.getElementById('panel-compliance').style.display = 'none';
-            document.getElementById('panel-mission').style.display = 'block';
-            document.getElementById('monitorStatus').innerText = "VERIFIED";
-            document.getElementById('monitorStatus').style.color = "#10b981";
-            document.getElementById('monitorTimer').innerText = "COMPLIANT";
-            document.getElementById('monitorTimer').style.color = "#10b981";
-        }, 1500);
-    }
-
-    // --- 5. MISSION & ADMIN ---
-    function handleSelection() {
-        const val = document.getElementById('selTarget').value;
-        addChat('xiaoer', `定位至: ${val}`);
-        map.setView([25.05, 55.2], 10);
-        generateMockCoverage();
-    }
-    function handleShp(input) {
-        if(!input.files[0]) return;
-        addChat('xiaoer', '正在解析 SHP...');
-        setTimeout(() => {
-            addChat('xiaoer', '解析完成。覆盖率计算中...');
-            const bounds = [[25.0, 55.15], [25.1, 55.25]];
-            L.rectangle(bounds, {color: '#ef4444', fill:false, dashArray:'5,5'}).addTo(layers['user']);
-            map.fitBounds(bounds);
-            generateMockCoverage();
-            document.getElementById('covReport').style.display = 'block';
-        }, 1500);
-    }
-    function generateMockCoverage() {
-        layers['2025'].clearLayers(); layers['2024'].clearLayers();
-        L.rectangle([[25.0, 55.15], [25.05, 55.25]], {color: '#3b82f6', weight:0, fillOpacity:0.4}).addTo(layers['2025']);
-        L.rectangle([[25.05, 55.15], [25.08, 55.25]], {color: '#6366f1', weight:0, fillOpacity:0.4}).addTo(layers['2024']);
-    }
+    // --- 4. LAYER TOGGLE LOGIC ---
     function toggleLayer(year) {
-        const el = document.getElementById(`toggle-${year}`);
-        if(el.classList.contains('disabled')) return;
-        el.classList.toggle('active');
-        if(el.classList.contains('active')) map.addLayer(layers[year]);
-        else map.removeLayer(layers[year]);
-    }
-    function updateStatus(year, status) {
-        const toggle = document.getElementById(`toggle-${year}`);
-        const label = toggle.querySelector('.year-label');
-        if (status === 'offline') {
-            toggle.classList.add('disabled'); toggle.classList.remove('active');
-            label.innerHTML += ' <span style="color:#ef4444; font-size:9px;">(MAINTENANCE)</span>';
+        const row = document.getElementById(`row-${year}`);
+        if(row.classList.contains('disabled')) return;
+        row.classList.toggle('active');
+        if(row.classList.contains('active')) {
+            map.addLayer(layers[year]);
+            addChat('engineer', `Layer ${year} enabled.`);
+        } else {
             map.removeLayer(layers[year]);
-            addChat('dushe', `DATASET ${year} 已下架维护。`);
-        } else if(status === 'live') {
-            toggle.classList.remove('disabled');
-            const col = year==='2026'?'#f59e0b':(year==='2025'?'#3b82f6':'#6366f1');
-            label.innerHTML = `<span class="year-tag" style="background:${col}"></span> ${year} COLLECTION`;
-            addChat('xiaoer', `DATASET ${year} 已上线。`);
         }
     }
-    function startTimer() {
-        let time = 864000;
-        setInterval(() => {
-            if(document.getElementById('monitorTimer').innerText === "COMPLIANT") return;
-            time--;
-            const d = Math.floor(time / 86400);
-            const h = Math.floor((time % 86400) / 3600);
-            document.getElementById('monitorTimer').innerText = `${d}D ${h}H`;
+
+    // --- 5. ADMIN & WORKFLOW ---
+    function toggleAdminPanel() { const el=document.getElementById('adminModal'); el.style.display=el.style.display==='flex'?'none':'flex'; }
+    function adminUpload(year) {
+        const st = document.getElementById(`st-${year}`);
+        st.innerText="UPLOADING..."; st.style.color="var(--accent-amber)";
+        setTimeout(()=>{
+            st.innerText="ONLINE"; st.className="year-status live";
+            addChat('engineer', `${year} Vector uploaded. Layer activated.`);
+            // Unlock UI
+            const row = document.getElementById(`row-${year}`);
+            row.classList.remove('disabled');
+            row.querySelector('.v-status').innerText = "ONLINE";
+            row.querySelector('.v-status').style.color = "var(--accent-green)";
         }, 1000);
     }
+    function startWorkflow() {
+        document.getElementById('panel-compliance').style.display='none';
+        document.getElementById('panel-mission').style.display='block';
+        addChat('concierge', 'Access granted. 2023 Baseline visible.');
+    }
 
-    addChat('sys', 'System Ready.');
+    // Init
+    addChat('concierge', 'System Online. 2023.shp loaded.');
 
 </script>
 
