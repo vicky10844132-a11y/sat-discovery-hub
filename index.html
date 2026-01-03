@@ -3,86 +3,159 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GPTM SOVEREIGN // ZENITH</title>
+    <title>GPTM SOVEREIGN // STAR SEA</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
 
     <style>
         /* --- THEME: DEEP SEA NAVY & SIGNAL YELLOW --- */
         :root {
-            --bg-body: #020b16; --bg-panel: #051e3e; --border: #1e3a5f;
-            --accent-yellow: #ffd700; --accent-green: #10b981; --accent-amber: #f59e0b;
-            --accent-data: #3b82f6; --accent-lock: #64748b;
-            --font-mono: "JetBrains Mono", monospace; --font-ui: "Inter", sans-serif;
+            --bg-body: #020b16;
+            --bg-panel: #051e3e;
+            --border: #1e3a5f;
+            
+            --accent-yellow: #ffd700; 
+            --accent-green: #10b981;
+            --accent-amber: #f59e0b;
+            --accent-data: #3b82f6;
+            --accent-lock: #64748b;
+            
+            --font-mono: "JetBrains Mono", monospace;
+            --font-ui: "Inter", sans-serif;
         }
+
         body.god-mode { --border: var(--accent-yellow); }
         body.god-mode .sidebar { border-right: 1px solid var(--accent-yellow); }
-        * { box-sizing: border-box; outline: none; }
+
+        * { box-sizing: border-box; outline: none; user-select: none; }
         body { margin: 0; padding: 0; font-family: var(--font-ui); background: var(--bg-body); color: #ccc; overflow: hidden; height: 100vh; width: 100vw; cursor: default; }
+        
         #app { display: flex; flex-direction: column; height: 100%; filter: blur(10px); transition: 0.8s; pointer-events: none; }
         #app.unlocked { filter: blur(0); pointer-events: all; }
 
-        /* LOGIN */
-        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; background: rgba(2, 11, 22, 0.98); display: flex; justify-content: center; align-items: center; flex-direction: column; }
-        .login-box { width: 450px; padding: 40px; border: 1px solid var(--border); background: var(--bg-panel); box-shadow: 0 0 80px rgba(0,0,0,0.8); border-radius: 8px; }
-        .login-title { font-size: 24px; font-weight: 900; color: #fff; margin-bottom: 20px; letter-spacing: 2px; text-align: center; }
-        .login-input { width: 100%; background: #020b16; border: 1px solid var(--border); color: #fff; padding: 12px; font-family: var(--font-mono); font-size: 12px; margin-bottom: 15px; border-radius: 4px; }
-        .login-input:focus { border-color: var(--accent-yellow); }
-        .enter-btn { width: 100%; background: var(--accent-yellow); color: #000; border: none; padding: 12px; font-weight: 800; cursor: pointer; margin-top: 10px; border-radius: 4px; letter-spacing: 1px; }
-        .reg-btn { width: 100%; background: transparent; border: 1px solid #666; color: #888; padding: 10px; font-size: 11px; cursor: pointer; margin-top: 10px; border-radius: 4px; }
-        .z-title { font-size: 10px; color: #888; margin: 15px 0 5px 0; text-align: center; }
-        .zodiac-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 20px; }
-        .z-btn { background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: #666; padding: 8px; cursor: pointer; text-align: center; border-radius: 4px; }
-        .z-btn.selected { border-color: var(--accent-yellow); color: var(--accent-yellow); background: rgba(255, 215, 0, 0.1); }
+        /* --- 1. LOGIN: STAR SEA MAP BACKGROUND --- */
+        #loginOverlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; 
+            display: flex; justify-content: center; align-items: center; flex-direction: column;
+            background: radial-gradient(circle at center, #0a2e5c 0%, #020b16 100%);
+            overflow: hidden;
+        }
+        
+        /* Map Grid & Stars Effect */
+        .star-map-bg {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;
+            background-image: 
+                linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: pulseGrid 10s infinite alternate;
+        }
+        .star {
+            position: absolute; width: 2px; height: 2px; background: #fff; border-radius: 50%;
+            animation: twinkle 3s infinite ease-in-out; box-shadow: 0 0 5px #fff;
+        }
+        @keyframes pulseGrid { 0% { opacity: 0.3; } 100% { opacity: 0.6; } }
+        @keyframes twinkle { 0%, 100% { opacity: 0.2; transform: scale(1); } 50% { opacity: 1; transform: scale(1.5); } }
 
-        /* HEADER */
+        .login-box { 
+            width: 400px; padding: 40px; border: 1px solid rgba(255,215,0,0.3); 
+            background: rgba(5, 30, 62, 0.9); backdrop-filter: blur(10px);
+            box-shadow: 0 0 100px rgba(0,0,0,0.5); border-radius: 12px; z-index: 2; position: relative;
+        }
+        .login-title { font-size: 24px; font-weight: 900; color: #fff; margin-bottom: 30px; letter-spacing: 2px; text-align: center; }
+        .login-input { 
+            width: 100%; background: rgba(0,0,0,0.5); border: 1px solid var(--border); color: #fff; 
+            padding: 12px; font-family: var(--font-mono); font-size: 12px; margin-bottom: 15px; border-radius: 4px; 
+            cursor: text; user-select: text;
+        }
+        .login-input:focus { border-color: var(--accent-yellow); }
+        .enter-btn { width: 100%; background: var(--accent-yellow); color: #000; border: none; padding: 12px; font-weight: 800; cursor: pointer; margin-top: 10px; border-radius: 4px; letter-spacing: 1px; transition: 0.2s; }
+        .enter-btn:hover { background: #fff; box-shadow: 0 0 15px var(--accent-yellow); }
+        .reg-link { 
+            text-align: center; margin-top: 15px; font-size: 11px; color: var(--accent-data); 
+            text-decoration: underline; cursor: pointer; 
+        }
+
+        /* --- HEADER --- */
         header { height: 50px; background: #0a1018; border-bottom: 1px solid var(--border); display: grid; grid-template-columns: 250px 1fr 300px; align-items: center; padding: 0 20px; z-index: 500; }
         .brand { font-size: 16px; font-weight: 900; color: #fff; letter-spacing: 2px; display: flex; align-items: center; gap: 10px; }
         .brand span { color: var(--accent-yellow); }
+
         .ai-topbar { display: flex; align-items: center; justify-content: center; gap: 15px; font-family: var(--font-mono); font-size: 11px; color: #888; cursor: pointer; height: 100%; }
         .ai-status { display: flex; align-items: center; gap: 6px; }
         .ai-dot { width: 6px; height: 6px; border-radius: 50%; }
+        .ai-msg-preview { max-width: 400px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #ccc; }
+        
+        .header-controls { display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
         .view-switch { display: none; background: #000; border: 1px solid var(--border); border-radius: 4px; padding: 2px; }
-        .vs-btn { padding: 6px 12px; font-size: 10px; border: none; background: transparent; color: #666; cursor: pointer; font-weight: 700; border-radius: 2px; }
+        .vs-btn { padding: 6px 12px; font-size: 10px; border: none; background: transparent; color: #666; cursor: pointer; font-weight: 700; font-family: var(--font-mono); border-radius: 2px; }
         .vs-btn.active { background: var(--accent-yellow); color: #000; }
         .user-badge { font-family: var(--font-mono); font-size: 11px; padding: 5px 10px; border: 1px solid var(--border); border-radius: 4px; color: #888; }
 
-        /* WORKSPACE & PANELS */
+        /* --- WORKSPACE --- */
         #workspace { flex: 1; display: grid; grid-template-columns: 340px 1fr; overflow: hidden; }
         .sidebar { background: var(--bg-panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 10; }
-        .p-head { padding: 15px; border-bottom: 1px solid var(--border); font-size: 11px; font-weight: 700; color: #fff; letter-spacing: 1px; background: rgba(0,0,0,0.2); display: flex; justify-content: space-between; }
+        .p-head { padding: 15px; border-bottom: 1px solid var(--border); font-size: 11px; font-weight: 700; color: #fff; letter-spacing: 1px; background: rgba(0,0,0,0.2); }
         .p-body { flex: 1; overflow-y: auto; padding: 20px; }
-        
-        .admin-upload-card { background: rgba(0,0,0,0.2); border: 1px solid var(--border); padding: 15px; margin-bottom: 10px; border-radius: 4px; }
-        .auc-header { display: flex; justify-content: space-between; margin-bottom: 10px; color: #fff; font-weight: 700; font-size: 12px; }
-        .auc-status { font-size: 9px; padding: 2px 6px; background: #000; color: #666; border-radius: 2px; }
-        .auc-status.live { color: var(--accent-green); border: 1px solid var(--accent-green); }
-        .upload-btn-mini { width: 100%; border: 1px dashed #666; color: #888; padding: 8px; text-align: center; font-size: 10px; cursor: pointer; border-radius: 2px; }
-        .upload-btn-mini:hover { border-color: var(--accent-yellow); color: var(--accent-yellow); }
 
-        .step-card { border: 1px solid #333; padding: 15px; margin-bottom: 15px; background: rgba(0,0,0,0.2); border-radius: 6px; opacity: 0.5; pointer-events: none; }
-        .step-card.active { opacity: 1; pointer-events: all; border-color: #666; background: rgba(255,255,255,0.02); }
-        .step-card.done { border-color: var(--accent-green); opacity: 0.8; }
-        .action-btn { width: 100%; background: var(--accent-yellow); color: #000; border: none; padding: 10px; font-weight: 800; cursor: pointer; border-radius: 4px; font-size: 11px; margin-bottom: 5px; }
-        .action-btn.warn { background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #ef4444; }
-        
+        /* MODULES */
         .module { margin-bottom: 25px; border-bottom: 1px dashed var(--border); padding-bottom: 20px; }
         .mod-title { font-size: 10px; color: var(--accent-yellow); font-weight: 700; margin-bottom: 10px; }
         .aoi-box { border: 1px solid #222; padding: 10px; background: #0a0a0a; margin-bottom: 10px; border-radius: 4px; }
         .sys-select { width: 100%; background: #151515; border: 1px solid #333; color: #ccc; padding: 8px; font-family: var(--font-mono); font-size: 11px; outline: none; }
-        .upload-zone { border: 1px dashed #444; padding: 20px; text-align: center; cursor: pointer; }
-        .year-toggle { display: flex; justify-content: space-between; align-items: center; background: #111; border: 1px solid #222; padding: 10px; margin-bottom: 5px; cursor: pointer; opacity: 1; }
+        .upload-zone { border: 1px dashed #444; padding: 20px; text-align: center; cursor: pointer; transition: 0.2s; border-radius: 4px; }
+        .upload-zone:hover { border-color: var(--accent-data); color: var(--accent-data); }
+
+        .sample-btn { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid #666; color: #ccc; padding: 12px; margin-bottom: 20px; cursor: pointer; text-align: left; display: flex; align-items: center; gap: 10px; border-radius: 4px; transition: 0.2s; }
+        .sample-btn:hover { background: rgba(255,255,255,0.1); border-color: #fff; color: #fff; }
+
+        .year-toggle { display: flex; justify-content: space-between; align-items: center; background: #111; border: 1px solid #222; padding: 10px; margin-bottom: 5px; cursor: pointer; opacity: 1; transition: 0.3s; border-radius: 4px; }
+        .year-toggle.disabled { opacity: 0.5; cursor: not-allowed; border-style: dashed; }
         .year-toggle.active { border-color: #fff; background: #1a1a1a; }
         .year-tag { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 8px; }
 
-        .email-panel { background: #111; border: 1px dashed #666; padding: 10px; border-radius: 4px; display: none; margin-bottom: 10px; }
-        .resend-link { font-size: 9px; color: #666; text-decoration: underline; cursor: pointer; float: right; margin-top: 5px; }
+        /* ADMIN */
+        #sidebar-admin { display: none; }
+        .admin-upload-card { background: rgba(0,0,0,0.2); border: 1px solid var(--border); padding: 15px; margin-bottom: 10px; border-radius: 4px; }
+        .auc-header { display: flex; justify-content: space-between; margin-bottom: 10px; color: #fff; font-weight: 700; font-size: 12px; }
+        .auc-status { font-size: 9px; padding: 2px 6px; background: #000; color: #666; border-radius: 2px; font-family: var(--font-mono); }
+        .auc-status.live { color: var(--accent-green); border: 1px solid var(--accent-green); }
+        .upload-btn-mini { width: 100%; border: 1px dashed #666; color: #888; padding: 8px; text-align: center; font-size: 10px; cursor: pointer; border-radius: 2px; }
+        .upload-btn-mini:hover { border-color: var(--accent-yellow); color: var(--accent-yellow); }
 
+        /* --- THE OMNI-MODAL (WORKFLOW) --- */
+        #workflowModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(2, 11, 22, 0.95); z-index: 2000; display: none; justify-content: center; align-items: center; }
+        .wf-box { width: 650px; height: 600px; background: var(--bg-panel); border: 1px solid var(--accent-yellow); border-radius: 8px; display: flex; flex-direction: column; position: relative; box-shadow: 0 0 80px rgba(0,0,0,0.8); }
+        .wf-header { padding: 15px 25px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2); }
+        .wf-title { font-weight: 900; color: #fff; letter-spacing: 1px; font-size: 14px; }
+        .wf-close { cursor: pointer; font-size: 24px; color: #666; transition: 0.2s; line-height: 1; }
+        .wf-close:hover { color: #fff; }
+        
+        .wf-body { flex: 1; padding: 30px; overflow-y: auto; color: #ccc; font-size: 13px; line-height: 1.6; }
+        
+        .wf-footer { padding: 15px 25px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2); }
+        .nav-btn { padding: 8px 20px; border: 1px solid #666; background: transparent; color: #ccc; cursor: pointer; border-radius: 4px; font-weight: 700; font-size: 11px; }
+        .nav-btn:hover { border-color: #fff; color: #fff; }
+        .nav-btn.primary { background: var(--accent-yellow); color: #000; border: none; }
+        .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        /* NDA Styles */
+        .nda-text { background: rgba(255,255,255,0.05); padding: 15px; height: 200px; overflow-y: auto; border: 1px solid #333; margin-bottom: 20px; font-size: 12px; font-family: serif; user-select: none; }
+        .nda-form { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .form-label { font-size: 10px; color: var(--accent-data); margin-bottom: 5px; font-weight: bold; }
+        .nda-input { width: 100%; background: #000; border: 1px solid #444; color: #fff; padding: 8px; border-radius: 4px; user-select: text; cursor: text; }
+        .nda-sign { font-family: 'Dancing Script', cursive; font-size: 18px; color: var(--accent-yellow); }
+
+        /* Email Trap */
+        .email-trap { background: #000; padding: 20px; border: 1px dashed #666; margin-top: 20px; border-radius: 4px; text-align: center; }
+
+        /* MAP */
         #map { width: 100%; height: 100%; background: #ffffff; z-index: 1; }
         
-        /* AI POPUP */
+        /* AI & Cursor */
         #aiDropdown { position: absolute; top: 50px; left: 50%; transform: translateX(-50%); width: 500px; background: rgba(5, 30, 62, 0.98); border: 1px solid var(--border); border-top: none; box-shadow: 0 10px 40px rgba(0,0,0,0.5); display: none; flex-direction: column; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; overflow: hidden; }
         .ai-body { height: 250px; overflow-y: auto; padding: 15px; font-family: var(--font-mono); font-size: 11px; }
         .chat-row { display: flex; gap: 10px; margin-bottom: 8px; align-items: flex-start; }
@@ -90,42 +163,35 @@
         .avatar.concierge { border: 1px solid var(--accent-green); color: var(--accent-green); background: rgba(16, 185, 129, 0.1); }
         .avatar.engineer { border: 1px solid var(--accent-amber); color: var(--accent-amber); background: rgba(245, 158, 11, 0.1); }
         .bubble { background: rgba(0,0,0,0.3); padding: 8px 12px; border-radius: 4px; color: #ddd; line-height: 1.4; border: 1px solid rgba(255,255,255,0.05); }
-
-        /* MODALS */
-        #warningModal, #ndaModal, #reportModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(2, 11, 22, 0.95); z-index: 10000; display: none; justify-content: center; align-items: center; }
-        .doc-paper { width: 500px; background: #fff; color: #000; padding: 40px; border-radius: 8px; font-family: serif; max-height: 80vh; overflow-y: auto; }
-        .warn-box { width: 450px; background: #051e3e; border: 1px solid var(--accent-amber); padding: 30px; text-align: center; border-radius: 8px; box-shadow: 0 0 50px rgba(245, 158, 11, 0.2); }
         .cursor-trail { position: fixed; pointer-events: none; z-index: 9999; font-size: 24px; opacity: 0.8; transition: 0.1s; }
+
     </style>
 </head>
 <body>
 
 <div id="loginOverlay">
+    <div class="star-map-bg">
+        </div>
     <div class="login-box">
         <div class="login-title">GPTM <span style="color:var(--accent-yellow)">GATEWAY</span></div>
-        <input type="text" class="login-input" id="loginCompany" placeholder="COMPANY (Admin: COMMANDER)" onkeypress="handleLoginKey(event)">
-        <input type="text" class="login-input" id="loginEmail" placeholder="EMAIL" onkeypress="handleLoginKey(event)">
-        <input type="text" class="login-input" id="loginCode" placeholder="VERIFICATION CODE (123456 / 000000)" onkeypress="handleLoginKey(event)">
-        
-        <div class="z-title">CHOOSE MOUSE SKIN</div>
-        <div class="zodiac-grid" id="zodiacGrid"></div>
+        <input type="text" class="login-input" id="loginEmail" placeholder="EMAIL (User ID)" onkeypress="handleLoginKey(event)">
+        <input type="password" class="login-input" id="loginPass" placeholder="PASSWORD" onkeypress="handleLoginKey(event)">
+        <input type="text" class="login-input" id="loginCode" placeholder="VERIFICATION CODE (123456)" onkeypress="handleLoginKey(event)">
         
         <button class="enter-btn" onclick="checkLogin()">AUTHENTICATE</button>
-        <button class="reg-btn" onclick="alert('Registration portal open.')">REGISTER NEW ACCOUNT</button>
+        <div class="reg-link" onclick="alert('Registration: Account created for ' + document.getElementById('loginEmail').value)">REGISTER NEW ACCOUNT</div>
     </div>
 </div>
 
 <header>
     <div class="brand"><i class="ph ph-globe-hemisphere-east"></i> GPTM <span>SOVEREIGN</span></div>
-    
     <div class="ai-topbar" onclick="toggleAIChat()">
         <div class="ai-status"><div class="ai-dot" style="background:var(--accent-green)"></div> CONCIERGE</div>
         <div class="ai-status"><div class="ai-dot" style="background:var(--accent-amber)"></div> ENGINEER</div>
         <div style="width:1px; height:15px; background:#333; margin:0 10px;"></div>
-        <div class="ai-msg-preview" id="aiTicker">System Online. 2023.SHP Baseline Active.</div>
+        <div class="ai-msg-preview" id="aiTicker">System Online.</div>
         <i class="ph ph-caret-down"></i>
     </div>
-
     <div class="header-controls">
         <div class="view-switch" id="viewSwitch">
             <button class="vs-btn" id="btnViewUser" onclick="switchView('user')">USER VIEW</button>
@@ -137,79 +203,74 @@
 
 <div id="aiDropdown"><div class="ai-body" id="chatBody"></div></div>
 
+<div id="workflowModal">
+    <div class="wf-box">
+        <div class="wf-header">
+            <div class="wf-title" id="wfTitle">SAMPLE DATA APPLICATION</div>
+            <div class="wf-close" onclick="closeModal()">×</div>
+        </div>
+        <div class="wf-body" id="wfContent"></div>
+        <div class="wf-footer">
+            <button class="nav-btn" id="btnPrev" onclick="prevStep()">PREVIOUS</button>
+            <button class="nav-btn primary" id="btnNext" onclick="nextStep()">NEXT ></button>
+        </div>
+    </div>
+</div>
+
 <div id="workspace">
     
     <div class="sidebar">
-        
         <div id="sidebar-user">
-            <div id="phase-compliance">
-                <div class="p-head">COMPLIANCE PROTOCOL</div>
-                <div class="p-body">
-                    <div class="step-card active" id="step1">
-                        <div class="step-title">SAMPLE REQUEST</div>
-                        <div class="step-desc">Access to Dubai JVC Sample.</div>
-                        <button class="action-btn warn" onclick="triggerApply()">APPLY FOR SAMPLE DATA</button>
+            <div class="p-head">MISSION CONTROL</div>
+            <div class="p-body">
+                <button class="sample-btn" onclick="openWorkflow()">
+                    <i class="ph ph-file-text" style="color:var(--accent-amber); font-size:18px;"></i>
+                    <div>
+                        <div style="font-weight:700; font-size:11px; color:#fff;">APPLY FOR SAMPLE DATA</div>
+                        <div style="font-size:9px; color:#888;">Dubai JVC (Verification Required)</div>
                     </div>
-                    <div class="step-card" id="step2">
-                        <div class="step-title">VERIFICATION LOOP</div>
-                        <div class="step-desc">Confirm Email Receipt to unlock FTP.</div>
-                        <div class="email-panel" id="emailPanel">
-                            <div style="font-size:10px; color:#fff; margin-bottom:5px;">SENT TO: <span id="dispEmail">...</span></div>
-                            <button class="action-btn primary" onclick="confirmEmailReceipt()">I RECEIVED THE EMAIL</button>
-                            <div class="resend-link" onclick="handleResend()">Not received? Resend</div>
-                        </div>
-                        <div id="dataTools" style="display:none;">
-                            <button class="action-btn" onclick="alert('FTP: 47.237.100.53 | Dubai_DSMDTM | sdjv0$%g;fd')">VIEW FTP CREDENTIALS</button>
-                            <div style="margin-top:10px; border-top:1px dashed #444; padding-top:10px;">
-                                <input type="file" id="reportInput" style="display:none" onchange="handleReport()">
-                                <button class="action-btn primary" onclick="document.getElementById('reportInput').click()">UPLOAD REPORT</button>
-                            </div>
-                        </div>
+                </button>
+
+                <div class="module">
+                    <div class="mod-title">TARGET DEFINITION</div>
+                    <div class="aoi-box">
+                        <div style="font-size:9px; color:#888; margin-bottom:5px;">A) ADMINISTRATIVE</div>
+                        <select class="sys-select" onchange="map.setView([25.05, 55.2], 10)"><option>GLOBAL</option><option>UAE (DUBAI)</option></select>
+                    </div>
+                    <div class="aoi-box" style="margin-bottom:0;">
+                        <div style="font-size:9px; color:#888; margin-bottom:5px;">B) UPLOAD AOI</div>
+                        <div class="upload-zone" onclick="alert('Upload Dialog')"><i class="ph ph-upload-simple"></i> UPLOAD .ZIP/KML</div>
                     </div>
                 </div>
-            </div>
 
-            <div id="phase-mission" style="display:none;">
-                <div class="p-head">COVERAGE SCOPE</div>
-                <div class="p-body">
-                    <div class="module">
-                        <div class="mod-title">TARGET DEFINITION</div>
-                        <div class="aoi-box">
-                            <div style="font-size:9px; color:#888; margin-bottom:5px;">A) ADMIN SELECT</div>
-                            <select class="sys-select" onchange="map.setView([25.05, 55.2], 10)">
-                                <option>GLOBAL</option><option>NATIONAL</option><option>UAE (DUBAI)</option>
-                            </select>
-                        </div>
-                        <div class="aoi-box" style="margin-bottom:0;">
-                            <div style="font-size:9px; color:#888; margin-bottom:5px;">B) CUSTOM UPLOAD</div>
-                            <div class="upload-zone" onclick="alert('Upload .ZIP/KML')"><i class="ph ph-upload-simple"></i> UPLOAD AOI</div>
-                        </div>
+                <div class="module" style="border:none;">
+                    <div class="mod-title">DATASET VINTAGE</div>
+                    <div class="year-toggle disabled" id="row-2023" onclick="toggleLayer('2023')">
+                        <div class="year-label"><span class="year-tag" style="background:var(--accent-lock)"></span> 2023 ARCHIVE</div>
+                        <div class="ph ph-check" style="opacity:0"></div>
                     </div>
-                    <div class="module" style="border:none;">
-                        <div class="mod-title">DATASET VINTAGE</div>
-                        <div class="year-toggle active" onclick="toggleLayer('2023')">
-                            <div class="year-label"><span class="year-tag" style="background:var(--accent-lock)"></span> 2023 ARCHIVE</div>
-                            <div style="font-size:9px; color:var(--accent-green)">ONLINE</div>
-                        </div>
-                        <div class="year-toggle active" onclick="toggleLayer('2025')">
-                            <div class="year-label"><span class="year-tag" style="background:var(--accent-data)"></span> 2025 COLLECTION</div>
-                            <div class="ph ph-check"></div>
-                        </div>
-                        <div class="year-toggle" onclick="toggleLayer('2024')">
-                            <div class="year-label"><span class="year-tag" style="background:#6366f1"></span> 2024 COLLECTION</div>
-                        </div>
+                    <div class="year-toggle disabled" id="row-2024" onclick="toggleLayer('2024')">
+                        <div class="year-label"><span class="year-tag" style="background:#8b5cf6"></span> 2024 COLLECTION</div>
+                        <div class="ph ph-check" style="opacity:0"></div>
+                    </div>
+                    <div class="year-toggle disabled" id="row-2025" onclick="toggleLayer('2025')">
+                        <div class="year-label"><span class="year-tag" style="background:var(--accent-data)"></span> 2025 COLLECTION</div>
+                        <div class="ph ph-check" style="opacity:0"></div>
+                    </div>
+                    <div class="year-toggle disabled" id="row-2026" onclick="toggleLayer('2026')">
+                        <div class="year-label"><span class="year-tag" style="background:var(--accent-amber)"></span> 2026 PREVIEW</div>
+                        <div class="ph ph-check" style="opacity:0"></div>
                     </div>
                 </div>
             </div>
         </div>
 
         <div id="sidebar-admin">
-            <div class="p-head" style="color:var(--accent-yellow)">DATA MANAGEMENT HUB</div>
+            <div class="p-head" style="color:var(--accent-yellow)">DATA MANAGEMENT</div>
             <div class="p-body">
-                <div class="admin-upload-card" style="border-color:var(--accent-green);">
-                    <div class="auc-header">2023 BASELINE <span class="auc-status live">LIVE</span></div>
-                    <div class="file-list">> 2023.shp [DETECTED]<br>> 2023.prj [WGS84]</div>
-                    <div class="upload-btn-mini" onclick="adminUpload('2023')">OVERWRITE / UPDATE</div>
+                <div class="admin-upload-card">
+                    <div class="auc-header">2023 ARCHIVE <span class="auc-status" id="st-2023">OFFLINE</span></div>
+                    <div class="upload-btn-mini" onclick="adminUpload('2023')">UPLOAD VECTOR</div>
                 </div>
                 <div class="admin-upload-card">
                     <div class="auc-header">2024 COLLECTION <span class="auc-status" id="st-2024">OFFLINE</span></div>
@@ -220,120 +281,72 @@
                     <div class="upload-btn-mini" onclick="adminUpload('2025')">UPLOAD VECTOR</div>
                 </div>
                 <div class="admin-upload-card">
-                    <div class="auc-header">2026 PREVIEW <span class="auc-status" id="st-2026">LOCKED</span></div>
+                    <div class="auc-header">2026 PREVIEW <span class="auc-status" id="st-2026">OFFLINE</span></div>
                     <div class="upload-btn-mini" onclick="adminUpload('2026')">UPLOAD VECTOR</div>
                 </div>
             </div>
         </div>
-
     </div>
 
     <div id="map"></div>
-
-</div>
-
-<div id="warningModal">
-    <div class="warn-box">
-        <h2 style="color:#fff; margin-bottom:10px;">MANDATORY PROTOCOL</h2>
-        <p style="color:#ccc; font-size:12px; line-height:1.6; text-align:left; margin-bottom:20px;">
-            1. Report required within 10 days.<br>2. Non-compliance = Blacklist.<br>3. Closed Loop System.
-        </p>
-        <div style="display:flex; gap:10px; justify-content:center; margin-bottom:20px;">
-            <input type="checkbox" id="warnCheck"> <label for="warnCheck" style="color:#fff; font-size:11px;">I ACCEPT</label>
-        </div>
-        <button class="action-btn" onclick="acceptWarning()">PROCEED TO NDA</button>
-    </div>
-</div>
-
-<div id="ndaModal">
-    <div class="doc-paper">
-        <div style="text-align:center; font-weight:bold;">NDA AGREEMENT</div>
-        <br><br><br>
-        <button class="action-btn" onclick="signNDA()">SIGN & SUBMIT</button>
-    </div>
-</div>
-
-<div id="reportModal">
-    <div class="doc-paper">
-        <div style="text-align:center; font-weight:bold;">FEEDBACK REPORT</div>
-        <br>
-        <button class="action-btn" onclick="document.getElementById('reportModal').style.display='none'; handleReport();">SUBMIT REPORT</button>
-    </div>
 </div>
 <script>
     // --- 1. SETUP ---
+    // Generate Stars for Login
+    const starBg = document.querySelector('.star-map-bg');
+    for(let i=0; i<30; i++) {
+        const s = document.createElement('div');
+        s.className = 'star';
+        s.style.left = Math.random()*100 + '%';
+        s.style.top = Math.random()*100 + '%';
+        s.style.animationDelay = Math.random()*2 + 's';
+        starBg.appendChild(s);
+    }
+
     const map = L.map('map', { zoomControl: false, minZoom: 2 }).setView([20, 0], 2);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
-    const layers = { '2023': L.featureGroup().addTo(map), '2024': L.featureGroup(), '2025': L.featureGroup() };
+    const layers = { '2023': L.featureGroup(), '2024': L.featureGroup(), '2025': L.featureGroup(), '2026': L.featureGroup() };
 
-    // LOAD 2023 BASELINE
-    function loadBaseline() {
-        // Mock 2023 Grid
-        const grid = [[[30,-100],[45,-80]], [[-20,-60],[-5,-45]], [[10,20],[30,40]], [[35,100],[50,140]]];
-        grid.forEach(b => L.rectangle(b, { color:'#64748b', weight:1, fillOpacity:0.2 }).addTo(layers['2023']));
-    }
-    loadBaseline();
-
-    // ZODIAC
-    const zodiacs = ['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓'];
-    const zGrid = document.getElementById('zodiacGrid');
-    let currentCursor = '♈';
-    zodiacs.forEach(z => {
-        const btn = document.createElement('div');
-        btn.className = 'z-btn'; btn.innerHTML = `<div class="z-icon">${z}</div>`;
-        btn.onclick = () => {
-            document.querySelectorAll('.z-btn').forEach(b => b.classList.remove('selected'));
-            btn.classList.add('selected'); currentCursor = z;
-        };
-        zGrid.appendChild(btn);
-    });
-    zGrid.children[0].classList.add('selected');
-
-    // --- 2. AI & LOGIN ---
-    function addChat(role, text) {
-        document.getElementById('aiTicker').innerText = `${role==='concierge'?'Concierge':'Engineer'}: ${text}`;
-        const body = document.getElementById('chatBody');
-        const row = document.createElement('div'); row.className = 'chat-row';
-        let av = role==='concierge'?'☺':'⚡'; let cls = role;
-        row.innerHTML = `<div class="avatar ${cls}">${av}</div><div class="bubble"><b>${role.toUpperCase()}:</b> ${text}</div>`;
-        body.appendChild(row); body.scrollTop = 9999;
-    }
-    function toggleAIChat() { document.getElementById('aiDropdown').style.display = document.getElementById('aiDropdown').style.display==='flex'?'none':'flex'; }
-
+    // --- 2. LOGIN LOGIC ---
     function handleLoginKey(e) { if(e.key==='Enter') checkLogin(); }
-    function sendCode() { addChat('concierge', 'Code sent: 123456 (Admin: 000000)'); }
     function checkLogin() {
-        const comp = document.getElementById('loginCompany').value.toUpperCase();
+        const user = document.getElementById('loginEmail').value;
         const code = document.getElementById('loginCode').value;
-        if(comp==='COMMANDER' && code==='000000') { activateGodMode(); return; }
+        
+        // ADMIN CHECK (For Demo)
+        if (user.toUpperCase() === 'COMMANDER' && code === '000000') {
+            activateGodMode(); return;
+        }
+        // USER CHECK
         if(code!=='123456') { addChat('engineer', 'Wrong code.'); return; }
-        loginUser(comp);
-    }
-
-    function loginUser(name) {
+        
         document.getElementById('loginOverlay').style.display='none';
         document.getElementById('app').classList.add('unlocked');
-        document.getElementById('headerUser').innerText = name;
-        document.getElementById('viewSwitch').style.display='none';
-        switchView('user');
-        document.getElementById('dispEmail').innerText = document.getElementById('loginEmail').value;
-        addChat('concierge', `Welcome ${name}. Please start compliance.`);
-        startCursor(currentCursor);
+        document.getElementById('headerUser').innerText = user;
+        addChat('concierge', `Welcome ${user}.`);
+        startCursor('♈'); 
     }
 
     function activateGodMode() {
-        document.body.classList.add('god-mode');
         document.getElementById('loginOverlay').style.display='none';
         document.getElementById('app').classList.add('unlocked');
         document.getElementById('headerUser').innerText = "COMMANDER";
         document.getElementById('headerUser').style.color = "var(--accent-yellow)";
-        document.getElementById('headerUser').style.borderColor = "var(--accent-yellow)";
         document.getElementById('viewSwitch').style.display='flex';
         switchView('admin');
         startCursor('♛');
-        addChat('engineer', 'Commander Access Granted. 2023 Vector is LOCKED.');
+        addChat('engineer', 'Admin Console Active.');
     }
 
+    // --- 3. AI & UTIL ---
+    function addChat(role, text) {
+        document.getElementById('aiTicker').innerText = `${role.toUpperCase()}: ${text}`;
+        const body = document.getElementById('chatBody');
+        const row = document.createElement('div'); row.className = 'chat-row';
+        row.innerHTML = `<div class="avatar ${role}">${role==='concierge'?'☺':'⚡'}</div><div class="bubble"><b>${role}:</b> ${text}</div>`;
+        body.appendChild(row); body.scrollTop=9999;
+    }
+    function toggleAIChat() { document.getElementById('aiDropdown').style.display = document.getElementById('aiDropdown').style.display==='flex'?'none':'flex'; }
     function startCursor(char) {
         document.addEventListener('mousemove', (e) => {
             const el = document.createElement('div'); el.className = 'cursor-trail'; el.innerText = char;
@@ -342,66 +355,142 @@
             document.body.appendChild(el); setTimeout(()=>el.remove(), 200);
         });
     }
-
     function switchView(mode) {
-        const u = document.getElementById('sidebar-user');
-        const a = document.getElementById('sidebar-admin');
-        if(mode === 'admin') {
-            u.style.display='none'; a.style.display='block';
+        if(mode==='admin') {
+            document.getElementById('sidebar-user').style.display='none';
+            document.getElementById('sidebar-admin').style.display='block';
             document.getElementById('btnViewUser').classList.remove('active');
             document.getElementById('btnViewAdmin').classList.add('active');
         } else {
-            u.style.display='flex'; u.style.flexDirection='column'; a.style.display='none';
+            document.getElementById('sidebar-user').style.display='flex';
+            document.getElementById('sidebar-admin').style.display='none';
             document.getElementById('btnViewUser').classList.add('active');
             document.getElementById('btnViewAdmin').classList.remove('active');
         }
     }
 
-    // --- 3. WORKFLOW ---
-    function triggerApply() { document.getElementById('warningModal').style.display='flex'; }
-    function acceptWarning() {
-        if(!document.getElementById('warnCheck').checked) { alert("Ack Required"); return; }
-        document.getElementById('warningModal').style.display='none';
-        document.getElementById('ndaModal').style.display='flex';
+    // --- 4. THE OMNI-MODAL LOGIC (WORKFLOW) ---
+    let step = 1;
+    let emailConfirmed = false;
+
+    function openWorkflow() {
+        step = 1;
+        document.getElementById('workflowModal').style.display = 'flex';
+        renderStep();
     }
-    function signNDA() {
-        document.getElementById('ndaModal').style.display='none';
-        document.getElementById('step1').classList.add('done');
-        document.getElementById('step2').classList.add('active');
-        document.getElementById('emailPanel').style.display='block';
-        addChat('concierge', 'NDA Signed. Email sent.');
-    }
+    function closeModal() { document.getElementById('workflowModal').style.display = 'none'; }
     
-    let resendCount = 0;
-    function handleResend() {
-        resendCount++;
-        if(resendCount === 1) addChat('concierge', 'Resending...');
-        else if(resendCount === 2) addChat('engineer', 'Network lag. Rerouting...');
-        else { addChat('engineer', 'Firewall issue. Bypassing.'); confirmEmailReceipt(); }
+    function nextStep() {
+        if(step===1 && !document.getElementById('warnCheck').checked) { alert('Please accept.'); return; }
+        if(step===2) {
+            const comp = document.getElementById('ndaCompany').value;
+            const sign = document.getElementById('ndaSign').value;
+            if(!comp || !sign) { alert('Please fill Company & Signature.'); return; }
+            addChat('concierge', `NDA Signed by ${comp}.`);
+        }
+        if(step===3 && !emailConfirmed) { alert('Confirm email first.'); return; }
+        step++;
+        renderStep();
     }
-    function confirmEmailReceipt() {
-        document.getElementById('emailPanel').style.display='none';
-        document.getElementById('dataTools').style.display='block';
-        addChat('concierge', 'Verified. FTP Unlocked.');
-    }
-    function handleReport() {
-        addChat('engineer', 'Report verified. Mission controls unlocked.');
-        document.getElementById('phase-compliance').style.display='none';
-        document.getElementById('phase-mission').style.display='block';
+    function prevStep() { if(step>1) step--; renderStep(); }
+
+    function renderStep() {
+        const c = document.getElementById('wfContent');
+        const bNext = document.getElementById('btnNext');
+        const bPrev = document.getElementById('btnPrev');
+        bPrev.disabled = (step===1);
+        bNext.innerText = "NEXT >";
+        bNext.onclick = nextStep;
+
+        if(step===1) {
+            c.innerHTML = `
+                <div style="text-align:center; color:var(--accent-amber); font-size:40px;"><i class="ph ph-warning-octagon"></i></div>
+                <h3 style="text-align:center;">PROTOCOL WARNING</h3>
+                <p>1. Mandatory Report in 10 days.<br>2. Non-compliance = Blacklist.</p>
+                <div style="text-align:center; margin-top:20px;">
+                    <input type="checkbox" id="warnCheck"> <label for="warnCheck">I ACCEPT THE CONSEQUENCES</label>
+                </div>`;
+        } else if(step===2) {
+            const today = new Date().toISOString().split('T')[0];
+            c.innerHTML = `
+                <h3 style="text-align:center;">NON-DISCLOSURE AGREEMENT</h3>
+                <div class="nda-text">I hereby agree that Data is for internal evaluation only... (NO DOWNLOAD)</div>
+                <div class="nda-form">
+                    <div>
+                        <div class="form-label">COMPANY NAME</div>
+                        <input type="text" class="nda-input" id="ndaCompany" placeholder="Enter Company">
+                    </div>
+                    <div>
+                        <div class="form-label">DATE (LOCKED)</div>
+                        <input type="text" class="nda-input" value="${today}" disabled>
+                    </div>
+                    <div style="grid-column: span 2;">
+                        <div class="form-label">DIGITAL SIGNATURE</div>
+                        <input type="text" class="nda-input nda-sign" id="ndaSign" placeholder="Sign here...">
+                    </div>
+                </div>`;
+        } else if(step===3) {
+            bNext.disabled = !emailConfirmed;
+            c.innerHTML = `
+                <h3 style="text-align:center;">VERIFICATION</h3>
+                <div class="email-trap">
+                    <div>Email sent to: ${document.getElementById('loginEmail').value}</div>
+                    <br>
+                    <button class="action-btn primary" onclick="doConfirm()">I RECEIVED IT</button>
+                    <div class="resend-link" onclick="addChat('engineer','Switched route. Try again.')">Resend</div>
+                </div>
+                ${emailConfirmed ? '<div style="text-align:center; color:var(--accent-green); margin-top:10px;">VERIFIED.</div>' : ''}`;
+        } else if(step===4) {
+            c.innerHTML = `
+                <h3 style="text-align:center;">FEEDBACK REPORT</h3>
+                <div class="upload-zone" onclick="alert('Upload Mock')"><i class="ph ph-upload-simple"></i> UPLOAD REPORT</div>`;
+            bNext.innerText = "FINISH";
+            bNext.onclick = () => {
+                closeModal();
+                addChat('engineer', 'Report accepted. Permissions unlocked.');
+            };
+        }
     }
 
-    // --- 4. MAP & ADMIN ---
-    function adminUpload(year) {
-        addChat('engineer', `${year} Vector layer mounted.`);
-        const b = [[20,-20],[40,20]];
-        L.rectangle(b, {color:'var(--accent-data)', fillOpacity:0.2}).addTo(layers['2025']);
+    function doConfirm() {
+        emailConfirmed = true;
+        addChat('concierge', 'Email Confirmed.');
+        renderStep();
     }
+
+    // --- 5. ADMIN UPLOAD ---
+    function adminUpload(year) {
+        const st = document.getElementById(`st-${year}`);
+        st.innerText = "ONLINE"; st.className = "auc-status live";
+        st.style.color = "var(--accent-green)";
+        
+        // Map Logic
+        const colors = {'2023':'#94a3b8', '2024':'#8b5cf6', '2025':'#3b82f6', '2026':'#f59e0b'};
+        const offset = (parseInt(year)-2023)*5;
+        L.rectangle([[20+offset, -20+offset], [40+offset, 20+offset]], {color: colors[year], fillOpacity:0.3}).addTo(layers[year]);
+        
+        // Unlock User Button
+        const userBtn = document.getElementById(`row-${year}`);
+        if(userBtn) userBtn.classList.remove('disabled');
+        
+        addChat('engineer', `${year} Layer Mounted.`);
+    }
+
     function toggleLayer(year) {
-        if(map.hasLayer(layers[year])) map.removeLayer(layers[year]); else map.addLayer(layers[year]);
+        const el = document.getElementById(`row-${year}`);
+        if(el.classList.contains('disabled')) return;
+        el.classList.toggle('active');
+        if(el.classList.contains('active')) {
+            map.addLayer(layers[year]);
+            el.querySelector('.ph-check').style.opacity = '1';
+        } else {
+            map.removeLayer(layers[year]);
+            el.querySelector('.ph-check').style.opacity = '0';
+        }
     }
 
     // Init
-    addChat('engineer', 'System Online. 2023.shp Verified.');
+    addChat('concierge', 'System Online.');
 
 </script>
 
