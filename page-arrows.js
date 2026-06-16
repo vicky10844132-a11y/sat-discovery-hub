@@ -23,6 +23,6 @@
   var wrap=document.createElement('div');
   wrap.className='sd-page-arrows';
   wrap.innerHTML=(prev?'<a class="sd-prev" href="'+prev.file+'">← Previous: '+prev.label+'</a>':'<span class="sd-prev">← Previous</span>')+(next?'<a class="sd-next" href="'+next.file+'">Next: '+next.label+' →</a>':'<span class="sd-next">Next →</span>');
-  var top=document.querySelector('header')||document.body.firstElementChild;
-  if(top&&top.parentNode){top.parentNode.insertBefore(wrap,top.nextSibling);}else{document.body.insertBefore(wrap,document.body.firstChild);}
+  var header=document.querySelector('header');
+  if(header&&header.parentNode){header.parentNode.insertBefore(wrap,header.nextSibling);}else{document.body.insertBefore(wrap,document.body.firstChild);}
 })();
