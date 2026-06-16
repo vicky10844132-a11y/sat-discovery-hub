@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Global Geospatial Resource & Production Hub</title>
+  <style>
+    body{margin:0;font-family:Arial,sans-serif;background:#061425;color:#eef7ff}header{padding:56px 7vw;border-bottom:1px solid #163b5c;background:linear-gradient(135deg,#123b62,#061425)}main{padding:36px 7vw}.card{background:#0b2138;border:1px solid #163b5c;border-radius:18px;padding:24px;margin:18px 0}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}h1{font-size:44px;margin:0 0 12px}.sub{font-size:20px;color:#9fb6c8;line-height:1.55}.pill{display:inline-block;border:1px solid #46d9ff;border-radius:999px;padding:8px 12px;margin:5px;color:#46d9ff}.step{border-left:3px solid #46d9ff;padding-left:14px;margin:13px 0;color:#cfe8f6}table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid #163b5c;padding:11px;text-align:left}.rule{border-color:#ffd166;background:#1d2a2e}.footer{padding:26px 7vw;color:#9fb6c8;border-top:1px solid #163b5c}@media(max-width:900px){.grid{grid-template-columns:1fr}h1{font-size:34px}}
+  </style>
+</head>
+<body>
+<header>
+  <div class="pill">StellarDEM Virtual Production Factory · MVP</div>
+  <h1>Global Geospatial Resource & Production Hub</h1>
+  <div class="sub">全球地理空间资源与产品生产调度中心：from global geospatial resources to factory-released DSM/DOM products.</div>
+</header>
+<main>
+  <section class="card">
+    <h2>Platform Positioning</h2>
+    <p>The Hub is a resource coordination and production orchestration platform. Storage, compute, data, algorithms, reference datasets, production partners and QC partners may be provided by different resource owners. The platform coordinates resources; it does not automatically own, expose or consume any provider's resources.</p>
+  </section>
+  <section class="grid">
+    <div class="card"><h3>01 Resource Provider Registry</h3><p>Register storage, compute, data, reference data, algorithm, production and QC providers.</p></div>
+    <div class="card"><h3>02 AOI / Country Pack Request</h3><p>Submit country, AOI, DSM/DOM specification, validation requirement and delivery format.</p></div>
+    <div class="card"><h3>03 Production Factory</h3><p>Match resources, split tasks, run mature production workflows and track status.</p></div>
+    <div class="card"><h3>04 QC & Validation</h3><p>Use public, commercial, client-provided or high-accuracy references for validation.</p></div>
+    <div class="card"><h3>05 Owner-Only Tile Key Release</h3><p>Generate tile-level delivery keys locked to owner release control. No direct credential delivery to third parties.</p></div>
+    <div class="card"><h3>06 Delivery Center</h3><p>Factory package with DSM, DOM, metadata, tile index, QC report, delivery note and license terms.</p></div>
+  </section>
+  <section class="card">
+    <h2>Factory Workflow</h2>
+    <div class="step">Data readiness check: coverage, stereo availability, cloud/snow/water risk.</div>
+    <div class="step">Resource matching: storage, compute, algorithm and production partner.</div>
+    <div class="step">Task split: AOI, grid and tile-level production tasks.</div>
+    <div class="step">Basic production: DSM, DOM, orthorectification, mosaic and color balance.</div>
+    <div class="step">QC intake and reference validation.</div>
+    <div class="step">Factory release review and owner-only tile key generation.</div>
+  </section>
+  <section class="card rule">
+    <h2>Core Control Rule</h2>
+    <p>All tile-level delivery keys and release credentials shall be issued exclusively to the platform owner's designated email address.</p>
+    <p>The system shall not send release credentials directly to clients, production partners, storage providers, compute providers or any third party. External release must be manually approved and forwarded by the platform owner.</p>
+  </section>
+  <section class="card">
+    <h2>Standard Factory Release Package</h2>
+    <table><tr><th>Folder</th><th>Content</th></tr><tr><td>01_DSM</td><td>Digital Surface Model tiles or AOI package</td></tr><tr><td>02_DOM</td><td>Orthorectified imagery package</td></tr><tr><td>03_Metadata</td><td>Product metadata and processing information</td></tr><tr><td>04_Tile_Index</td><td>Tile grid, IDs and authorized release scope</td></tr><tr><td>05_QC_Report</td><td>Coverage, format, visual and consistency checks</td></tr><tr><td>06_Accuracy_Statement</td><td>Accuracy statement based on agreed reference data</td></tr><tr><td>07_Delivery_Note</td><td>Delivery description and client-facing release note</td></tr><tr><td>08_License_Terms</td><td>Use scope, restrictions and project authorization</td></tr></table>
+  </section>
+</main>
+<div class="footer">Global Geospatial Resource & Production Hub · StellarDEM online factory MVP</div>
+</body>
+</html>
