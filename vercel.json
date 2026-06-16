@@ -1,15 +1,11 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "app.py",
-      "use": "@vercel/python"
-    }
-  ],
+  "cleanUrls": true,
+  "trailingSlash": false,
   "routes": [
     {
-      "src": "(.*)",
-      "dest": "app.py"
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ]
 }
