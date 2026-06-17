@@ -1,6 +1,7 @@
 (function(){
   var pages=[
     {file:'homepage-v1.html',label:'Home'},
+    {file:'user-guide.html',label:'Workflow Map'},
     {file:'input-center.html',label:'Input Center'},
     {file:'aoi-tools.html',label:'AOI Tools'},
     {file:'production-toolkit.html',label:'Production Toolkit'},
