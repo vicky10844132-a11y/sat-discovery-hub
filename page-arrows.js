@@ -8,6 +8,7 @@
     {file:'progress-monitor.html',label:'Progress Monitor'},
     {file:'preview-qc.html',label:'Preview & QC'},
     {file:'output-center.html',label:'Output Center'},
+    {file:'production-intelligence.html',label:'Production Intelligence'},
     {file:'tle-report.html',label:'Orbit Prediction'},
     {file:'disclaimer.html',label:'Source & Disclaimer'}
   ];
