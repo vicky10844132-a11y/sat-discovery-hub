@@ -1,9 +1,8 @@
-"""GS LinkOps AI backend skeleton.
+"""GS LinkOps AI backend API.
 
-This is the production-oriented API foundation for the full intelligent ground
-segment operations platform. It intentionally starts without preloaded satellite
-or ground station resources. Approved resources should enter through API import
-or controlled CRUD endpoints.
+Production-oriented API foundation for the full intelligent ground segment
+operations platform. No satellite, station, manufacturer or customer records are
+preloaded. All resources enter through controlled CRUD/import endpoints.
 """
 
 from __future__ import annotations
@@ -16,10 +15,16 @@ from uuid import uuid4
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
+from ai_copilot_service import billing_recommendation, generate_operational_brief, recommend_best_contact
+from billing_service import BillingInput, decide_billing
+from orbit_engine import SatelliteTLE, Station, calculate_contact_windows
+from report_service import generate_billing_statement, generate_mission_report, generate_transfer_report
+from rules_engine import capability_match, classify_failure, mission_readiness, transfer_readiness
+
 app = FastAPI(
     title="GS LinkOps AI API",
-    version="0.1.0",
-    description="Intelligent ground segment resource and downlink operations platform API.",
+    version="0.2.0",
+    description="Full intelligent ground segment resource and downlink operations platform API.",
 )
 
 
@@ -27,6 +32,7 @@ class Status(str, Enum):
     draft = "Draft"
     onboarding = "Onboarding"
     authorized = "Authorized"
+    testing = "Testing"
     suspended = "Suspended"
 
 
@@ -83,7 +89,7 @@ class GroundStation(BaseModel):
     country_city: Optional[str] = None
     latitude: Optional[float] = None
     longitude: Optional[float] = None
-    altitude_m: Optional[float] = None
+    altitude_m: float = 0.0
     antenna: Optional[str] = None
     supported_band: Optional[str] = None
     frequency_range: Optional[str] = None
@@ -91,9 +97,9 @@ class GroundStation(BaseModel):
     minimum_elevation_deg: float = 10.0
     demodulator: Optional[str] = None
     max_data_rate_mbps: Optional[float] = None
-    transfer_method: Optional[str] = None
+    transfer_method: str = "SFTP"
     status: Status = Status.draft
-    cost_per_pass_usd: Optional[float] = None
+    cost_per_pass_usd: float = 0.0
 
 
 class Satellite(BaseModel):
@@ -136,6 +142,35 @@ class Mission(BaseModel):
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 
+class StationConfiguration(BaseModel):
+    id: str = Field(default_factory=lambda: f"CFG-{uuid4().hex[:8].upper()}")
+    mission_id: str
+    frequency: Optional[str] = None
+    if_frequency: Optional[str] = None
+    polarization: Optional[str] = None
+    modulation: Optional[str] = None
+    coding: Optional[str] = None
+    data_rate_mbps: Optional[float] = None
+    frame_format: Optional[str] = None
+    sync_word: Optional[str] = None
+    manufacturer_confirmed: bool = False
+    station_confirmed: bool = False
+
+
+class ReceptionLog(BaseModel):
+    id: str = Field(default_factory=lambda: f"RF-{uuid4().hex[:8].upper()}")
+    mission_id: str
+    signal_detected: bool = False
+    carrier_lock: bool = False
+    demod_lock: bool = False
+    frame_sync: bool = False
+    data_captured: bool = False
+    peak_snr: Optional[str] = None
+    cn0: Optional[str] = None
+    received_size: Optional[str] = None
+    issue_description: Optional[str] = None
+
+
 class TransferJob(BaseModel):
     id: str = Field(default_factory=lambda: f"TRF-{uuid4().hex[:8].upper()}")
     mission_id: str
@@ -173,19 +208,18 @@ DB: Dict[str, Dict[str, Any]] = {
     "satellites": {},
     "passes": {},
     "missions": {},
+    "configs": {},
+    "receptions": {},
     "transfers": {},
     "billing": {},
+    "reports": {},
     "audit": {},
 }
 
 
 def store(collection: str, item: BaseModel) -> BaseModel:
     DB[collection][item.id] = item.model_dump()
-    DB["audit"][uuid4().hex] = {
-        "time": datetime.now(timezone.utc).isoformat(),
-        "action": f"create {collection}",
-        "object_id": item.id,
-    }
+    DB["audit"][uuid4().hex] = {"time": datetime.now(timezone.utc).isoformat(), "action": f"create {collection}", "object_id": item.id}
     return item
 
 
@@ -196,6 +230,19 @@ def get_or_404(collection: str, object_id: str) -> Dict[str, Any]:
     return obj
 
 
+def platform_snapshot() -> Dict[str, Any]:
+    return {
+        "organizations": list(DB["organizations"].values()),
+        "stations": list(DB["stations"].values()),
+        "satellites": list(DB["satellites"].values()),
+        "missions": list(DB["missions"].values()),
+        "configs": list(DB["configs"].values()),
+        "receptions": list(DB["receptions"].values()),
+        "transfers": list(DB["transfers"].values()),
+        "billing": list(DB["billing"].values()),
+    }
+
+
 @app.get("/health")
 def health() -> Dict[str, str]:
     return {"status": "ok", "service": "GS LinkOps AI"}
@@ -203,17 +250,8 @@ def health() -> Dict[str, str]:
 
 @app.get("/dashboard")
 def dashboard() -> Dict[str, Any]:
-    return {
-        "organizations": len(DB["organizations"]),
-        "contacts": len(DB["contacts"]),
-        "ground_stations": len(DB["stations"]),
-        "satellites": len(DB["satellites"]),
-        "pass_windows": len(DB["passes"]),
-        "missions": len(DB["missions"]),
-        "transfer_jobs": len(DB["transfers"]),
-        "billing_records": len(DB["billing"]),
-        "ai_alerts": ai_alerts(),
-    }
+    brief = generate_operational_brief(platform_snapshot())
+    return {"counts": brief["summary"], "ai_alerts": brief["highest_priority_alerts"], "recommended_next_action": brief["recommended_next_action"]}
 
 
 @app.post("/organizations")
@@ -251,72 +289,44 @@ def list_satellites() -> List[Dict[str, Any]]:
     return list(DB["satellites"].values())
 
 
-def capability_score(sat: Dict[str, Any], stn: Dict[str, Any]) -> Dict[str, Any]:
-    score = 30
-    reasons: List[str] = []
-    if stn.get("status") == "Authorized":
-        score += 15
-    else:
-        reasons.append("station not authorized")
-    if sat.get("status") in {"Authorized", "Testing"}:
-        score += 15
-    else:
-        reasons.append("satellite not authorized/testing")
-    if sat.get("band") and stn.get("supported_band") and sat["band"].lower().split("/")[0].strip() in stn["supported_band"].lower():
-        score += 15
-    else:
-        reasons.append("band confirmation required")
-    if not sat.get("data_rate_mbps") or not stn.get("max_data_rate_mbps") or stn["max_data_rate_mbps"] >= sat["data_rate_mbps"]:
-        score += 10
-    else:
-        reasons.append("data rate may exceed station capacity")
-    if sat.get("polarization") and stn.get("polarization") and sat["polarization"].lower().split("/")[0].strip() in stn["polarization"].lower():
-        score += 10
-    else:
-        reasons.append("polarization confirmation required")
-    if stn.get("latitude") is not None and stn.get("longitude") is not None:
-        score += 10
-    else:
-        reasons.append("station coordinates missing")
-    if sat.get("tle_line_1") and sat.get("tle_line_2"):
-        score += 5
-    else:
-        reasons.append("TLE missing")
-    status = "Matched" if score >= 80 else "Conditional" if score >= 55 else "Need Review"
-    return {"score": min(100, score), "match_status": status, "reason": "; ".join(reasons) or "ready"}
-
-
 @app.post("/orbit/calculate")
-def calculate_pass_windows() -> List[PassWindow]:
-    """Simplified placeholder for contact windows.
-
-    Production implementation should replace this with a Skyfield/SGP4 service.
-    """
+def calculate_pass_windows_api() -> List[PassWindow]:
     DB["passes"].clear()
     results: List[PassWindow] = []
-    for sat_index, sat in enumerate(DB["satellites"].values()):
-        for stn_index, stn in enumerate(DB["stations"].values()):
-            match = capability_score(sat, stn)
-            seed = (int(sat.get("norad_id") or 10000) + round(abs((stn.get("latitude") or 0) * 100)) + stn_index * 89 + sat_index * 53) % 720
-            hour = seed // 60
-            minute = seed % 60
-            duration = 10 + (seed % 7)
-            max_el = max(stn.get("minimum_elevation_deg") or 10, min(87, 20 + match["score"] % 50))
-            pw = PassWindow(
-                satellite_id=sat["id"],
-                station_id=stn["id"],
-                start_utc=f"D+1 {hour:02d}:{minute:02d} UTC",
-                end_utc=f"+{duration} min",
-                duration_min=float(duration),
-                max_elevation_deg=float(max_el),
-                score=match["score"],
-                match_status=match["match_status"],
-                reason=match["reason"],
-                orbit_mode="placeholder; production requires Skyfield/SGP4",
-            )
+    for sat in DB["satellites"].values():
+        for stn in DB["stations"].values():
+            match = capability_match(sat, stn)
+            try:
+                if sat.get("tle_line_1") and sat.get("tle_line_2") and stn.get("latitude") is not None and stn.get("longitude") is not None:
+                    windows = calculate_contact_windows(
+                        SatelliteTLE(sat["name"], sat["tle_line_1"], sat["tle_line_2"]),
+                        Station(stn["name"], float(stn["latitude"]), float(stn["longitude"]), float(stn.get("altitude_m") or 0), float(stn.get("minimum_elevation_deg") or 10)),
+                        hours=24,
+                    )
+                    for w in windows[:3]:
+                        pw = PassWindow(satellite_id=sat["id"], station_id=stn["id"], start_utc=w.start_utc, end_utc=w.end_utc, duration_min=w.duration_min, max_elevation_deg=w.max_elevation_deg, score=match["score"], match_status=match["match_status"], reason=match["summary"], orbit_mode=w.orbit_mode)
+                        DB["passes"][pw.id] = pw.model_dump()
+                        results.append(pw)
+                    continue
+            except Exception as exc:
+                orbit_mode = f"Skyfield unavailable; fallback placeholder: {exc}"
+            else:
+                orbit_mode = "placeholder; TLE/coordinates required for Skyfield/SGP4"
+            seed = (int(sat.get("norad_id") or 10000) + round(abs((stn.get("latitude") or 0) * 100))) % 720
+            pw = PassWindow(satellite_id=sat["id"], station_id=stn["id"], start_utc=f"D+1 {seed//60:02d}:{seed%60:02d} UTC", end_utc="+10 min", duration_min=10, max_elevation_deg=30, score=match["score"], match_status=match["match_status"], reason=match["summary"], orbit_mode=orbit_mode)
             DB["passes"][pw.id] = pw.model_dump()
             results.append(pw)
     return sorted(results, key=lambda x: x.score, reverse=True)
+
+
+@app.get("/passes")
+def list_passes() -> List[Dict[str, Any]]:
+    return list(DB["passes"].values())
+
+
+@app.get("/capability/recommendation")
+def recommend_contact() -> Dict[str, Any]:
+    return recommend_best_contact(list(DB["satellites"].values()), list(DB["stations"].values()))
 
 
 @app.post("/missions/from-pass/{pass_id}")
@@ -332,12 +342,34 @@ def advance_mission(mission_id: str) -> Dict[str, Any]:
     flow = [status.value for status in MissionStatus]
     idx = flow.index(mission["status"]) if mission["status"] in flow else 0
     mission["status"] = flow[min(idx + 1, len(flow) - 1)]
-    if mission["status"] == MissionStatus.transfer_waiting.value:
-        if not any(t["mission_id"] == mission_id for t in DB["transfers"].values()):
-            stn = get_or_404("stations", mission["station_id"])
-            transfer = TransferJob(mission_id=mission_id, source_station_id=mission["station_id"], method=stn.get("transfer_method") or "SFTP")
-            store("transfers", transfer)
+    if mission["status"] == MissionStatus.configuration_pending.value and not any(c["mission_id"] == mission_id for c in DB["configs"].values()):
+        store("configs", StationConfiguration(mission_id=mission_id))
+    if mission["status"] in {MissionStatus.signal_acquired.value, MissionStatus.carrier_locked.value, MissionStatus.demod_locked.value, MissionStatus.frame_synced.value, MissionStatus.data_captured.value} and not any(r["mission_id"] == mission_id for r in DB["receptions"].values()):
+        store("receptions", ReceptionLog(mission_id=mission_id, signal_detected=True))
+    if mission["status"] == MissionStatus.transfer_waiting.value and not any(t["mission_id"] == mission_id for t in DB["transfers"].values()):
+        stn = get_or_404("stations", mission["station_id"])
+        store("transfers", TransferJob(mission_id=mission_id, source_station_id=mission["station_id"], method=stn.get("transfer_method") or "SFTP"))
     return mission
+
+
+@app.get("/missions")
+def list_missions() -> List[Dict[str, Any]]:
+    return list(DB["missions"].values())
+
+
+@app.post("/configs")
+def create_config(item: StationConfiguration) -> StationConfiguration:
+    return store("configs", item)
+
+
+@app.post("/receptions")
+def create_reception(item: ReceptionLog) -> ReceptionLog:
+    return store("receptions", item)
+
+
+@app.get("/transfers")
+def list_transfers() -> List[Dict[str, Any]]:
+    return list(DB["transfers"].values())
 
 
 @app.post("/transfers/{transfer_id}/complete")
@@ -347,37 +379,82 @@ def complete_transfer(transfer_id: str) -> Dict[str, Any]:
     transfer["confirmed"] = True
     mission = get_or_404("missions", transfer["mission_id"])
     stn = get_or_404("stations", mission["station_id"])
-    cost = float(stn.get("cost_per_pass_usd") or 0)
-    billing = BillingRecord(
-        mission_id=mission["id"],
-        station_cost_usd=cost,
-        client_price_usd=cost + 1000,
-        gs_service_fee_usd=1000,
-        gross_margin_usd=1000,
-        status="Billable",
-        decision_reason="Transfer completed and operator/manufacturer confirmation recorded.",
-    )
+    decision = decide_billing(BillingInput(mission_status=mission["status"], data_captured=True, transfer_completed=True, operator_confirmed=True, station_cost=float(stn.get("cost_per_pass_usd") or 0), service_fee=1000))
+    billing = BillingRecord(mission_id=mission["id"], station_cost_usd=decision.station_cost, client_price_usd=decision.client_price, gs_service_fee_usd=decision.service_fee, gross_margin_usd=decision.gross_margin, status=decision.status.value, decision_reason=decision.reason)
     store("billing", billing)
     return transfer
 
 
+@app.get("/billing")
+def list_billing() -> List[Dict[str, Any]]:
+    return list(DB["billing"].values())
+
+
+@app.get("/billing/recommendation/{mission_id}")
+def get_billing_recommendation(mission_id: str) -> Dict[str, Any]:
+    mission = get_or_404("missions", mission_id)
+    transfer = next((t for t in DB["transfers"].values() if t["mission_id"] == mission_id), None)
+    reception = next((r for r in DB["receptions"].values() if r["mission_id"] == mission_id), None)
+    return billing_recommendation(mission, transfer, reception)
+
+
+@app.get("/reports/mission/{mission_id}")
+def mission_report(mission_id: str) -> Dict[str, Any]:
+    mission = get_or_404("missions", mission_id)
+    sat = get_or_404("satellites", mission["satellite_id"])
+    stn = get_or_404("stations", mission["station_id"])
+    cfg = next((c for c in DB["configs"].values() if c["mission_id"] == mission_id), None)
+    rec = next((r for r in DB["receptions"].values() if r["mission_id"] == mission_id), None)
+    trf = next((t for t in DB["transfers"].values() if t["mission_id"] == mission_id), None)
+    bil = next((b for b in DB["billing"].values() if b["mission_id"] == mission_id), None)
+    report = generate_mission_report(mission, sat, stn, cfg, rec, trf, bil)
+    DB["reports"][uuid4().hex] = report.__dict__
+    return report.__dict__
+
+
+@app.get("/reports/transfer/{transfer_id}")
+def transfer_report(transfer_id: str) -> Dict[str, Any]:
+    transfer = get_or_404("transfers", transfer_id)
+    mission = get_or_404("missions", transfer["mission_id"])
+    report = generate_transfer_report(transfer, mission)
+    return report.__dict__
+
+
+@app.get("/reports/billing/{billing_id}")
+def billing_report(billing_id: str) -> Dict[str, Any]:
+    billing = get_or_404("billing", billing_id)
+    mission = get_or_404("missions", billing["mission_id"])
+    report = generate_billing_statement(billing, mission)
+    return report.__dict__
+
+
 @app.get("/ai/alerts")
 def ai_alerts() -> List[str]:
-    alerts: List[str] = []
-    if not DB["organizations"]:
-        alerts.append("No organizations have been added.")
-    if not DB["stations"]:
-        alerts.append("No ground stations have been added.")
-    if not DB["satellites"]:
-        alerts.append("No satellites have been added.")
-    for sat in DB["satellites"].values():
-        if not sat.get("tle_line_1") or not sat.get("tle_line_2"):
-            alerts.append(f"Satellite {sat.get('name') or sat['id']} is missing TLE lines.")
-        if not sat.get("band") or not sat.get("polarization"):
-            alerts.append(f"Satellite {sat.get('name') or sat['id']} is missing downlink band or polarization.")
-    for stn in DB["stations"].values():
-        if stn.get("latitude") is None or stn.get("longitude") is None:
-            alerts.append(f"Station {stn.get('name') or stn['id']} is missing coordinates.")
-        if stn.get("status") != "Authorized":
-            alerts.append(f"Station {stn.get('name') or stn['id']} is not marked Authorized.")
-    return alerts or ["No major alerts detected."]
+    return generate_operational_brief(platform_snapshot())["highest_priority_alerts"]
+
+
+@app.get("/ai/brief")
+def ai_brief() -> Dict[str, Any]:
+    return generate_operational_brief(platform_snapshot())
+
+
+@app.get("/ai/failure-classification/{mission_id}")
+def failure_classification(mission_id: str) -> Dict[str, Any]:
+    get_or_404("missions", mission_id)
+    reception = next((r for r in DB["receptions"].values() if r["mission_id"] == mission_id), None)
+    transfer = next((t for t in DB["transfers"].values() if t["mission_id"] == mission_id), None)
+    return {"mission_id": mission_id, "classification": classify_failure(reception, transfer)}
+
+
+@app.get("/readiness/mission/{mission_id}")
+def readiness(mission_id: str) -> Dict[str, Any]:
+    mission = get_or_404("missions", mission_id)
+    cfg = next((c for c in DB["configs"].values() if c["mission_id"] == mission_id), None)
+    trf = next((t for t in DB["transfers"].values() if t["mission_id"] == mission_id), None)
+    return mission_readiness(mission, cfg, trf)
+
+
+@app.get("/readiness/transfer/{transfer_id}")
+def transfer_ready(transfer_id: str) -> Dict[str, Any]:
+    transfer = get_or_404("transfers", transfer_id)
+    return transfer_readiness(transfer)
