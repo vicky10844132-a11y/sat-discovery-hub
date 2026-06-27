@@ -1,0 +1,31 @@
+services:
+  gs-linkops-api:
+    image: python:3.11-slim
+    container_name: gs-linkops-api
+    working_dir: /app/backend
+    volumes:
+      - ./:/app
+    command: sh -c "pip install -r requirements-gs-linkops.txt && uvicorn gs_linkops_api:app --host 0.0.0.0 --port 8000 --reload"
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://gs_linkops:gs_linkops@postgres:5432/gs_linkops
+      - APP_ENV=development
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16
+    container_name: gs-linkops-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=gs_linkops
+      - POSTGRES_USER=gs_linkops
+      - POSTGRES_PASSWORD=gs_linkops
+    volumes:
+      - gs_linkops_pgdata:/var/lib/postgresql/data
+      - ./backend/database_schema.sql:/docker-entrypoint-initdb.d/001_schema.sql:ro
+
+volumes:
+  gs_linkops_pgdata:
