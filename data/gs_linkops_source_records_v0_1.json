@@ -1,5 +1,5 @@
 {
-  "version": "0.2",
+  "version": "0.3",
   "created_for": "GS LinkOps AI resource database building",
   "created_at": "2026-06-28",
   "updated_at": "2026-06-29",
@@ -160,6 +160,66 @@
       "confidence_level": "Medium-high for research concept extraction; not an operational GSaaS capability sheet.",
       "missing_fields": ["production implementation", "ground station operator integration", "commercial workflow", "security/compliance model"],
       "next_action": "Use as future AI matching/priority-scoring inspiration, not as an immediate ground-station availability source."
+    },
+    {
+      "record_id": "SRC-GS-LEAF-NETWORK-002",
+      "category": "commercial_gsaas_network_capability",
+      "name": "Leaf Space public network and service capability reference",
+      "source_url": "https://en.wikipedia.org/wiki/Leaf_Space",
+      "useful_for": ["GSaaS benchmark for API-first TT&C and payload downlink", "smart scheduler concept", "pay-as-you-go / per-minute commercial model", "S-band / X-band / Ka-band capability taxonomy", "high-rate X-band and Ka-band payload downlink benchmark", "site-level frequency matrix inspiration"],
+      "database_targets": ["GSaaS Benchmark Library", "Ground Station Compatibility Database", "Commercial Model Library", "Partner Adapter Database"],
+      "extractable_fields": ["operator_name", "service_name", "network_site_count_public", "ground_station_count_public", "frequency_bands_public", "s_band_uplink_range_public", "x_band_downlink_rate_public", "ka_band_downlink_rate_public", "booking_mode", "pricing_model", "api_support", "data_delivery_examples"],
+      "confidence_level": "Medium. Search result provides structured public summary and should be cross-checked against current Leaf Space official pages before commercial use.",
+      "missing_fields": ["official current site list", "per-site exact antenna models", "baseband/modem stack", "encryption/security options", "SLA", "customer onboarding restrictions", "actual API schema"],
+      "next_action": "Use this to extend the commercial_gsaas_operator table with api_support, scheduler_type, pricing_model and high_rate_downlink_benchmark fields."
+    },
+    {
+      "record_id": "SRC-GS-NASA-DSN-001",
+      "category": "institutional_deep_space_ground_network_reference",
+      "name": "NASA Deep Space Network public frequency and antenna reference",
+      "source_url": "https://en.wikipedia.org/wiki/NASA_Deep_Space_Network",
+      "useful_for": ["deep-space vs near-space frequency taxonomy", "S-band / X-band / Ka-band operational concept", "70 m and 34 m antenna class reference", "beam waveguide antenna abstraction", "deep-space communication risk and weather sensitivity for optical links", "future optical communication tag"],
+      "database_targets": ["Institutional Ground Station Reference Library", "Frequency Band Taxonomy", "Antenna Class Library", "Deep Space / Near Space Capability Model"],
+      "extractable_fields": ["network_name", "operator", "station_complex", "antenna_diameter_class", "antenna_design", "supported_uplink_bands", "supported_downlink_bands", "deep_space_band", "near_space_band", "optical_communication_status", "mission_class"],
+      "confidence_level": "Medium. Good public technical taxonomy; use NASA/JPL official pages for final authoritative values.",
+      "missing_fields": ["station-by-station current schedule availability", "service access rules", "interface documents", "security model", "cost/pricing", "commercial third-party availability"],
+      "next_action": "Add DSN-like antenna_class and mission_distance_class fields to GS LinkOps AI, even though DSN is not a normal commercial GSaaS resource."
+    },
+    {
+      "record_id": "SRC-GS-NASA-DSN-ANTENNA-002",
+      "category": "station_capability_reference",
+      "name": "NASA DSN antenna list public capability matrix",
+      "source_url": "https://en.wikipedia.org/wiki/List_of_antennas_in_NASA%27s_Deep_Space_Network",
+      "useful_for": ["station capability matrix design", "DSS station code normalization", "antenna diameter and operational date fields", "band-specific uplink/downlink range fields", "beam-waveguide antenna design reference", "decommissioned vs active status field"],
+      "database_targets": ["Station Capability Normalization Table", "Antenna Class Library", "Frequency Band Taxonomy", "Institutional Ground Station Reference Library"],
+      "extractable_fields": ["dss_code", "complex_name", "antenna_diameter_m", "date_operational", "date_decommissioned", "antenna_type", "transmit_band", "receive_band", "frequency_range_mhz", "notes"],
+      "confidence_level": "Medium. Valuable capability-matrix pattern; individual values should be validated from NASA/JPL antenna pages before use.",
+      "missing_fields": ["current maintenance schedule", "operational reservation rules", "receiver chain details", "modem/baseband", "mission priority policy", "commercial access"],
+      "next_action": "Use this as a schema pattern for commercial station capability sheets: one station may contain multiple antennas, each with independent band/range/status fields."
+    },
+    {
+      "record_id": "SRC-STD-DEEP-SPACE-BANDS-001",
+      "category": "frequency_band_taxonomy_reference",
+      "name": "Deep space and near space band allocation public reference",
+      "source_url": "https://en.wikipedia.org/wiki/Deep_space_bands",
+      "useful_for": ["space research frequency allocation vocabulary", "near-space vs deep-space band separation", "uplink/downlink frequency range normalization", "S / X / K / Ka band mapping", "frequency conflict and mission-distance risk tagging"],
+      "database_targets": ["Frequency Band Taxonomy", "RF Compatibility Engine", "Regulatory / Spectrum Risk Library"],
+      "extractable_fields": ["band_designation", "mission_distance_class", "uplink_frequency_mhz", "downlink_frequency_mhz", "allocation_source", "supported_by_network", "regulatory_tag"],
+      "confidence_level": "Medium. Useful public summary; official ITU and JPL frequency assignment documents should be used for authoritative engineering tables.",
+      "missing_fields": ["jurisdiction-specific licensing constraints", "operator-specific channel plans", "actual spacecraft frequency assignment", "ground-station supported sub-bands", "interference environment"],
+      "next_action": "Create a normalized frequency_band_reference table and link it to satellite_profile.rf_downlink and station_capability.supported_bands."
+    },
+    {
+      "record_id": "SRC-RESEARCH-SX-SHARED-APERTURE-001",
+      "category": "research_ground_terminal_antenna_architecture",
+      "name": "Fully Scalable Polarization-Reconfigurable S/X-Band Shared-Aperture Phased Array for Satellite Ground-Station Reception",
+      "source_url": "https://arxiv.org/abs/2606.20973",
+      "useful_for": ["future multi-mission terminal architecture", "S/X shared-aperture antenna concept", "phased-array station capability fields", "polarization support fields", "wide-angle scan capability", "RFSoC active measurement reference"],
+      "database_targets": ["Future Antenna Technology Library", "Ground Station Fingerprint Template", "RF Compatibility Engine", "AI Matching Roadmap"],
+      "extractable_fields": ["antenna_architecture", "frequency_bands", "aperture_scaling", "polarization_modes", "scan_range_deg", "axial_ratio_db", "measurement_method", "rf_system_on_chip_support"],
+      "confidence_level": "Medium-high for research extraction because it is a current technical paper; not an immediately deployable commercial station capability.",
+      "missing_fields": ["commercial vendor availability", "field deployment readiness", "full link budget", "supported modem/baseband stack", "environmental qualification", "pricing"],
+      "next_action": "Add antenna_architecture, polarization_modes and scan_range_deg as optional advanced station fingerprint fields for future smart terminal support."
     }
   ],
   "next_batch_targets": [
@@ -167,8 +227,9 @@
     "SSC CONNECT official service pages and capability sheets",
     "RBC Signals official API/network pages",
     "ESA individual ESTRACK station pages",
-    "NASA Near Space Network / Deep Space Network pages",
-    "Leaf Space technical documentation pages",
+    "NASA Near Space Network official pages",
+    "NASA/JPL DSN official antenna pages",
+    "Leaf Space official technical documentation pages",
     "AWS Ground Station site capabilities page",
     "SatNOGS DB API documentation",
     "CCSDS SLE blue books and service-specific documents",
