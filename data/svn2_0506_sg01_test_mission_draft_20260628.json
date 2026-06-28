@@ -1,0 +1,134 @@
+{
+  "mission_package_name": "SVN2-05 / SVN2-06 SG-01 Test Mission Draft",
+  "source": "Owner-provided chat screenshot and station configuration screenshots",
+  "status": "Draft - satellite operator and owner confirmation required",
+  "created_for": "GS LinkOps AI Owner Console",
+  "mission_context": {
+    "station_id": "SG-01",
+    "station_name": "Singapore Equatorial Ground Station",
+    "test_target": "SVN2-05 / SVN2-06",
+    "satellite_codes": [
+      {
+        "satellite_name": "SVN2-05",
+        "line_or_internal_code": "68378"
+      },
+      {
+        "satellite_name": "SVN2-06",
+        "line_or_internal_code": "68377"
+      }
+    ],
+    "owner_note_cn": "现在测试 2-0506 星比较方便；北美两行代号；雷达星融配置；配好后下周给 2-4 个测试时间段安排任务。",
+    "test_window_request": "Next week, 2-4 candidate test time windows required from satellite operator / scheduling party."
+  },
+  "rf_and_baseband_summary": {
+    "data_transmission_center_frequency_mhz": 8212,
+    "if_center_frequency_mhz_from_gui": 1200,
+    "demodulation": "8PSK",
+    "symbol_or_bit_rate_mbps_from_gui": 800,
+    "acquisition_range_khz_from_gui": 2000,
+    "capture_range_secondary_from_gui": "0.003",
+    "loop_bandwidth": "AUTO",
+    "matched_filter": "Root raised cosine / square-root raised cosine indicated in GUI",
+    "matched_filter_rolloff": "0.2",
+    "frequency_inversion": "Adaptive",
+    "dc_offset_correction": "Off",
+    "direct_current_bias_correction": "Off",
+    "mapping_phase": "Normal",
+    "mapping_mode": "Gray2",
+    "differential_selection": "NRZ_L",
+    "output_clock": "Normal",
+    "output_mode": "Merged",
+    "blind_equalization": "On",
+    "polarization_cancellation": "On",
+    "equalization_mode": "Single",
+    "frame_header_correction": "On",
+    "time_code": "Off",
+    "checksum_removal": "Off",
+    "clock_polarity": "Positive",
+    "no_data_clock": "No clock",
+    "agc_control": "Auto",
+    "agc_level_dbm": "500 as shown in GUI - unit/value requires confirmation",
+    "agc_time_constant": "10 ms",
+    "filter_setting": "Filter1"
+  },
+  "frame_sync_decode_configuration": {
+    "input_selection": "Combined / 合路",
+    "frame_sync_enabled": "On",
+    "path_1": {
+      "sync_code_length_bytes": 4,
+      "sync_word_hex": "1ACFFC1D",
+      "sync_mask_hex": "FFFFFFFF",
+      "frame_length_bytes": 1024,
+      "anti_slip_bits": 3,
+      "sync_tolerance_bits": 3,
+      "sync_threshold": 3,
+      "loss_threshold": 3,
+      "derandomization_enabled": "On",
+      "derandomization_order": "Decode first, derandomize later / 先解扰后译码 as displayed requires confirmation",
+      "code_position": "Inverted / 反转",
+      "derandomization_selection": "Custom",
+      "polynomial_hex": "8003",
+      "initial_hex": "4A80",
+      "crc_enabled": "Off",
+      "crc_selection": "CRC16",
+      "rs_enabled": "Off",
+      "rs_type": "RS(255,223)",
+      "rs_standard": "CCSDS",
+      "ldpc_decoder_enabled": "On",
+      "ldpc_selection": "7/8 (8160)"
+    },
+    "path_2": {
+      "sync_code_length_bytes": 4,
+      "sync_word_hex": "1ACFFC1D",
+      "sync_mask_hex": "FFFFFFFF",
+      "frame_length_bytes": 1024,
+      "anti_slip_bits": 3,
+      "sync_tolerance_bits": 3,
+      "sync_threshold": 3,
+      "loss_threshold": 3,
+      "derandomization_enabled": "Off",
+      "derandomization_order": "Decode first, derandomize later / screenshot shows disabled path",
+      "code_position": "Shift register / 移位寄存器",
+      "derandomization_selection": "CCSDS",
+      "crc_enabled": "Off",
+      "crc_selection": "CRC16",
+      "rs_enabled": "Off",
+      "rs_type": "RS(255,223)",
+      "rs_standard": "CCSDS",
+      "ldpc_decoder_enabled": "Off",
+      "ldpc_selection": "7/8 (8160) shown but disabled"
+    }
+  },
+  "platform_interpretation": {
+    "recommended_station": "SG-01 because provided screenshots are specifically SG-01 station configuration and data center frequency is 8212 MHz, within SG-01 X-band downlink range 8000-8400 MHz.",
+    "mission_type": "Test mission / configuration compatibility test",
+    "ai_role": "AI should check completeness and generate configuration checklist. Owner manually arranges task after satellite operator provides 2-4 candidate time windows.",
+    "human_required_decisions": [
+      "Confirm the exact satellite identity for SVN2-05 and SVN2-06.",
+      "Confirm whether 68378 / 68377 are NORAD IDs, internal line codes, or another satellite operator code.",
+      "Confirm TLE or OMM for both satellites.",
+      "Confirm RF polarization for 8212 MHz downlink.",
+      "Confirm whether GUI value 1200 MHz IF should replace or coexist with earlier 1270 MHz IF configuration.",
+      "Confirm whether rate is 800 Mbps or 900 Mbps for the final SG-01 test configuration.",
+      "Confirm whether Gray2 in this GUI replaces Gray1 in earlier configuration screenshots.",
+      "Confirm whether LDPC 7/8 is the final decode setting.",
+      "Confirm output data path and transfer destination.",
+      "Confirm next week 2-4 available test windows from satellite operator."
+    ]
+  },
+  "mission_creation_blockers": [
+    "No exact pass windows yet.",
+    "No TLE / OMM yet.",
+    "No RF polarization confirmed.",
+    "No operator confirmation person recorded.",
+    "No transfer destination recorded.",
+    "Configuration conflict between earlier 1270 MHz IF / 900 Mbps / Gray1 package and this 1200 MHz IF / 800 Mbps / Gray2 screenshot requires confirmation."
+  ],
+  "next_action_for_owner": [
+    "Ask satellite operator to confirm if 68378 and 68377 are NORAD IDs or internal codes.",
+    "Ask satellite operator for TLE / OMM for SVN2-05 and SVN2-06.",
+    "Ask satellite operator to provide 2-4 candidate test windows next week in UTC.",
+    "Ask station/operator to confirm final SG-01 configuration: IF frequency, bit rate, mapping, LDPC, polarization and output path.",
+    "After confirmation, create two test missions: one for SVN2-05 and one for SVN2-06, both using SG-01."
+  ]
+}
