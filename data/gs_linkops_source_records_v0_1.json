@@ -1,0 +1,196 @@
+{
+  "version": "0.1",
+  "created_for": "GS LinkOps AI resource database building",
+  "created_at": "2026-06-28",
+  "records": [
+    {
+      "record_id": "SRC-SAT-CELESTRAK-001",
+      "category": "satellite_catalogue_orbit_source",
+      "name": "CelesTrak NORAD GP Element Sets",
+      "source_url": "https://celestrak.org/NORAD/elements/",
+      "useful_for": [
+        "Current GP / TLE / OMM data",
+        "SATCAT and satellite catalogue references",
+        "Active satellite groups",
+        "Synthetic Aperture Radar group",
+        "Communications, GNSS, Earth resources, Planet, Spire, Starlink, OneWeb groups",
+        "CSV / JSON / OMM XML / OMM KVN formats"
+      ],
+      "database_targets": [
+        "Global Satellite Intelligence Database",
+        "Orbit / Ephemeris Source Library",
+        "Satellite Profile Template"
+      ],
+      "extractable_fields": [
+        "NORAD catalog number",
+        "satellite group",
+        "TLE / GP source",
+        "OMM format availability",
+        "satellite category",
+        "data freshness"
+      ],
+      "confidence_level": "High for public orbit/catalogue metadata; not sufficient for private downlink configuration",
+      "missing_fields": [
+        "operator commercial availability",
+        "RF downlink frequency",
+        "polarization",
+        "modulation",
+        "coding",
+        "frame structure"
+      ],
+      "next_action": "Use as first satellite/orbit data source and build satellite profile importer later."
+    },
+    {
+      "record_id": "SRC-SAT-UCS-001",
+      "category": "satellite_context_database",
+      "name": "UCS Satellite Database",
+      "source_url": "https://www.ucsusa.org/resources/satellite-database",
+      "useful_for": [
+        "operator and owner context",
+        "country / region",
+        "satellite purpose",
+        "orbit class",
+        "mass, power, launch date, expected lifetime",
+        "apogee, perigee, inclination, period"
+      ],
+      "database_targets": [
+        "Global Satellite Intelligence Database",
+        "Satellite Operator Context Library"
+      ],
+      "extractable_fields": [
+        "satellite name",
+        "country of origin",
+        "purpose",
+        "operator / owner / builder",
+        "orbit parameters",
+        "launch information"
+      ],
+      "confidence_level": "Useful for open-source satellite context; database data current through 2023-05-01 and updates are paused",
+      "missing_fields": [
+        "current operational status after 2023-05-01",
+        "private RF/downlink configuration",
+        "commercial service availability"
+      ],
+      "next_action": "Use as historical/context supplement, not sole current source."
+    },
+    {
+      "record_id": "SRC-GS-AWS-001",
+      "category": "cloud_ground_station_architecture_reference",
+      "name": "AWS Ground Station How It Works",
+      "source_url": "https://docs.aws.amazon.com/ground-station/latest/ug/how-it-works.html",
+      "useful_for": [
+        "satellite onboarding workflow",
+        "mission profile composition",
+        "contact scheduling",
+        "contact execution",
+        "dataflows",
+        "antenna capabilities abstraction",
+        "digital twin concept"
+      ],
+      "database_targets": [
+        "Ground Station System Interface Database",
+        "Mission Profile Template",
+        "Dispatch Workflow Reference Library"
+      ],
+      "extractable_fields": [
+        "onboarding status",
+        "valid ephemeris requirement",
+        "mission profile components",
+        "tracking config",
+        "dataflow source/destination",
+        "contact status lifecycle",
+        "site capability concept"
+      ],
+      "confidence_level": "High for cloud GSaaS workflow reference; not a source for all third-party station details",
+      "missing_fields": [
+        "individual third-party station RF-chain detail",
+        "partner station commercial terms outside AWS"
+      ],
+      "next_action": "Use as architecture benchmark for our Mission Profile and Contact Scheduling model."
+    },
+    {
+      "record_id": "SRC-GS-LEAF-001",
+      "category": "commercial_gsaas_network_reference",
+      "name": "Leaf Space Leaf Line",
+      "source_url": "https://leaf.space/leaf-line/",
+      "useful_for": [
+        "commercial GSaaS network model",
+        "global antenna count and location count",
+        "S / X / Ka support",
+        "smart and on-demand booking",
+        "RESTful API onboarding model",
+        "technical feasibility check",
+        "end-to-end compatibility check",
+        "near-real-time data transfer",
+        "payload file transfer examples such as S3 bucket"
+      ],
+      "database_targets": [
+        "Global Ground Station Compatibility Database",
+        "GSaaS Benchmark Library",
+        "Partner Adapter Database"
+      ],
+      "extractable_fields": [
+        "network size",
+        "frequency bands",
+        "booking modes",
+        "data delivery modes",
+        "pricing model",
+        "onboarding workflow",
+        "support model"
+      ],
+      "confidence_level": "High for public Leaf Line service model; insufficient for individual antenna RF/baseband fingerprint",
+      "missing_fields": [
+        "per-site exact coordinates",
+        "per-antenna model",
+        "per-site RF chain",
+        "baseband details",
+        "actual station restrictions"
+      ],
+      "next_action": "Use as public GSaaS benchmark and compare with GS LinkOps AI dispatch platform positioning."
+    },
+    {
+      "record_id": "SRC-GS-SATNOGS-001",
+      "category": "open_ground_station_network_reference",
+      "name": "SatNOGS Network",
+      "source_url": "https://network.satnogs.org/",
+      "useful_for": [
+        "open ground station network structure",
+        "observation scheduling model",
+        "community station metadata",
+        "open satellite transmitter database reference",
+        "public API-style reuse reference"
+      ],
+      "database_targets": [
+        "Open Ground Station Reference Library",
+        "Source Evidence Library",
+        "Station Metadata Normalization Reference"
+      ],
+      "extractable_fields": [
+        "station identity",
+        "observation records",
+        "satellite transmitter information",
+        "network status concept"
+      ],
+      "confidence_level": "Useful for open network concepts and metadata; not equivalent to commercial X-band payload downlink capability",
+      "missing_fields": [
+        "commercial service availability",
+        "X-band payload downlink support",
+        "booking contract terms",
+        "professional SLA",
+        "secure delivery path"
+      ],
+      "next_action": "Use for open metadata and interface inspiration, not as commercial station availability source."
+    }
+  ],
+  "next_batch_targets": [
+    "KSAT official ground network pages",
+    "SSC CONNECT official pages",
+    "RBC Signals official pages",
+    "ESA ESTRACK public station pages",
+    "NASA Near Space Network / Deep Space Network pages",
+    "Leaf Space technical documentation pages",
+    "AWS Ground Station site capabilities page",
+    "SatNOGS DB API documentation",
+    "SkyGS and federated GSaaS scheduling papers"
+  ]
+}
