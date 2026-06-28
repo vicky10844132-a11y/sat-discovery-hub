@@ -1,0 +1,198 @@
+{
+  "config_package_name": "SG-01 Operator Provided Baseband / Demodulator Configuration Draft",
+  "source": "Owner-provided screenshots from satellite operator information",
+  "status": "Draft - station/operator technical confirmation required before execution",
+  "station_id": "SG-01",
+  "station_name": "Singapore Equatorial Ground Station",
+  "scope": "Downlink reception baseband / demodulator / CADU processing configuration",
+  "important_boundary": "This package records reception-side configuration only. It must not be interpreted as satellite uplink command or TT&C control authorization.",
+  "demodulators": [
+    {
+      "demodulator_id": "Demodulator 1",
+      "if_processing": {
+        "input_selection": "Nominal / IF1 nominal",
+        "input_frequency_hz": 1270000000,
+        "acquisition_range_hz": 200000,
+        "demodulation": "8PSK",
+        "phase_rotation": "CCSDS",
+        "mapping": "Gray1",
+        "vcm": "Disable",
+        "bit_rate_bps": 900000000,
+        "pcm_code": "NRZ-L",
+        "iq_polarity": "Ambig DPUA",
+        "output_clock": "Normal",
+        "output_mode": "Merged",
+        "matched_filter": "Integral",
+        "randomizer": "Disable"
+      },
+      "ber": {
+        "ber_mode": null,
+        "file_number": null
+      },
+      "physical_layer": {
+        "mode": null,
+        "vcm": null,
+        "modulation": null,
+        "rate": null,
+        "pilots": null,
+        "short_frame": null,
+        "gamma_file": null,
+        "decoder": null,
+        "pl_scrambling": null
+      },
+      "viterbi_decoding": {
+        "viterbi_decoding": null,
+        "viterbi_decoder": null,
+        "viterbi_puncturing": null
+      }
+    },
+    {
+      "demodulator_id": "Demodulator 2",
+      "if_processing": {
+        "input_selection": "Nominal / IF2 nominal",
+        "input_frequency_hz": 1270000000,
+        "acquisition_range_hz": 200000,
+        "demodulation": "8PSK",
+        "phase_rotation": "CCSDS",
+        "mapping": "Gray1",
+        "vcm": "Disable",
+        "bit_rate_bps": 900000000,
+        "pcm_code": "NRZ-L",
+        "iq_polarity": "Ambig DPUC",
+        "output_clock": "Normal",
+        "output_mode": "Merged",
+        "matched_filter": "Integral",
+        "randomizer": "Disable"
+      },
+      "ber": {
+        "ber_mode": null,
+        "file_number": null
+      },
+      "physical_layer": {
+        "mode": null,
+        "vcm": null,
+        "modulation": null,
+        "rate": null,
+        "pilots": null,
+        "short_frame": null,
+        "gamma_file": null,
+        "decoder": null,
+        "pl_scrambling": null
+      },
+      "viterbi_decoding": {
+        "viterbi_decoding": null,
+        "viterbi_decoder": null,
+        "viterbi_puncturing": null
+      }
+    }
+  ],
+  "processing_units": [
+    {
+      "processing_unit_id": "Processing Unit 1",
+      "cadu": {
+        "input_selection": null,
+        "input_selection_additional": null,
+        "transport_layer": null,
+        "idle_discarded": null
+      },
+      "frame_synchronization": {
+        "frame_synchronizer": "ON",
+        "ambiguity_resolution": "ON",
+        "msb_sync_word_hex": "1ACFFC1D",
+        "lsb_sync_word_hex": "0",
+        "msb_sw_mask_hex": "0",
+        "lsb_sw_mask_hex": "0",
+        "sync_word_size_bits": 32,
+        "frame_block_length_bytes": 1024,
+        "nrzm_dpu": null,
+        "lsb_first": null
+      },
+      "check_decode": {
+        "frame_header_rs": "OFF",
+        "frame_checking": "OFF",
+        "descrambling": "ON",
+        "descrambling_note": "custom descrambling",
+        "crc_poly_hex": "40801",
+        "crc_preset_hex": "14839",
+        "decoding": "LDPC 7/8",
+        "decoding_state": "ON"
+      },
+      "synchronization_strategy": {
+        "syn": 2,
+        "ctl": 2,
+        "lts": 2,
+        "slip": 0
+      },
+      "tm_block_ending": {
+        "spare_data": null,
+        "disable_time_datation": null
+      }
+    },
+    {
+      "processing_unit_id": "Processing Unit 2",
+      "cadu": {
+        "input_selection": null,
+        "input_selection_additional": null,
+        "transport_layer": null,
+        "idle_discarded": null
+      },
+      "frame_synchronization": {
+        "frame_synchronizer": "ON",
+        "ambiguity_resolution": "ON",
+        "msb_sync_word_hex": "1ACFFC1D",
+        "lsb_sync_word_hex": "0",
+        "msb_sw_mask_hex": "0",
+        "lsb_sw_mask_hex": "0",
+        "sync_word_size_bits": 32,
+        "frame_block_length_bytes": 1024,
+        "nrzm_dpu": null,
+        "lsb_first": null
+      },
+      "check_decode": {
+        "frame_header_rs": "OFF",
+        "frame_checking": "OFF",
+        "descrambling": "ON",
+        "descrambling_note": "custom descrambling",
+        "crc_poly_hex": "40801",
+        "crc_preset_hex": "14839",
+        "decoding": "LDPC 7/8",
+        "decoding_state": "ON"
+      },
+      "synchronization_strategy": {
+        "syn": 2,
+        "ctl": 2,
+        "lts": 2,
+        "slip": 0
+      },
+      "tm_block_ending": {
+        "spare_data": null,
+        "disable_time_datation": null
+      }
+    }
+  ],
+  "ai_interpretation_for_platform": {
+    "mission_relevance": "This is a station-side demodulator/baseband reception configuration for SG-01 and can be used to create a Configuration Check record before a pass.",
+    "matched_station_capability": "SG-01 X-band downlink path supports high-rate X-band reception; this config indicates 8PSK, CCSDS, 900 Mbps per demodulator entry and LDPC 7/8 decoding.",
+    "owner_action_required": [
+      "Confirm which satellite / mission this configuration belongs to.",
+      "Confirm whether both demodulators are used simultaneously or as redundant/parallel processing chains.",
+      "Confirm whether 1.27 GHz IF input is generated from X-band RF downconversion at SG-01.",
+      "Confirm exact RF downlink frequency and polarization for the satellite pass.",
+      "Confirm data output path after merged output and CADU processing.",
+      "Confirm station/operator approval before execution."
+    ]
+  },
+  "missing_or_uncertain_fields": [
+    "satellite_name",
+    "mission_id",
+    "norad_id_or_tle",
+    "rf_downlink_frequency",
+    "rf_polarization",
+    "baseband_output_path",
+    "transfer_destination",
+    "station_confirmation_person",
+    "operator_confirmation_person",
+    "date_or_pass_window",
+    "whether_configuration_is_test_or_operational"
+  ]
+}
