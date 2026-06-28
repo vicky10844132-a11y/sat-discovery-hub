@@ -1,0 +1,242 @@
+{
+  "run_id": "20260629_run4_delta",
+  "language": "en",
+  "purpose": "Incremental source records for GS LinkOps AI database building",
+  "records": [
+    {
+      "record_id": "SRC-GS-KSATLITE-001",
+      "source_type": "operator capability page",
+      "source_name": "KSATlite - Smart, Secure and Scalable Ground Operations",
+      "source_url": "https://www.ksat.no/ground-network-services/ksatlite/",
+      "operator": "Kongsberg Satellite Services / KSAT",
+      "category": "Commercial GSaaS / smallsat and constellation ground network",
+      "structured_summary": "KSATlite is a fully automated Ground Segment-as-a-Service for small satellites, mega-constellations and multi-mission operations. Public material states support for machine-to-machine interfaces, API-driven scheduling, customer portal visibility, anomaly detection, network-of-networks partner integration, and coverage for LEO orbits through 26 stations and 150+ antennas. Public band coverage includes S-band uplink/downlink, X-band downlink and Ka-band downlink. Antenna range is stated as 3.7 m to 6.1 m. Historical performance is stated above 99.75% globally.",
+      "database_targets": [
+        "GSaaS Provider Profile",
+        "Ground Station Compatibility Database",
+        "Station Network Capability Table",
+        "Partner Adapter Database",
+        "Commercial/Risk Tag Library"
+      ],
+      "extractable_fields": {
+        "provider_name": "KSATlite / KSAT",
+        "service_model": "Fully automated Ground Segment-as-a-Service",
+        "supported_missions": ["small satellites", "mega-constellations", "Earth Observation", "SatCom", "IoT"],
+        "network_model": "network of networks with partner integration",
+        "station_count_public": 26,
+        "antenna_count_public": "150+",
+        "antenna_diameter_range_m_public": "3.7-6.1",
+        "frequency_bands_public": ["S-band uplink", "S-band downlink", "X-band downlink", "Ka-band downlink"],
+        "system_interfaces_public": ["API-driven scheduling", "machine-to-machine interfaces", "customer portal"],
+        "operations_features": ["autonomous operations", "real-time visibility", "data flow monitoring", "performance metrics", "anomaly detection"],
+        "performance_claim_public": ">99.75% global historical performance"
+      },
+      "commercial_tags": ["GSaaS", "automated operations", "API scheduling", "constellation support", "multi-provider redundancy"],
+      "risk_tags": ["public capability not per-site exact", "pricing not public", "RF/baseband chain not public", "commercial access requires direct confirmation"],
+      "confidence_level": "High for public network/service model; Medium for exact operational performance until contract-level SLA is confirmed",
+      "missing_fields": [
+        "per-site coordinates",
+        "per-antenna model and G/T",
+        "EIRP",
+        "polarization details",
+        "modulation/coding support",
+        "baseband vendor/system",
+        "data delivery protocols and cloud endpoints",
+        "price model and minimum commitment",
+        "security/compliance restrictions"
+      ],
+      "next_action": "Create KSATlite provider profile and use as benchmark template for automated GSaaS capability fields; request commercial capability sheet for per-site and per-band confirmation."
+    },
+    {
+      "record_id": "SRC-GS-KSAT-DIGITAL-IF-001",
+      "source_type": "operator technology page reference",
+      "source_name": "KSAT Digital IF / Virtualized Ground Station Architecture reference",
+      "source_url": "https://www.ksat.no/ground-network-services/ksatlite/",
+      "operator": "Kongsberg Satellite Services / KSAT",
+      "category": "Virtualized ground station / Digital IF architecture",
+      "structured_summary": "KSAT public navigation exposes Digital IF / Virtualized Ground Station Architecture and cloud integration as new technologies adjacent to KSATlite. This is valuable for GS LinkOps AI because virtualized station architecture implies that RF capture, digitized IF streams, cloud routing, scheduling, and downstream processing may be modeled separately rather than treating a ground station as a single fixed hardware asset.",
+      "database_targets": [
+        "Ground Station System Interface Database",
+        "Digital IF / Virtualized Station Schema",
+        "Cloud Delivery / Processing Adapter Library"
+      ],
+      "extractable_fields": {
+        "technology_keywords": ["Digital IF", "Virtualized Ground Station Architecture", "Cloud integration", "Cloud Processing as a Service"],
+        "modeling_implication": "Separate station RF front-end, digitized IF transport, baseband processing, cloud handoff and customer delivery as independent compatibility objects.",
+        "interface_candidates": ["digitized IF stream", "cloud processing endpoint", "dataflow configuration", "mission profile", "customer portal/API"]
+      },
+      "commercial_tags": ["virtualized ground segment", "cloud processing", "managed service upgrade"],
+      "risk_tags": ["details behind provider pages", "architecture specifics not fully public", "requires technical datasheet"],
+      "confidence_level": "Medium; public page confirms existence of the technology category, but detailed interfaces require source documents or vendor confirmation",
+      "missing_fields": [
+        "Digital IF format",
+        "sample rates",
+        "transport protocol",
+        "DIFI/VITA-49 compatibility",
+        "baseband virtualization stack",
+        "cloud provider integrations",
+        "latency and throughput limits"
+      ],
+      "next_action": "Add a Digital IF object model to GS LinkOps AI and continue searching DIFI/VITA-49, cloud ground-station and virtualized baseband materials."
+    },
+    {
+      "record_id": "SRC-STANDARD-CCSDS-MO-001",
+      "source_type": "standards / mission operations framework",
+      "source_name": "CCSDS Mission Operations Services / Message Abstraction Layer",
+      "source_url": "https://en.wikipedia.org/wiki/CCSDS_Mission_Operations",
+      "operator": "CCSDS / international space agencies",
+      "category": "Mission operations system interface standard",
+      "structured_summary": "CCSDS Mission Operations standards define a service-oriented framework for spacecraft and ground mission operations. The core modeling value is the separation of mission operations services, common services, message abstraction layer and transport binding. For GS LinkOps AI this is useful as a neutral schema for system adapters: status parameters, control actions, alerts, orbit vectors, schedules, planning requests, software images, service provider/consumer roles, and transport-independent wrappers for legacy systems.",
+      "database_targets": [
+        "Ground Station System Interface Database",
+        "System Adapter Template",
+        "Mission Operations Object Model",
+        "Interoperability Standards Library"
+      ],
+      "extractable_fields": {
+        "standard_family": "CCSDS Mission Operations / MAL",
+        "architecture_pattern": "service-oriented architecture with transport-independent service definitions",
+        "relevant_objects": ["status parameter", "control action", "notification alert", "orbit vector", "schedule", "planning request", "software image"],
+        "adapter_concepts": ["service provider", "service consumer", "technology adapter", "legacy wrapper", "message transport binding"]
+      },
+      "commercial_tags": ["interoperability", "multi-mission reuse", "vendor-neutral interface"],
+      "risk_tags": ["standard adoption varies by mission", "implementation details differ", "not a commercial availability source"],
+      "confidence_level": "Medium-High for conceptual object model; implementation requires official CCSDS documents and mission-specific ICDs",
+      "missing_fields": [
+        "official CCSDS document IDs for selected services",
+        "implementation binding used by each operator",
+        "provider-specific ICD mapping",
+        "security/authentication method",
+        "operational constraints"
+      ],
+      "next_action": "Use CCSDS MO/MAL as the neutral field taxonomy for GS LinkOps AI adapters; map provider APIs and portals into this model."
+    },
+    {
+      "record_id": "SRC-STANDARD-CCSDS-CFDP-001",
+      "source_type": "standards / data delivery protocol",
+      "source_name": "CCSDS File Delivery Protocol (CFDP)",
+      "source_url": "https://en.wikipedia.org/wiki/CCSDS_File_Delivery_Protocol",
+      "operator": "CCSDS / ISO",
+      "category": "Space-to-ground file delivery / mission data transfer standard",
+      "structured_summary": "CCSDS File Delivery Protocol is a standard protocol for transferring files in space missions, including between spacecraft and Earth. For GS LinkOps AI, CFDP is useful as a standard delivery-method tag and as a field to distinguish raw RF/baseband delivery, frame/packet delivery, file delivery, and cloud/object-storage delivery. It should be tracked separately from commercial customer delivery methods such as SFTP, HTTPS, S3 bucket, cloud object storage or provider portal download.",
+      "database_targets": [
+        "Delivery Method Library",
+        "Mission Data Transfer Schema",
+        "Ground Station System Interface Database"
+      ],
+      "extractable_fields": {
+        "protocol_name": "CCSDS File Delivery Protocol",
+        "abbreviation": "CFDP",
+        "standard_role": "file transfer protocol for space missions",
+        "delivery_layer_use": "spacecraft-to-ground or mission data file transfer",
+        "database_tags": ["space file transfer", "mission data delivery", "standard protocol"]
+      },
+      "commercial_tags": ["standardized delivery", "mission operations compatibility"],
+      "risk_tags": ["not equivalent to customer-facing cloud/SFTP delivery", "operator support must be confirmed"],
+      "confidence_level": "Medium-High for protocol existence and modeling relevance; operational support must be confirmed per mission/operator",
+      "missing_fields": [
+        "operator support status",
+        "protocol class/mode",
+        "security layer",
+        "integration endpoint",
+        "file naming and metadata conventions"
+      ],
+      "next_action": "Add CFDP as a delivery protocol option and require provider/mission confirmation before marking it supported."
+    },
+    {
+      "record_id": "SRC-RESEARCH-LIGHTSOUT-001",
+      "source_type": "research paper",
+      "source_name": "Lights-Out: An Automated Ground Segment for unstaffed Satellite Operations",
+      "source_url": "https://arxiv.org/abs/2510.21516",
+      "operator": "German satellite communications mission Heinrich Hertz / DLR context",
+      "category": "Automated ground segment / operations automation research",
+      "structured_summary": "This 2025 paper presents an automated ground segment concept used for the Heinrich Hertz satellite mission. It describes automated TTC outside office hours, pre-planned and automatically executed schedules, de-confliction between user mission schedules and main mission schedules, operator-configurable automated monitoring and reaction logic, emergency notification, automated flight operation procedures, and a self-service user portal. The portal allows external payload users to schedule predefined experiments, monitor live execution and access ground-station telemetry/RF test equipment during scheduled experiments. The paper is highly relevant to GS LinkOps AI's AI dispatch, risk control, schedule de-confliction and user portal modules.",
+      "database_targets": [
+        "Mission Automation Pattern Library",
+        "Scheduling / De-confliction Logic",
+        "AI Copilot Workflow Library",
+        "Ground Station Portal Feature Model"
+      ],
+      "extractable_fields": {
+        "automation_features": ["pre-planned schedule execution", "automated TTC", "automatic monitoring", "operator-configurable reactions", "emergency notification", "automated flight operations procedures"],
+        "portal_features": ["self-service user portal", "experiment scheduling", "live execution monitoring", "access to ground station telemetry", "access to RF test equipment"],
+        "matching_fields": ["main mission schedule", "user mission schedule", "de-confliction rule", "reaction time", "operator override", "risk trigger"],
+        "reaction_time_claim": "less than 1 minute for some payload reconfiguration use cases"
+      },
+      "commercial_tags": ["self-service portal", "automated operations", "low-touch operations", "24/7 access"],
+      "risk_tags": ["research/mission-specific implementation", "not a GSaaS commercial product sheet", "requires validation before commercial reuse"],
+      "confidence_level": "High for research concept and field taxonomy; Medium for direct commercial applicability",
+      "missing_fields": [
+        "exact software stack",
+        "API specification",
+        "security model",
+        "RF equipment interface details",
+        "customer billing model",
+        "operator approval gates"
+      ],
+      "next_action": "Convert paper concepts into GS LinkOps AI workflow fields: schedule conflict class, monitoring trigger, automated reaction, operator approval, emergency notification and self-service portal permissions."
+    },
+    {
+      "record_id": "SRC-OPEN-SATNOGS-API-001",
+      "source_type": "open network / forum-style technical ecosystem",
+      "source_name": "SatNOGS Network and Database model",
+      "source_url": "https://satnogs.org/",
+      "operator": "Libre Space Foundation / SatNOGS community",
+      "category": "Open ground-station network metadata and scheduling model",
+      "structured_summary": "SatNOGS is an open-source satellite ground-station network ecosystem. Public descriptions identify a network web application for scheduling observations, a crowd-sourced satellite transmitter database available through API, station client software that receives scheduled observations, captures transmissions and uploads results, and open ground-station hardware/software components. Although it is not equivalent to professional X-band payload downlink GSaaS, it is valuable for GS LinkOps AI as an open metadata model for station identity, observation scheduling, satellite transmitter records, station status and community evidence.",
+      "database_targets": [
+        "Open Ground Station Reference Library",
+        "Satellite Transmitter Metadata Schema",
+        "Observation Scheduling Model",
+        "Source Evidence Library"
+      ],
+      "extractable_fields": {
+        "network_components": ["Network scheduling web application", "Satellite transmitter database", "Client station software", "Open station hardware"],
+        "metadata_objects": ["station identity", "satellite transmitter", "observation record", "station status", "scheduled observation"],
+        "interface_model": ["API-accessible database", "scheduled observation delivery to client", "result upload to network"]
+      },
+      "commercial_tags": ["open-source reference", "metadata model", "non-commercial benchmark"],
+      "risk_tags": ["not commercial SLA", "not guaranteed professional payload downlink", "mostly amateur/open telemetry bands", "must not be mixed with commercial GSaaS availability"],
+      "confidence_level": "High for open ecosystem model; Low for commercial station capability",
+      "missing_fields": [
+        "commercial service availability",
+        "professional SLA",
+        "secure delivery path",
+        "X-band payload downlink support",
+        "contractual booking process",
+        "station RF-chain details"
+      ],
+      "next_action": "Use SatNOGS only as an open-source metadata and scheduling reference; keep separate from commercial provider capability records."
+    }
+  ],
+  "new_database_fields": [
+    "service_model",
+    "station_count_public",
+    "antenna_count_public",
+    "antenna_diameter_range_m_public",
+    "system_interfaces_public",
+    "operations_features",
+    "performance_claim_public",
+    "digital_if_format",
+    "virtualized_ground_station_flag",
+    "mission_operations_service_object",
+    "adapter_provider_role",
+    "adapter_consumer_role",
+    "delivery_protocol",
+    "cfdp_support_status",
+    "schedule_deconfliction_rule",
+    "automated_reaction_rule",
+    "self_service_portal_feature",
+    "open_metadata_source_flag"
+  ],
+  "recommended_next_scan_topics": [
+    "DIFI Consortium / VITA-49 digital IF standards",
+    "RBC Signals public capability material",
+    "ATLAS Space Operations Freedom software and antenna network",
+    "Viasat Real-Time Earth technical capability sheets",
+    "Leaf Space per-site network references",
+    "KSAT Hyper low-latency service",
+    "CCSDS SLE official document families",
+    "provider API / portal screenshots and documentation"
+  ]
+}
