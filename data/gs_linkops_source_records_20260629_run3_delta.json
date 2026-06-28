@@ -1,0 +1,283 @@
+{
+  "version": "0.3-run3-delta",
+  "created_for": "GS LinkOps AI resource database building",
+  "created_at": "2026-06-29",
+  "language_strategy": "English-first source records and technical database fields.",
+  "records": [
+    {
+      "record_id": "SRC-GS-NASA-NEN-001",
+      "category": "near_earth_ground_network_capability_matrix",
+      "name": "NASA Near Earth / Near Space Network public station capability matrix",
+      "source_url": "https://en.wikipedia.org/wiki/Near_Earth_Network",
+      "useful_for": [
+        "near-Earth ground network taxonomy",
+        "station-by-station band and antenna-size matrix",
+        "NASA + partner station operator model",
+        "S-band / X-band / Ka-band support normalization",
+        "commercial and institutional station role distinction",
+        "partner station mapping for KSAT, SSC, SANSA and NASA-owned sites"
+      ],
+      "database_targets": [
+        "Global Ground Station Compatibility Database",
+        "Station Capability Normalization Table",
+        "Partner Operator Library",
+        "Frequency Band Taxonomy",
+        "Ground Network Role Model"
+      ],
+      "extractable_fields": [
+        "network_name",
+        "station_name",
+        "operator",
+        "country_or_region",
+        "supported_bands_public",
+        "antenna_diameter_m_public",
+        "asset_count_public",
+        "partner_operator",
+        "mission_class",
+        "network_role",
+        "commercial_or_institutional_tag"
+      ],
+      "confidence_level": "Medium. Public matrix is valuable for schema and reference coverage; operational values should be verified against NASA SCaN / NSN official service documentation before commercial use.",
+      "missing_fields": [
+        "current official NSN station list",
+        "per-antenna RF chain",
+        "modem/baseband configuration",
+        "scheduling interface",
+        "service access rules",
+        "pricing or reimbursement model",
+        "security and user authorization process"
+      ],
+      "next_action": "Use as a schema driver for station_capability rows, especially fields for supported_bands_public, antenna_diameter_m_public, operator and partner_operator. Cross-check with NASA SCaN user guides later."
+    },
+    {
+      "record_id": "SRC-RESEARCH-SKYGS-001",
+      "category": "research_federated_gsaas_scheduling",
+      "name": "The Space above the Sky: Uniting Global-Scale Ground Station as a Service for Efficient Orbital Data Processing",
+      "source_url": "https://arxiv.org/abs/2501.00354",
+      "useful_for": [
+        "multi-provider GSaaS scheduling model",
+        "joint communication and cloud-computing resource scheduling",
+        "cost-latency optimization objective",
+        "provider federation risk model",
+        "real-time matching using bipartite graph and Hungarian algorithm",
+        "robustness against weather and limited station availability"
+      ],
+      "database_targets": [
+        "Matching Intelligence",
+        "AI Dispatch Optimization Roadmap",
+        "Commercial Cost Model Library",
+        "Mission Latency SLA Library",
+        "Multi-provider GSaaS Federation Model"
+      ],
+      "extractable_fields": [
+        "provider_id",
+        "ground_station_candidate",
+        "cloud_region_candidate",
+        "data_volume",
+        "latency_threshold",
+        "estimated_contact_cost",
+        "estimated_compute_cost",
+        "weather_risk",
+        "provider_availability",
+        "matching_score",
+        "optimization_method"
+      ],
+      "confidence_level": "Medium-high for matching-logic and system-design extraction because it is a recent research paper; not an operator capability sheet and not evidence of actual commercial availability.",
+      "missing_fields": [
+        "production-grade implementation",
+        "real operator contract constraints",
+        "actual GSaaS API schemas",
+        "station-specific RF/baseband details",
+        "commercial price sheets",
+        "security/compliance gating rules"
+      ],
+      "next_action": "Add cost_latency_score, provider_federation_flag and weather_risk_score to the future AI matching engine. Keep separate from verified station capability records."
+    },
+    {
+      "record_id": "SRC-RESEARCH-LEO-STATION-SELECTION-001",
+      "category": "research_ground_station_selection_large_leo",
+      "name": "Scalable Ground Station Selection for Large LEO Constellations",
+      "source_url": "https://arxiv.org/abs/2510.03438",
+      "useful_for": [
+        "large LEO constellation ground-station selection",
+        "multi-provider candidate-site ranking",
+        "downlink volume and communication-gap optimization",
+        "hierarchical decomposition method",
+        "cluster-level high-value location identification",
+        "benchmarking against Capella, ICEYE and Planet-style constellation sizes"
+      ],
+      "database_targets": [
+        "Matching Intelligence",
+        "Constellation Support Model",
+        "Ground Station Site Selection Library",
+        "AI Candidate Ranking Engine"
+      ],
+      "extractable_fields": [
+        "constellation_size",
+        "satellite_operator_type",
+        "candidate_station_site",
+        "access_window_count",
+        "downlink_volume_estimate",
+        "communication_gap_metric",
+        "provider_constraint",
+        "site_cluster_score",
+        "selection_confidence"
+      ],
+      "confidence_level": "Medium-high for algorithmic design and field extraction; not a source for station ownership, pricing or exact station configurations.",
+      "missing_fields": [
+        "actual commercial station calendar",
+        "per-pass pricing",
+        "site licensing constraints",
+        "RF/baseband compatibility",
+        "operator-specific contractual restrictions",
+        "live contact availability"
+      ],
+      "next_action": "Use this to design the station_candidate_ranking table and to distinguish single-mission matching from constellation-scale planning."
+    },
+    {
+      "record_id": "SRC-GS-ESA-KOUROU-001",
+      "category": "institutional_station_capability_reference",
+      "name": "ESA ESTRACK Kourou Station public capability reference",
+      "source_url": "https://en.wikipedia.org/wiki/Kourou_Station",
+      "useful_for": [
+        "ESTRACK single-station record pattern",
+        "launch and early orbit phase support reference",
+        "S-band and X-band receive capability fields",
+        "tracking telemetry telecommand and radiometric measurement vocabulary",
+        "auxiliary acquisition antenna concept"
+      ],
+      "database_targets": [
+        "Institutional Ground Station Reference Library",
+        "Station Capability Normalization Table",
+        "LEOP Support Capability Library"
+      ],
+      "extractable_fields": [
+        "station_name",
+        "station_code",
+        "location",
+        "antenna_diameter_m",
+        "auxiliary_antenna_diameter_m",
+        "receive_bands_public",
+        "mission_phase_supported",
+        "ttc_support",
+        "radiometric_measurement_support"
+      ],
+      "confidence_level": "Medium. Useful public station-level capability reference; verify with official ESA station page before operational or commercial use.",
+      "missing_fields": [
+        "current antenna status",
+        "full RF chain",
+        "baseband/modem stack",
+        "service access process",
+        "third-party support availability",
+        "pricing and authorization"
+      ],
+      "next_action": "Create station-specific ESTRACK records rather than only a network-level record; use Kourou as the first LEOP-capable station example."
+    },
+    {
+      "record_id": "SRC-GS-ESA-SANTA-MARIA-001",
+      "category": "institutional_station_capability_reference",
+      "name": "ESA ESTRACK Santa Maria Island Station public capability reference",
+      "source_url": "https://en.wikipedia.org/wiki/Santa_Maria_Island_Station",
+      "useful_for": [
+        "ESTRACK station capability row example",
+        "S-band launch tracking capability",
+        "X-band receive range field example",
+        "Atlantic coverage and launch trajectory support reference",
+        "mission-phase-specific station role"
+      ],
+      "database_targets": [
+        "Institutional Ground Station Reference Library",
+        "Station Capability Normalization Table",
+        "Launch Tracking Support Library",
+        "Frequency Band Taxonomy"
+      ],
+      "extractable_fields": [
+        "station_name",
+        "station_code",
+        "location",
+        "antenna_diameter_m",
+        "s_band_receive_range_mhz",
+        "x_band_receive_range_mhz",
+        "launch_tracking_capability",
+        "coverage_region",
+        "mission_phase_supported"
+      ],
+      "confidence_level": "Medium. Public technical ranges are useful for schema validation; official ESA documents should be used before final engineering use.",
+      "missing_fields": [
+        "current operational status",
+        "antenna tracking limits",
+        "RF chain and receiver details",
+        "baseband/modem",
+        "availability calendar",
+        "service request interface"
+      ],
+      "next_action": "Add frequency range fields to station_capability table, not only generic band names."
+    },
+    {
+      "record_id": "SRC-GS-GOLDSTONE-001",
+      "category": "deep_space_station_capability_reference",
+      "name": "Goldstone Deep Space Communications Complex public antenna and band reference",
+      "source_url": "https://en.wikipedia.org/wiki/Goldstone_Deep_Space_Communications_Complex",
+      "useful_for": [
+        "DSN station complex schema",
+        "large-aperture antenna class reference",
+        "S-band / X-band / Ka-band frequency-range normalization",
+        "deep-space mission support taxonomy",
+        "station complex with multiple antenna assets model"
+      ],
+      "database_targets": [
+        "Deep Space Ground Network Reference Library",
+        "Antenna Class Library",
+        "Frequency Band Taxonomy",
+        "Station Complex Data Model"
+      ],
+      "extractable_fields": [
+        "complex_name",
+        "operator",
+        "location",
+        "antenna_asset_count_public",
+        "largest_antenna_diameter_m",
+        "s_band_range_ghz_public",
+        "x_band_range_ghz_public",
+        "ka_band_range_ghz_public",
+        "mission_distance_class"
+      ],
+      "confidence_level": "Medium. Public reference is valuable for taxonomy and antenna-class fields; official NASA/JPL pages are required for authoritative current status.",
+      "missing_fields": [
+        "current DSS asset status",
+        "per-antenna subsystem details",
+        "interface documents",
+        "mission priority policy",
+        "commercial access",
+        "live schedule"
+      ],
+      "next_action": "Use as a station_complex pattern: one complex contains many antenna assets with independent size, band and status fields."
+    }
+  ],
+  "schema_updates_suggested": [
+    "station_capability.supported_bands_public",
+    "station_capability.frequency_range_mhz",
+    "station_capability.antenna_diameter_m_public",
+    "station_capability.operator",
+    "station_capability.partner_operator",
+    "station_capability.mission_phase_supported",
+    "station_capability.station_complex_id",
+    "matching.cost_latency_score",
+    "matching.weather_risk_score",
+    "matching.provider_federation_flag",
+    "matching.constellation_scale_flag",
+    "commercial.estimated_contact_cost",
+    "commercial.estimated_compute_cost",
+    "risk.commercial_or_institutional_tag",
+    "risk.service_access_rule_required"
+  ],
+  "next_batch_targets": [
+    "NASA SCaN official Near Space Network user guide and service pages",
+    "Official SSC CONNECT service/capability pages",
+    "Official RBC Signals network/API pages",
+    "Official ESA Kourou and Santa Maria station pages",
+    "Leaf Space official technical pages beyond public summaries",
+    "SatNOGS DB API documentation and transmitter schema",
+    "CCSDS CFDP and SLE service-specific Blue Books"
+  ]
+}
