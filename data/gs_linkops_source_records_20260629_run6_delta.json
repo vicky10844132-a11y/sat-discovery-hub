@@ -1,0 +1,118 @@
+{
+  "dataset": "GS LinkOps AI Source Evidence Delta",
+  "run_id": "20260629_run6",
+  "language": "English",
+  "records": [
+    {
+      "record_id": "SRC-GSAAS-LEAF-INFOSTELLAR-INTEGRATION-001",
+      "category": "GSaaS federation / partner network integration",
+      "source_name": "Leaf Space / Infostellar integration public reference",
+      "source_type": "operator / GSaaS network public material",
+      "source_url": "https://en.wikipedia.org/wiki/Leaf_Space",
+      "database_targets": ["Partner Adapter Database", "GSaaS Federation Library", "Commercial Network Benchmark Library"],
+      "extractable_fields": {
+        "provider": "Leaf Space",
+        "partner_provider": "Infostellar",
+        "service_model": "Ground Segment as a Service / managed TT&C and payload downlink",
+        "interface_public": "API interface and smart scheduler are publicly described for Leaf Line; Infostellar integration should be treated as partner/federation evidence, not as an operational interface specification.",
+        "frequency_bands_public": ["S-band", "X-band", "Ka-band"],
+        "commercial_tags": ["pay_as_you_go", "per_minute_pricing_public_claim", "partner_federation", "api_enabled_gsaas"],
+        "risk_tags": ["public_summary_only", "partner_scope_not_contractually_verified", "per_site_capability_missing"]
+      },
+      "confidence_level": "Medium. Useful for GSaaS federation logic and partner-adapter modeling; not sufficient for exact commercial terms or per-site RF chain.",
+      "missing_fields": ["actual Infostellar API endpoints", "SLA", "per-site antenna map", "per-site frequency constraints", "security model", "settlement terms"],
+      "next_action": "Create a GSaaS federation object with provider, partner, interface abstraction, station access scope, settlement_owner, SLA_owner and evidence confidence fields."
+    },
+    {
+      "record_id": "SRC-GS-KRATOS-OPENSPACE-001",
+      "category": "Virtualized ground system / software-defined ground segment",
+      "source_name": "Kratos OpenSpace public references",
+      "source_type": "ground-system vendor material / public search evidence",
+      "source_url": "https://www.kratosdefense.com/",
+      "database_targets": ["Ground Station System Interface Database", "Virtual Ground System Reference Library", "Station Adapter Template"],
+      "extractable_fields": {
+        "system_family": "OpenSpace",
+        "concept": "virtualized / software-defined ground system architecture",
+        "database_value": ["virtualized_modem_flag", "software_defined_gateway_flag", "cloud_native_ground_segment_flag", "ground_system_vendor", "adapter_layer_required"],
+        "commercial_tags": ["vendor_platform", "ground_segment_modernization", "not_station_operator"],
+        "risk_tags": ["vendor_claim_requires_product_sheet_validation", "implementation_scope_unknown"]
+      },
+      "confidence_level": "Medium. Valuable for system-interface taxonomy, but exact modules and capability limits require vendor datasheets or direct confirmation.",
+      "missing_fields": ["supported waveforms", "supported protocols", "deployment model", "licensing", "integration API", "supported antenna/RF hardware"],
+      "next_action": "Add 'virtualized ground system' as a separate interface class, distinct from physical station capability and GSaaS operator access."
+    },
+    {
+      "record_id": "SRC-GS-SAFRAN-CORTEX-001",
+      "category": "Ground station baseband / modem / TT&C equipment",
+      "source_name": "Safran CORTEX public references",
+      "source_type": "equipment vendor / capability-sheet target",
+      "source_url": "https://www.safran-group.com/",
+      "database_targets": ["Baseband System Library", "Ground Station Fingerprint Template", "RF/Baseband Compatibility Database"],
+      "extractable_fields": {
+        "vendor": "Safran",
+        "system_family": "CORTEX",
+        "capability_class": "satellite telemetry, tracking and command / modem and baseband processing",
+        "database_value": ["baseband_vendor", "modem_family", "ttc_support_flag", "demodulation_chain_required", "mission_profile_equipment_dependency"],
+        "risk_tags": ["datasheet_required", "exact_waveform_support_not_confirmed", "license_and_export_control_possible"]
+      },
+      "confidence_level": "Medium. Useful to build the baseband-equipment vocabulary; exact supported modulations/coding must be confirmed from datasheets.",
+      "missing_fields": ["frequency coverage", "modulation/coding support", "CCSDS support", "data rate", "interfaces", "license model", "export restrictions"],
+      "next_action": "Create equipment-level fields under station fingerprint: receiver, modem/baseband, demodulator, decoder, protocol stack, vendor, model, license/export tag."
+    },
+    {
+      "record_id": "SRC-GS-INTUITIVE-LDN-001",
+      "category": "Lunar data relay / cislunar communications architecture",
+      "source_name": "Intuitive Machines Lunar Data Network / Khonstellation public references",
+      "source_type": "operator / lunar communication architecture",
+      "source_url": "https://intuitivemachines.com/",
+      "database_targets": ["Non-LEO Mission Communications Library", "Relay Network Model", "Risk & Mission Distance Classification"],
+      "extractable_fields": {
+        "operator": "Intuitive Machines",
+        "network_concept": "Lunar Data Network / relay satellites and Earth ground stations for lunar orbit/surface users",
+        "mission_domain": "cislunar / lunar surface / lunar orbit",
+        "database_value": ["relay_network_flag", "communications_path_type", "mission_distance_class", "surface_to_orbit_to_ground_path", "store_forward_candidate", "lunar_service_provider"],
+        "commercial_tags": ["lunar_infrastructure_as_a_service", "future_service", "CLPS_related_context"],
+        "risk_tags": ["emerging_service", "mission_schedule_uncertainty", "public_architecture_not_station_capability_sheet"]
+      },
+      "confidence_level": "Medium. Strong for architecture classification; station count, frequency plan and service availability need primary-source confirmation.",
+      "missing_fields": ["ground station locations", "frequency bands", "antenna diameters", "relay satellite status", "service pricing", "operational SLA"],
+      "next_action": "Add a non-LEO/cislunar communications path class so GS LinkOps AI can distinguish direct-to-ground, relay-to-ground and surface-network delivery models."
+    },
+    {
+      "record_id": "SRC-SATCOM-NOKIA-LUNAR-4G-001",
+      "category": "Lunar surface communications / local payload network",
+      "source_name": "Nokia Bell Labs Lunar Surface Communication System on IM-2",
+      "source_type": "news / mission public technical context",
+      "source_url": "https://www.wired.com/story/nokia-4g-network-on-the-moon",
+      "database_targets": ["Payload Communications Library", "Lunar Surface Network Template", "Risk/Event Library"],
+      "extractable_fields": {
+        "system": "4G/LTE lunar surface communication system",
+        "components_public": ["radio", "base station", "routing", "core integrated in Network-in-a-Box"],
+        "mission_context": "IM-2 Athena lunar mission",
+        "delivery_path": "surface assets to lander, lander to Earth ground station",
+        "database_value": ["local_surface_network_flag", "payload_network_node", "lander_gateway_flag", "edge_network_to_earth_relay", "mission_failure_risk_event"],
+        "risk_tags": ["mission_partial_failure", "surface_assets_not_deployed", "short_runtime", "not_a_standard_GSaaS_service"]
+      },
+      "confidence_level": "Medium. Useful as a future lunar local-network example; not directly usable for LEO ground-station matching.",
+      "missing_fields": ["RF frequencies", "antenna pattern", "throughput", "command/data protocol mapping", "ground station technical details"],
+      "next_action": "Add a 'local mission network' layer in the data model, separate from Earth ground station and relay network layers."
+    },
+    {
+      "record_id": "SRC-STD-LUNANET-LNIS-001",
+      "category": "Cislunar network standards / interoperability",
+      "source_name": "LunaNet Interoperability Specification public references",
+      "source_type": "standard / interoperability architecture",
+      "source_url": "https://en.wikipedia.org/wiki/LunaNet",
+      "database_targets": ["Standards Interface Library", "Relay Network Model", "Future Cislunar Service Compatibility"],
+      "extractable_fields": {
+        "standard_family": "LunaNet Interoperability Specification",
+        "functions_public": ["communications", "navigation", "networking", "store-and-forward / DTN concept"],
+        "database_value": ["dtn_support_flag", "interoperability_standard", "cislunar_network_service", "navigation_service_flag", "pre_scheduled_contact_reduction_concept"],
+        "risk_tags": ["draft_or_evolving_standard", "implementation_specific_confirmation_required"]
+      },
+      "confidence_level": "Medium. High value for future interface taxonomy; exact operational adoption must be verified per provider/mission.",
+      "missing_fields": ["current LNIS version source document", "provider compliance", "protocol implementation", "service availability", "testing status"],
+      "next_action": "Add standards fields for cislunar providers: LNIS compatibility, DTN support, navigation service support, relay service class and implementation evidence."
+    }
+  ]
+}
