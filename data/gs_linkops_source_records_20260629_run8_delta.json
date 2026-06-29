@@ -1,0 +1,340 @@
+{
+  "run_id": "20260629_run8",
+  "language": "en",
+  "purpose": "GS LinkOps AI source-evidence delta for database building",
+  "records": [
+    {
+      "record_id": "SRC-GS-SSC-GLOBAL-NETWORK-003",
+      "category": "Commercial ground station network / operator capability reference",
+      "name": "SSC Space Global Ground Station Network",
+      "source_url": "https://www.sscspace.com/ssc-worldwide/ground-station-network/",
+      "source_type": "operator_public_material",
+      "database_targets": [
+        "Global Ground Station Compatibility Database",
+        "Provider Federation Library",
+        "Station Network Coverage Model",
+        "Commercial Operator Benchmark Library"
+      ],
+      "structured_information": {
+        "operator": "SSC Space / Swedish Space Corporation",
+        "public_role": "civilian global ground-station network operator",
+        "known_station_regions_public": [
+          "Sweden / Esrange",
+          "United States / Alaska, Hawaii, Florida",
+          "Canada / Inuvik",
+          "Chile / Santiago and Punta Arenas",
+          "Thailand",
+          "Australia",
+          "partner stations in additional countries"
+        ],
+        "service_scope_public": [
+          "satellite communications",
+          "TT&C support",
+          "data downlink",
+          "spacecraft operations and engineering support",
+          "near-Earth, lunar and selected deep-space links"
+        ],
+        "network_model": "own stations plus partner stations",
+        "provider_federation_flag": true,
+        "mission_distance_class": ["LEO", "near-Earth", "lunar / deep-space selected missions"],
+        "commercial_risk_tags": [
+          "partner-station dependency",
+          "per-station capability must be confirmed",
+          "deep-space support is mission-specific",
+          "contracted capacity and SLA not public"
+        ]
+      },
+      "useful_fields_for_gs_linkops_ai": [
+        "operator",
+        "station_region",
+        "own_station_vs_partner_station",
+        "mission_distance_class",
+        "supported_service_type",
+        "provider_federation_flag",
+        "coverage_region",
+        "commercial_availability_status"
+      ],
+      "confidence_level": "Medium-High for public network model and regional presence; Medium for exact per-site technical capability because public information is aggregated.",
+      "missing_fields": [
+        "per-site antenna inventory",
+        "per-site antenna diameter",
+        "exact frequency band per antenna",
+        "RF chain details",
+        "baseband/modem vendor",
+        "data delivery SLA",
+        "booking API availability",
+        "commercial rate card"
+      ],
+      "next_action": "Create SSC provider profile and separate station child records for Esrange, Inuvik, North Pole Alaska, Hawaii, Chile, Thailand and Australia. Mark all station-specific RF/baseband fields as requiring partner or customer confirmation."
+    },
+    {
+      "record_id": "SRC-GS-ESRANGE-CAPABILITY-003",
+      "category": "Ground station facility / polar-orbit support benchmark",
+      "name": "Esrange Satellite Station / SSC Space Center",
+      "source_url": "https://sscspace.com/esrange/",
+      "source_type": "operator_public_material_plus_public_facility_reference",
+      "database_targets": [
+        "Ground Station Fingerprint Database",
+        "Polar Station Benchmark Library",
+        "Station Capability Table",
+        "Remote Sensing Downlink Benchmark Library"
+      ],
+      "structured_information": {
+        "station_name": "Esrange Satellite Station",
+        "country": "Sweden",
+        "operator": "SSC Space",
+        "site_role_public": [
+          "polar-orbit satellite communications",
+          "data acquisition and processing for remote sensing and scientific missions",
+          "TT&C support",
+          "network operations hub for SSC stations"
+        ],
+        "public_capability_indicators": {
+          "ttc_systems_public": "six independent S-band TT&C systems reported in public facility references",
+          "receive_systems_public": "six multi-frequency S/X-band receive antenna systems reported in public facility references",
+          "uhf_note": "one S-band TT&C system reported with UHF receive capability in public references",
+          "data_processing_building_flag": true
+        },
+        "orbit_fit": ["polar orbit", "sun-synchronous orbit", "remote sensing missions"],
+        "risk_tags": [
+          "public capability may be outdated",
+          "exact antenna inventory requires operator confirmation",
+          "commercial access path may depend on SSC contract"
+        ]
+      },
+      "useful_fields_for_gs_linkops_ai": [
+        "station_name",
+        "latitude_band",
+        "orbit_fit",
+        "ttc_system_count_public",
+        "receive_antenna_count_public",
+        "frequency_band_public",
+        "processing_facility_flag",
+        "polar_station_score"
+      ],
+      "confidence_level": "Medium for specific counts because the count comes from public facility references; High for Esrange as SSC polar station and remote-sensing/TT&C role.",
+      "missing_fields": [
+        "current antenna list",
+        "antenna diameters",
+        "antenna G/T",
+        "EIRP",
+        "supported modulations/coding",
+        "baseband chain",
+        "data delivery method",
+        "booking workflow",
+        "current commercial availability"
+      ],
+      "next_action": "Use as a polar benchmark station. Build a station fingerprint template with public fields filled and technical RF/baseband fields marked as pending confirmation."
+    },
+    {
+      "record_id": "SRC-GS-ASF-FAIRBANKS-001",
+      "category": "NASA Near Earth Network station / SAR data facility reference",
+      "name": "Alaska Satellite Facility Ground Station",
+      "source_url": "https://asf.alaska.edu/",
+      "source_type": "public_facility_reference",
+      "database_targets": [
+        "NASA NEN Station Capability Library",
+        "Remote Sensing Ground Station Database",
+        "SAR Data Reception and Archive Workflow Library",
+        "Station Fingerprint Database"
+      ],
+      "structured_information": {
+        "station_name": "Alaska Satellite Facility / Fairbanks",
+        "operator_or_host": "University of Alaska Fairbanks / NASA-supported facility",
+        "network_context": "NASA Near Earth Network member / remote sensing data facility",
+        "public_antenna_assets": [
+          "two 11-meter S/X-band antennas reported in public references",
+          "one 9-meter S/X-band antenna reported in public references"
+        ],
+        "service_scope_public": [
+          "telemetry downlink",
+          "uplink",
+          "command",
+          "two-way coherent tracking",
+          "processing and distribution of remote-sensing data"
+        ],
+        "data_center_role": "NASA DAAC focused on SAR data archive and distribution",
+        "orbit_fit": ["high-inclination", "polar orbit", "Earth observation", "SAR missions"],
+        "delivery_model_public": ["data archive", "processed SAR data distribution", "science user access"]
+      },
+      "useful_fields_for_gs_linkops_ai": [
+        "antenna_diameter_m_public",
+        "frequency_band_public",
+        "service_scope",
+        "data_center_role",
+        "mission_type_fit",
+        "archive_distribution_flag",
+        "two_way_tracking_flag"
+      ],
+      "confidence_level": "Medium-High for public antenna class and data-center role; Low for commercial availability because ASF is primarily NASA/science infrastructure rather than commercial GSaaS.",
+      "missing_fields": [
+        "current operational antenna schedule",
+        "commercial third-party access rules",
+        "supported modulation/coding",
+        "baseband vendor",
+        "data latency SLA",
+        "real-time delivery options",
+        "API booking access"
+      ],
+      "next_action": "Add ASF as a non-commercial benchmark station for SAR/EO reception workflow and NASA NEN capability comparison, not as an immediately bookable GSaaS station."
+    },
+    {
+      "record_id": "SRC-GS-NASA-NEN-MATRIX-003",
+      "category": "Government network capability matrix / station inventory reference",
+      "name": "NASA Near Earth Network public station capability matrix",
+      "source_url": "https://www.nasa.gov/directorates/somd/space-communications-navigation-program/near-earth-network/",
+      "source_type": "government_public_material",
+      "database_targets": [
+        "Station Capability Matrix",
+        "Provider Federation Library",
+        "Frequency Band Compatibility Table",
+        "NASA / Agency Network Benchmark Library"
+      ],
+      "structured_information": {
+        "network_name": "NASA Near Earth Network",
+        "network_model": "NASA stations plus partner/operator stations",
+        "public_station_capability_examples": [
+          "Alaska Satellite Facility: S/X-band, 11m/11m/9m class antennas in public references",
+          "Wallops: VHF and S/X-band support in public references",
+          "White Sands: VHF and S/Ka-band support in public references",
+          "KSAT Singapore/Svalbard/TrollSat: S/X-band station support in public references",
+          "SSC Kiruna/Chile/Alaska/Hawaii/Australia: S/X-band support in public references"
+        ],
+        "provider_federation_flag": true,
+        "frequency_bands_public": ["VHF", "S-band", "X-band", "Ka-band in selected stations"],
+        "mission_class": ["near-Earth", "LEO", "launch and early operations for selected missions", "Earth observation"]
+      },
+      "useful_fields_for_gs_linkops_ai": [
+        "network_name",
+        "station_operator",
+        "asset_diameter_m_public",
+        "frequency_band_public",
+        "partner_operator",
+        "provider_federation_flag",
+        "mission_class",
+        "government_network_flag"
+      ],
+      "confidence_level": "Medium because the public matrix is useful for field design but individual station details must be checked against current operator documents.",
+      "missing_fields": [
+        "current active/inactive station status",
+        "per-antenna availability",
+        "per-mission access rules",
+        "commercial reuse permission",
+        "modem/baseband details",
+        "dataflow/delivery interface"
+      ],
+      "next_action": "Use NEN as a reference model for federated station inventory: network -> provider -> station -> antenna asset -> frequency band -> mission/service role."
+    },
+    {
+      "record_id": "SRC-GS-MASPALOMAS-INTA-001",
+      "category": "ESTRACK / launch and satellite tracking station reference",
+      "name": "Maspalomas Station / INTA / ESTRACK historical station",
+      "source_url": "https://www.esa.int/Enabling_Support/Operations/ESTRACK_tracking_stations",
+      "source_type": "agency_public_material_plus_station_reference",
+      "database_targets": [
+        "ESTRACK Station Library",
+        "Station Capability Database",
+        "Launch Tracking Benchmark Library"
+      ],
+      "structured_information": {
+        "station_name": "Maspalomas Station",
+        "country": "Spain / Canary Islands",
+        "operator_or_host": "INTA; historically associated with ESA/NASA support",
+        "public_antenna_asset": "15-meter parabolic antenna in public references",
+        "frequency_support_public": ["S-band receive", "S-band transmit", "X-band receive"],
+        "station_roles_public": [
+          "spacecraft communication",
+          "launch tracking / mission support history",
+          "international mission support"
+        ],
+        "risk_tags": [
+          "public role and current availability must be confirmed",
+          "not automatically commercial GSaaS",
+          "agency/host access constraints likely"
+        ]
+      },
+      "useful_fields_for_gs_linkops_ai": [
+        "station_name",
+        "country",
+        "host_agency",
+        "antenna_diameter_m_public",
+        "frequency_band_public",
+        "tx_rx_capability_public",
+        "agency_access_constraint"
+      ],
+      "confidence_level": "Medium for public antenna/frequency fields; Low for current third-party access availability.",
+      "missing_fields": [
+        "current operational status",
+        "current ESTRACK role",
+        "baseband and modem chain",
+        "commercial access possibility",
+        "delivery workflow",
+        "booking interface"
+      ],
+      "next_action": "Add as an ESTRACK/agency benchmark station and mark commercial availability unknown. Use for field taxonomy and station capability schema, not immediate procurement."
+    },
+    {
+      "record_id": "SRC-RESEARCH-GRADYS-GS-001",
+      "category": "Research software / generic ground-station framework",
+      "name": "GrADyS-GS: reusable ground station software for field experiments",
+      "source_url": "https://arxiv.org/abs/2204.00488",
+      "source_type": "research_paper",
+      "database_targets": [
+        "Ground Segment Software Architecture Library",
+        "Experiment Control Interface Library",
+        "AI Copilot Workflow Design",
+        "Reusable Ground Station Framework Reference"
+      ],
+      "structured_information": {
+        "paper_focus": "reusable ground-station software framework for controlling, monitoring and storing field-experiment results",
+        "architecture_relevance": [
+          "dynamic Python and JavaScript framework",
+          "monitoring and storage of experiment results",
+          "connection to heterogeneous field technologies",
+          "centralized data collection",
+          "simulation / field-test workflow support"
+        ],
+        "gs_linkops_transfer_value": [
+          "useful reference for modular station-operation UI",
+          "useful for experiment/test campaign manager",
+          "supports concept of adapters for heterogeneous assets"
+        ],
+        "risk_tags": [
+          "not a satellite RF ground-station product",
+          "must not be treated as commercial GSaaS capability",
+          "architecture ideas only"
+        ]
+      },
+      "useful_fields_for_gs_linkops_ai": [
+        "adapter_framework_flag",
+        "experiment_workflow_flag",
+        "monitoring_interface",
+        "data_storage_interface",
+        "heterogeneous_asset_control",
+        "test_campaign_manager"
+      ],
+      "confidence_level": "High for software-architecture inspiration; Low for direct satellite communications capability.",
+      "missing_fields": [
+        "satellite RF chain support",
+        "orbital pass scheduling support",
+        "S/X/Ka band station compatibility",
+        "commercial production readiness"
+      ],
+      "next_action": "Use only as a software-architecture reference for GS LinkOps AI test manager and adapter layer; do not add it to commercial station inventory."
+    }
+  ],
+  "field_updates": [
+    "own_station_vs_partner_station",
+    "station_region",
+    "provider_federation_flag",
+    "mission_distance_class",
+    "polar_station_score",
+    "archive_distribution_flag",
+    "agency_access_constraint",
+    "tx_rx_capability_public",
+    "data_center_role",
+    "adapter_framework_flag",
+    "test_campaign_manager"
+  ],
+  "notes": "Run 8 focused on expanding beyond previously captured KSAT/Leaf/AWS/ESA/SatNOGS records by adding SSC global network, Esrange, ASF Fairbanks, NASA NEN matrix normalization, Maspalomas, and one reusable ground-station software architecture paper."
+}
