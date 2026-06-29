@@ -1,0 +1,254 @@
+{
+  "version": "0.1",
+  "created_for": "GS LinkOps AI resource database building",
+  "created_at": "2026-06-29",
+  "language_strategy": "English-first source records, technical fields and summaries.",
+  "delta_run": "run7",
+  "records": [
+    {
+      "record_id": "SRC-GSAAS-AZURE-RETIREMENT-001",
+      "category": "cloud_ground_station_service_lifecycle_risk",
+      "name": "Microsoft Azure Orbital Ground Station retirement signal",
+      "source_url": "https://learn.microsoft.com/en-us/azure/orbital/overview",
+      "useful_for": [
+        "cloud GSaaS lifecycle risk model",
+        "provider dependency risk",
+        "cloud service retirement flag",
+        "avoid single-provider architecture"
+      ],
+      "database_targets": [
+        "Commercial GSaaS Provider Library",
+        "Risk and Continuity Rule Library",
+        "Provider Lifecycle Status Dictionary"
+      ],
+      "extractable_fields": [
+        "provider_name",
+        "service_name",
+        "service_status_public",
+        "retirement_flag",
+        "documentation_redirect_status",
+        "provider_dependency_risk",
+        "migration_required_flag"
+      ],
+      "structured_value": {
+        "provider": "Microsoft Azure",
+        "service": "Azure Orbital Ground Station",
+        "observed_status": "Microsoft Learn overview redirects to Azure update page with Azure Orbital Ground Station retirement identifier",
+        "risk_tag": "cloud_service_retirement_risk"
+      },
+      "confidence_level": "Medium-high. The redirect is from Microsoft Learn/Azure domain, but the rendered page did not expose the full retirement details in the captured text.",
+      "missing_fields": [
+        "exact retirement date",
+        "migration guidance",
+        "replacement service path",
+        "affected regions",
+        "customer notice details"
+      ],
+      "next_action": "Track Azure Orbital status separately from active GSaaS providers. Add a provider_lifecycle_status field to avoid recommending retired/deprecated cloud GSaaS options."
+    },
+    {
+      "record_id": "SRC-GSAAS-SKYGS-FEDERATION-002",
+      "category": "research_gsaas_federation_and_cloud_scheduling",
+      "name": "SkyGS: federated GSaaS and cloud computing scheduling model",
+      "source_url": "https://arxiv.org/abs/2501.00354",
+      "useful_for": [
+        "multi-provider GSaaS federation",
+        "cost-latency optimization",
+        "weather and station availability robustness",
+        "ground station and cloud data center co-scheduling"
+      ],
+      "database_targets": [
+        "Matching Intelligence",
+        "GSaaS Federation Model",
+        "Cost-Latency Optimization Rule Library"
+      ],
+      "extractable_fields": [
+        "provider_federation_flag",
+        "ground_station_provider",
+        "cloud_provider",
+        "data_latency_threshold",
+        "cost_objective",
+        "weather_variability_risk",
+        "bipartite_matching_assignment",
+        "hungarian_algorithm_flag"
+      ],
+      "structured_value": {
+        "algorithmic_model": "Lyapunov optimization + bipartite graph matching / Hungarian algorithm",
+        "reported_benefit_public": "cost savings up to 63% and average data latency reduction up to 95% in simulations",
+        "risk_tag": "single_gsaas_provider_latency_and_weather_risk"
+      },
+      "confidence_level": "High for research-model inspiration; medium for operational claims because results are simulation-based.",
+      "missing_fields": [
+        "real provider pricing inputs",
+        "real station availability calendars",
+        "contractual cross-provider access constraints",
+        "data sovereignty constraints",
+        "private cloud egress fees"
+      ],
+      "next_action": "Use SkyGS to define GS LinkOps AI matching fields: cost_score, latency_score, weather_risk_score, provider_federation_flag and cloud_delivery_cost."
+    },
+    {
+      "record_id": "SRC-GS-SATNOGS-STACK-003",
+      "category": "open_ground_station_full_stack_reference",
+      "name": "SatNOGS open ground station stack model",
+      "source_url": "https://satnogs.org/",
+      "useful_for": [
+        "open network architecture",
+        "observation scheduling model",
+        "satellite transmitter database model",
+        "station client software model",
+        "open hardware ground station instrumentation"
+      ],
+      "database_targets": [
+        "Open Ground Station Reference Library",
+        "Station Metadata Normalization Reference",
+        "Transmitter Database Schema"
+      ],
+      "extractable_fields": [
+        "network_component",
+        "database_component",
+        "client_component",
+        "ground_station_component",
+        "observation_schedule",
+        "transmitter_frequency",
+        "station_status",
+        "decoded_frame_count"
+      ],
+      "structured_value": {
+        "architecture_components": ["Network", "Database", "Client", "Ground Station"],
+        "commercial_equivalence": "Not commercial X-band payload downlink; useful as open metadata and scheduling reference"
+      },
+      "confidence_level": "Medium-high for open architecture and metadata schema; low for professional commercial downlink capability.",
+      "missing_fields": [
+        "commercial SLA",
+        "secure customer delivery path",
+        "professional X-band payload downlink capability",
+        "pricing",
+        "station RF/baseband certification"
+      ],
+      "next_action": "Use SatNOGS as the open-source schema inspiration for observation, station status and transmitter fields, but keep it separate from commercial GSaaS station availability."
+    },
+    {
+      "record_id": "SRC-STD-NANOSAT-MO-002",
+      "category": "mission_operations_framework_standard_interface",
+      "name": "NanoSat MO Framework ground adapter and proxy model",
+      "source_url": "https://nanosat-mo-framework.github.io/",
+      "useful_for": [
+        "small satellite mission operations interface",
+        "ground adapter pattern",
+        "ground proxy pattern",
+        "monitor and control services",
+        "software management services",
+        "mission planning services"
+      ],
+      "database_targets": [
+        "Ground Station System Interface Database",
+        "Mission Operations Adapter Library",
+        "Satellite Software Interface Reference"
+      ],
+      "extractable_fields": [
+        "ground_adapter",
+        "ground_proxy",
+        "monitor_control_service",
+        "software_management_service",
+        "mission_planning_service",
+        "transport_agnostic_flag",
+        "platform_independent_flag"
+      ],
+      "structured_value": {
+        "interface_pattern": "Ground MO Adapter / Ground MO Proxy",
+        "standard_family": "CCSDS Mission Operations services",
+        "satellite_class_focus": "small satellites / nanosatellites"
+      },
+      "confidence_level": "High for interface vocabulary and open framework architecture; actual operator implementation varies by mission.",
+      "missing_fields": [
+        "operator-specific deployment status",
+        "security/authentication implementation",
+        "supported transport bindings",
+        "integration cost",
+        "commercial service mapping"
+      ],
+      "next_action": "Add ground_adapter and ground_proxy as formal interface entity types in GS LinkOps AI."
+    },
+    {
+      "record_id": "SRC-GROUNDSEGMENT-ARCHITECTURE-001",
+      "category": "ground_segment_architecture_reference",
+      "name": "Ground segment functional elements and telemetry distribution model",
+      "source_url": "https://en.wikipedia.org/wiki/Ground_segment",
+      "useful_for": [
+        "ground segment system decomposition",
+        "mission control center functions",
+        "remote terminal roles",
+        "telemetry processing model",
+        "payload data and telemetry distribution"
+      ],
+      "database_targets": [
+        "Ground Segment Architecture Library",
+        "System Role Dictionary",
+        "Data Flow Model"
+      ],
+      "extractable_fields": [
+        "ground_station_role",
+        "mission_control_center_role",
+        "remote_terminal_role",
+        "ground_network_role",
+        "telemetry_processing_function",
+        "payload_data_distribution_path",
+        "backup_control_facility_flag"
+      ],
+      "structured_value": {
+        "core_elements": ["ground stations", "mission control centers", "remote terminals", "ground networks"],
+        "data_handled": ["commands", "telemetry", "payload data", "voice/video where applicable"]
+      },
+      "confidence_level": "Medium. Good taxonomy baseline; not a source for individual station capability or commercial availability.",
+      "missing_fields": [
+        "specific vendor systems",
+        "station RF chain",
+        "baseband details",
+        "security boundary",
+        "customer delivery SLA"
+      ],
+      "next_action": "Use as a neutral architecture taxonomy to separate GS LinkOps AI entities: station, mission control, remote terminal, ground network and delivery endpoint."
+    },
+    {
+      "record_id": "SRC-RESEARCH-XEOVERSE-LEO-SIM-001",
+      "category": "research_leo_constellation_ground_station_simulation",
+      "name": "xeoverse real-time simulation platform for large LEO satellite mega-constellations",
+      "source_url": "https://arxiv.org/abs/2406.11366",
+      "useful_for": [
+        "large LEO constellation simulation",
+        "ground station and satellite network topology modeling",
+        "inter-satellite link dynamics",
+        "routing change pre-computation",
+        "digital twin / simulation layer for dispatch testing"
+      ],
+      "database_targets": [
+        "Simulation and Digital Twin Library",
+        "Matching Intelligence Testbench",
+        "LEO Constellation Network Model"
+      ],
+      "extractable_fields": [
+        "satellite_node",
+        "ground_station_node",
+        "user_terminal_node",
+        "inter_satellite_link",
+        "topology_update_interval",
+        "routing_change_event",
+        "simulation_runtime_ratio",
+        "constellation_scale"
+      ],
+      "structured_value": {
+        "simulation_approach": "lightweight Linux virtual machines in Mininet with precomputed topology and routing changes",
+        "application_to_gs_linkops_ai": "Use for dispatch simulation before real station integration."
+      },
+      "confidence_level": "High for research concept; medium for direct production use because it is a simulation platform rather than a commercial ground station product.",
+      "missing_fields": [
+        "integration with real station APIs",
+        "validated commercial station performance",
+        "RF/baseband physical layer modeling depth",
+        "operational deployment examples"
+      ],
+      "next_action": "Create a simulation_testbench module for GS LinkOps AI to test matching logic across satellites, stations, clouds and delivery endpoints before live operations."
+    }
+  ]
+}
