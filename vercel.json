@@ -4,6 +4,14 @@
   "trailingSlash": false,
   "routes": [
     {
+      "src": "/gs-linkops-ai-v0.2-preview",
+      "dest": "/gs-linkops-ai-v0.2-preview.html"
+    },
+    {
+      "src": "/gs-linkops-ai-v0.2-preview.html",
+      "dest": "/gs-linkops-ai-v0.2-preview.html"
+    },
+    {
       "src": "/(.*)",
       "dest": "/index.html"
     }
