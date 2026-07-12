@@ -1,0 +1,77 @@
+{
+  "version": "0.1",
+  "created_at": "2026-07-13",
+  "created_for": "GS LinkOps AI continuous public-resource scan",
+  "records": [
+    {
+      "record_id": "AUTO-SCAN-312",
+      "category": "commercial_gsaas_network_and_delivery_model",
+      "name": "Leaf Space Leaf Line current network, scheduling, delivery and pricing model",
+      "source_url": "https://leaf.space/leaf-line/",
+      "source_date_checked": "2026-07-13",
+      "structured_summary": {
+        "network_claims": {
+          "active_antennas": 40,
+          "locations": 17,
+          "planned_antennas": 6,
+          "bands": ["S", "X", "Ka"],
+          "sun_synchronous_orbit_coverage_claim": "14/14",
+          "mid_inclination_orbit_coverage_claim": "26/28"
+        },
+        "scheduling_modes": ["smart automated scheduling", "on-demand manual booking", "priority scheduling for suitable ConOps"],
+        "service_types": ["TT&C commanding", "TT&C telemetry", "payload mission-data reception", "payload mission-data transmission"],
+        "delivery_modes": {
+          "ttc": ["real-time TCP/IP", "real-time UDP", "GSE", "other operator-supported streams"],
+          "payload": ["real-time stream", "file transfer", "S3 bucket", "Contabo or equivalent customer environment"]
+        },
+        "integration": ["RESTful API", "sandbox environment", "technical feasibility check", "end-to-end compatibility test"],
+        "commercial_model": ["per-minute pay-as-you-go", "volume discount", "no minimum service usage commitment", "no minimum mission-duration commitment", "RF licensing included", "signal processing included", "backhaul included", "customer-environment delivery included"]
+      },
+      "database_targets": ["provider", "network", "station", "service_catalogue", "scheduling_policy", "delivery_interface", "commercial_terms", "onboarding_workflow"],
+      "suggested_fields": ["active_antenna_count_claimed", "active_location_count_claimed", "planned_antenna_count", "orbit_coverage_claim", "booking_mode", "priority_scheduling_supported", "ttc_delivery_protocol", "payload_delivery_mode", "sandbox_available", "end_to_end_test_required", "pricing_unit", "minimum_commitment", "rf_license_included", "signal_processing_included", "backhaul_included"],
+      "commercial_risk_tags": ["operator_claimed_network_count", "per_minute_price_not_public", "site_level_capacity_not_public", "service_scope_may_vary_by_station", "third_party_delivery_endpoint_dependency"],
+      "confidence_level": "High for current public service model and operator-claimed network totals because the source is Leaf Space official material; medium for operational availability at individual antennas until confirmed by contract or capability sheet.",
+      "pending_confirmation": ["per-site antenna inventory", "exact per-antenna frequency ranges", "polarization", "G/T and EIRP", "supported modulations and coding", "maximum payload throughput per station", "SLA and availability commitment", "data-retention policy", "cybersecurity controls", "current price bands and volume tiers", "which sites support Ka-band", "whether GSE means a specific encapsulation/profile in each mission"]
+    },
+    {
+      "record_id": "AUTO-SCAN-313",
+      "category": "open_satellite_and_transmitter_metadata_api",
+      "name": "SatNOGS DB REST API for satellite and transmitter metadata",
+      "source_url": "https://docs.satnogs.org/projects/satnogs-db/en/stable/api.html",
+      "source_date_checked": "2026-07-13",
+      "structured_summary": {
+        "api_type": "REST",
+        "primary_entities": ["satellite", "transmitter"],
+        "access_model": "open access",
+        "licence": "CC BY-SA",
+        "reference_model": "interactive live schema documentation"
+      },
+      "database_targets": ["satellite", "transmitter", "frequency_plan", "modulation", "frame_format", "source_evidence", "external_identifier_mapping"],
+      "suggested_fields": ["satnogs_satellite_id", "satnogs_transmitter_id", "norad_cat_id", "transmitter_status", "downlink_frequency", "uplink_frequency", "mode", "modulation", "baud_rate", "coding", "frame_format", "source_licence", "last_observed_at", "community_validation_status"],
+      "risk_tags": ["crowdsourced_metadata", "community_editable", "operational_use_requires_validation", "licence_attribution_required", "transmitter_record_may_be_stale"],
+      "confidence_level": "High for API existence, access model and entity scope because the source is official SatNOGS documentation; variable for individual transmitter values because records are community maintained.",
+      "pending_confirmation": ["full current API schema", "field-level nullability", "update timestamps", "record provenance", "moderation workflow", "rate limits", "pagination", "stable identifiers", "deprecated transmitter handling", "licence obligations for database redistribution"]
+    },
+    {
+      "record_id": "AUTO-SCAN-314",
+      "category": "open_ground_station_scheduling_and_observation_api",
+      "name": "SatNOGS Network REST and OpenAPI interface for scheduled jobs and observation data",
+      "source_url": "https://docs.satnogs.org/projects/satnogs-network/en/stable/api.html",
+      "source_date_checked": "2026-07-13",
+      "structured_summary": {
+        "api_type": "REST",
+        "interface_description": "OpenAPI",
+        "primary_functions": ["retrieve scheduled jobs", "post observation data", "retrieve network data"],
+        "access_model": "open access",
+        "licence": "CC BY-SA",
+        "documentation_modes": ["OpenAPI document", "interactive generated API documentation"]
+      },
+      "database_targets": ["ground_station", "observation_request", "scheduled_job", "observation_result", "artifact", "telemetry_evidence", "api_adapter"],
+      "suggested_fields": ["external_station_id", "external_job_id", "observation_id", "scheduled_start", "scheduled_end", "target_satellite_id", "station_status", "observation_status", "frequency", "demodulation_mode", "artifact_type", "artifact_url", "quality_status", "api_schema_version", "source_licence"],
+      "interface_design_value": ["separate scheduling objects from observation-result objects", "use OpenAPI-described adapters", "support bidirectional workflow: job retrieval plus result posting", "retain open-source reference implementation for GS LinkOps AI adapter testing"],
+      "risk_tags": ["open_network_not_commercial_sla", "station_hardware_heterogeneous", "observation_quality_variable", "community_station_availability", "licence_attribution_required", "not_equivalent_to_professional_payload_downlink"],
+      "confidence_level": "High for API architecture and workflow because the source is official SatNOGS Network documentation; low-to-medium for any individual station's commercial-grade capability or availability.",
+      "pending_confirmation": ["current OpenAPI schema fields", "authentication requirements for posting", "rate limits", "job lifecycle states", "artifact retention", "quality scoring", "station capability schema", "error and retry behavior", "webhook support", "time synchronization requirements", "commercial reuse limitations"]
+    }
+  ]
+}
