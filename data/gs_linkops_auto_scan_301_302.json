@@ -1,0 +1,112 @@
+{
+  "version": "0.1",
+  "created_at": "2026-07-12",
+  "batch": "AUTO-SCAN-301-302",
+  "status": "candidate_research_records",
+  "records": [
+    {
+      "record_id": "AUTO-SCAN-301",
+      "category": "ground_system_interface_standard",
+      "name": "CCSDS Mission Operations Message Abstraction Layer (MAL)",
+      "source_url": "https://public.ccsds.org/Publications/BlueBooks.aspx",
+      "source_type": "official_standard_family",
+      "summary": "The CCSDS Mission Operations framework separates mission-operation services from implementation technology through a layered architecture: Mission Operations services, Common Services, Message Abstraction Layer, and transport bindings. MAL defines technology-neutral interaction patterns and permits protocol adapters so telemetry, control, event, archive, timeline, and bulk-data services can be integrated without hard-coding applications to a single middleware stack.",
+      "useful_for": [
+        "GS LinkOps AI adapter abstraction",
+        "mission control and station interface normalization",
+        "technology-neutral service contracts",
+        "future integration with CCSDS-compliant mission systems",
+        "separation of operational services from transport protocols"
+      ],
+      "database_targets": [
+        "Ground Station System Interface Database",
+        "Adapter and Protocol Registry",
+        "Mission Operations Service Catalogue",
+        "Integration Compatibility Matrix"
+      ],
+      "extractable_fields": [
+        "interface_standard_family",
+        "service_layer",
+        "interaction_pattern",
+        "transport_binding",
+        "encoding_binding",
+        "adapter_required",
+        "service_provider_role",
+        "service_consumer_role",
+        "implementation_conformance",
+        "supported_mission_operations_services"
+      ],
+      "commercial_or_risk_tags": [
+        "standards_based",
+        "vendor_neutral",
+        "adapter_implementation_required",
+        "version_compatibility_risk",
+        "conformance_testing_required"
+      ],
+      "confidence_level": "High for architecture and terminology because CCSDS is the primary standards body; implementation-level compatibility remains system-specific.",
+      "pending_confirmation_fields": [
+        "exact CCSDS MAL version supported by each operator",
+        "available transport bindings",
+        "available language bindings",
+        "authentication and security profile",
+        "operator-specific deviations",
+        "formal conformance evidence"
+      ],
+      "next_action": "Add MAL as a separate interface family beside CCSDS SLE. Model service definitions, bindings, adapters and conformance as separate linked entities rather than one free-text interface field."
+    },
+    {
+      "record_id": "AUTO-SCAN-302",
+      "category": "ground_segment_telemetry_processing_reference",
+      "name": "SCOS-2000 telemetry and SLE integration pattern",
+      "source_url": "https://www.esa.int/Enabling_Support/Operations/SCOS-2000",
+      "source_type": "institutional_ground_system_reference",
+      "summary": "ESA's SCOS-2000 ground-system model receives CCSDS transfer frames from ground stations through Space Link Extension interfaces, demultiplexes them into telemetry packets, performs parameter monitoring and limit checking, validates telecommands, and archives packets and parameters. This provides a practical reference architecture connecting station-delivered frames to mission-control telemetry processing and operational archives.",
+      "useful_for": [
+        "station-to-control-centre handover model",
+        "frame and packet processing chain",
+        "telemetry quality and limit checking",
+        "command verification workflow",
+        "packet and parameter archive design"
+      ],
+      "database_targets": [
+        "Ground Station System Interface Database",
+        "Data Delivery and Processing Pipeline",
+        "Telemetry Product Catalogue",
+        "Mission Control Integration Template"
+      ],
+      "extractable_fields": [
+        "delivery_unit_type",
+        "frame_standard",
+        "packet_standard",
+        "sle_service_type",
+        "demultiplexing_required",
+        "telemetry_parameter_definition_source",
+        "limit_checking_supported",
+        "telecommand_verification_supported",
+        "archive_packet_level",
+        "archive_parameter_level",
+        "handover_endpoint",
+        "quality_flags"
+      ],
+      "commercial_or_risk_tags": [
+        "institutional_reference",
+        "licensed_software_context",
+        "CCSDS_dependent",
+        "mission_database_dependency",
+        "integration_testing_required"
+      ],
+      "confidence_level": "High for the general ESA ground-system processing pattern; medium for direct reuse because licensing, release, configuration and operator implementation details vary.",
+      "pending_confirmation_fields": [
+        "current supported SCOS-2000 release",
+        "licensing terms for the intended deployment jurisdiction",
+        "supported SLE service variants",
+        "supported frame and packet profiles",
+        "mission database import format",
+        "real-time throughput limits",
+        "high-availability architecture",
+        "cybersecurity controls"
+      ],
+      "next_action": "Use this pattern to split GS LinkOps AI delivery into RF reception, transfer-frame handover, packet extraction, telemetry validation, archive and customer delivery stages. Do not treat raw RF reception and mission-ready telemetry as the same service product."
+    }
+  ]
+}
