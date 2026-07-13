@@ -1,0 +1,166 @@
+{
+  "batch_id": "AUTO-SCAN-333-335",
+  "generated_at": "2026-07-13T10:59:33+08:00",
+  "records": [
+    {
+      "record_id": "AUTO-SCAN-333",
+      "title": "Dynamic task and resource scheduling for space-air-ground-sea integrated networks",
+      "category": ["research", "multi-layer scheduling", "edge compute", "handover"],
+      "structured_summary": {
+        "core_concept": "Jointly schedule task offloading, satellite resources, UAV bandwidth and terrestrial compute while anticipating handovers and congestion.",
+        "gs_linkops_relevance": "Extends pass scheduling into an end-to-end task-routing model where downlink capacity, compute location, handover state and delivery deadline are co-optimized.",
+        "reported_result": "The paper reports at least 23% lower average task delay than selected benchmark methods under its simulation conditions; this is not an operational SLA."
+      },
+      "suggested_entities": ["task_offload_plan", "handover_event", "multi_layer_route", "compute_resource", "delivery_deadline"],
+      "suggested_fields": [
+        "task_source_layer",
+        "task_destination_layer",
+        "anticipated_handover_time",
+        "handover_buffer_requirement_mb",
+        "satellite_compute_available",
+        "uav_relay_available",
+        "terrestrial_edge_available",
+        "bandwidth_allocation_mbps",
+        "compute_allocation_units",
+        "task_delay_budget_ms",
+        "post_handover_congestion_risk",
+        "energy_objective_weight"
+      ],
+      "commercial_risk_tags": [
+        "research_simulation",
+        "multi_layer_dependency",
+        "handover_prediction_error",
+        "compute_capacity_not_guaranteed",
+        "result_not_sla"
+      ],
+      "confidence": {
+        "source_quality": "high",
+        "technical_claims": "medium-high",
+        "commercial_applicability": "medium"
+      },
+      "pending_confirmation": [
+        "Orbit and traffic assumptions",
+        "Supported radio bands and waveforms",
+        "Real-time control interface",
+        "Required telemetry refresh rate",
+        "Compute isolation and security model",
+        "Performance under real ground-station capacity conflicts"
+      ],
+      "sources": [
+        {
+          "type": "research_paper",
+          "title": "Dynamic Task and Resource Scheduling Towards Green Space-Air-Ground-Sea Integrated Network",
+          "date": "2026-05-02",
+          "url": "https://arxiv.org/abs/2605.01414"
+        }
+      ]
+    },
+    {
+      "record_id": "AUTO-SCAN-334",
+      "title": "Concurrent optical ground infrastructure for satellite-serviced quantum networks",
+      "category": ["research", "optical ground station", "quantum network", "concurrent scheduling"],
+      "structured_summary": {
+        "core_concept": "Quantum satellite services require simultaneous multi-hop path availability because entanglement cannot be copied and practical buffering is limited.",
+        "gs_linkops_relevance": "Introduces a scheduling class where a contact is valid only when multiple optical ground stations and satellite links are concurrently available, rather than independently bookable passes.",
+        "architecture_findings": "The study identifies ground-station lattice geometry, multi-inclination constellations, multi-party satellite service policies and satellite altitude as major architecture variables."
+      },
+      "suggested_entities": ["concurrent_contact_group", "quantum_ground_station", "entanglement_path", "traffic_matrix", "fidelity_constraint"],
+      "suggested_fields": [
+        "simultaneous_station_count",
+        "concurrent_visibility_required",
+        "path_start_time",
+        "path_end_time",
+        "entanglement_fidelity_threshold",
+        "active_link_strength",
+        "time_to_connectivity",
+        "ground_lattice_type",
+        "constellation_inclination_set",
+        "satellite_altitude_km",
+        "background_noise_model",
+        "optical_weather_availability"
+      ],
+      "commercial_risk_tags": [
+        "research_architecture",
+        "commercial_service_unconfirmed",
+        "simultaneous_resource_lock_required",
+        "weather_sensitive",
+        "quantum_terminal_compatibility_required"
+      ],
+      "confidence": {
+        "source_quality": "high",
+        "architecture_claims": "medium-high",
+        "near_term_commercial_availability": "low"
+      },
+      "pending_confirmation": [
+        "Optical wavelength and terminal standard",
+        "Pointing acquisition and tracking performance",
+        "Quantum memory assumptions",
+        "Weather and daylight constraints",
+        "Commercial operators and booking interfaces",
+        "Security and certification requirements"
+      ],
+      "sources": [
+        {
+          "type": "research_paper",
+          "title": "Designing a Satellite Serviced Quantum Network Backbone for Concurrent Global Connectivity",
+          "date": "2026-05-04",
+          "url": "https://arxiv.org/abs/2605.02164"
+        }
+      ]
+    },
+    {
+      "record_id": "AUTO-SCAN-335",
+      "title": "Authenticated encryption for emergency space telemetry",
+      "category": ["research", "telemetry security", "command protection", "emergency communications"],
+      "structured_summary": {
+        "core_concept": "Apply lightweight authenticated encryption with fixed-length messages to protect confidentiality, integrity and authenticity while preserving compatibility with constrained telemetry transports.",
+        "gs_linkops_relevance": "Adds security evidence and message-protection capabilities to the ground-station interface model, especially for emergency telemetry and command-stack protection workflows.",
+        "standards_context": "The study frames its design against command stack protection requirements in NASA-STD-1006A."
+      },
+      "suggested_entities": ["security_profile", "telemetry_channel_profile", "cryptographic_key", "command_authorization_event", "security_evidence"],
+      "suggested_fields": [
+        "authenticated_encryption_supported",
+        "confidentiality_enabled",
+        "integrity_protection_enabled",
+        "message_authentication_enabled",
+        "fixed_length_ciphertext",
+        "algorithm_identifier",
+        "key_management_method",
+        "key_rotation_interval",
+        "replay_protection_method",
+        "emergency_mode_profile",
+        "transport_compatibility",
+        "command_stack_protection_standard"
+      ],
+      "commercial_risk_tags": [
+        "research_proposal",
+        "cryptographic_export_control_pending",
+        "key_management_dependency",
+        "interoperability_test_required",
+        "security_claim_requires_validation"
+      ],
+      "confidence": {
+        "source_quality": "high",
+        "security_design": "medium-high",
+        "commercial_implementation_status": "unknown"
+      },
+      "pending_confirmation": [
+        "Exact algorithm and key sizes",
+        "Formal security analysis",
+        "Implementation latency and throughput",
+        "Compatibility with CCSDS security standards",
+        "Ground and spacecraft key provisioning",
+        "Certification and export-control status",
+        "Operational incident recovery process"
+      ],
+      "sources": [
+        {
+          "type": "research_paper",
+          "title": "Authenticated encryption for space telemetry",
+          "date": "2026-01-29",
+          "url": "https://arxiv.org/abs/2601.21657"
+        }
+      ]
+    }
+  ]
+}
