@@ -1,0 +1,194 @@
+{
+  "dataset": "GS LinkOps AI auto-scan candidate records",
+  "batch": "AUTO-SCAN-330-332",
+  "generated_at": "2026-07-13T10:02:40+08:00",
+  "status": "candidate_research_records",
+  "records": [
+    {
+      "id": "AUTO-SCAN-330",
+      "title": "Edge-side residual timing and frequency control for software-defined 5G NTN ground stations",
+      "category": ["ground_station_system", "software_defined_ground_station", "5g_ntn", "baseband_control", "edge_processing"],
+      "summary": "A 2026 hardware-in-the-loop study places residual timing-advance and carrier-frequency-offset control at the ground-station edge after coarse UE-side geometric pre-compensation. The design is relevant to rapidly varying LEO 5G NTN uplinks because the ground segment must continuously correct residual Doppler and propagation timing rather than relying only on static link configuration.",
+      "extracted_capabilities": {
+        "architecture": "UE coarse pre-compensation plus edge-side residual TA/CFO closed loop",
+        "ground_station_type": "software-defined ground station",
+        "network_context": "5G NR non-terrestrial network uplink",
+        "control_observables": ["round-trip time", "timing advance residual", "carrier frequency offset residual", "goodput"],
+        "reported_test_context": "March 2026 hardware-in-the-loop campaign across four ground-station locations",
+        "reported_results": {
+          "residual_ta_p95_us": 0.49,
+          "residual_cfo_p95_hz": "76-77",
+          "note": "Results are study-specific and must not be treated as a commercial SLA or general performance guarantee."
+        }
+      },
+      "suggested_schema_fields": [
+        "timing_compensation_architecture",
+        "coarse_precompensation_source",
+        "residual_ta_controller_location",
+        "residual_cfo_controller_location",
+        "ta_update_interval_ms",
+        "cfo_update_interval_ms",
+        "residual_ta_p95_us",
+        "residual_cfo_p95_hz",
+        "edge_compute_dependency",
+        "hil_validation_status",
+        "ntn_waveform_profile",
+        "mobility_model"
+      ],
+      "commercial_risk_tags": [
+        "research_prototype",
+        "commercial_product_unconfirmed",
+        "waveform_and_vendor_dependency",
+        "edge_compute_latency_sensitive",
+        "study_result_not_sla"
+      ],
+      "confidence": "medium-high",
+      "confidence_basis": "Recent primary research with hardware-in-the-loop evidence; external commercial implementation and repeatability remain unverified.",
+      "pending_confirmation": [
+        "Exact 3GPP release and NTN profile",
+        "Supported waveform, numerology and bandwidth",
+        "Required ephemeris and timing inputs",
+        "Controller update rate and stability limits",
+        "Compatibility with commercial SDRs, modems and digitizers",
+        "Clock source, PTP/GNSS requirements and holdover behavior",
+        "Performance under rain fade, interference and packet loss",
+        "Operational cybersecurity and remote-control interface"
+      ],
+      "sources": [
+        {
+          "title": "Edge-Side Residual Timing and Frequency Control for Software-Defined Ground Stations in 5G NTN Uplinks",
+          "publisher": "arXiv",
+          "published_date": "2026-04-15",
+          "url": "https://arxiv.org/abs/2604.13984",
+          "source_type": "primary_research"
+        }
+      ]
+    },
+    {
+      "id": "AUTO-SCAN-331",
+      "title": "Cloud-based on-demand satellite operation with multi-ground-station automation",
+      "category": ["mission_operations", "ground_station_management", "cloud_ground_segment", "automation", "multi_satellite_operations"],
+      "summary": "A 2026 operational report from Tohoku University describes cloud-based management of satellites and ground stations, including automatic command generation. By 2022, the reported system was managing up to eight satellites daily through three ground stations in Sendai, Hakodate and Sweden. The record is useful for modeling mission-control automation separately from RF station capability.",
+      "extracted_capabilities": {
+        "operation_model": "cloud-based on-demand satellite and ground-station operations",
+        "automation": ["automatic command generation", "multi-satellite daily operations", "multi-ground-station management"],
+        "reported_satellite_scale": "up to 8 operational satellites simultaneously managed on a daily basis",
+        "reported_ground_station_count": 3,
+        "reported_sites": ["Sendai", "Hakodate", "Sweden"],
+        "mission_context": ["Earth observation", "50 cm-class satellites", "CubeSat-class satellites up to 3U"]
+      },
+      "suggested_schema_fields": [
+        "mission_operations_platform",
+        "cloud_deployment_model",
+        "automatic_command_generation_supported",
+        "command_approval_workflow",
+        "satellite_fleet_capacity",
+        "ground_station_fleet_capacity",
+        "operator_in_the_loop_required",
+        "schedule_to_command_pipeline",
+        "telemetry_ingestion_method",
+        "mission_database_format",
+        "multi_tenant_isolation",
+        "operations_audit_log",
+        "ground_station_adapter_type"
+      ],
+      "commercial_risk_tags": [
+        "academic_operational_system",
+        "commercial_availability_unconfirmed",
+        "command_authorization_safety_critical",
+        "cloud_dependency",
+        "multi_tenant_security_pending"
+      ],
+      "confidence": "medium-high",
+      "confidence_basis": "Primary operational report describes real mission use, but detailed interfaces, software architecture and commercial availability are not fully public.",
+      "pending_confirmation": [
+        "Ground-station antenna, band and baseband configurations",
+        "Command authentication and human approval controls",
+        "API, message bus and scheduler interface specifications",
+        "Telemetry and payload delivery formats",
+        "Failure handling, rollback and safe-mode procedures",
+        "Cloud provider and data residency",
+        "SLA, concurrency and throughput limits",
+        "Whether the Sweden station is owned, leased or accessed through a partner"
+      ],
+      "sources": [
+        {
+          "title": "Report on Earth Observation Missions and Ground Station Management using On-Demand Satellite Operation System",
+          "publisher": "arXiv",
+          "published_date": "2026-01-19",
+          "url": "https://arxiv.org/abs/2601.12857",
+          "source_type": "primary_research_operational_report"
+        }
+      ]
+    },
+    {
+      "id": "AUTO-SCAN-332",
+      "title": "NGSO gateway planning using rain, visibility, elevation and traffic-demand constraints",
+      "category": ["ground_station_planning", "gateway_site_selection", "ngso", "weather_risk", "capacity_planning"],
+      "summary": "A gateway-planning study for non-geostationary constellations combines rain attenuation, minimum elevation, satellite visibility, geographic constraints and user-traffic demand into a map-grid site-selection method. It provides a useful planning layer between orbital coverage analysis and construction or GSaaS procurement decisions.",
+      "extracted_capabilities": {
+        "planning_target": "NGSO gateway station placement and network dimensioning",
+        "input_constraints": [
+          "rain attenuation",
+          "minimum elevation angle",
+          "satellite visibility",
+          "geographic and siting constraints",
+          "user traffic demand"
+        ],
+        "output_objects": ["candidate suitability grid", "selected gateway locations", "required ground access point count"],
+        "applicability": ["new gateway development", "candidate-site ranking", "GSaaS coverage-gap analysis", "network expansion planning"]
+      },
+      "suggested_schema_fields": [
+        "site_suitability_score",
+        "rain_attenuation_statistic",
+        "minimum_elevation_deg",
+        "visibility_fraction",
+        "traffic_demand_density",
+        "gateway_capacity_requirement_gbps",
+        "geographic_exclusion_reason",
+        "fiber_backhaul_availability",
+        "power_availability",
+        "regulatory_feasibility",
+        "candidate_grid_resolution_km",
+        "planning_scenario_id",
+        "weather_dataset_version",
+        "orbit_dataset_version"
+      ],
+      "commercial_risk_tags": [
+        "planning_model_not_capacity_commitment",
+        "weather_dataset_dependency",
+        "traffic_forecast_uncertainty",
+        "regulatory_constraints_may_override_score",
+        "construction_cost_not_fully_modeled"
+      ],
+      "confidence": "high-for-methodology_medium-for-site-decision",
+      "confidence_basis": "Primary systems research with explicit planning criteria; actual deployment decisions require current local regulatory, RF, land, power and backhaul validation.",
+      "pending_confirmation": [
+        "Current rain-climate dataset and percentile used",
+        "Frequency-dependent fade model",
+        "Terrain masking and local clutter",
+        "Spectrum licensing and coordination feasibility",
+        "Land ownership and construction permissions",
+        "Fiber route, latency and redundancy",
+        "Power quality and backup generation",
+        "Per-gateway antenna count and throughput",
+        "Customer traffic forecast and peak-to-average ratio",
+        "CAPEX, OPEX and geopolitical risk"
+      ],
+      "sources": [
+        {
+          "title": "Gateway Station Geographical Planning for Emerging Non-Geostationary Satellites Constellations",
+          "publisher": "arXiv",
+          "published_date": "2023-09-19",
+          "url": "https://arxiv.org/abs/2309.10581",
+          "source_type": "primary_research"
+        }
+      ]
+    }
+  ],
+  "processing_notes": [
+    "These records are candidate research inputs and are not operational capacity commitments.",
+    "Study-specific performance figures must be retained with source, scenario and validation context.",
+    "Before production import, deduplicate schema fields against prior AUTO-SCAN records and normalize sources into the common evidence table."
+  ]
+}
