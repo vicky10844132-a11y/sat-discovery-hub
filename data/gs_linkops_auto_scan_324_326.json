@@ -1,0 +1,211 @@
+{
+  "version": "0.1",
+  "created_for": "GS LinkOps AI resource database building",
+  "created_at": "2026-07-13",
+  "batch": "AUTO-SCAN-324-326",
+  "records": [
+    {
+      "record_id": "AUTO-SCAN-324",
+      "category": "ground_system_digital_if_standard",
+      "name": "DIFI Digital IF Interoperability Standard v1.3.0",
+      "source_url": "https://dificonsortium.org/standards/",
+      "source_date": "2025-07",
+      "structured_summary": {
+        "standard_name": "IEEE-ISTO Std 4900-2021 Digital IF Interoperability Standard",
+        "current_public_version": "1.3.0",
+        "publication_date": "2025-07",
+        "interface_role": "Digitized IF data and associated metadata transport over standard IP networks",
+        "related_standard": "VITA 49.2",
+        "version_change_notes": [
+          "Improved synchronization",
+          "Improved flow control",
+          "Resolved flow-control issues identified in v1.2.0"
+        ],
+        "architecture_value": "Separates antenna/RF digitization from modem and signal-processing functions, enabling interoperable and virtualized ground segments."
+      },
+      "database_targets": [
+        "Ground Station System Interface Database",
+        "Digital IF Compatibility Matrix",
+        "Baseband Adapter Registry",
+        "Interface Standards Library"
+      ],
+      "extractable_fields": [
+        "digital_if_standard",
+        "standard_version",
+        "vita_49_2_compatibility",
+        "data_plane_protocol",
+        "metadata_transport_supported",
+        "synchronization_profile",
+        "flow_control_profile",
+        "ip_network_transport",
+        "implementation_conformance_status",
+        "adapter_required"
+      ],
+      "commercial_risk_tags": [
+        "standard_version_mismatch",
+        "vendor_claim_requires_conformance_evidence",
+        "full_specification_access_requires_request",
+        "legacy_analog_if_integration_required",
+        "digital_if_vendor_lock_in_reduction"
+      ],
+      "confidence_level": "High for the standard identity, public version, IP data-plane purpose and VITA 49.2 relationship because the source is the official DIFI Consortium standards page.",
+      "pending_confirmation_fields": [
+        "Full packet and metadata profile",
+        "Required versus optional packet classes",
+        "Timestamp source and precision requirements",
+        "Supported sample formats and bit widths",
+        "Network QoS and packet-loss handling",
+        "Security and encryption profile",
+        "Per-vendor supported DIFI version",
+        "Interoperability test evidence"
+      ],
+      "next_action": "Add DIFI version and conformance fields to antenna, digitizer, modem and baseband records; do not treat a generic DIFI claim as verified compatibility without version-specific evidence."
+    },
+    {
+      "record_id": "AUTO-SCAN-325",
+      "category": "ground_system_interface_certification",
+      "name": "DIFI Product Certification and Lifecycle Evidence Model",
+      "source_url": "https://dificonsortium.org/difi-certification-why-certify/",
+      "source_date": "2026-06-04",
+      "structured_summary": {
+        "certification_scope": [
+          "Packet-format interpretation",
+          "Device behavior for defined use cases",
+          "Specification compliance",
+          "Interoperability testing"
+        ],
+        "public_certification_version": "DIFI Standard v1.1",
+        "process": [
+          "Vendor obtains certification plan",
+          "Vendor completes required tests",
+          "Results submitted to Certification Working Group",
+          "Certification approval",
+          "Product listed publicly"
+        ],
+        "termination_conditions": [
+          "Product modification affecting DIFI functionality without recertification",
+          "Uncorrected failure to perform as advertised",
+          "Vendor no longer being a consortium member"
+        ],
+        "public_product_examples": [
+          "7880RFIP ADC/DAC products",
+          "Sentry ODU ADC/DAC",
+          "Keysight PathWave Vector Signal Analysis 89600 VSA",
+          "Kratos OpenEdge Digitizer 2500",
+          "DIFI Spectrum Analyzer",
+          "wave: IQ Edge Device",
+          "DIFI satTRAC Multi-App Modem"
+        ]
+      },
+      "database_targets": [
+        "Equipment Certification Registry",
+        "Vendor Capability Evidence Library",
+        "Interface Compatibility Matrix",
+        "Certification Lifecycle Event Table"
+      ],
+      "extractable_fields": [
+        "product_name",
+        "product_version",
+        "vendor_name",
+        "certification_standard_version",
+        "certification_status",
+        "certification_approval_date",
+        "public_listing_status",
+        "recertification_required",
+        "certification_termination_reason",
+        "validation_tool_used",
+        "interoperability_test_status"
+      ],
+      "commercial_risk_tags": [
+        "certification_version_lags_current_standard",
+        "certification_not_equal_end_to_end_compatibility",
+        "product_modification_requires_recertification",
+        "membership_dependent_certification",
+        "public_listing_required_for_trademark_claim"
+      ],
+      "confidence_level": "High for the official certification process, current public certification version and listed products. Product deployment suitability remains mission-specific.",
+      "pending_confirmation_fields": [
+        "Certificate identifier",
+        "Certification issue and expiry dates",
+        "Exact tested use-case profile",
+        "Test report availability",
+        "Compatibility with DIFI v1.3.0",
+        "Firmware or software version constraints",
+        "Supported bandwidth and sample rates",
+        "Field-deployed interoperability evidence"
+      ],
+      "next_action": "Create a separate certification evidence object linked to each equipment version; never store certification only as a permanent boolean field."
+    },
+    {
+      "record_id": "AUTO-SCAN-326",
+      "category": "virtualized_ground_segment_architecture",
+      "name": "RF-over-IP and Extended L-Band Ground Segment Transformation",
+      "source_url": "https://dificonsortium.org/impact-of-digitization-in-the-satellite-ground-segment/",
+      "source_date": "2026-04-10",
+      "structured_summary": {
+        "legacy_architecture": [
+          "Satellite-link frequencies may range from about 2.2 GHz to above 40 GHz",
+          "BUCs and BDCs translate signals to an extended L-band IF range",
+          "Public reference identifies an extended L-band range of approximately 850-2450 MHz",
+          "Analog amplifiers, switches, matrices and splitters route IF signals to modem racks",
+          "Copper-cable degradation forces processing equipment to remain near antennas",
+          "Individual modems have finite stream and transponder bandwidth capacity"
+        ],
+        "target_architecture": [
+          "Digitized RF/IF over IP",
+          "Remote signal routing",
+          "Software or virtualized modem processing",
+          "Shared compute and processing pools",
+          "Multi-vendor equipment interoperability"
+        ],
+        "database_implication": "Ground-station capability must model the complete signal path rather than only antenna band support."
+      },
+      "database_targets": [
+        "Ground Station RF Chain Database",
+        "Baseband and Modem Inventory",
+        "Signal Routing Topology",
+        "Virtual Processing Resource Pool",
+        "Modernization Readiness Score"
+      ],
+      "extractable_fields": [
+        "space_link_frequency_range",
+        "if_frequency_range",
+        "buc_model",
+        "bdc_model",
+        "analog_or_digital_if",
+        "rf_over_ip_supported",
+        "analog_matrix_present",
+        "digitizer_location",
+        "modem_location",
+        "maximum_stream_count",
+        "per_modem_bandwidth",
+        "remote_processing_supported",
+        "virtual_modem_supported",
+        "processing_pool_location",
+        "modernization_stage"
+      ],
+      "commercial_risk_tags": [
+        "legacy_analog_chain_dependency",
+        "copper_distance_and_signal_degradation",
+        "modem_capacity_bottleneck",
+        "equipment_colocation_constraint",
+        "migration_and_adapter_cost",
+        "cybersecurity_scope_expands_with_rf_over_ip"
+      ],
+      "confidence_level": "Medium-high. The architecture description is technically detailed and hosted by the DIFI Consortium, but the article is an industry whitepaper rather than an operator-specific verified station configuration.",
+      "pending_confirmation_fields": [
+        "Per-site actual IF range",
+        "Digitizer sample rate and effective bandwidth",
+        "Network latency and jitter limits",
+        "Packet-loss tolerance",
+        "Precision timing source",
+        "Redundancy architecture",
+        "Cybersecurity controls",
+        "Supported modem workloads",
+        "Maximum concurrent contacts",
+        "Migration status by station"
+      ],
+      "next_action": "Add RF-chain topology and modernization-stage records so matching can distinguish analog IF stations, hybrid stations and fully digitized RF-over-IP sites."
+    }
+  ]
+}
