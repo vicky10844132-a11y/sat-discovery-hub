@@ -1,0 +1,223 @@
+{
+  "batch_id": "AUTO-SCAN-342-344",
+  "generated_date": "2026-07-13",
+  "records": [
+    {
+      "record_id": "AUTO-SCAN-342",
+      "title": "SSC Space Go external ICD, API lifecycle and five-site service architecture",
+      "category": ["GSaaS", "system_interface", "ground_station_network", "delivery"],
+      "summary": "SSC Space Go publishes an external Ground-to-Ground Interface Control Document, version 2.9 dated June 2026, based on an OpenAPI specification. The document defines autonomous scheduling, TLE management, real-time TT&C access, S3 payload delivery, post-contact reports, metrics, error handling and a scheduler sandbox. It identifies five initial sites: Kiruna/Esrange, Alaska, Inuvik, Punta Arenas and Western Australia. The interface version history explicitly records breaking API changes and additions such as availability checks, booking horizons, service tiers, raw data distribution format and data-transfer progress reports.",
+      "confirmed_capabilities": {
+        "antenna_class": "4-meter-class",
+        "sites": ["Esrange/Kiruna", "Alaska", "Inuvik", "Punta Arenas", "Western Australia"],
+        "uplink_bands": ["S"],
+        "downlink_bands": ["S", "X", "Ka"],
+        "simultaneous_reception": "S and X with both polarizations according to ICD",
+        "uplink_polarization": "S-band switchable RHCP/LHCP",
+        "scheduling": "autonomous, API-based",
+        "ttc_access": "real-time over defined protocols",
+        "payload_delivery": "S3-compatible customer endpoint",
+        "architecture": ["digitized RF/IF", "software-defined radios", "software modems", "cloud-native orchestration"],
+        "dual_polarization": "simultaneous dual-polarization downlink for compatible X/Ka spacecraft",
+        "commercial_queue_model": "initial first-come, first-served scheduled access"
+      },
+      "recommended_fields": [
+        "interface_document_version",
+        "openapi_schema_version",
+        "api_breaking_change_date",
+        "api_base_path",
+        "scheduler_sandbox_available",
+        "availability_check_supported",
+        "booking_horizon_by_service_tier",
+        "contact_state_machine_version",
+        "tle_management_interface",
+        "ttc_gateway_protocol",
+        "payload_distribution_format",
+        "raw_format_supported",
+        "data_transfer_progress_report",
+        "post_contact_report_endpoint",
+        "metrics_schema",
+        "problem_response_format",
+        "simultaneous_band_reception",
+        "dual_polarization_supported",
+        "station_code"
+      ],
+      "commercial_risk_tags": [
+        "api_version_dependency",
+        "breaking_change_management_required",
+        "first_come_first_served_capacity",
+        "service_tier_booking_constraints",
+        "customer_endpoint_compatibility_required",
+        "network_specification_not_individual_antenna_test_evidence"
+      ],
+      "confidence": {
+        "rating": "high",
+        "basis": "Official SSC external ICD and official SSC product publication"
+      },
+      "fields_to_confirm": [
+        "exact frequency ranges per site",
+        "per-site G/T and EIRP",
+        "modulation and coding profiles",
+        "TT&C gateway protocol details and authentication",
+        "S3 endpoint security and encryption profile",
+        "service-tier booking horizons and cancellation rules",
+        "Ka-band availability by site",
+        "per-site maintenance windows and SLA",
+        "current pricing and minimum commitments"
+      ],
+      "sources": [
+        {
+          "publisher": "SSC Space Go",
+          "title": "Ground-to-Ground Interface Control Document v2.9",
+          "date": "2026-06",
+          "url": "https://go.sscspace.com/docs/icd_external/",
+          "source_type": "official_interface_document"
+        },
+        {
+          "publisher": "SSC Space",
+          "title": "Fast, scalable ground access for small satellite operations",
+          "date": "2026-04-13",
+          "url": "https://sscspace.com/news/fast-scalable-ground-access-for-small-satellite-operations/",
+          "source_type": "official_operator_publication"
+        }
+      ]
+    },
+    {
+      "record_id": "AUTO-SCAN-343",
+      "title": "AWS Ground Station Seoul retirement, antenna inventory APIs and location lifecycle",
+      "category": ["GSaaS", "provider_lifecycle", "station_inventory", "API"],
+      "summary": "AWS documentation states that antenna resources in Seoul ceased to be supported on June 16, 2026. The current public location table lists eleven shared locations and maps each physical station to its AWS delivery region. AWS also exposes ListGroundStations, ListAntennas and ListGroundStationReservations APIs, but antenna inventory access is permission-gated: a customer must have the satellite onboarded to the site or have azimuth/elevation ephemeris permissions. Digital Twin stations mirror production station configurations, while Dedicated Antenna locations and capabilities are not publicly disclosed.",
+      "confirmed_capabilities": {
+        "retired_location": "Seoul",
+        "retirement_effective_date": "2026-06-16",
+        "current_public_locations": ["Alaska", "Bahrain", "Cape Town", "Dubbo", "Hawaii", "Ireland", "Ohio", "Oregon", "Punta Arenas", "Singapore", "Stockholm"],
+        "inventory_interfaces": ["ListGroundStations", "ListAntennas", "ListGroundStationReservations"],
+        "digital_twin": "available in AWS regions where AWS Ground Station is available",
+        "dedicated_antenna_disclosure": "locations and capabilities not publicly disclosed",
+        "data_region_mapping": "physical station may be outside the AWS region receiving the data"
+      },
+      "recommended_fields": [
+        "station_service_status",
+        "service_status_effective_date",
+        "provider_location_retirement_event",
+        "physical_station_country",
+        "connected_cloud_region",
+        "cloud_region_code",
+        "station_outside_cloud_region",
+        "inventory_api_available",
+        "inventory_api_permission_condition",
+        "antenna_name_exposed",
+        "reservation_visibility",
+        "digital_twin_available",
+        "dedicated_asset_public_disclosure",
+        "satellite_site_approval_status"
+      ],
+      "commercial_risk_tags": [
+        "provider_location_retirement",
+        "site_approval_required",
+        "inventory_visibility_permission_gated",
+        "physical_location_cloud_region_mismatch",
+        "dedicated_capacity_nonpublic",
+        "migration_and_reonboarding_risk"
+      ],
+      "confidence": {
+        "rating": "high",
+        "basis": "Current official AWS Ground Station documentation"
+      },
+      "fields_to_confirm": [
+        "customer migration path from Seoul",
+        "whether historical Seoul mission profiles remain visible",
+        "replacement coverage recommendations",
+        "per-location antenna count and current reservations",
+        "per-location antenna capability type",
+        "service credits or contract treatment for location retirement",
+        "digital twin limits versus production hardware"
+      ],
+      "sources": [
+        {
+          "publisher": "Amazon Web Services",
+          "title": "AWS Ground Station Locations",
+          "date": "2026-06-16 or later",
+          "url": "https://docs.aws.amazon.com/ground-station/latest/ug/aws-ground-station-antenna-locations.html",
+          "source_type": "official_documentation"
+        }
+      ]
+    },
+    {
+      "record_id": "AUTO-SCAN-344",
+      "title": "AWS encrypted striped delivery and Kratos virtual front-end processing interfaces",
+      "category": ["data_delivery", "baseband", "virtual_ground", "cybersecurity", "system_interface"],
+      "summary": "AWS Ground Station Agent delivery stripes satellite data near the antenna, encrypts it using a customer-provided AWS KMS key, transports the stripes across the AWS backbone, decrypts them at the customer EC2 receiver, applies forward error correction to recover dropped data and forwards the reconstructed stream to a configured IP/port. AWS documents that each dataflow terminates at a single EC2 receiver and is not inherently multi-AZ redundant. Separately, Kratos quantumFEP provides a software front-end processor between C2 and RF signal processing, including command/telemetry processing, recording, AES COMSEC, CCSDS processing, packet-level FEC and network gateway interfaces, with HTML5, API, REST or GEMS monitoring/control and deployment on bare metal, private cloud or public cloud.",
+      "confirmed_capabilities": {
+        "aws_delivery_flow": ["proximate agent", "data striping", "KMS encryption", "AWS backbone", "EC2 receiver", "decryption", "FEC recovery", "IP/port forwarding"],
+        "aws_transport": "UDP ingress to EC2 receiver",
+        "aws_redundancy_note": "single receiver per dataflow; not multi-AZ redundant by default",
+        "kratos_processing_functions": ["command processing", "telemetry processing", "recording", "AES COMSEC", "CCSDS processing", "packet-level FEC", "network gateway"],
+        "kratos_control_interfaces": ["HTML5 UI", "API", "REST", "GEMS"],
+        "kratos_deployment_models": ["bare metal", "private cloud", "cloud provider"]
+      },
+      "recommended_fields": [
+        "delivery_striping_supported",
+        "transport_encryption_method",
+        "customer_managed_key_supported",
+        "kms_key_arn",
+        "receiver_endpoint_type",
+        "receiver_redundancy_model",
+        "multi_az_redundancy",
+        "packet_loss_recovery_method",
+        "fec_location",
+        "udp_port_range",
+        "managed_prefix_list_available",
+        "virtual_fep_supported",
+        "command_processing_supported",
+        "telemetry_processing_supported",
+        "comsec_supported",
+        "key_manager_embedded",
+        "ccsds_processing_supported",
+        "network_gateway_interface",
+        "monitor_control_protocol",
+        "deployment_environment"
+      ],
+      "commercial_risk_tags": [
+        "single_receiver_failure_domain",
+        "customer_kms_dependency",
+        "udp_network_configuration_required",
+        "cloud_region_and_vpc_dependency",
+        "vendor_claim_requires_interoperability_test",
+        "ccsds_profile_and_version_unconfirmed",
+        "comsec_export_control_review_pending"
+      ],
+      "confidence": {
+        "rating": "high",
+        "basis": "Official AWS technical documentation and official Kratos product documentation"
+      },
+      "fields_to_confirm": [
+        "stripe count and packet format",
+        "FEC algorithm and recovery limits",
+        "maximum supported throughput",
+        "latency and jitter envelope",
+        "recommended receiver failover design",
+        "Kratos supported CCSDS service/profile versions",
+        "GEMS interface specification",
+        "AES key-management and certification details",
+        "compatibility evidence with specific modem vendors"
+      ],
+      "sources": [
+        {
+          "publisher": "Amazon Web Services",
+          "title": "Set up and configure Amazon VPC for AWS Ground Station",
+          "date": "2026",
+          "url": "https://docs.aws.amazon.com/ground-station/latest/ug/dataflows.vpc-configuration.html",
+          "source_type": "official_technical_documentation"
+        },
+        {
+          "publisher": "Kratos Space",
+          "title": "OpenSpace quantumFEP Virtualized Front End Processor",
+          "date": "accessed 2026-07-13",
+          "url": "https://www.kratosspace.com/products/satellites/ttc-devices-and-software/quantumfep",
+          "source_type": "official_product_documentation"
+        }
+      ]
+    }
+  ]
+}
