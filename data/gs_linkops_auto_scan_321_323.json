@@ -1,0 +1,151 @@
+{
+  "version": "0.1",
+  "created_for": "GS LinkOps AI resource database building",
+  "created_at": "2026-07-13",
+  "batch_range": "AUTO-SCAN-321 to AUTO-SCAN-323",
+  "records": [
+    {
+      "record_id": "AUTO-SCAN-321",
+      "category": "gsaas_provider_lifecycle_risk",
+      "name": "Azure Orbital Ground Station retirement and infrastructure disposition signal",
+      "structured_summary": "Current public reporting indicates that Microsoft retired the Azure Orbital ground-station service after an earlier commercial rollout and subsequently disposed of associated antenna assets. For GS LinkOps AI, this is a high-value provider-lifecycle case: a technically integrated cloud ground-station service can exit the market, creating migration, contract, endpoint, data-residency and mission-continuity risks even when the underlying cloud platform remains available.",
+      "database_targets": [
+        "GSaaS Provider Registry",
+        "Provider Lifecycle Event Table",
+        "Mission Continuity Risk Library",
+        "Adapter Deprecation Registry"
+      ],
+      "extractable_fields": [
+        "provider_service_name",
+        "service_status",
+        "retirement_date",
+        "asset_disposition_status",
+        "successor_or_acquirer",
+        "customer_migration_path",
+        "api_deprecation_status",
+        "endpoint_shutdown_date",
+        "contract_transition_status",
+        "data_retention_after_exit",
+        "mission_continuity_risk_score"
+      ],
+      "commercial_risk_labels": [
+        "provider_exit_risk",
+        "cloud_vendor_strategy_change",
+        "api_and_endpoint_deprecation",
+        "customer_migration_required",
+        "asset_transfer_pending_confirmation"
+      ],
+      "source_url": "https://en.wikipedia.org/wiki/Microsoft_Azure",
+      "source_type": "current secondary summary referencing industry reporting",
+      "confidence_level": "Medium. The service-retirement signal is valuable, but effective dates, asset buyer, customer migration arrangements and official Microsoft notices require primary-source confirmation.",
+      "pending_confirmation_fields": [
+        "official Microsoft retirement notice",
+        "effective service shutdown date",
+        "affected Azure regions and ground sites",
+        "identity of antenna-asset buyer",
+        "customer transition and data-retention terms",
+        "status of historical APIs and SDKs",
+        "whether partner-operated capacity remained available"
+      ],
+      "next_action": "Create provider lifecycle events as append-only records rather than overwriting historical provider capabilities. Locate official Microsoft lifecycle documentation and asset-transfer records before using this event operationally."
+    },
+    {
+      "record_id": "AUTO-SCAN-322",
+      "category": "commercial_ground_network_asset_provenance",
+      "name": "SSC CONNECT owned-station and partner-station network model",
+      "structured_summary": "Public network descriptions of SSC Space show a mixed infrastructure model combining company-owned ground stations with contracted or partner stations across multiple countries. This is important for GS LinkOps AI because a provider-level network entry does not prove uniform ownership, engineering configuration, security controls, licensing responsibility, SLA or booking authority at every listed site.",
+      "database_targets": [
+        "Commercial GS Operator Library",
+        "Ground Station Asset Registry",
+        "Partner Station Relationship Table",
+        "Service Responsibility Matrix"
+      ],
+      "extractable_fields": [
+        "network_operator",
+        "station_name",
+        "country",
+        "asset_ownership_type",
+        "station_operator",
+        "commercial_reseller",
+        "contracted_partner_status",
+        "booking_authority",
+        "frequency_licence_holder",
+        "maintenance_responsibility",
+        "network_operations_center",
+        "service_level_owner",
+        "data_security_responsibility"
+      ],
+      "commercial_risk_labels": [
+        "mixed_owned_and_partner_network",
+        "site_capability_not_uniform",
+        "subcontractor_dependency",
+        "licensing_responsibility_pending",
+        "per_site_sla_requires_confirmation"
+      ],
+      "source_url": "https://en.wikipedia.org/wiki/SSC_Space",
+      "source_type": "secondary operator/network summary",
+      "confidence_level": "Medium. The mixed owned/partner network model is credible, but per-site ownership, current availability and technical capability must be validated against SSC capability sheets or contracts.",
+      "pending_confirmation_fields": [
+        "current official station list",
+        "owned versus partner classification per site",
+        "per-antenna frequency bands",
+        "antenna diameter and tracking limits",
+        "baseband and modem inventory",
+        "API and scheduling interface",
+        "per-site data delivery options",
+        "SLA and maintenance responsibility",
+        "frequency licensing and export-control restrictions"
+      ],
+      "next_action": "Add a required asset_provenance layer between provider and station records. Do not inherit provider-wide capability claims automatically to partner sites."
+    },
+    {
+      "record_id": "AUTO-SCAN-323",
+      "category": "research_large_constellation_ground_station_selection",
+      "name": "Scalable hierarchical ground-station selection for large LEO constellations",
+      "structured_summary": "A 2025 research paper proposes a hierarchical ground-station selection framework for large LEO constellations. It decomposes the global optimization problem into single-satellite, short-time-window subproblems, clusters consistently valuable locations, and maps those clusters back to feasible GSaaS sites. The method remains computationally usable where exact mixed-integer optimization becomes difficult for larger constellations.",
+      "database_targets": [
+        "Matching Intelligence",
+        "Network Planning Engine",
+        "Constellation Scenario Library",
+        "Optimization Evidence Registry"
+      ],
+      "extractable_fields": [
+        "constellation_size",
+        "satellite_orbit_set",
+        "candidate_station_set",
+        "short_window_duration",
+        "single_satellite_subproblem_id",
+        "location_cluster_id",
+        "cluster_value_score",
+        "mapped_gsaas_site",
+        "global_feasibility_status",
+        "optimality_gap_percent",
+        "downlink_volume_objective",
+        "communications_gap_objective",
+        "operational_cost_objective",
+        "solver_runtime",
+        "scenario_seed"
+      ],
+      "research_risk_labels": [
+        "algorithmic_recommendation_not_operational_commitment",
+        "candidate_site_data_may_be_stale",
+        "synthetic_and_public_constellation_inputs",
+        "weather_and_contract_constraints_may_be_omitted"
+      ],
+      "source_url": "https://arxiv.org/abs/2510.03438",
+      "source_type": "research paper",
+      "confidence_level": "High for the published optimization method and reported experiments; Medium for direct commercial use without current provider, weather, licensing, pricing and capacity data.",
+      "pending_confirmation_fields": [
+        "complete objective-function weights",
+        "provider site dataset date",
+        "weather availability integration",
+        "station capacity and conflict model",
+        "minimum purchase and pricing constraints",
+        "regulatory and data-residency constraints",
+        "reproducible code and input datasets",
+        "performance on customer-specific ephemerides"
+      ],
+      "next_action": "Store optimization outputs with scenario, input snapshot, objective weights and confidence. Never write a recommended station portfolio without preserving the provider-data version used to generate it."
+    }
+  ]
+}

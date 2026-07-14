@@ -1,0 +1,166 @@
+{
+  "version": "0.1",
+  "created_at": "2026-07-13",
+  "records": [
+    {
+      "record_id": "AUTO-SCAN-306",
+      "category": "network_service_taxonomy",
+      "name": "NASA SCaN service decomposition reference",
+      "source_url": "https://en.wikipedia.org/wiki/Space_Communications_and_Navigation_Program",
+      "source_basis": "Public summary citing NASA SCaN ConOps and Space Network User's Guide",
+      "structured_summary": {
+        "service_functions": [
+          "forward data transfer",
+          "return data transfer",
+          "radiometric measurement",
+          "time correlation",
+          "service monitoring",
+          "ephemeris exchange",
+          "operational coordination",
+          "service scheduling",
+          "emergency communications",
+          "post-landing communications"
+        ],
+        "network_families": ["Near Earth Network", "Space Network", "Deep Space Network"],
+        "public_band_context": ["S", "X", "Ku", "Ka", "optical planned or emerging depending on network"]
+      },
+      "database_targets": [
+        "Service Catalogue",
+        "Mission Support Function Dictionary",
+        "Contact Lifecycle Model",
+        "Network Capability Taxonomy"
+      ],
+      "suggested_fields": [
+        "service_function_type",
+        "forward_or_return",
+        "radiometric_measurement_supported",
+        "time_correlation_supported",
+        "ephemeris_exchange_method",
+        "service_monitoring_channel",
+        "operational_coordination_required",
+        "emergency_support_available",
+        "scheduling_interface_type"
+      ],
+      "commercial_risk_tags": [
+        "institutional_reference_not_commercial_offer",
+        "historical_user_guide_elements_may_be_outdated",
+        "network_specific_implementation_required"
+      ],
+      "confidence_level": "Medium-high for service taxonomy; medium for current implementation details",
+      "pending_confirmation": [
+        "current NASA SCaN service definitions",
+        "current supported interfaces and user onboarding process",
+        "network-specific modulation and coding profiles",
+        "commercial or international access eligibility",
+        "current scheduling and telemetry handover endpoints"
+      ]
+    },
+    {
+      "record_id": "AUTO-SCAN-307",
+      "category": "ground_station_site_and_antenna_assets",
+      "name": "ESA Kiruna station dual-antenna asset model",
+      "source_url": "https://en.wikipedia.org/wiki/Kiruna_Station",
+      "source_basis": "Public station summary referencing ESA Kiruna station material",
+      "structured_summary": {
+        "station_name": "Kiruna Station",
+        "country": "Sweden",
+        "operator_context": "ESA ESTRACK station operated locally with SSC involvement according to public summaries",
+        "coordinates_public": "67.857128 N, 20.964325 E",
+        "antenna_assets": [
+          {
+            "asset_code": "KI1/KIR-1",
+            "diameter_m": 15,
+            "uplink_bands_public": ["S"],
+            "downlink_bands_public": ["S", "X"]
+          },
+          {
+            "asset_code": "KI2/KIR-2",
+            "diameter_m": 13,
+            "uplink_bands_public": ["S"],
+            "downlink_bands_public": ["S", "X"]
+          }
+        ],
+        "mission_role_public": ["polar-orbit mission support", "LEOP support", "telemetry and scientific data reception"]
+      },
+      "database_targets": [
+        "Ground Station Site Table",
+        "Antenna Asset Table",
+        "Frequency Capability Table",
+        "Institutional Access Risk Table"
+      ],
+      "suggested_fields": [
+        "site_id",
+        "antenna_asset_id",
+        "antenna_diameter_m",
+        "uplink_bands_public",
+        "downlink_bands_public",
+        "mission_role",
+        "local_operator",
+        "network_owner",
+        "institutional_access_class",
+        "public_coordinate_precision"
+      ],
+      "commercial_risk_tags": [
+        "institutional_network_not_public_gsaas",
+        "commercial_access_not_assumed",
+        "secondary_summary_requires_official_validation",
+        "antenna_specific_configuration_unknown"
+      ],
+      "confidence_level": "Medium",
+      "pending_confirmation": [
+        "official current ESA station capability sheet",
+        "per-antenna RF chain and tracking limits",
+        "baseband and modem inventory",
+        "CCSDS SLE service support and versions",
+        "current mission allocation and available capacity",
+        "third-party access and contracting route",
+        "data delivery and secure backhaul interfaces"
+      ]
+    },
+    {
+      "record_id": "AUTO-SCAN-308",
+      "category": "space_data_interface_standards",
+      "name": "CCSDS CFDP and XTCE interface separation model",
+      "source_url": "https://en.wikipedia.org/wiki/Consultative_Committee_for_Space_Data_Systems",
+      "source_basis": "Public CCSDS standards-family summary",
+      "structured_summary": {
+        "cfdp_role": "standardized file delivery protocol for space mission data transfer and custody-aware file movement",
+        "xtce_role": "standardized XML representation for telemetry and command definitions",
+        "separation_principle": "file transport, telemetry-command metadata, space-link services and mission-operations interfaces should be modeled as separate interface layers"
+      },
+      "database_targets": [
+        "Interface Standards Library",
+        "Delivery Protocol Table",
+        "Telemetry Command Schema Registry",
+        "Adapter Compatibility Matrix"
+      ],
+      "suggested_fields": [
+        "interface_standard_family",
+        "standard_name",
+        "standard_version",
+        "delivery_protocol",
+        "custody_transfer_supported",
+        "telemetry_dictionary_format",
+        "command_dictionary_format",
+        "schema_exchange_method",
+        "adapter_required",
+        "conformance_evidence"
+      ],
+      "commercial_risk_tags": [
+        "standards_support_must_not_be_inferred",
+        "vendor_profile_may_be_partial",
+        "version_interoperability_requires_testing",
+        "security_profile_not_defined_by_basic_record"
+      ],
+      "confidence_level": "High for standards-family classification; medium for implementation mapping",
+      "pending_confirmation": [
+        "official CCSDS Blue Book identifiers and current revisions",
+        "vendor-specific CFDP modes and custody support",
+        "XTCE version and profile used by each mission control system",
+        "security and authentication bindings",
+        "supported transport bindings",
+        "interoperability and conformance test evidence"
+      ]
+    }
+  ]
+}

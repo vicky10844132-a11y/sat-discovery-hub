@@ -1,0 +1,200 @@
+{
+  "batch_id": "AUTO-SCAN-327-329",
+  "generated_at": "2026-07-13T09:06:34+08:00",
+  "status": "candidate_research_records",
+  "records": [
+    {
+      "record_id": "AUTO-SCAN-327",
+      "title": "ESA New Norcia NNO-3 / DSA-4 commissioning-state asset record",
+      "category": ["ground_station", "antenna_asset", "institutional_network", "lifecycle_event"],
+      "structured_summary": {
+        "site_name": "New Norcia",
+        "country": "Australia",
+        "network": "ESA ESTRACK",
+        "antenna_code": "NNO-3 / DSA-4",
+        "reflector_diameter_m": 35,
+        "reported_uplink_bands": ["X", "Ka"],
+        "reported_downlink_bands": ["X", "K", "Ka"],
+        "inauguration_date": "2025-10-04",
+        "reported_service_entry": "not earlier than March 2026",
+        "access_class": "institutional / cross-support; public GSaaS access not assumed"
+      },
+      "database_value": [
+        "Separate physical commissioning, operational acceptance and commercial availability states.",
+        "Store antenna-level capability instead of inheriting all site capabilities to every asset.",
+        "Track future-service dates as lifecycle events rather than overwriting current status."
+      ],
+      "recommended_fields": [
+        "asset_commissioning_status",
+        "inauguration_date",
+        "planned_service_entry_date",
+        "operational_acceptance_date",
+        "uplink_band_by_asset",
+        "downlink_band_by_asset",
+        "institutional_access_class",
+        "cross_support_eligibility",
+        "commercial_booking_available"
+      ],
+      "commercial_risk_tags": [
+        "institutional_network_not_public_gsaas",
+        "service_entry_date_requires_current_confirmation",
+        "band_summary_not_equal_full_frequency_plan",
+        "mission_access_requires_agreement"
+      ],
+      "confidence": {
+        "overall": "medium-high",
+        "reason": "Network and antenna details are consistent with ESA-linked public summaries, but current operational acceptance and exact service interfaces require direct ESA confirmation."
+      },
+      "pending_confirmation": [
+        "Whether NNO-3 entered routine service after March 2026",
+        "Exact transmit and receive frequency ranges",
+        "G/T, EIRP, tracking rates and polarization",
+        "Supported CCSDS SLE services and versions",
+        "Cross-support contracting and scheduling path",
+        "Baseband, modem and data-delivery interfaces"
+      ],
+      "sources": [
+        {
+          "title": "ESTRACK network and antenna summary",
+          "url": "https://en.wikipedia.org/wiki/ESTRACK",
+          "source_type": "public secondary summary with ESA references",
+          "retrieved_date": "2026-07-13"
+        }
+      ]
+    },
+    {
+      "record_id": "AUTO-SCAN-328",
+      "title": "ESTRACK owned, augmented and cooperative network responsibility model",
+      "category": ["network_operator", "station_relationship", "service_responsibility", "commercial_risk"],
+      "structured_summary": {
+        "network_name": "ESA ESTRACK",
+        "network_layers": [
+          "ESA-owned core stations",
+          "commercially contracted augmented stations",
+          "cooperative stations supplied through inter-agency agreements"
+        ],
+        "operations_model": "Mission connections and core network operations are coordinated through ESOC / the Network Operations Centre; physical assets may be owned and operated by different organizations.",
+        "example_augmented_operators": ["KSAT", "SSC", "Goonhilly"],
+        "commercial_implication": "A station appearing in a network map does not establish ownership, booking authority, pricing authority or uniform SLA responsibility."
+      },
+      "database_value": [
+        "Model network membership independently from station ownership and station operation.",
+        "Represent service contracts and cooperation agreements as time-bounded relationships.",
+        "Attach SLA, licence, maintenance, security and booking responsibilities to the relevant party."
+      ],
+      "recommended_entities": [
+        "network_membership",
+        "station_ownership",
+        "station_operation_contract",
+        "cross_support_agreement",
+        "commercial_reseller_relationship",
+        "service_responsibility_assignment"
+      ],
+      "recommended_fields": [
+        "relationship_type",
+        "relationship_effective_from",
+        "relationship_effective_to",
+        "booking_authority",
+        "pricing_authority",
+        "frequency_licence_holder",
+        "maintenance_responsibility",
+        "sla_owner",
+        "data_security_responsibility",
+        "customer_contracting_entity"
+      ],
+      "commercial_risk_tags": [
+        "network_map_not_proof_of_ownership",
+        "partner_station_capability_not_uniform",
+        "subcontractor_dependency",
+        "contractual_access_required",
+        "responsibility_chain_requires_confirmation"
+      ],
+      "confidence": {
+        "overall": "medium-high",
+        "reason": "The layered network structure is well established publicly; individual agreements, current station membership and responsibility allocation are not fully public."
+      },
+      "pending_confirmation": [
+        "Current augmented and cooperative station roster",
+        "Per-station ownership and operator",
+        "Commercial booking authority",
+        "Licence and regulatory responsibility",
+        "Per-mission SLA owner",
+        "Data custody and cybersecurity responsibility"
+      ],
+      "sources": [
+        {
+          "title": "ESTRACK network composition",
+          "url": "https://en.wikipedia.org/wiki/ESTRACK",
+          "source_type": "public secondary summary with ESA references",
+          "retrieved_date": "2026-07-13"
+        }
+      ]
+    },
+    {
+      "record_id": "AUTO-SCAN-329",
+      "title": "In-orbit edge processing and space data-center impact on ground-segment demand",
+      "category": ["satellite_system", "data_delivery", "processing_architecture", "capacity_planning", "research"],
+      "structured_summary": {
+        "architecture": "Software-driven, multi-tenant in-orbit processing platforms use onboard or orbital compute to transform raw payload data into reduced or actionable products before downlink.",
+        "ground_segment_effect": [
+          "Potential reduction in raw downlink volume",
+          "Shift from bulk raw-data delivery to product/event delivery",
+          "More variable contact demand based on processing completion and priority",
+          "Possible use of inter-satellite links before selecting a downlink gateway",
+          "Need to schedule compute, storage, ISL and ground contacts jointly"
+        ],
+        "applicability": "Architecture and capacity-planning model; not evidence of a generally available commercial GSaaS service."
+      },
+      "database_value": [
+        "Store generated raw volume separately from required downlink volume.",
+        "Model processing location and compression/productization before contact scheduling.",
+        "Allow contact requests to depend on compute completion, product priority and delivery deadline."
+      ],
+      "recommended_fields": [
+        "raw_data_generated_gb",
+        "post_processing_data_gb",
+        "processing_location",
+        "onboard_compute_available",
+        "orbital_compute_provider",
+        "processing_completion_time",
+        "compression_or_reduction_ratio",
+        "product_priority",
+        "delivery_deadline",
+        "inter_satellite_route_available",
+        "selected_downlink_gateway",
+        "compute_contact_joint_schedule_id"
+      ],
+      "commercial_risk_tags": [
+        "research_architecture",
+        "commercial_availability_unconfirmed",
+        "compute_failure_can_delay_downlink",
+        "vendor_lock_in_risk",
+        "data_sovereignty_and_export_control_pending",
+        "raw_data_retention_policy_required"
+      ],
+      "confidence": {
+        "overall": "medium-high",
+        "reason": "The architecture and capacity pressures are supported by a 2026 research paper, but economic forecasts and commercial implementation assumptions remain scenario-dependent."
+      },
+      "pending_confirmation": [
+        "Actual in-orbit compute throughput and power budget",
+        "Supported payload data formats",
+        "Processing reliability and fallback to raw downlink",
+        "ISL routing and custody model",
+        "Data sovereignty and export-control treatment",
+        "Commercial pricing and SLA",
+        "Ground API for compute-completion and downlink-trigger events"
+      ],
+      "sources": [
+        {
+          "title": "Deep Tech to Space: Space Data Centers and AI Revolution at the Edge",
+          "url": "https://arxiv.org/abs/2605.19892",
+          "source_type": "research paper",
+          "publication_date": "2026-05-19",
+          "retrieved_date": "2026-07-13"
+        }
+      ]
+    }
+  ],
+  "safety_note": "These records are research candidates. Planned, institutional, cooperative or research capabilities must not be treated as commercially bookable capacity without direct operator verification."
+}

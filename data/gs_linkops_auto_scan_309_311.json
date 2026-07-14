@@ -1,0 +1,191 @@
+{
+  "version": "0.1",
+  "created_at": "2026-07-13",
+  "created_for": "GS LinkOps AI automated source scanning",
+  "records": [
+    {
+      "record_id": "AUTO-SCAN-309",
+      "category": "gsaas_dataflow_interface_model",
+      "name": "AWS Ground Station node-edge dataflow and delivery format model",
+      "source_title": "Work with dataflows - AWS Ground Station",
+      "source_url": "https://docs.aws.amazon.com/ground-station/latest/ug/dataflows.html",
+      "source_type": "official_operator_documentation",
+      "retrieved_at": "2026-07-13",
+      "structured_summary": {
+        "architecture": "Mission-profile dataflows are composed from source and destination nodes represented by configs.",
+        "delivery_modes": [
+          "Digitized RF stream to compute endpoint",
+          "Asynchronous digitized RF recording to Amazon S3",
+          "Demodulated and decoded packet stream"
+        ],
+        "public_data_formats": [
+          "VITA-49 Signal Data/IP for antenna downlink bandwidth <= 40 MHz",
+          "AWS Ground Station Class 2 packets for antenna downlink bandwidth > 40 MHz",
+          "Demodulated/Decoded Data/IP packets for managed demodulation and decoding",
+          "VITA-49 Signal Data/IP required for antenna uplink and used for uplink echo"
+        ]
+      },
+      "database_targets": [
+        "Ground Station System Interface Database",
+        "Data Delivery Format Library",
+        "Mission Profile Dataflow Graph",
+        "Partner Adapter Database"
+      ],
+      "extractable_fields": [
+        "dataflow_node_type",
+        "source_or_destination",
+        "rf_bandwidth_mhz",
+        "delivery_packet_format",
+        "raw_or_processed",
+        "synchronous_or_asynchronous",
+        "storage_destination",
+        "compute_endpoint",
+        "operator_specific_format",
+        "adapter_required"
+      ],
+      "commercial_risk_tags": [
+        "operator_proprietary_format_above_40mhz",
+        "onboarding_required_for_format_details",
+        "cloud_vendor_lock_in",
+        "egress_and_storage_cost_to_confirm"
+      ],
+      "confidence_level": "High for current AWS public interface behavior and format classification.",
+      "pending_confirmation_fields": [
+        "Full AWS Ground Station Class 2 packet specification",
+        "Exact Demodulated/Decoded Data/IP schema",
+        "Supported per-site maximum bandwidth",
+        "Packet loss and retransmission behavior",
+        "Latency and jitter guarantees",
+        "Current regional delivery pricing"
+      ]
+    },
+    {
+      "record_id": "AUTO-SCAN-310",
+      "category": "gsaas_mission_profile_configuration_model",
+      "name": "AWS Ground Station contact configuration and telemetry sink model",
+      "source_title": "Use AWS Ground Station Configs",
+      "source_url": "https://docs.aws.amazon.com/ground-station/latest/ug/how-it-works.config.html",
+      "source_type": "official_operator_documentation",
+      "retrieved_at": "2026-07-13",
+      "structured_summary": {
+        "config_groups": ["tracking", "dataflow", "telemetry"],
+        "tracking_modes": ["REQUIRED", "PREFERRED", "REMOVED"],
+        "downlink_parameters": ["center frequency", "bandwidth", "polarization"],
+        "uplink_parameters": ["frequency", "polarization", "target EIRP"],
+        "supported_nodes": [
+          "AntennaDownlinkConfig",
+          "AntennaDownlinkDemodDecodeConfig",
+          "AntennaUplinkConfig",
+          "UplinkEchoConfig",
+          "DataflowEndpointConfig",
+          "S3RecordingConfig",
+          "TelemetrySinkConfig"
+        ],
+        "delivery_controls": [
+          "EC2 dataflow endpoints",
+          "S3 PCAP recording",
+          "cross-region endpoint selection",
+          "near-real-time telemetry streaming to Kinesis"
+        ]
+      },
+      "database_targets": [
+        "Mission Profile Template",
+        "Contact Configuration Schema",
+        "Telemetry Delivery Interface Database",
+        "Compatibility Matching Engine"
+      ],
+      "extractable_fields": [
+        "autotrack_policy",
+        "program_track_fallback",
+        "center_frequency_hz",
+        "bandwidth_hz",
+        "polarization",
+        "target_eirp_dbw",
+        "demod_decode_managed_service",
+        "endpoint_region",
+        "cross_region_delivery",
+        "s3_recording_enabled",
+        "s3_object_prefix_template",
+        "telemetry_sink_type",
+        "contact_schedule_failure_reason"
+      ],
+      "commercial_risk_tags": [
+        "managed_demod_decode_requires_support_engagement",
+        "endpoint_region_dependency",
+        "iam_configuration_dependency",
+        "failed_to_schedule_if_endpoint_group_missing",
+        "customer_cloud_account_configuration_required"
+      ],
+      "confidence_level": "High for AWS mission-profile object structure, configuration fields and delivery dependencies.",
+      "pending_confirmation_fields": [
+        "Supported modulation families",
+        "Supported coding and framing schemes",
+        "Maximum simultaneous dataflows per contact",
+        "Per-region Kinesis throughput limits",
+        "Demodulator implementation and FPGA/SDR architecture",
+        "Current service-level commitments"
+      ]
+    },
+    {
+      "record_id": "AUTO-SCAN-311",
+      "category": "dedicated_ground_station_commercial_model",
+      "name": "AWS Ground Station Dedicated Antenna ownership, visibility and maintenance model",
+      "source_title": "AWS Ground Station Dedicated Antennas",
+      "source_url": "https://docs.aws.amazon.com/ground-station/latest/ug/dedicated-antennas.html",
+      "source_type": "official_operator_documentation",
+      "retrieved_at": "2026-07-13",
+      "structured_summary": {
+        "commercial_model": "Customer-specific physical antenna managed by AWS and accessed through the same APIs and workflows as public antennas.",
+        "resource_model": [
+          "Custom-built to customer specifications",
+          "Flexible site location and AWS Region attachment",
+          "Dedicated rather than per-contact shared access",
+          "One or more antennas per organization",
+          "Optional sharing across multiple AWS accounts"
+        ],
+        "reservation_visibility": [
+          "Own contacts visible with contact ID",
+          "Other authorized accounts visible as time slots without contact ID",
+          "Planned and unplanned maintenance windows visible",
+          "Unplanned maintenance may cancel overlapping contacts"
+        ]
+      },
+      "database_targets": [
+        "Ground Station Commercial Model Library",
+        "Dedicated Capacity Contract Schema",
+        "Reservation Visibility Model",
+        "Maintenance and Availability Risk Database"
+      ],
+      "extractable_fields": [
+        "antenna_access_model",
+        "custom_specification_allowed",
+        "site_location_flexibility",
+        "connected_cloud_region",
+        "shared_account_whitelist",
+        "reservation_visibility_scope",
+        "maintenance_window_visibility",
+        "maintenance_type",
+        "contact_cancellation_risk",
+        "operator_managed_maintenance"
+      ],
+      "commercial_risk_tags": [
+        "long_term_contract_likely",
+        "custom_build_lead_time_to_confirm",
+        "cloud_platform_dependency",
+        "unplanned_maintenance_contact_cancellation",
+        "commercial_terms_not_public"
+      ],
+      "confidence_level": "High for the product operating model and reservation visibility behavior published by AWS.",
+      "pending_confirmation_fields": [
+        "Minimum contract term",
+        "Capital and recurring pricing",
+        "Build and commissioning lead time",
+        "Service availability SLA",
+        "Customer ownership rights at contract end",
+        "Regulatory licensing responsibility",
+        "Supported antenna sizes and frequency bands",
+        "Cross-border data and export-control restrictions"
+      ]
+    }
+  ]
+}

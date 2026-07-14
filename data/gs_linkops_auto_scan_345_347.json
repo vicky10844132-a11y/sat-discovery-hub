@@ -1,0 +1,149 @@
+{
+  "batch_id": "AUTO-SCAN-345-347",
+  "generated_at": "2026-07-13T14:57:18+08:00",
+  "records": [
+    {
+      "id": "AUTO-SCAN-345",
+      "title": "AWS Ground Station near-real-time telemetry sink and contact observability",
+      "category": "gsaas_interface",
+      "summary": "AWS Ground Station can stream near-real-time antenna telemetry during a contact through a TelemetrySinkConfig bound to a mission profile. Delivery is to Amazon Kinesis Data Streams in the same account and scheduling region. Currently documented telemetry includes commanded and actual azimuth/elevation, plus tracking status and tracking error when autotracking is enabled. Cross-region delivery from the antenna to the scheduling region is supported.",
+      "fields": [
+        "telemetry_sink_type",
+        "telemetry_sink_region",
+        "telemetry_account_constraint",
+        "mission_profile_telemetry_binding",
+        "pointing_actual_az_deg",
+        "pointing_actual_el_deg",
+        "pointing_commanded_az_deg",
+        "pointing_commanded_el_deg",
+        "tracking_status",
+        "tracking_error",
+        "autotracking_required_for_tracking_telemetry",
+        "cross_region_telemetry_delivery",
+        "telemetry_latency_class"
+      ],
+      "commercial_risk_tags": [
+        "cloud_account_dependency",
+        "same_account_and_region_sink_constraint",
+        "telemetry_type_scope_limited",
+        "kinesis_cost_and_retention_pending",
+        "vendor_specific_observability_interface"
+      ],
+      "confidence": "high",
+      "pending_confirmation": [
+        "exact telemetry record schema",
+        "stream partition key and ordering behavior",
+        "end-to-end latency distribution",
+        "retention and replay model",
+        "additional RF quality metrics availability",
+        "alarm and webhook support",
+        "customer-visible tracking error units and thresholds"
+      ],
+      "sources": [
+        {
+          "title": "AWS Ground Station - Work with telemetry",
+          "url": "https://docs.aws.amazon.com/ground-station/latest/ug/telemetry.html",
+          "source_type": "official_documentation",
+          "accessed_date": "2026-07-13"
+        }
+      ]
+    },
+    {
+      "id": "AUTO-SCAN-346",
+      "title": "AWS custom OEM ephemeris preview API and vendor-specific CCSDS constraints",
+      "category": "orbit_data_interface",
+      "summary": "AWS Ground Station offers a preview Ephemeris API for customer-provided CCSDS Orbit Ephemeris Message data. Access is enabled case by case through AWS Support. Uploaded OEM data overrides Space-Track-derived ephemerides and can support early operations, maneuvers and improved tracking. AWS requires KVN-formatted OEM version 2.0, Earth-centered data, UTC, EME2000 or ITRF2000 reference frames, and mandatory interpolation metadata; unsupported fields can cause validation failure.",
+      "fields": [
+        "ephemeris_api_status",
+        "api_access_approval_required",
+        "ephemeris_source_priority",
+        "ephemeris_format",
+        "ccsds_oem_version",
+        "reference_frame",
+        "time_system",
+        "center_name",
+        "interpolation_method",
+        "interpolation_degree",
+        "upload_source_type",
+        "ephemeris_validation_status",
+        "ephemeris_expiration_time",
+        "pre_catalog_satellite_identifier_supported"
+      ],
+      "commercial_risk_tags": [
+        "preview_api",
+        "support_ticket_enablement_required",
+        "vendor_specific_ccsds_profile",
+        "validation_failure_risk",
+        "customer_orbit_data_confidentiality",
+        "space_track_override_operational_risk"
+      ],
+      "confidence": "high",
+      "pending_confirmation": [
+        "general availability date",
+        "API quotas and update frequency",
+        "validation turnaround time",
+        "precedence among multiple active ephemerides",
+        "support for covariance and acceleration terms",
+        "audit trail and rollback",
+        "encryption and data retention treatment"
+      ],
+      "sources": [
+        {
+          "title": "AWS Ground Station - Provide OEM ephemeris data",
+          "url": "https://docs.aws.amazon.com/ground-station/latest/ug/providing-oem-ephemeris-data.html",
+          "source_type": "official_documentation",
+          "accessed_date": "2026-07-13"
+        }
+      ]
+    },
+    {
+      "id": "AUTO-SCAN-347",
+      "title": "Optical ground-station service economics and hybrid RF-optical architecture",
+      "category": "research_and_market_model",
+      "summary": "A June 2026 systems-engineering assessment argues that optical ground-station bottlenecks have shifted from peak line rate to repeatable service under weather, acquisition, scheduling and operations constraints. It identifies usable duty factor, site diversity, shared-network utilization, interoperability and service assurance as controlling variables, and treats hybrid optical plus RF as the defensible baseline through 2030: optical for throughput and spectrum relief, RF for continuity, contingency and assured command paths.",
+      "fields": [
+        "optical_line_rate_bps",
+        "usable_duty_factor",
+        "weather_inclusive_efficiency",
+        "site_diversity_factor",
+        "shared_network_utilization",
+        "service_class_assurance",
+        "acquisition_success_probability",
+        "optical_contact_time_per_day",
+        "availability_adjusted_cost_per_tb",
+        "rf_fallback_supported",
+        "hybrid_path_selection_policy",
+        "interoperability_evidence_level",
+        "atmospheric_mitigation_type"
+      ],
+      "commercial_risk_tags": [
+        "weather_hard_outage",
+        "availability_not_line_rate_limited",
+        "service_layer_maturity_gap",
+        "site_diversity_cost",
+        "shared_capacity_contention",
+        "optical_only_continuity_risk",
+        "research_cost_model_not_tariff"
+      ],
+      "confidence": "medium_high",
+      "pending_confirmation": [
+        "operator-specific weather availability",
+        "actual station duty factor",
+        "commercial SLA definitions",
+        "terminal and modem interoperability",
+        "RF fallback switching latency",
+        "delivered cost under customer traffic concentration",
+        "site-level fiber and power resilience"
+      ],
+      "sources": [
+        {
+          "title": "Optical Ground Stations for Space Communications: Systems Engineering, Availability, and Service Economics Through 2030",
+          "url": "https://arxiv.org/html/2606.23711v1",
+          "source_type": "research_paper",
+          "published_date": "2026-06-16",
+          "accessed_date": "2026-07-13"
+        }
+      ]
+    }
+  ]
+}
