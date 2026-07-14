@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="GS LinkOps AI">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#27c6a7"/>
+      <stop offset="1" stop-color="#347fc0"/>
+    </linearGradient>
+    <filter id="s" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#000" flood-opacity=".35"/>
+    </filter>
+  </defs>
+  <rect x="18" y="18" width="476" height="476" rx="112" fill="#081222" stroke="#315b85" stroke-width="6"/>
+  <rect x="128" y="128" width="256" height="256" rx="72" fill="url(#g)" filter="url(#s)"/>
+  <path d="M163 315c34-94 125-145 215-112" fill="none" stroke="#fff" stroke-width="10" stroke-linecap="round" opacity=".92"/>
+  <path d="M151 292c48-83 141-117 222-70" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" opacity=".62"/>
+  <circle cx="356" cy="201" r="17" fill="#fff"/>
+  <circle cx="356" cy="201" r="7" fill="#081222"/>
+  <text x="256" y="329" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="112" font-weight="800" fill="#081222">GS</text>
+</svg>
