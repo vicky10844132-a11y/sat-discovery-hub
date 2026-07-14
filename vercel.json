@@ -5,6 +5,9 @@
   "routes": [
     {"src": "/gs-linkops-ai", "dest": "/gs-linkops-ai.html"},
     {"src": "/gs-linkops-ai.html", "dest": "/gs-linkops-ai.html"},
+    {"src": "/gs-linkops-manifest.webmanifest", "dest": "/gs-linkops-manifest.webmanifest"},
+    {"src": "/gs-linkops-icon.svg", "dest": "/gs-linkops-icon.svg"},
+    {"src": "/gs-linkops-sw.js", "dest": "/gs-linkops-sw.js", "headers": {"Service-Worker-Allowed": "/", "Cache-Control": "no-cache"}},
     {"src": "/gs-linkops-assets/app00.gz.b64", "dest": "/gs-linkops-assets/app00.gz.b64"},
     {"src": "/gs-linkops-assets/app01.gz.b64", "dest": "/gs-linkops-assets/app01.gz.b64"},
     {"src": "/gs-linkops-assets/app02.gz.b64", "dest": "/gs-linkops-assets/app02.gz.b64"},
