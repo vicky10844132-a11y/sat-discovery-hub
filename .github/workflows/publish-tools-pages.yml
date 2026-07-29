@@ -83,6 +83,7 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: _site
+
   deploy:
     if: github.event_name != 'pull_request'
     environment:
@@ -94,3 +95,34 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  verify-live:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Verify published DATA SEARCH and AOI TOOL
+        shell: bash
+        run: |
+          set -euo pipefail
+          verify_page() {
+            local url="$1"
+            local output="$2"
+            local bytes="$3"
+            local hash="$4"
+            for attempt in $(seq 1 24); do
+              if curl -fsSL --retry 1 --connect-timeout 15 "$url" -o "$output"; then
+                if [ "$(wc -c < "$output")" -eq "$bytes" ] && echo "$hash  $output" | sha256sum -c -; then
+                  grep -qi '<!doctype html' "$output"
+                  grep -qi '</html>' "$output"
+                  echo "Verified: $url"
+                  return 0
+                fi
+              fi
+              sleep 10
+            done
+            echo "Live verification failed: $url" >&2
+            return 1
+          }
+          verify_page 'https://vicky10844132-a11y.github.io/sat-discovery-hub/data-search.html' /tmp/data-search.html 490261 f18d068cac522bdcb5bebfeeaec7e12a0a64de73ddc8250aef3dc9387987a72c
+          verify_page 'https://vicky10844132-a11y.github.io/sat-discovery-hub/aoi-tool.html' /tmp/aoi-tool.html 85764 53d214b46eaaddce532d898e5297bb22bf9acde67ce97664a1fe22feafd28aae
