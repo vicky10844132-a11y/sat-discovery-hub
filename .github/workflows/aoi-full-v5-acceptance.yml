@@ -1,0 +1,274 @@
+name: AOI full V5 acceptance
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/aoi-full-v5-acceptance.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout published tools
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 0
+
+      - name: Build deep-gray and rose V5
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp aoi-tool-operations-v4.html aoi-tool-full-v5.html
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('aoi-tool-full-v5.html')
+          s=p.read_text(encoding='utf-8')
+
+          replacements={
+            '--charcoal:#252a2d':'--charcoal:#2b2e34',
+            '--charcoal-2:#171b1d':'--charcoal-2:#17191d',
+            '--graphite:#353b3e':'--graphite:#3d4148',
+            '--peacock:#087f73':'--peacock:#c83f72',
+            '--peacock-2:#0e9a8a':'--peacock-2:#e15a8b',
+            '--peacock-soft:#e5f4f1':'--peacock-soft:#fbe8f0',
+            '--red:#d34747':'--red:#a92f5a',
+            '--blue:#3b6f91':'--blue:#5d626b',
+            "const COLORS={A:'#3b6f91',B:'#a55c35',original:'#7e8988',adjusted:'#087f73',result:'#0e9a8a',intersection:'#8f6ab1',remainder:'#d08a28',added:'#21a179',removed:'#d34747',overlap:'#7256a8'};":"const COLORS={A:'#d9467a',B:'#454a52',original:'#858a92',adjusted:'#d9467a',result:'#eb5d8f',intersection:'#b83d69',remainder:'#5b6068',added:'#d9467a',removed:'#982b53',overlap:'#aa365f'};",
+            "const colors=['#087f73','#3b6f91','#a55c35','#7256a8','#d08a28','#21a179']":"const colors=['#d9467a','#454a52','#eb5d8f','#61666e','#b83d69','#858a92']",
+            'peacock green':'rose red',
+            'border-bottom:3px solid #087f73':'border-bottom:3px solid #d9467a',
+            'fill="#19a58f"':'fill="#d9467a"',
+            'stroke="#43d3b6"':'stroke="#f06b9b"',
+            'fill="#2f708c"':'fill="#454a52"',
+            'stroke="#77b8d2"':'stroke="#858a92"'
+          }
+          for old,new in replacements.items():
+              if old in s:
+                  s=s.replace(old,new)
+
+          # Compare panel controls derived layers only. A/B visibility remains governed by collection checkboxes.
+          old="const keys=['A','B','original','adjusted','result','splitIntersection','splitRemainder'].filter(k=>state.features[k]);host.innerHTML=keys.map"
+          new="const keys=['original','adjusted','result','splitIntersection','splitRemainder'].filter(k=>state.features[k]);host.innerHTML=keys.map"
+          assert old in s
+          s=s.replace(old,new,1)
+
+          # Keep edited geometry synchronized with the active collection item.
+          marker="const oldRefresh=window.refreshAll;window.refreshAll=function(){oldRefresh();refreshProMetrics()};"
+          injection=marker+"\nmap.on(L.Draw.Event.EDITED,()=>setTimeout(()=>{const item=pro.collection.find(x=>x.id===pro.activeId),f=state.features[state.target];if(item&&f){item.feature=clone(f);item.name=uniqueName(item.name.replace(/_[0-9.]+km2(?:_[0-9]+)?$/,''),item.feature);drawCollection(item);renderCollection();refreshProMetrics()}},20));"
+          assert marker in s
+          s=s.replace(marker,injection,1)
+
+          # Add a semantic marker and updated theme meta color.
+          s=s.replace('<meta content="width=device-width, initial-scale=1.0" name="viewport"/>','<meta content="width=device-width, initial-scale=1.0" name="viewport"/>\n<meta name="theme-color" content="#17191d"/>\n<!-- AOI_FULL_V5_DEEP_GRAY_ROSE -->',1)
+          p.write_text(s,encoding='utf-8')
+          PY
+
+      - name: Static validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'AOI_FULL_V5_DEEP_GRAY_ROSE' aoi-tool-full-v5.html
+          grep -q -- '--peacock:#c83f72' aoi-tool-full-v5.html
+          grep -q "window.runBatch=runBatch" aoi-tool-full-v5.html
+          grep -q 'vendor/leaflet.js' aoi-tool-full-v5.html
+          grep -q 'vendor/turf.min.js' aoi-tool-full-v5.html
+          grep -q 'vendor/jszip.min.js' aoi-tool-full-v5.html
+          grep -q 'vendor/shpwrite.js' aoi-tool-full-v5.html
+
+      - name: Build exhaustive browser acceptance test
+        shell: bash
+        run: |
+          cat > aoi-v5-test.html <<'HTML'
+          <!doctype html><html><body><iframe id="tool" src="aoi-tool-full-v5.html" style="width:1500px;height:1000px"></iframe><pre id="result">WAIT</pre><script>
+          const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+          const out=document.getElementById('result');
+          const frame=document.getElementById('tool');
+          frame.addEventListener('load',async()=>{
+            await sleep(3200);
+            const w=frame.contentWindow,d=w.document,checks={},fail=[];
+            const ok=(name,value,detail='')=>{checks[name]=!!value;if(!value)fail.push(name+(detail?':'+detail:''));};
+            const noThrow=async(name,fn)=>{try{await fn();checks[name]=true}catch(e){checks[name]=false;fail.push(name+':'+(e?.message||e));}};
+            const rows=()=>d.querySelectorAll('.collection-row').length;
+            const boxes=()=>[...d.querySelectorAll('.collection-row input[type=checkbox]')];
+            const paths=()=>d.querySelectorAll('.leaflet-overlay-pane path').length;
+            const errors=[];
+            w.addEventListener('error',e=>errors.push(e.message));
+            w.addEventListener('unhandledrejection',e=>errors.push(String(e.reason)));
+            try{
+              ok('theme',getComputedStyle(d.documentElement).getPropertyValue('--peacock').trim()==='#c83f72');
+              ok('libraries',!!(w.L&&w.turf&&w.JSZip&&w.shpwrite&&w.L.Draw));
+
+              const handlers=new Set();
+              d.querySelectorAll('[onclick],[onchange],[oninput]').forEach(el=>{
+                for(const attr of ['onclick','onchange','oninput']){
+                  const code=el.getAttribute(attr)||'';
+                  const m=code.match(/^\s*([A-Za-z_$][\w$]*)\s*\(/);
+                  if(m&&!['document','location','setTimeout'].includes(m[1]))handlers.add(m[1]);
+                }
+              });
+              const missing=[...handlers].filter(n=>typeof w[n]!=='function');
+              ok('all_inline_handlers_global',missing.length===0,missing.join(','));
+
+              ok('initial_collection',rows()===2);
+              ok('initial_unchecked',boxes().length===2&&boxes().every(x=>!x.checked));
+              ok('initial_hidden',paths()===0,'paths='+paths());
+              boxes()[0].click();await sleep(80);ok('checkbox_show_one',paths()>0);
+              boxes()[1].click();await sleep(80);ok('checkbox_show_two',boxes().every(x=>x.checked)&&paths()>=2);
+              boxes()[0].click();await sleep(50);ok('checkbox_hide',!boxes()[0].checked);
+              boxes()[0].click();await sleep(50);
+
+              const expected=[3,4,5,6,7,9];
+              for(let i=0;i<6;i++){
+                d.querySelectorAll('.collection-ops button')[i].click();await sleep(180);
+                ok('batch_'+i,rows()===expected[i],'rows='+rows());
+              }
+
+              const geoOps=['buffer','simplify','convex','envelope','oriented','repair','removeholes','explode'];
+              let before=rows();
+              for(const op of geoOps){
+                await noThrow('geometry_'+op,async()=>{w.runGeometry(op);await sleep(160)});
+                ok('geometry_output_'+op,rows()===++before,'rows='+rows());
+              }
+
+              // Drawing tools: verify the actual Leaflet Draw handlers are enabled.
+              let polygonEnabled=false,rectangleEnabled=false;
+              const pEnable=w.L.Draw.Polygon.prototype.enable,rEnable=w.L.Draw.Rectangle.prototype.enable;
+              w.L.Draw.Polygon.prototype.enable=function(){polygonEnabled=true;return this};
+              w.L.Draw.Rectangle.prototype.enable=function(){rectangleEnabled=true;return this};
+              w.startDraw('polygon');w.startDraw('rectangle');
+              w.L.Draw.Polygon.prototype.enable=pEnable;w.L.Draw.Rectangle.prototype.enable=rEnable;
+              ok('draw_polygon',polygonEnabled);ok('draw_rectangle',rectangleEnabled);
+
+              // Active edit tool.
+              d.querySelector('.collection-name').click();await sleep(100);
+              let editEnabled=false;const eEnable=w.L.EditToolbar.Edit.prototype.enable;
+              w.L.EditToolbar.Edit.prototype.enable=function(){editEnabled=true;return this};
+              w.startEdit();w.L.EditToolbar.Edit.prototype.enable=eEnable;
+              ok('edit_active',editEnabled);
+
+              // Import GeoJSON, KML and KMZ.
+              const poly={type:'Feature',properties:{name:'Imported'},geometry:{type:'Polygon',coordinates:[[[103.70,1.20],[103.72,1.20],[103.72,1.22],[103.70,1.22],[103.70,1.20]]]}};
+              before=rows();
+              await w.importFile({files:[new w.File([JSON.stringify(poly)],'import.geojson',{type:'application/geo+json'})],value:''});await sleep(120);
+              ok('import_geojson',rows()===before+1);before=rows();
+              const kml='<?xml version="1.0"?><kml><Document><Placemark><Polygon><outerBoundaryIs><LinearRing><coordinates>103.73,1.20,0 103.75,1.20,0 103.75,1.22,0 103.73,1.22,0 103.73,1.20,0</coordinates></LinearRing></outerBoundaryIs></Polygon></Placemark></Document></kml>';
+              await w.importFile({files:[new w.File([kml],'import.kml',{type:'application/vnd.google-earth.kml+xml'})],value:''});await sleep(120);
+              ok('import_kml',rows()===before+1);before=rows();
+              const zip=new w.JSZip();zip.file('doc.kml',kml);const kmz=await zip.generateAsync({type:'blob'});
+              await w.importFile({files:[new w.File([kmz],'import.kmz',{type:'application/vnd.google-earth.kmz'})],value:''});await sleep(140);
+              ok('import_kmz',rows()===before+1);
+
+              // Named boundary with deterministic mocked network response.
+              const oldFetch=w.fetch;w.fetch=async()=>({ok:true,json:async()=>({features:[{...poly,properties:{name:'Mock Boundary',display_name:'Mock Boundary'}}]})});
+              d.getElementById('country').value='Mockland';before=rows();
+              await w.findNamedBoundary();await sleep(80);ok('named_search',d.getElementById('geocodeSelect').options.length===1);
+              w.useGeocode();await sleep(120);ok('named_use',rows()===before+1);w.fetch=oldFetch;
+
+              // Rule adjustment and comparison.
+              d.querySelector('.collection-name').click();await sleep(60);
+              d.getElementById('minArea').value='500';d.getElementById('minWidth').value='15';
+              before=rows();w.adjustBoundary();await sleep(220);
+              ok('rule_adjust',rows()===before+1);
+              w.showPanel('compare');await sleep(80);
+              ok('comparison_metrics',!d.getElementById('compareMetrics').classList.contains('empty'));
+              await noThrow('comparison_added',async()=>w.showComparisonLayer('added'));
+              await noThrow('comparison_removed',async()=>w.showComparisonLayer('removed'));
+              await noThrow('comparison_overlap',async()=>w.showComparisonLayer('overlap'));
+              await noThrow('comparison_clear',async()=>w.clearComparisonLayers());
+
+              // Original/adjusted actions, each from a fresh adjustment state.
+              await noThrow('use_adjusted',async()=>{w.useAdjusted();await sleep(100)});
+              d.getElementById('minArea').value='700';w.adjustBoundary();await sleep(180);
+              await noThrow('use_original',async()=>{w.useOriginal();await sleep(100)});
+              await noThrow('remove_adjusted',async()=>w.removeAdjusted());
+
+              // Vertex coordinates.
+              w.prompt=()=> 'DD';
+              const pts=d.querySelector('.collection-row .collection-icon');pts.click();await sleep(80);
+              ok('vertex_coordinates',d.querySelectorAll('.vertex-label').length>0);
+              pts.click();await sleep(40);
+
+              // Map controls.
+              await noThrow('fit_active',async()=>w.fitProActive());
+              await noThrow('basemap_switch',async()=>w.switchProBasemap());
+              let measureLine=false,measureArea=false;
+              const lineEnable=w.L.Draw.Polyline.prototype.enable,areaEnable=w.L.Draw.Polygon.prototype.enable;
+              w.L.Draw.Polyline.prototype.enable=function(){measureLine=true;return this};
+              w.L.Draw.Polygon.prototype.enable=function(){measureArea=true;return this};
+              w.startProMeasure('distance');w.startProMeasure('area');
+              w.L.Draw.Polyline.prototype.enable=lineEnable;w.L.Draw.Polygon.prototype.enable=areaEnable;
+              ok('measure_distance',measureLine);ok('measure_area',measureArea);
+              let fsCalled=false;d.querySelector('.map-shell').requestFullscreen=()=>{fsCalled=true;return Promise.resolve()};
+              await noThrow('fullscreen',async()=>w.toggleProFullscreen());ok('fullscreen_called',fsCalled);
+
+              // Settings, help and navigation.
+              w.openStandaloneSettings();ok('settings_open',d.getElementById('settingsModal').classList.contains('show'));
+              w.toggleStandaloneFeature('coordinates',false);w.toggleStandaloneFeature('coordinates',true);w.closeStandaloneSettings();
+              ok('settings_close',!d.getElementById('settingsModal').classList.contains('show'));
+              w.openHelp();ok('help_open',d.getElementById('helpModal').classList.contains('show'));w.closeHelp();ok('help_close',!d.getElementById('helpModal').classList.contains('show'));
+              for(const panel of ['build','rules','overlay','compare','export']){w.showPanel(panel);await sleep(30);ok('panel_'+panel,d.getElementById('panel-'+panel).classList.contains('active'))}
+
+              // Export all formats. Replace the global download binding with a recorder.
+              w.showPanel('export');await sleep(80);
+              const downloads=[];w.__recordDownload=(name,data,type)=>downloads.push({name,type,size:data?.size||String(data||'').length});
+              w.eval('download=window.__recordDownload');
+              d.getElementById('exportTarget').value=d.getElementById('exportTarget').options[0].value;
+              for(const type of ['geojson','kml','kmz','wkt','csv','shp','package'])await w.exportData(type);
+              await sleep(350);
+              ok('exports_all',downloads.length===7,JSON.stringify(downloads.map(x=>x.name)));
+              ok('export_geojson',downloads.some(x=>x.name.endsWith('.geojson')));
+              ok('export_kml',downloads.some(x=>x.name.endsWith('.kml')));
+              ok('export_kmz',downloads.some(x=>x.name.endsWith('.kmz')));
+              ok('export_wkt',downloads.some(x=>x.name.endsWith('.wkt')));
+              ok('export_csv',downloads.some(x=>x.name.endsWith('.csv')));
+              ok('export_shp',downloads.some(x=>x.name.endsWith('_SHP.zip')));
+              ok('export_package',downloads.some(x=>x.name.endsWith('_GIS_Package.zip')));
+
+              // Recreate comparison and test report export.
+              w.showPanel('build');d.querySelector('.collection-name').click();d.getElementById('minArea').value='900';w.adjustBoundary();await sleep(180);
+              w.exportComparisonReport();await sleep(50);ok('comparison_report',downloads.some(x=>x.name.endsWith('_Comparison_Report.html')));
+
+              // Layer helpers and delete/visibility controls.
+              await noThrow('layer_zoom',async()=>w.zoomLayer('A'));
+              await noThrow('layer_copy',async()=>w.setFromLayer('A'));
+              await noThrow('layer_opacity',async()=>w.setOpacity('A',45));
+              await noThrow('layer_toggle',async()=>{w.toggleLayer('A',true);w.toggleLayer('A',false)});
+
+              // Clear workspace last.
+              w.clearAll(false);await sleep(100);ok('clear_all',d.querySelectorAll('.collection-row').length===0);
+              ok('no_runtime_errors',errors.length===0,errors.join('|'));
+            }catch(e){fail.push('fatal:'+e.stack)}
+            const pass=fail.length===0;
+            out.textContent=(pass?'PASS_AOI_FULL_V5 ':'FAIL_AOI_FULL_V5 ')+JSON.stringify({checks,fail,errors});
+          });
+          </script></body></html>
+          HTML
+
+      - name: Run exhaustive Chromium acceptance
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 8765 >/tmp/aoi-v5-http.log 2>&1 &
+          server=$!
+          trap 'kill $server || true' EXIT
+          sleep 2
+          browser="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          test -n "$browser"
+          "$browser" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --virtual-time-budget=45000 --dump-dom http://127.0.0.1:8765/aoi-v5-test.html > /tmp/aoi-v5-dom.html
+          grep 'PASS_AOI_FULL_V5' /tmp/aoi-v5-dom.html
+
+      - name: Commit accepted V5
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add aoi-tool-full-v5.html
+          git commit -m 'Publish fully tested deep-gray and rose AOI Tool V5'
+          git push origin gh-pages
