@@ -1,0 +1,134 @@
+name: Fix AOI V6 Shapefile final
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fix-aoi-v6-shapefile-final.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix-test-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout published branch and fetch main
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 0
+
+      - name: Reapply validated edit and measurement repair
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git show origin/main:.github/workflows/fix-aoi-v6-edit-measure.yml > /tmp/edit-measure.yml
+          python - <<'PY'
+          from pathlib import Path
+          w=Path('/tmp/edit-measure.yml').read_text(encoding='utf-8')
+          marker="          python - <<'PY'\n"
+          start=w.index(marker)+len(marker)
+          end=w.index("\n          PY\n\n      - name: Install Chromium test engine",start)
+          lines=w[start:end].splitlines()
+          script='\n'.join(line[10:] if line.startswith('          ') else line for line in lines)
+          exec(compile(script,'edit-measure-patch','exec'),{})
+          PY
+
+      - name: Fix legacy shp-write Base64 output
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('aoi-tool-full-v6.html')
+          s=p.read_text(encoding='utf-8')
+          old="if(type==='shp'){if(!window.shpwrite?.zip){toast('Shapefile helper unavailable','Use GeoJSON or the GIS package.',true);return}try{const fc=f.type==='FeatureCollection'?f:turf.featureCollection([f]),blob=await shpwrite.zip(fc,{outputType:'blob',folder:name,types:{polygon:'aoi'}});return download(name+'_SHP.zip',blob)}catch(e){toast('Shapefile export failed',e.message,true)}}"
+          new="""if(type==='shp'){if(!window.shpwrite?.zip){toast('Shapefile helper unavailable','Use GeoJSON or the GIS package.',true);return}try{const fc=f.type==='FeatureCollection'?f:turf.featureCollection([f]),packed=await Promise.resolve(shpwrite.zip(fc,{folder:name,types:{polygon:'aoi',polyline:'lines',point:'points'}}));let blob;if(packed instanceof Blob)blob=packed;else if(packed instanceof ArrayBuffer)blob=new Blob([packed],{type:'application/zip'});else if(ArrayBuffer.isView(packed))blob=new Blob([packed.buffer],{type:'application/zip'});else if(typeof packed==='string'){const raw=packed.replace(/^data:.*?;base64,/,''),binary=atob(raw),bytes=new Uint8Array(binary.length);for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);blob=new Blob([bytes],{type:'application/zip'})}else throw new Error('Unsupported ZIP output from the Shapefile helper.');return download(name+'_SHP.zip',blob,'application/zip')}catch(e){toast('Shapefile export failed',e.message||'Unable to create ZIP.',true)}}"""
+          if old not in s:
+              raise SystemExit('Shapefile export block not found')
+          s=s.replace(old,new,1)
+          s=s.replace('<!-- AOI_FULL_V6_ALL_BUTTONS_VALIDATED -->','<!-- AOI_FULL_V6_ALL_BUTTONS_VALIDATED_SHAPEFILE -->',1)
+          p.write_text(s,encoding='utf-8')
+          print('final bytes',p.stat().st_size)
+          PY
+
+      - name: Install Chromium test engine
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm install playwright@latest --no-audit --no-fund
+          npx playwright install --with-deps chromium
+
+      - name: Validate edit measurement operations zoom and all exports
+        run: |
+          cat > validate-final.js <<'JS'
+          const {chromium}=require('playwright');
+          const assert=(x,m)=>{if(!x)throw new Error(m)};
+          (async()=>{
+            const browser=await chromium.launch({headless:true});
+            const context=await browser.newContext({viewport:{width:1600,height:1000},acceptDownloads:true});
+            const page=await context.newPage();
+            const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>d.accept('DD'));
+            await page.goto('http://127.0.0.1:8765/aoi-tool-full-v6.html',{waitUntil:'domcontentloaded'});
+            await page.waitForFunction(()=>window.L&&window.turf&&document.querySelectorAll('.collection-row').length===2);
+            await page.waitForTimeout(900);
+
+            await page.getByRole('button',{name:'Load Demo'}).click();
+            await page.waitForFunction(()=>document.querySelectorAll('.collection-row').length===2);
+            console.log('PASS Load Demo');
+
+            await page.locator('.collection-name').first().click();
+            await page.getByRole('button',{name:'Edit Active'}).click();
+            await page.waitForTimeout(250);
+            assert(await page.locator('.leaflet-editing-icon').count()>0,'No edit vertex handles');
+            assert(await page.locator('#aoiEditActions.show').count()===1,'Edit controls missing');
+            const before=await page.evaluate(()=>JSON.stringify(state.features.A));
+            const marker=page.locator('.leaflet-editing-icon').first(),b=await marker.boundingBox();
+            await page.mouse.move(b.x+b.width/2,b.y+b.height/2);await page.mouse.down();await page.mouse.move(b.x+26,b.y+17,{steps:5});await page.mouse.up();
+            await page.getByRole('button',{name:'Save Edit'}).click();await page.waitForTimeout(200);
+            assert(await page.evaluate(()=>JSON.stringify(state.features.A))!==before,'Saved edit did not update geometry');
+            console.log('PASS Edit Active save');
+
+            const rows0=await page.locator('.collection-row').count(),geom0=await page.evaluate(()=>JSON.stringify(state.features.A));
+            await page.locator('button[title="Measure distance"]').click();
+            await page.evaluate(()=>map.fire(L.Draw.Event.CREATED,{layer:L.polyline([[1.30,103.78],[1.32,103.82]])}));await page.waitForTimeout(150);
+            assert(await page.locator('.collection-row').count()===rows0,'Distance added AOI');assert(await page.evaluate(()=>JSON.stringify(state.features.A))===geom0,'Distance replaced AOI');
+            await page.locator('button[title="Measure area"]').click();
+            await page.evaluate(()=>map.fire(L.Draw.Event.CREATED,{layer:L.polygon([[1.30,103.78],[1.30,103.82],[1.34,103.82]])}));await page.waitForTimeout(150);
+            assert(await page.locator('.collection-row').count()===rows0,'Area added AOI');assert(await page.evaluate(()=>JSON.stringify(state.features.A))===geom0,'Area replaced AOI');
+            console.log('PASS measurement isolation');
+
+            await page.locator('.rail-btn[data-panel="overlay"]').click();
+            const r0=await page.locator('.collection-row').count();
+            await page.locator("button[onclick=\"runOverlay('intersection')\"]").click();
+            await page.waitForFunction(n=>document.querySelectorAll('.collection-row').length>n,r0);
+            console.log('PASS Intersection');
+
+            await page.waitForTimeout(800);const z0=await page.evaluate(()=>map.getZoom());
+            await page.locator('button[title="Zoom in"]').click();await page.waitForTimeout(800);const z1=await page.evaluate(()=>map.getZoom());assert(z1>z0,`Zoom in ${z0}->${z1}`);
+            await page.locator('button[title="Zoom out"]').click();await page.waitForTimeout(800);const z2=await page.evaluate(()=>map.getZoom());assert(z2<z1,`Zoom out ${z1}->${z2}`);
+            console.log('PASS Zoom controls');
+
+            await page.evaluate(()=>{const o=turf.clone(state.features.A),a=turf.transformTranslate(o,2,90,{units:'kilometers'});state.features.original=normalizeFeature(o);state.features.adjusted=normalizeFeature(a);renderLayer('original');renderLayer('adjusted');refreshAll()});
+            await page.locator('.rail-btn[data-panel="export"]').click();
+            const cases=[["exportData('geojson')",'.geojson'],["exportData('kml')",'.kml'],["exportData('kmz')",'.kmz'],["exportData('wkt')",'.wkt'],["exportData('csv')",'.csv'],["exportData('shp')",'.zip'],["exportData('package')",'.zip'],['exportComparisonReport()','.html']];
+            for(const [call,ext] of cases){const dl=page.waitForEvent('download',{timeout:15000});await page.locator(`button[onclick="${call}"]`).click();const d=await dl,f=d.suggestedFilename();assert(f.toLowerCase().endsWith(ext),call+' => '+f);console.log('PASS export',f)}
+            assert(!errors.length,'Page errors: '+errors.join(' | '));
+            console.log('FINAL_AOI_BUTTON_REPAIRS_PASS');
+            await browser.close();
+          })().catch(e=>{console.error(e);process.exit(1)});
+          JS
+          python3 -m http.server 8765 >/tmp/final-http.log 2>&1 &
+          server=$!
+          trap 'kill $server || true' EXIT
+          sleep 2
+          node validate-final.js
+
+      - name: Publish final repaired AOI V6
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add aoi-tool-full-v6.html
+          git commit -m 'Finalize AOI button repairs and legacy Shapefile ZIP export'
+          git push origin gh-pages
