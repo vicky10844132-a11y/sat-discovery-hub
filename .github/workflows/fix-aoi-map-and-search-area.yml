@@ -1,0 +1,154 @@
+name: Fix AOI map and DATA SEARCH area
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fix-aoi-map-and-search-area.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout publishing branch
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 0
+      - name: Patch and validate pages
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib, re
+
+          def sha(path):
+              return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+          # Refuse to patch an unexpected version.
+          assert sha('aoi-tool.html') == '53d214b46eaaddce532d898e5297bb22bf9acde67ce97664a1fe22feafd28aae'
+          assert sha('data-search.html') == 'f18d068cac522bdcb5bebfeeaec7e12a0a64de73ddc8250aef3dc9387987a72c'
+
+          # AOI TOOL: always-visible embedded reference map.
+          p=Path('aoi-tool.html'); s=p.read_text(encoding='utf-8')
+          css='''\n#map{position:relative;overflow:hidden;background:#0b2232}.aoi-offline-map{position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}.aoi-offline-map text{font-family:Inter,"Segoe UI",Arial,sans-serif}.aoi-map-note{position:absolute;left:16px;top:16px;z-index:650;background:rgba(255,255,255,.92);border:1px solid #8fb7b0;border-radius:9px;padding:7px 10px;color:#31534e;font-size:9px;font-weight:700;box-shadow:0 6px 18px rgba(20,31,27,.12);pointer-events:none}\n'''
+          s=s.replace('</style>',css+'</style>',1)
+          svg='''<svg class="aoi-offline-map" viewBox="0 0 1200 760" preserveAspectRatio="xMidYMid slice" aria-label="Embedded reference map"><defs><linearGradient id="aoiSea" x1="0" x2="1"><stop offset="0" stop-color="#0a2537"/><stop offset="1" stop-color="#123b50"/></linearGradient><pattern id="aoiGrid" width="60" height="60" patternUnits="userSpaceOnUse"><path d="M60 0H0V60" fill="none" stroke="#5f9caf" stroke-width="0.65" opacity=".35"/></pattern></defs><rect width="1200" height="760" fill="url(#aoiSea)"/><rect width="1200" height="760" fill="url(#aoiGrid)"/><g fill="#d8ddd1" stroke="#7ea0a0" stroke-width="1.4"><path d="M110 190C83 237 105 315 161 343c45 22 73 57 81 106 10 61 70 103 120 69 39-27 18-80-4-118-20-34 1-76 47-112 52-42 37-107-26-136-83-38-221-30-269 38Z"/><path d="M365 455c-31 30-32 81-4 126 25 40 54 104 56 144 4 66 70 86 111 34 39-49 45-115 17-173-29-61-102-167-180-131Z"/><path d="M502 174c-44 38-58 104-28 149 35 52 91 47 119 94 27 45 9 104 41 145 44 56 116 43 138-21 21-59 8-126-27-177-27-39-17-82 16-117 41-45 7-111-60-123-80-14-151 9-199 50Z"/><path d="M704 153c52-41 155-55 234-15 72 36 104 100 72 151-27 42-83 54-129 82-46 27-48 74-19 114 30 43 10 102-47 117-75 19-126-33-145-95-17-55-50-91-91-122-51-39-38-99 8-130 38-27 76-70 117-102Z"/><path d="M896 536c57-39 137-27 171 23 35 52 2 113-68 120-65 7-139-27-149-75-6-30 14-49 46-68Z"/></g><g stroke="#91c9d6" stroke-width="1" opacity=".55"><line x1="600" y1="0" x2="600" y2="760"/><line x1="0" y1="380" x2="1200" y2="380"/></g><g fill="#b8d9e2" font-size="15" letter-spacing="1.5"><text x="142" y="297">NORTH AMERICA</text><text x="405" y="594">SOUTH AMERICA</text><text x="560" y="415">AFRICA</text><text x="808" y="273">EURASIA</text><text x="932" y="611">AUSTRALIA</text></g><g><polygon points="785,350 838,332 874,365 852,419 793,407" fill="#19a58f" fill-opacity=".25" stroke="#43d3b6" stroke-width="4"/><polygon points="749,383 806,370 830,424 775,454 733,421" fill="#3d78a6" fill-opacity=".22" stroke="#75b8e5" stroke-width="4"/><text x="735" y="323" fill="#efffff" font-size="16" font-weight="700">AOI reference workspace</text></g></svg><div class="aoi-map-note">Embedded reference map · online tiles load when available</div>'''
+          old='<main class="map-shell"><div class="map" id="map"></div>'
+          assert old in s
+          s=s.replace(old,'<main class="map-shell"><div class="map" id="map">'+svg+'</div>',1)
+          old_err="if(!window.L||!window.turf){const el=document.getElementById('map');if(el)el.innerHTML='<div style=\"height:100%;display:grid;place-items:center;padding:30px;background:#e7ebea;color:#33413d;text-align:center;font:600 14px Segoe UI,Arial\">Map libraries could not be loaded. Connect to the internet or deploy the source package with locally hosted Leaflet and Turf files.</div>';throw new Error('Required map libraries are unavailable');}"
+          new_err="if(!window.L||!window.turf){const el=document.getElementById('map');if(el)el.classList.add('fallback-only');throw new Error('Required map libraries are unavailable; embedded reference map remains visible.');}"
+          assert old_err in s
+          s=s.replace(old_err,new_err,1)
+          p.write_text(s,encoding='utf-8')
+
+          # DATA SEARCH: remove map overlay shortcuts and show AOI area below map.
+          p=Path('data-search.html'); s=p.read_text(encoding='utf-8')
+          s,n=re.subn(r'\s*<div class="map-actions">.*?</div>\s*(?=<div class="map-toolkit">)','\n    ',s,count=1,flags=re.S)
+          assert n==1
+          s=s.replace('</style>','''\n.map-status{left:50%!important;right:auto!important;bottom:8px!important;transform:translateX(-50%);min-width:260px;text-align:center;font-size:10px!important;font-weight:750;color:#3f5068;padding:6px 12px!important}.map-actions{display:none!important}\n</style>''',1)
+          s=s.replace('<div class="map-status" id="mapStatus">Lat: 0.00000 · Lon: 0.00000 · Zoom: 3</div>','<div class="map-status" id="mapStatus">Selected AOI area: calculating…</div>',1)
+          needle="""const aois={
+            kenya:[[4.7,34.2],[3.6,40.8],[-4.7,40.5],[-4.9,38.5],[-1.0,34.0],[4.7,34.2]],
+            singapore:[[1.48,103.58],[1.49,104.10],[1.18,104.13],[1.16,103.60],[1.48,103.58]],
+            arctic:[[66,-20],[75,-10],[79,25],[74,60],[68,40],[66,-20]],
+            brazil:[[-10,-55],[-10,-48],[-17,-47],[-18,-54],[-10,-55]]
+          };"""
+          assert needle in s
+          helpers=needle+"""
+          function sphericalPolygonAreaKm2(points){
+            if(!Array.isArray(points)||points.length<3)return 0;
+            const R=6371.0088,rad=Math.PI/180;let total=0;
+            for(let i=0;i<points.length;i++){
+              const a=points[i],b=points[(i+1)%points.length];
+              const lat1=Number(a[0])*rad,lat2=Number(b[0])*rad;
+              let dLon=(Number(b[1])-Number(a[1]))*rad;
+              if(dLon>Math.PI)dLon-=2*Math.PI;if(dLon<-Math.PI)dLon+=2*Math.PI;
+              total+=dLon*(2+Math.sin(lat1)+Math.sin(lat2));
+            }
+            return Math.abs(total)*R*R/2;
+          }
+          function formatAreaKm2(area){
+            const digits=area>=100000?0:area>=1000?1:2;
+            return Number(area||0).toLocaleString(undefined,{minimumFractionDigits:digits,maximumFractionDigits:digits});
+          }
+          function updateAoiAreaStatus(points,label='Selected AOI'){
+            const el=document.getElementById('mapStatus');if(!el)return 0;
+            const area=sphericalPolygonAreaKm2(points);
+            el.textContent=`${label} area: ${formatAreaKm2(area)} km²`;
+            return area;
+          }"""
+          s=s.replace(needle,helpers,1)
+          old="""function initMap(){
+            if(!window.L){notify('Map fallback active','Network map library is unavailable. The platform remains navigable.');return;}
+            map=L.map('map',{zoomControl:false,worldCopyJump:true,minZoom:2}).setView([13,35],3);
+            baseLayers.osm=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'});
+            baseLayers.satellite=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:18,attribution:'Tiles © Esri'});
+            baseLayers.light=L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{maxZoom:19,attribution:'© OpenStreetMap © CARTO'});
+            currentTile=baseLayers.osm.addTo(map);
+            map.on('mousemove',e=>{document.getElementById('mapStatus').textContent=`Lat: ${e.latlng.lat.toFixed(5)} · Lon: ${e.latlng.lng.toFixed(5)} · Zoom: ${map.getZoom()}`});
+            map.on('zoomend',()=>{const c=map.getCenter();document.getElementById('mapStatus').textContent=`Lat: ${c.lat.toFixed(5)} · Lon: ${c.lng.toFixed(5)} · Zoom: ${map.getZoom()}`});
+            map.on('click',handleMapClick);
+            showAOI('kenya');
+          }"""
+          new="""function initMap(){
+            updateAoiAreaStatus(aois.kenya,'Kenya AOI');
+            if(!window.L){notify('Map fallback active','Network map library is unavailable. The platform remains navigable.');return;}
+            map=L.map('map',{zoomControl:false,worldCopyJump:true,minZoom:2}).setView([13,35],3);
+            baseLayers.osm=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'});
+            baseLayers.satellite=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:18,attribution:'Tiles © Esri'});
+            baseLayers.light=L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{maxZoom:19,attribution:'© OpenStreetMap © CARTO'});
+            currentTile=baseLayers.osm.addTo(map);
+            map.on('click',handleMapClick);
+            showAOI('kenya');
+          }"""
+          assert old in s
+          s=s.replace(old,new,1)
+          old_show="""function showAOI(name,el){
+            activeAoiName=name.charAt(0).toUpperCase()+name.slice(1);const label=document.getElementById('activeAoiLabel');if(label)label.textContent=activeAoiName+' AOI · exact polygon search';
+            if(el){document.querySelectorAll('.aoi-item').forEach(x=>x.classList.remove('selected'));el.classList.add('selected')}
+            if(!window.L||!map)return; if(activeAOI)map.removeLayer(activeAOI);"""
+          new_show="""function showAOI(name,el){
+            activeAoiName=name.charAt(0).toUpperCase()+name.slice(1);const label=document.getElementById('activeAoiLabel');if(label)label.textContent=activeAoiName+' AOI · exact polygon search';
+            updateAoiAreaStatus(aois[name],activeAoiName+' AOI');
+            if(el){document.querySelectorAll('.aoi-item').forEach(x=>x.classList.remove('selected'));el.classList.add('selected')}
+            if(!window.L||!map)return; if(activeAOI)map.removeLayer(activeAOI);"""
+          assert old_show in s
+          s=s.replace(old_show,new_show,1)
+          old_finish="""function finishDrawing(){if(!tempLine)return;overlays.push(tempLine);if(drawingMode==='area'){const b=tempLine.getBounds(),km=Math.abs((b.getNorth()-b.getSouth())*(b.getEast()-b.getWest())*12321*Math.cos((b.getNorth()+b.getSouth())/2*Math.PI/180));tempLine.bindPopup(`<strong>Measured Area</strong><br>${km.toFixed(2)} km²`).openPopup()}else if(drawingMode==='distance'){let d=0;for(let i=1;i<drawPoints.length;i++)d+=drawPoints[i-1].distanceTo(drawPoints[i]);tempLine.bindPopup(`<strong>Measured Distance</strong><br>${(d/1000).toFixed(2)} km`).openPopup()}drawingMode=null;tempLine=null;drawPoints=[]}"""
+          new_finish="""function finishDrawing(){if(!tempLine)return;overlays.push(tempLine);const completedMode=drawingMode;if(completedMode==='area'||completedMode==='polygon'){const pts=drawPoints.map(p=>[p.lat,p.lng]),km=updateAoiAreaStatus(pts,completedMode==='area'?'Measured range':'Drawn AOI');if(completedMode==='area')tempLine.bindPopup(`<strong>Measured Area</strong><br>${formatAreaKm2(km)} km²`).openPopup()}else if(completedMode==='distance'){let d=0;for(let i=1;i<drawPoints.length;i++)d+=drawPoints[i-1].distanceTo(drawPoints[i]);tempLine.bindPopup(`<strong>Measured Distance</strong><br>${(d/1000).toFixed(2)} km`).openPopup()}drawingMode=null;tempLine=null;drawPoints=[]}"""
+          assert old_finish in s
+          s=s.replace(old_finish,new_finish,1)
+          p.write_text(s,encoding='utf-8')
+
+          # Structural validation.
+          a=Path('aoi-tool.html').read_text(encoding='utf-8')
+          d=Path('data-search.html').read_text(encoding='utf-8')
+          assert 'class="aoi-offline-map"' in a
+          assert 'embedded reference map remains visible' in a
+          assert '<div class="map-actions">' not in d
+          assert 'function sphericalPolygonAreaKm2' in d
+          assert 'Selected AOI area: calculating' in d
+          print('Patched bytes:',len(a.encode()),len(d.encode()))
+          PY
+          python - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          class P(HTMLParser):
+              def __init__(self): super().__init__(); self.stack=[]
+              def handle_starttag(self,t,a): self.stack.append(t)
+          for f in ['aoi-tool.html','data-search.html']:
+              P().feed(Path(f).read_text(encoding='utf-8'))
+              print('HTML parsed:',f)
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add aoi-tool.html data-search.html
+          git commit -m 'Restore AOI map and show AOI area in DATA SEARCH'
+          git push origin gh-pages
