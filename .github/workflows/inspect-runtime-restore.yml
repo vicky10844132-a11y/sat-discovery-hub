@@ -1,0 +1,32 @@
+name: Inspect runtime restoration
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Inspect restoration workflow runs
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          curl -fsSL \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            'https://api.github.com/repos/${{ github.repository }}/actions/runs?per_page=30' > /tmp/runs.json
+          python - <<'PY'
+          import json
+          d=json.load(open('/tmp/runs.json'))
+          for r in d.get('workflow_runs',[]):
+              if r.get('name')=='Restore full tool runtime':
+                  print(r['id'],r['status'],r.get('conclusion'),r['head_sha'],r['html_url'])
+          PY
