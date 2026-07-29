@@ -1,0 +1,135 @@
+name: Fix AOI single visibility source
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fix-aoi-single-visibility-source.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout published tools
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 0
+
+      - name: Make checkbox the only AOI visibility controller
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          targets=['aoi-tool.html','aoi-tool-restored.html']
+          for filename in targets:
+              p=Path(filename)
+              s=p.read_text(encoding='utf-8')
+
+              old="function collectionStyle(i){const colors=['#087f73','#3b6f91','#a55c35','#7256a8','#d08a28','#21a179'];return colors[i%colors.length]}"
+              new=old+"\nfunction hideWorkspaceStateLayers(){Object.values(state.layers||{}).forEach(l=>{try{if(l&&map.hasLayer(l))map.removeLayer(l)}catch(e){}})}"
+              assert old in s, (filename,'collectionStyle')
+              s=s.replace(old,new,1)
+
+              old="function addCollection(feature,base='AOI',source='input',activate=true){if(!feature)return null;const f=normalizeFeature(clone(feature),feature.properties||{}),id='aoi-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),name=uniqueName(base,f);f.properties={...(f.properties||{}),name,source};const item={id,name,feature:f,source,visible:true,color:collectionStyle(pro.collection.length)};pro.collection.push(item);pro.selected.add(id);drawCollection(item);if(activate)activateCollection(id,false);renderCollection();return item}"
+              new="function addCollection(feature,base='AOI',source='input',activate=true,visible=true){if(!feature)return null;const f=normalizeFeature(clone(feature),feature.properties||{}),id='aoi-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),name=uniqueName(base,f);f.properties={...(f.properties||{}),name,source};const item={id,name,feature:f,source,visible:!!visible,color:collectionStyle(pro.collection.length)};pro.collection.push(item);if(item.visible)pro.selected.add(id);drawCollection(item);if(activate)activateCollection(id,false);renderCollection();return item}"
+              assert old in s, (filename,'addCollection')
+              s=s.replace(old,new,1)
+
+              old="function activateCollection(id,fit=true){const item=pro.collection.find(x=>x.id===id);if(!item)return;pro.activeId=id;setFeature(state.target,clone(item.feature),item.name,'collection-load');if(fit)fitFeature(item.feature);renderCollection();refreshProMetrics()}"
+              new="function activateCollection(id,fit=true){const item=pro.collection.find(x=>x.id===id);if(!item)return;pro.activeId=id;setFeature(state.target,clone(item.feature),item.name,'collection-load');hideWorkspaceStateLayers();if(fit)fitFeature(item.feature);renderCollection();refreshProMetrics()}"
+              assert old in s, (filename,'activateCollection')
+              s=s.replace(old,new,1)
+
+              old="const oldSet=window.setFeature;window.setFeature=function(key,f,name,method='input'){oldSet(key,f,name,method);if((key==='A'||key==='B')&&method!=='collection-load'&&method!=='demo')addCollection(f,name||key,method,false);refreshProMetrics()};"
+              new="const oldSet=window.setFeature;window.setFeature=function(key,f,name,method='input'){oldSet(key,f,name,method);if((key==='A'||key==='B')&&method!=='collection-load'&&method!=='demo')addCollection(f,name||key,method,false,true);if(method==='collection-load'||method!=='demo')hideWorkspaceStateLayers();refreshProMetrics()};"
+              assert old in s, (filename,'setFeature wrapper')
+              s=s.replace(old,new,1)
+
+              old="const oldOverlay=window.runOverlay;window.runOverlay=function(op){oldOverlay(op);setTimeout(()=>{if(op==='split'){if(state.features.splitIntersection)addCollection(state.features.splitIntersection,'Split_Intersection','split',false);if(state.features.splitRemainder)addCollection(state.features.splitRemainder,'Split_Remainder','split',false)}else if(state.features.result)addCollection(state.features.result,op==='union'?'Merged_AOI':op==='intersection'?'Intersection_AOI':op==='xor'?'Non_Overlap_AOI':'Difference_AOI','overlay',false);renderCollection()},20)};"
+              new="const oldOverlay=window.runOverlay;window.runOverlay=function(op){oldOverlay(op);setTimeout(()=>{if(op==='split'){if(state.features.splitIntersection)addCollection(state.features.splitIntersection,'Split_Intersection','split',false,true);if(state.features.splitRemainder)addCollection(state.features.splitRemainder,'Split_Remainder','split',false,true)}else if(state.features.result)addCollection(state.features.result,op==='union'?'Merged_AOI':op==='intersection'?'Intersection_AOI':op==='xor'?'Non_Overlap_AOI':'Difference_AOI','overlay',false,true);hideWorkspaceStateLayers();renderCollection()},20)};"
+              assert old in s, (filename,'runOverlay wrapper')
+              s=s.replace(old,new,1)
+
+              old="const oldGeom=window.runGeometry;window.runGeometry=function(op){oldGeom(op);setTimeout(()=>{if(state.features.result)addCollection(state.features.result,op,'geometry',false)},20)};"
+              new="const oldGeom=window.runGeometry;window.runGeometry=function(op){oldGeom(op);setTimeout(()=>{if(state.features.result)addCollection(state.features.result,op,'geometry',false,true);hideWorkspaceStateLayers()},20)};"
+              assert old in s, (filename,'runGeometry wrapper')
+              s=s.replace(old,new,1)
+
+              old="const oldAdjust=window.adjustBoundary;window.adjustBoundary=function(){oldAdjust();setTimeout(()=>{if(state.features.adjusted)addCollection(state.features.adjusted,'Adjusted_AOI','adjustment',false)},20)};"
+              new="const oldAdjust=window.adjustBoundary;window.adjustBoundary=function(){oldAdjust();setTimeout(()=>{if(state.features.adjusted)addCollection(state.features.adjusted,'Adjusted_AOI','adjustment',false,true);hideWorkspaceStateLayers()},20)};"
+              assert old in s, (filename,'adjust wrapper')
+              s=s.replace(old,new,1)
+
+              old="const oldUseGeo=window.useGeocode;window.useGeocode=function(){oldUseGeo();setTimeout(()=>{const f=state.features[state.target];if(f)addCollection(f,f.properties?.name||'Named_Boundary','named',false)},30)};"
+              new="const oldUseGeo=window.useGeocode;window.useGeocode=function(){oldUseGeo();setTimeout(()=>{const f=state.features[state.target];if(f)addCollection(f,f.properties?.name||'Named_Boundary','named',false,true);hideWorkspaceStateLayers()},30)};"
+              assert old in s, (filename,'geocode wrapper')
+              s=s.replace(old,new,1)
+
+              old="const oldLoad=window.loadDemo;window.loadDemo=function(){oldLoad();setTimeout(()=>{pro.collection=[];pro.layers.forEach(l=>map.removeLayer(l));pro.layers.clear();pro.selected.clear();if(state.features.A)addCollection(state.features.A,'Demo_AOI_A','demo',false);if(state.features.B)addCollection(state.features.B,'Demo_AOI_B','demo',false);renderCollection();refreshProMetrics()},30)};"
+              new="const oldLoad=window.loadDemo;window.loadDemo=function(){oldLoad();setTimeout(()=>{pro.collection=[];pro.layers.forEach(l=>map.removeLayer(l));pro.layers.clear();pro.selected.clear();hideWorkspaceStateLayers();if(state.features.A)addCollection(state.features.A,'Demo_AOI_A','demo',false,false);if(state.features.B)addCollection(state.features.B,'Demo_AOI_B','demo',false,false);renderCollection();refreshProMetrics()},30)};"
+              assert old in s, (filename,'loadDemo wrapper')
+              s=s.replace(old,new,1)
+
+              old="setTimeout(()=>{pro.collection=[];pro.layers.forEach(l=>map.removeLayer(l));pro.layers.clear();pro.selected.clear();if(state.features.A)addCollection(state.features.A,'Demo_AOI_A','demo',false);if(state.features.B)addCollection(state.features.B,'Demo_AOI_B','demo',false);renderCollection();applyStandaloneSettings();refreshProMetrics()},80);"
+              new="setTimeout(()=>{pro.collection=[];pro.layers.forEach(l=>map.removeLayer(l));pro.layers.clear();pro.selected.clear();hideWorkspaceStateLayers();if(state.features.A)addCollection(state.features.A,'Demo_AOI_A','demo',false,false);if(state.features.B)addCollection(state.features.B,'Demo_AOI_B','demo',false,false);renderCollection();applyStandaloneSettings();refreshProMetrics()},80);"
+              assert old in s, (filename,'initial demo collection')
+              s=s.replace(old,new,1)
+
+              marker='AOI_VISIBILITY_SINGLE_SOURCE_V3'
+              s=s.replace('</head>',f'<!-- {marker} -->\n</head>',1)
+              p.write_text(s,encoding='utf-8')
+
+          # New filename avoids immutable proxy cache.
+          Path('aoi-tool-checkbox-v3.html').write_text(Path('aoi-tool-restored.html').read_text(encoding='utf-8'),encoding='utf-8')
+          PY
+
+      - name: Browser test checkbox show and hide
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > visibility-test.html <<'HTML'
+          <!doctype html><html><body><iframe id="f" src="aoi-tool-checkbox-v3.html" style="width:1400px;height:900px"></iframe><pre id="r">WAIT</pre><script>
+          const f=document.getElementById('f');
+          f.onload=()=>setTimeout(()=>{
+            try{
+              const d=f.contentDocument;
+              const boxes=[...d.querySelectorAll('.collection-row input[type=checkbox]')];
+              const paths=()=>d.querySelectorAll('.leaflet-overlay-pane path').length;
+              const initialUnchecked=boxes.length===2&&boxes.every(x=>!x.checked);
+              const initialPaths=paths();
+              boxes[0].checked=true;boxes[0].dispatchEvent(new Event('change',{bubbles:true}));
+              const shown=paths()>initialPaths;
+              boxes[0].checked=false;boxes[0].dispatchEvent(new Event('change',{bubbles:true}));
+              const hidden=paths()===initialPaths;
+              const pass=initialUnchecked&&initialPaths===0&&shown&&hidden;
+              document.getElementById('r').textContent=(pass?'PASS':'FAIL')+JSON.stringify({boxes:boxes.length,initialUnchecked,initialPaths,shown,hidden,finalPaths:paths()});
+            }catch(e){document.getElementById('r').textContent='FAIL '+e.stack}
+          },3000);
+          </script></body></html>
+          HTML
+          python3 -m http.server 8765 >/tmp/aoi-visibility-http.log 2>&1 &
+          server=$!
+          trap 'kill $server || true' EXIT
+          sleep 2
+          browser="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          test -n "$browser"
+          "$browser" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --virtual-time-budget=12000 --dump-dom http://127.0.0.1:8765/visibility-test.html >/tmp/visibility-dom.html
+          grep 'PASS' /tmp/visibility-dom.html
+          grep -q 'AOI_VISIBILITY_SINGLE_SOURCE_V3' aoi-tool-checkbox-v3.html
+
+      - name: Commit fixed AOI version
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add aoi-tool.html aoi-tool-restored.html aoi-tool-checkbox-v3.html
+          git commit -m 'Make AOI checkbox the sole map visibility control'
+          git push origin gh-pages
