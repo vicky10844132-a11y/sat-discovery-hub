@@ -1,3 +1,4 @@
+# runtime restoration trigger 2
 name: Restore full tool runtime
 
 on:
@@ -86,10 +87,8 @@ jobs:
           def replace_core(path):
               p=Path(path)
               s=p.read_text(encoding='utf-8')
-              # Stylesheets
               s=re.sub(r'<link[^>]+href=["\']https://unpkg\.com/leaflet@1\.9\.4/dist/leaflet\.css["\'][^>]*>', '<link rel="stylesheet" href="vendor/leaflet.css">', s, flags=re.I)
               s=re.sub(r'<link[^>]+href=["\']https://cdnjs\.cloudflare\.com/ajax/libs/leaflet\.draw/1\.0\.4/leaflet\.draw\.css["\'][^>]*>', '<link rel="stylesheet" href="vendor/leaflet.draw.css">', s, flags=re.I)
-              # Scripts, including the temporary onerror fallbacks.
               replacements={
                 r'<script[^>]+src=["\']https://unpkg\.com/leaflet@1\.9\.4/dist/leaflet\.js["\'][^>]*></script>':'<script src="vendor/leaflet.js"></script>',
                 r'<script[^>]+src=["\']https://unpkg\.com/leaflet-draw@1\.0\.4/dist/leaflet\.draw\.js["\'][^>]*></script>':'<script src="vendor/leaflet.draw.js"></script>',
