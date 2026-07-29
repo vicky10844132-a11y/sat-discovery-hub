@@ -1,2 +1,2 @@
 Validate DATA SEARCH and AOI TOOL GitHub Pages build.
-Direct file transfer test.
+Complete repository bundle validation.
