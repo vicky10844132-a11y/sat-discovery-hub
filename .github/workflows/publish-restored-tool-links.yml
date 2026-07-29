@@ -1,0 +1,33 @@
+name: Publish restored tool paths
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-restored-tool-links.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 0
+      - name: Create fresh restored paths
+        run: |
+          set -euo pipefail
+          cp aoi-tool.html aoi-tool-restored.html
+          cp data-search.html data-search-restored.html
+          grep -q 'vendor/leaflet.js' aoi-tool-restored.html
+          grep -q 'vendor/turf.min.js' aoi-tool-restored.html
+          grep -q 'vendor/leaflet.js' data-search-restored.html
+          grep -q 'vendor/satellite.min.js' data-search-restored.html
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add aoi-tool-restored.html data-search-restored.html
+          git commit -m 'Publish restored full-function tool links'
+          git push origin gh-pages
