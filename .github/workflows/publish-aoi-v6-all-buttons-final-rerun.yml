@@ -1,0 +1,75 @@
+name: Publish AOI V6 all buttons final rerun
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-aoi-v6-all-buttons-final-rerun.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  validate-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 0
+
+      - name: Apply previously validated repairs
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git show origin/main:.github/workflows/publish-aoi-v6-all-buttons-final.yml > /tmp/source.yml
+          python - <<'PY'
+          from pathlib import Path
+          src=Path('/tmp/source.yml').read_text()
+          def extract(name,next_name,path):
+              a=src.index('      - name: '+name)
+              a=src.index('        run: |\n',a)+len('        run: |\n')
+              b=src.index('      - name: '+next_name,a)
+              lines=src[a:b].rstrip().splitlines()
+              Path(path).write_text('\n'.join(x[10:] if x.startswith('          ') else x for x in lines)+'\n')
+          extract('Reapply validated edit and measurement repair','Replace obsolete shp-write ZIP wrapper','/tmp/apply-edit.sh')
+          extract('Replace obsolete shp-write ZIP wrapper','Install Chromium test engine','/tmp/apply-shp.sh')
+          PY
+          bash /tmp/apply-edit.sh
+          bash /tmp/apply-shp.sh
+
+      - name: Install browser
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm install playwright@latest --no-audit --no-fund
+          npx playwright install --with-deps chromium
+
+      - name: Corrected full validation
+        run: |
+          cat > test.js <<'JS'
+          const {chromium}=require('playwright');
+          const assert=(x,m)=>{if(!x)throw new Error(m)};
+          (async()=>{const browser=await chromium.launch({headless:true});const context=await browser.newContext({viewport:{width:1600,height:1000},acceptDownloads:true});const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>d.accept('DD'));await page.goto('http://127.0.0.1:8765/aoi-tool-full-v6.html',{waitUntil:'domcontentloaded'});await page.waitForFunction(()=>window.L&&window.turf&&document.querySelectorAll('.collection-row').length===2);await page.waitForTimeout(800);
+          const report=await page.evaluate(()=>{const bs=[...document.querySelectorAll('button[onclick]')],invalid=bs.filter(b=>typeof b.onclick!=='function').length,missing=[];for(const b of bs){const m=(b.getAttribute('onclick')||'').match(/^\s*([A-Za-z_$][\w$]*)\s*\(/);if(m&&typeof window[m[1]]!=='function')missing.push(m[1])}return{count:bs.length,invalid,missing:[...new Set(missing)]}});assert(report.count>=35&&!report.invalid&&!report.missing.length,'Handlers '+JSON.stringify(report));console.log('PASS handlers',report.count);
+          await page.getByRole('button',{name:'Load Demo'}).click();await page.waitForFunction(()=>document.querySelectorAll('.collection-row').length===2);await page.getByRole('button',{name:'Settings'}).click();assert(await page.locator('#settingsModal.show').count(),'Settings');await page.locator('#settingsModal .close').click();await page.getByRole('button',{name:'Documentation'}).click();assert(await page.locator('#helpModal.show').count(),'Documentation');await page.locator('#helpModal .close').click();for(const x of ['build','rules','overlay','compare','export']){await page.locator(`.rail-btn[data-panel="${x}"]`).click();assert(await page.locator(`#panel-${x}.active`).count(),'Panel '+x)}console.log('PASS shell controls');
+          await page.locator('.rail-btn[data-panel="build"]').click();await page.locator('.collection-name').first().click();await page.getByRole('button',{name:'Edit Active'}).click();await page.waitForTimeout(200);assert(await page.locator('.leaflet-editing-icon').count(),'Edit handles');const g0=await page.evaluate(()=>JSON.stringify(state.features.A)),m=page.locator('.leaflet-editing-icon').first(),box=await m.boundingBox();await page.mouse.move(box.x+5,box.y+5);await page.mouse.down();await page.mouse.move(box.x+29,box.y+20,{steps:5});await page.mouse.up();await page.getByRole('button',{name:'Save Edit'}).click();await page.waitForTimeout(150);assert(await page.evaluate(()=>JSON.stringify(state.features.A))!==g0,'Edit save');console.log('PASS edit');
+          const rows=await page.locator('.collection-row').count(),geom=await page.evaluate(()=>JSON.stringify(state.features.A));await page.locator('button[title="Measure distance"]').click();await page.evaluate(()=>map.fire(L.Draw.Event.CREATED,{layer:L.polyline([[1.30,103.78],[1.32,103.82]])}));await page.waitForTimeout(120);assert(await page.locator('.collection-row').count()===rows&&await page.evaluate(()=>JSON.stringify(state.features.A))===geom,'Distance isolation');await page.locator('button[title="Measure area"]').click();await page.evaluate(()=>map.fire(L.Draw.Event.CREATED,{layer:L.polygon([[1.30,103.78],[1.30,103.82],[1.34,103.82]])}));await page.waitForTimeout(120);assert(await page.locator('.collection-row').count()===rows&&await page.evaluate(()=>JSON.stringify(state.features.A))===geom,'Area isolation');console.log('PASS measures');
+          await page.locator('.rail-btn[data-panel="overlay"]').click();for(const op of ['union','intersection','a-b','b-a','xor','split']){await page.locator(`button[onclick="runOverlay('${op}')"]`).click();await page.waitForTimeout(90)}console.log('PASS overlays');for(const op of ['buffer','simplify','convex','envelope','oriented','repair','removeholes','explode']){await page.locator(`button[onclick="runGeometry('${op}')"]`).click();await page.waitForTimeout(90)}console.log('PASS geometry');
+          await page.locator('.rail-btn[data-panel="rules"]').click();await page.locator('#minArea').fill('2000');await page.locator('#minWidth').fill('40');await page.getByRole('button',{name:'Adjust Boundary'}).click();await page.waitForTimeout(180);await page.locator('.rail-btn[data-panel="compare"]').click();for(const n of ['Show Added Area','Show Removed Area','Show Overlap','Clear Difference Layers'])await page.getByRole('button',{name:n}).click();console.log('PASS rules compare');
+          await page.waitForTimeout(600);const z0=await page.evaluate(()=>map.getZoom());await page.locator('button[title="Zoom in"]').click();await page.waitForTimeout(650);const z1=await page.evaluate(()=>map.getZoom());assert(z1>z0,'Zoom in');await page.locator('button[title="Zoom out"]').click();await page.waitForTimeout(650);assert(await page.evaluate(()=>map.getZoom())<z1,'Zoom out');await page.locator('#edgeLengthToggle').click();await page.locator('#edgeLengthToggle').click();await page.locator('button[title="Switch basemap"]').click();await page.locator('button[title="Fit active AOI"]').click();console.log('PASS map');
+          await page.evaluate(()=>{if(!state.features.original)state.features.original=turf.clone(state.features.A);if(!state.features.adjusted)state.features.adjusted=turf.transformTranslate(state.features.A,2,90,{units:'kilometers'});renderLayer('original');renderLayer('adjusted');refreshAll()});await page.locator('.rail-btn[data-panel="export"]').click();for(const [call,ext] of [["exportData('geojson')",'.geojson'],["exportData('kml')",'.kml'],["exportData('kmz')",'.kmz'],["exportData('wkt')",'.wkt'],["exportData('csv')",'.csv'],["exportData('shp')",'.zip'],["exportData('package')",'.zip'],['exportComparisonReport()','.html']]){const wait=page.waitForEvent('download',{timeout:15000});await page.locator(`button[onclick="${call}"]`).click();const d=await wait,f=d.suggestedFilename();assert(f.toLowerCase().endsWith(ext),call+' '+f);console.log('PASS export',f)}assert(!errors.length,'Errors '+errors.join(' | '));console.log('AOI_ALL_BUTTONS_FINAL_PASS');await browser.close()})().catch(e=>{console.error(e);process.exit(1)});
+          JS
+          python3 -m http.server 8765 >/tmp/aoi-final.log 2>&1 &
+          server=$!
+          trap 'kill $server || true' EXIT
+          sleep 2
+          node test.js
+
+      - name: Publish
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add aoi-tool-full-v6.html
+          git commit -m 'Publish final AOI V6 all-button validated build'
+          git push origin gh-pages
