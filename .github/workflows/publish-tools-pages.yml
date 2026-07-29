@@ -35,7 +35,12 @@ jobs:
           curl -fsSL "https://raw.githubusercontent.com/vicky10844132-a11y/sat-discovery-hub/9c6260ce18c35acf2fb030fe7abd9673772e4e03/data-search-assets/part01.b64" > /tmp/01
           curl -fsSL "https://raw.githubusercontent.com/vicky10844132-a11y/sat-discovery-hub/f3f4ef40b7c29ff7cbde10eceb622fe7337bf2a0/data-search-assets/r00.b64" > /tmp/02
           curl -fsSL "https://raw.githubusercontent.com/vicky10844132-a11y/sat-discovery-hub/cf30d35b1df89c6b12cb5d612c7cea3d6da83e3f/data-search-assets/r01.b64" > /tmp/03
-          cat /tmp/00 /tmp/01 /tmp/02 /tmp/03 | tr -d '\r\n ' | base64 --decode | gzip --decompress > _site/data-search.html
+          for f in /tmp/00 /tmp/01 /tmp/02 /tmp/03; do wc -c "$f"; sha256sum "$f"; done
+          cat /tmp/00 /tmp/01 /tmp/02 /tmp/03 | tr -d '\r\n ' > /tmp/data.b64
+          echo "Combined base64 bytes: $(wc -c < /tmp/data.b64)"
+          base64 --decode /tmp/data.b64 > /tmp/data.gz
+          echo "Compressed bytes: $(wc -c < /tmp/data.gz)"
+          gzip --decompress --stdout /tmp/data.gz > _site/data-search.html
           test "$(wc -c < _site/data-search.html)" -gt 400000
           grep -qi '<!doctype html' _site/data-search.html
           grep -qi 'DATA SEARCH' _site/data-search.html
