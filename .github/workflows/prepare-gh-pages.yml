@@ -1,0 +1,48 @@
+name: Prepare hidden tools site
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/prepare-gh-pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout tools source
+        uses: actions/checkout@v4
+        with:
+          ref: tools-pages
+      - name: Build verified site
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p _site
+          cat data-search-assets/part00.b64 data-search-assets/part01.b64 data-search-assets/r00.b64 data-search-assets/r01.b64 data-search-assets/part03.b64 data-search-assets/part04.b64 data-search-assets/part05.b64 data-search-assets/part06.b64 data-search-assets/part07.b64 data-search-assets/part08.b64 data-search-assets/part09.b64 | tr -d '\r\n ' | base64 --decode | gzip --decompress > _site/data-search.html
+          cat aoi-tool-assets/part*.b64 | tr -d '\r\n ' | base64 --decode | gzip --decompress > _site/aoi-tool.html
+          test "$(wc -c < _site/data-search.html)" -eq 490261
+          test "$(wc -c < _site/aoi-tool.html)" -eq 85764
+          echo 'f18d068cac522bdcb5bebfeeaec7e12a0a64de73ddc8250aef3dc9387987a72c  _site/data-search.html' | sha256sum -c -
+          echo '53d214b46eaaddce532d898e5297bb22bf9acde67ce97664a1fe22feafd28aae  _site/aoi-tool.html' | sha256sum -c -
+          printf '%s\n' '<!doctype html><html><head><meta charset="utf-8"><meta name="robots" content="noindex,nofollow"><title>Tools</title></head><body></body></html>' > _site/index.html
+          printf '%s\n' 'User-agent: *' 'Disallow: /' > _site/robots.txt
+          touch _site/.nojekyll
+      - name: Publish prepared files to gh-pages branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd _site
+          git init
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git checkout -b gh-pages
+          git add .
+          git commit -m 'Publish DATA SEARCH and AOI TOOL'
+          git push --force "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" gh-pages
