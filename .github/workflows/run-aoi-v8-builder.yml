@@ -1,0 +1,77 @@
+name: Run AOI V8 builder
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/run-aoi-v8-builder.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-test-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout main scripts
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: source
+
+      - name: Checkout published site
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: site
+          fetch-depth: 0
+
+      - name: Extract and run V8 builder
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import os, textwrap
+          raw=Path('source/.github/workflows/build-aoi-v8-multi.yml').read_text(encoding='utf-8')
+          marker="python3 - <<'PY'\n"
+          start=raw.index(marker)+len(marker)
+          end=raw.index("\n          PY",start)
+          code=textwrap.dedent(raw[start:end])
+          os.chdir('site')
+          exec(compile(code,'build_aoi_v8.py','exec'),{'__name__':'__main__'})
+          PY
+
+      - name: Install Chromium
+        working-directory: site
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm install playwright@latest --no-audit --no-fund
+          npx playwright install --with-deps chromium
+
+      - name: Extract and run V8 browser test
+        working-directory: site
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import textwrap
+          raw=Path('../source/.github/workflows/build-aoi-v8-multi.yml').read_text(encoding='utf-8')
+          marker="cat > test-v8.js <<'JS'\n"
+          start=raw.index(marker)+len(marker)
+          end=raw.index("\n          JS",start)
+          Path('test-v8.js').write_text(textwrap.dedent(raw[start:end]),encoding='utf-8')
+          PY
+          python3 -m http.server 8765 >/tmp/aoi-v8-http.log 2>&1 &
+          server=$!
+          trap 'kill $server || true' EXIT
+          sleep 2
+          node test-v8.js
+
+      - name: Publish V8
+        working-directory: site
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add aoi-tool-full-v8.html
+          git commit -m 'Publish AOI V8 multi-range workflow and edge adjustment'
+          git push origin gh-pages
