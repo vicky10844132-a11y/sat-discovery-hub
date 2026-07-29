@@ -1,4 +1,4 @@
-# runtime restoration trigger 2
+# runtime restoration trigger 3
 name: Restore full tool runtime
 
 on:
@@ -82,37 +82,47 @@ jobs:
           set -euo pipefail
           python - <<'PY'
           from pathlib import Path
-          import re
 
-          def replace_core(path):
-              p=Path(path)
+          replacements={
+            'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css':'vendor/leaflet.css',
+            'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css':'vendor/leaflet.css',
+            'https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css':'vendor/leaflet.draw.css',
+            'https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css':'vendor/leaflet.draw.css',
+            'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js':'vendor/leaflet.js',
+            'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js':'vendor/leaflet.js',
+            'https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js':'vendor/leaflet.draw.js',
+            'https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js':'vendor/leaflet.draw.js',
+            'https://cdn.jsdelivr.net/npm/@turf/turf@7.2.0/turf.min.js':'vendor/turf.min.js',
+            'https://unpkg.com/@turf/turf@7.2.0/turf.min.js':'vendor/turf.min.js',
+            'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js':'vendor/jszip.min.js',
+            'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js':'vendor/jszip.min.js',
+            'https://unpkg.com/shp-write@0.3.2/shpwrite.js':'vendor/shpwrite.js',
+            'https://cdn.jsdelivr.net/npm/shp-write@0.3.2/shpwrite.js':'vendor/shpwrite.js',
+            'https://cdn.jsdelivr.net/npm/satellite.js@6.0.1/dist/satellite.min.js':'vendor/satellite.min.js',
+            'https://unpkg.com/satellite.js@6.0.1/dist/satellite.min.js':'vendor/satellite.min.js',
+          }
+
+          for filename in ['aoi-tool.html','data-search.html']:
+              p=Path(filename)
               s=p.read_text(encoding='utf-8')
-              s=re.sub(r'<link[^>]+href=["\']https://unpkg\.com/leaflet@1\.9\.4/dist/leaflet\.css["\'][^>]*>', '<link rel="stylesheet" href="vendor/leaflet.css">', s, flags=re.I)
-              s=re.sub(r'<link[^>]+href=["\']https://cdnjs\.cloudflare\.com/ajax/libs/leaflet\.draw/1\.0\.4/leaflet\.draw\.css["\'][^>]*>', '<link rel="stylesheet" href="vendor/leaflet.draw.css">', s, flags=re.I)
-              replacements={
-                r'<script[^>]+src=["\']https://unpkg\.com/leaflet@1\.9\.4/dist/leaflet\.js["\'][^>]*></script>':'<script src="vendor/leaflet.js"></script>',
-                r'<script[^>]+src=["\']https://unpkg\.com/leaflet-draw@1\.0\.4/dist/leaflet\.draw\.js["\'][^>]*></script>':'<script src="vendor/leaflet.draw.js"></script>',
-                r'<script[^>]+src=["\']https://cdn\.jsdelivr\.net/npm/@turf/turf@7\.2\.0/turf\.min\.js["\'][^>]*></script>':'<script src="vendor/turf.min.js"></script>',
-                r'<script[^>]+src=["\']https://cdnjs\.cloudflare\.com/ajax/libs/jszip/3\.10\.1/jszip\.min\.js["\'][^>]*></script>':'<script src="vendor/jszip.min.js"></script>',
-                r'<script[^>]+src=["\']https://unpkg\.com/shp-write@0\.3\.2/shpwrite\.js["\'][^>]*></script>':'<script src="vendor/shpwrite.js"></script>',
-                r'<script[^>]+src=["\']https://cdn\.jsdelivr\.net/npm/satellite\.js@6\.0\.1/dist/satellite\.min\.js["\'][^>]*></script>':'<script src="vendor/satellite.min.js"></script>',
-              }
-              for pattern,repl in replacements.items():
-                  s,n=re.subn(pattern,repl,s,count=1,flags=re.I)
-                  if n!=1:
-                      raise SystemExit(f'{path}: dependency reference not found for {pattern}')
+              before=s
+              for old,new in replacements.items():
+                  s=s.replace(old,new)
+              if s==before:
+                  raise SystemExit(f'{filename}: no dependency URLs changed')
               p.write_text(s,encoding='utf-8')
-
-          replace_core('aoi-tool.html')
-          replace_core('data-search.html')
 
           a=Path('aoi-tool.html').read_text(encoding='utf-8')
           d=Path('data-search.html').read_text(encoding='utf-8')
-          assert '<script src="vendor/leaflet.js"></script>' in a and '<script src="vendor/turf.min.js"></script>' in a
-          assert '<script src="vendor/leaflet.js"></script>' in d and '<script src="vendor/satellite.min.js"></script>' in d
+          assert 'src="vendor/leaflet.js"' in a and 'src="vendor/turf.min.js"' in a
+          assert 'src="vendor/leaflet.js"' in d and 'src="vendor/satellite.min.js"' in d
           assert 'aoi-offline-map' in a
           assert 'Selected AOI area:' in d
           assert 'class="map-actions"' not in d
+          blocked=['unpkg.com/leaflet','leaflet-draw@','@turf/turf@','cdnjs.cloudflare.com/ajax/libs/jszip','shp-write@','satellite.js@6.0.1']
+          for name,text in [('AOI',a),('DATA SEARCH',d)]:
+              for token in blocked:
+                  assert token not in text, (name,token)
           for name in ['leaflet.js','leaflet.css','leaflet.draw.js','leaflet.draw.css','turf.min.js','jszip.min.js','shpwrite.js','satellite.min.js']:
               p=Path('vendor')/name
               assert p.exists() and p.stat().st_size>1000, (name,p.stat().st_size if p.exists() else 0)
