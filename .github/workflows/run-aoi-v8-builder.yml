@@ -13,7 +13,7 @@ permissions:
 jobs:
   build-test-publish:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 12
     steps:
       - name: Checkout main scripts
         uses: actions/checkout@v4
@@ -56,12 +56,14 @@ jobs:
           p.write_text(s,encoding='utf-8')
           PY
 
-      - name: Install Chromium
+      - name: Install browser test driver
         working-directory: site
         run: |
           npm init -y >/dev/null 2>&1
-          npm install playwright@latest --no-audit --no-fund
-          npx playwright install --with-deps chromium
+          npm install playwright-core@latest --no-audit --no-fund
+          CHROME_BIN=$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser)
+          test -n "$CHROME_BIN"
+          echo "CHROME_BIN=$CHROME_BIN" >> "$GITHUB_ENV"
 
       - name: Extract and run V8 browser test
         working-directory: site
@@ -74,6 +76,8 @@ jobs:
           end=raw.index("\n          JS",start)
           lines=raw[start:end].splitlines()
           code='\n'.join(line[10:] if line.startswith('          ') else line for line in lines)
+          code=code.replace("require('playwright')","require('playwright-core')")
+          code=code.replace("chromium.launch({headless:true})","chromium.launch({headless:true,executablePath:process.env.CHROME_BIN,args:['--no-sandbox']})")
           Path('test-v8.js').write_text(code,encoding='utf-8')
           PY
           python3 -m http.server 8765 >/tmp/aoi-v8-http.log 2>&1 &
