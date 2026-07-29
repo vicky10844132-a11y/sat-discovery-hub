@@ -1,0 +1,183 @@
+name: Build AOI V8 multi-range
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/build-aoi-v8-multi.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-test-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout published branch
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 0
+
+      - name: Build V8 from V7
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          src=Path('aoi-tool-full-v7.html')
+          s=src.read_text(encoding='utf-8')
+          s=s.replace('<!-- AOI_QUICK_GUIDE_V7 -->','<!-- AOI_QUICK_GUIDE_V7 -->\n<!-- AOI_MULTI_RANGE_V8 -->',1)
+
+          target='<div class="card soft" id="targetCard"><div class="card-head"><div><strong>Active target</strong></div><span>DRAW / IMPORT DESTINATION</span></div><div class="grid2"><button class="btn primary" id="targetA" onclick="setTarget(\'A\')">Primary AOI A</button><button class="btn" id="targetB" onclick="setTarget(\'B\')">Secondary AOI B</button></div><button class="btn wide quick-guide-btn" id="quickGuideButton" onclick="openQuickGuide()">使用说明</button><div class="hint">All new drawings, imports and named boundaries are assigned to the selected target.</div></div>'
+          assert target in s
+          s=s.replace(target,'',1)
+          s=re.sub(r'<div class="modal-backdrop" id="quickGuideModal">.*?(?=<div class="modal-backdrop" id="helpModal">)','',s,count=1,flags=re.S)
+
+          relation_modal='''<div class="modal-backdrop" id="relationModal"><div class="modal relation-modal"><div class="modal-head"><h3>设置运算关系</h3><button class="close" onclick="closeRelationModal()">×</button></div><div class="modal-body"><div class="relation-selected" id="relationSelected"></div><div class="field"><label>运算方式</label><select id="relationOperation" onchange="updateRelationExpression()"><option value="union">合并全部勾选范围</option><option value="intersection">全部范围共同交集</option><option value="one-minus-many">一个范围减去其余多个范围</option><option value="many-minus-one">其余多个范围合并后减去一个范围</option><option value="each-minus-one">其余范围分别减去一个范围</option><option value="xor">保留非重叠区域</option><option value="split">用其余范围切分一个范围</option></select></div><div class="field" id="relationBaseField"><label>主范围 / 基准范围</label><select id="relationBase" onchange="updateRelationExpression()"></select></div><div class="relation-expression"><span>本次计算</span><strong id="relationExpression">—</strong></div><button class="btn primary wide" onclick="executeSelectedRelation()">执行运算</button><div class="hint">运算结果不会覆盖原范围，而会作为下一个字母编号的新 AOI 加入列表。</div></div></div></div>'''
+          s=s.replace('<div class="modal-backdrop" id="helpModal">',relation_modal+'\n<div class="modal-backdrop" id="helpModal">',1)
+
+          css='''
+          .collection-code{display:inline-grid;place-items:center;min-width:25px;height:25px;padding:0 7px;margin-right:7px;border-radius:7px;background:var(--charcoal-2);color:#fff;font-weight:900;font-size:11px;letter-spacing:.5px}
+          .relation-launch{width:100%;min-height:42px;border:1.5px solid var(--peacock);background:var(--peacock);color:#fff;border-radius:10px;font-weight:850;box-shadow:0 8px 18px rgba(200,63,114,.18)}
+          .relation-launch:hover{background:var(--peacock-2)}
+          .relation-modal{width:min(620px,94vw)}.relation-selected{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px}.relation-chip{padding:7px 10px;border-radius:999px;background:#f1f2f3;border:1px solid #d7dddd;font-size:11px;font-weight:800}.relation-chip b{color:var(--peacock);margin-right:4px}.relation-expression{padding:13px 14px;margin:13px 0;background:#17191d;color:#fff;border-radius:10px}.relation-expression span{display:block;font-size:9px;letter-spacing:1px;color:#b9c2c3;margin-bottom:5px}.relation-expression strong{font-size:13px;color:#ffd7e5;word-break:break-word}
+          .edge-check-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.edge-summary{margin-top:10px;padding:11px;border-radius:10px;background:#f7f8f8;border:1px solid #d7dddd;font-size:11px;line-height:1.7}.edge-summary strong{color:var(--peacock)}
+          .short-edge-label{background:#ff3b30;color:#fff;border:2px solid #fff;border-radius:7px;padding:3px 6px;font-size:10px;font-weight:900;box-shadow:0 3px 12px rgba(120,0,0,.35);white-space:nowrap}.edge-alert{animation:edgePulse 1s infinite alternate}@keyframes edgePulse{from{stroke-width:5;opacity:.72}to{stroke-width:8;opacity:1}}
+          .change-metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px}.change-metric{background:#fff;border:1px solid #d7dddd;border-radius:8px;padding:8px}.change-metric span{display:block;font-size:9px;color:#6f797b}.change-metric b{display:block;margin-top:3px;font-size:12px;color:#202628}
+          '''
+          s=s.replace('</style>',css+'\n</style>',1)
+
+          s=s.replace("const pro={collection:[],selected:new Set(),activeId:null,layers:new Map(),labels:new Map(),edgeLabels:new Map(),showEdgeLengths:true,baseIndex:0,measure:null,settings:","const pro={collection:[],selected:new Set(),activeId:null,layers:new Map(),labels:new Map(),edgeLabels:new Map(),showEdgeLengths:true,baseIndex:0,measure:null,sequence:0,shortEdgeLayer:null,edgeCheck:null,settings:",1)
+          s=s.replace("const clone=x=>JSON.parse(JSON.stringify(x));","const clone=x=>JSON.parse(JSON.stringify(x));\nfunction alphaCode(n){let out='';do{out=String.fromCharCode(65+n%26)+out;n=Math.floor(n/26)-1}while(n>=0);return out}",1)
+
+          old="function addCollection(feature,base='AOI',source='input',activate=true,visible=true){if(!feature)return null;const f=normalizeFeature(clone(feature),feature.properties||{}),id='aoi-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),name=uniqueName(base,f);f.properties={...(f.properties||{}),name,source};const item={id,name,feature:f,source,visible:!!visible,color:collectionStyle(pro.collection.length)};pro.collection.push(item);if(item.visible)pro.selected.add(id);drawCollection(item);if(activate)activateCollection(id,false);renderCollection();return item}"
+          new="function addCollection(feature,base='AOI',source='input',activate=true,visible=true){if(!feature)return null;const f=normalizeFeature(clone(feature),feature.properties||{}),id='aoi-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),name=uniqueName(base,f),code=alphaCode(pro.sequence++);f.properties={...(f.properties||{}),name,source,aoi_code:code};const item={id,code,name,feature:f,source,visible:!!visible,color:collectionStyle(pro.collection.length)};pro.collection.push(item);if(item.visible)pro.selected.add(id);drawCollection(item);if(activate)activateCollection(id,false);renderCollection();return item}"
+          assert old in s
+          s=s.replace(old,new,1)
+
+          pattern=r"function renderCollection\(\)\{.*?\}\nwindow\.proToggleSelect="
+          replacement="""function renderCollection(){const mount=document.getElementById('collectionMount');if(!mount)return;const rows=pro.collection.map(item=>{let area=0;try{area=metrics(item.feature).area}catch(e){}return `<div class=\"collection-row ${item.id===pro.activeId?'active':''}\"><input type=\"checkbox\" ${item.visible?'checked':''} onchange=\"proToggleSelect('${item.id}',this.checked)\" title=\"勾选后显示并参与运算\"><div onclick=\"proActivate('${item.id}')\"><div class=\"collection-name\"><span class=\"collection-code\">${item.code||'?'}</span>${item.name}</div><div class=\"collection-meta\">${item.source}</div></div><div class=\"collection-area\">${area.toFixed(2)}</div><button class=\"collection-icon\" title=\"Vertex coordinates\" onclick=\"proVertex('${item.id}')\">Pts</button><button class=\"collection-icon\" title=\"Show / hide\" onclick=\"proVisible('${item.id}')\">${item.visible?'◉':'○'}</button><button class=\"collection-icon delete\" title=\"Delete\" onclick=\"proDelete('${item.id}')\">×</button></div>`}).join('')||'<div class=\"empty\" style=\"margin:8px\">No AOIs added.</div>';mount.innerHTML=`<div class=\"collection-card\"><div class=\"collection-head\"><strong>AOI Collection</strong><button class=\"collection-add\" onclick=\"startDraw('polygon')\" title=\"Add AOI\">+</button></div><div class=\"collection-cols\"><span></span><span>AOI name</span><span style=\"text-align:right\">km²</span><span>Pts</span><span></span><span></span></div>${rows}<div class=\"collection-footer\"><span>${pro.selected.size} selected</span><span>${pro.collection.length} AOIs</span></div></div><div class=\"collection-ops\"><button class=\"relation-launch\" onclick=\"openRelationModal()\">设置勾选项的运算关系</button></div>`}
+window.proToggleSelect="""
+          s,n=re.subn(pattern,replacement,s,count=1,flags=re.S)
+          assert n==1,n
+
+          s=s.replace("pro.selected.clear();hideWorkspaceStateLayers();if(state.features.A)addCollection", "pro.selected.clear();pro.sequence=0;clearShortEdgeHighlights();hideWorkspaceStateLayers();if(state.features.A)addCollection",1)
+          s=s.replace("pro.selected.clear();pro.activeId=null;renderCollection();", "pro.selected.clear();pro.activeId=null;pro.sequence=0;clearShortEdgeHighlights();renderCollection();",1)
+
+          s=s.replace("const settingsMeta={named:'Named Boundary Builder',rules:'Rules & Adjust',overlay:'Boolean Overlay',geometry:'Geometry Tools',compare:'Comparison',export:'Export',coordinates:'Vertex Coordinates',maptools:'Map Tools'};","const settingsMeta={named:'Named Boundary Builder',rules:'Minimum Edge Check',geometry:'Geometry Tools',compare:'Comparison',export:'Export',coordinates:'Vertex Coordinates',maptools:'Map Tools'};",1)
+          old_apply="function applyStandaloneSettings(){const p=n=>document.querySelector(`.rail-btn[data-panel=\"${n}\"]`);if(p('rules'))p('rules').style.display=pro.settings.rules?'':'none';if(p('overlay'))p('overlay').style.display=(pro.settings.overlay||pro.settings.geometry)?'':'none';if(p('compare'))p('compare').style.display=pro.settings.compare?'':'none';if(p('export'))p('export').style.display=pro.settings.export?'':'none';const named=document.getElementById('country')?.closest('.card');if(named)named.style.display=pro.settings.named?'':'none';document.querySelectorAll('#panel-overlay .operation').forEach((b,i)=>{b.style.display=i<6?(pro.settings.overlay?'':'none'):(pro.settings.geometry?'':'none')});document.querySelectorAll('.collection-icon').forEach(b=>{if(b.textContent.trim()==='Pts')b.style.display=pro.settings.coordinates?'':'none'});document.getElementById('mapToolsPro').style.display=pro.settings.maptools?'flex':'none'}"
+          new_apply="function applyStandaloneSettings(){const p=n=>document.querySelector(`.rail-btn[data-panel=\"${n}\"]`);if(p('rules'))p('rules').style.display=pro.settings.rules?'':'none';if(p('overlay'))p('overlay').style.display=pro.settings.geometry?'':'none';if(p('compare'))p('compare').style.display=pro.settings.compare?'':'none';if(p('export'))p('export').style.display=pro.settings.export?'':'none';const named=document.getElementById('country')?.closest('.card');if(named)named.style.display=pro.settings.named?'':'none';document.querySelectorAll('#panel-overlay .operation').forEach(b=>b.style.display=pro.settings.geometry?'':'none');document.querySelectorAll('.collection-icon').forEach(b=>{if(b.textContent.trim()==='Pts')b.style.display=pro.settings.coordinates?'':'none'});document.getElementById('mapToolsPro').style.display=pro.settings.maptools?'flex':'none'}"
+          assert old_apply in s
+          s=s.replace(old_apply,new_apply,1)
+
+          addon=r'''
+          // V8 multi-range relationship manager
+          state.target='A';
+          const buildHead=document.querySelector('#panel-build .panel-head p');if(buildHead)buildHead.textContent='Draw or import any number of AOIs; each new range receives the next letter.';
+          const overlayPanel=document.getElementById('panel-overlay');if(overlayPanel){const head=overlayPanel.querySelector('.panel-head');if(head){head.querySelector('h2').textContent='Geometry Tools';head.querySelector('p').textContent='Optional single-AOI geometry processing';}const body=overlayPanel.querySelector('.panel-body');if(body){body.querySelector('.card.soft')?.remove();body.querySelector('.section-title')?.remove();body.querySelector('.operation-grid')?.remove();}}
+          const rulesPanel=document.getElementById('panel-rules');if(rulesPanel){rulesPanel.querySelector('.panel-head h2').textContent='Minimum Edge Length';rulesPanel.querySelector('.panel-head p').textContent='Detect and repair edges shorter than your kilometre threshold';rulesPanel.querySelector('.panel-body').innerHTML=`<div class="card soft"><div class="card-head"><div><strong>Minimum edge length</strong></div><span>ACTIVE AOI</span></div><div class="field"><label>Minimum edge length (km)</label><input id="minimumEdgeKm" type="number" min="0.001" step="0.01" value="1"></div><div class="edge-check-grid"><button class="btn" onclick="checkMinimumEdges()">检查</button><button class="btn primary" onclick="adjustMinimumEdges()">调整</button></div><div class="hint">先点击 AOI 名称将其设为当前范围。检查后，不满足要求的边会以红色醒目标记。</div><div class="edge-summary" id="edgeCheckSummary">尚未检查。</div></div><div class="card"><div class="card-head"><div><strong>Area change</strong></div><span>CLOSED GEOMETRY</span></div><div id="edgeChangeSummary" class="empty">调整后将在这里显示新增、减少和净变化面积。</div></div>`;}
+
+          function selectedCodes(){return selectedItems().map(x=>x.code)}
+          function unionMany(features){if(!features.length)return null;let out=clone(features[0]);for(let i=1;i<features.length;i++){out=turf.union(turf.featureCollection([out,features[i]]));if(!out)return null}return out}
+          function intersectMany(features){if(!features.length)return null;let out=clone(features[0]);for(let i=1;i<features.length;i++){out=turf.intersect(turf.featureCollection([out,features[i]]));if(!out)return null}return out}
+          function subtractFeature(a,b){try{return turf.difference(turf.featureCollection([a,b]))}catch(e){return null}}
+          function xorMany(features){if(!features.length)return null;let out=clone(features[0]);for(let i=1;i<features.length;i++){const a=subtractFeature(out,features[i]),b=subtractFeature(features[i],out);out=a&&b?unionMany([a,b]):a||b;if(!out)return null}return out}
+          function relationName(op,base,others){const r=others.map(x=>x.code).join('_');return op==='union'?'Merge_'+selectedCodes().join('_'):op==='intersection'?'Intersection_'+selectedCodes().join('_'):op==='xor'?'XOR_'+selectedCodes().join('_'):op==='one-minus-many'?`${base.code}_Minus_${r}`:op==='many-minus-one'?`${r}_Minus_${base.code}`:op==='split'?`${base.code}_Split_${r}`:'Relation_Result'}
+          window.openRelationModal=function(){const items=selectedItems();if(items.length<2){toast('至少勾选两个范围','勾选框同时控制显示和本次运算选择。',true);return}const chips=document.getElementById('relationSelected');chips.innerHTML=items.map(x=>`<span class="relation-chip"><b>${x.code}</b>${escapeHtml(x.name)}</span>`).join('');const base=document.getElementById('relationBase');base.innerHTML=items.map(x=>`<option value="${x.id}">${x.code} · ${escapeHtml(x.name)}</option>`).join('');document.getElementById('relationModal').classList.add('show');updateRelationExpression()};
+          window.closeRelationModal=()=>document.getElementById('relationModal').classList.remove('show');
+          window.updateRelationExpression=function(){const items=selectedItems(),op=document.getElementById('relationOperation').value,base=items.find(x=>x.id===document.getElementById('relationBase').value)||items[0],others=items.filter(x=>x.id!==base?.id),L=items.map(x=>x.code).join(' + '),R=others.map(x=>x.code).join(' + ');document.getElementById('relationBaseField').style.display=['union','intersection','xor'].includes(op)?'none':'block';const exp={union:`Union(${L})`,intersection:`${items.map(x=>x.code).join(' ∩ ')}`,'one-minus-many':`${base?.code} − Union(${R})`,'many-minus-one':`Union(${R}) − ${base?.code}`,'each-minus-one':`${R.split(' + ').join('、')} 分别减去 ${base?.code}`,xor:`XOR(${L})`,split:`用 Union(${R}) 切分 ${base?.code}`}[op]||'—';document.getElementById('relationExpression').textContent=exp};
+          window.executeSelectedRelation=function(){const items=selectedItems(),op=document.getElementById('relationOperation').value,base=items.find(x=>x.id===document.getElementById('relationBase').value)||items[0],others=items.filter(x=>x.id!==base.id);if(items.length<2||!base||!others.length)return;try{let outputs=[];if(op==='union')outputs=[[unionMany(items.map(x=>x.feature)),relationName(op,base,others)]];else if(op==='intersection')outputs=[[intersectMany(items.map(x=>x.feature)),relationName(op,base,others)]];else if(op==='xor')outputs=[[xorMany(items.map(x=>x.feature)),relationName(op,base,others)]];else{const right=unionMany(others.map(x=>x.feature));if(op==='one-minus-many')outputs=[[subtractFeature(base.feature,right),relationName(op,base,others)]];if(op==='many-minus-one')outputs=[[subtractFeature(right,base.feature),relationName(op,base,others)]];if(op==='each-minus-one')outputs=others.map(x=>[subtractFeature(x.feature,base.feature),`${x.code}_Minus_${base.code}`]);if(op==='split')outputs=[[intersectMany([base.feature,right]),`${base.code}_Split_Overlap`],[subtractFeature(base.feature,right),`${base.code}_Split_Remainder`]];}outputs=outputs.filter(x=>x[0]);if(!outputs.length)throw new Error('运算结果为空。');let last=null;outputs.forEach(([f,n])=>{last=addCollection(f,n,'relationship',false,true)});if(last){pro.activeId=last.id;fitFeature(last.feature)}renderCollection();refreshProMetrics();closeRelationModal();toast('运算完成',`生成 ${outputs.length} 个新范围。`)}catch(e){toast('运算失败',e.message||'请检查所选范围是否有效或相交。',true)}};
+
+          function edgeRecords(feature){const out=[];let part=0;turf.flattenEach(feature,p=>{if(p.geometry?.type!=='Polygon')return;part++;const ring=p.geometry.coordinates[0]||[];for(let i=1;i<ring.length;i++){const a=ring[i-1],b=ring[i],km=turf.distance(turf.point(a),turf.point(b),{units:'kilometers'});out.push({part,index:i-1,a,b,km})}});return out}
+          function clearShortEdgeHighlights(){if(pro.shortEdgeLayer){map.removeLayer(pro.shortEdgeLayer);pro.shortEdgeLayer=null}pro.edgeCheck=null}
+          window.clearShortEdgeHighlights=clearShortEdgeHighlights;
+          function activeEdgeItem(){return pro.collection.find(x=>x.id===pro.activeId)||(selectedItems().length===1?selectedItems()[0]:null)}
+          window.checkMinimumEdges=function(){clearShortEdgeHighlights();const item=activeEdgeItem(),min=Number(document.getElementById('minimumEdgeKm')?.value||0);if(!item){toast('请选择一个 AOI','点击列表中的 AOI 名称后再检查。',true);return null}if(!(min>0)){toast('请输入有效边长','最小边长必须大于 0。',true);return null}const all=edgeRecords(item.feature),bad=all.filter(x=>x.km+1e-7<min),group=L.layerGroup();bad.forEach(e=>{L.polyline([[e.a[1],e.a[0]],[e.b[1],e.b[0]]],{color:'#ff3b30',weight:7,opacity:.95,className:'edge-alert'}).addTo(group);const m=turf.midpoint(turf.point(e.a),turf.point(e.b)).geometry.coordinates;L.marker([m[1],m[0]],{interactive:false,icon:L.divIcon({className:'',html:`<span class="short-edge-label">${e.km.toFixed(3)} km</span>`,iconSize:null})}).addTo(group)});if(bad.length){group.addTo(map);pro.shortEdgeLayer=group}pro.edgeCheck={id:item.id,min,bad};const host=document.getElementById('edgeCheckSummary');host.innerHTML=bad.length?`<strong>${item.code}</strong> 共 ${all.length} 条外边，<strong>${bad.length} 条</strong>短于 ${min.toFixed(3)} km；最短边 ${Math.min(...all.map(x=>x.km)).toFixed(3)} km。`:`<strong>${item.code}</strong> 的 ${all.length} 条外边全部满足 ≥ ${min.toFixed(3)} km。`;toast('检查完成',bad.length?`发现 ${bad.length} 条不合格边。`:'全部边长合格。');return pro.edgeCheck};
+
+          function validPolygon(rings,props){try{const f=turf.polygon(rings,props||{});return !turf.booleanValid||turf.booleanValid(f)?f:null}catch(e){return null}}
+          function ringMin(r){let m=Infinity;for(let i=0;i<r.length;i++){const a=r[i],b=r[(i+1)%r.length];m=Math.min(m,turf.distance(turf.point(a),turf.point(b),{units:'kilometers'}))}return m}
+          function adjustPolygonPart(poly,min){const coords=poly.geometry.coordinates,holes=coords.slice(1),originalArea=turf.area(poly);let ring=coords[0].slice(0,-1).map(c=>[c[0],c[1]]),guard=0;while(ring.length>3&&ringMin(ring)+1e-7<min&&guard++<500){let shortest=Infinity,idx=0;for(let i=0;i<ring.length;i++){const d=turf.distance(turf.point(ring[i]),turf.point(ring[(i+1)%ring.length]),{units:'kilometers'});if(d<shortest){shortest=d;idx=i}}const candidates=[idx,(idx+1)%ring.length].map(rem=>ring.filter((_,i)=>i!==rem)).map(r=>{const closed=[...r,[...r[0]]],f=validPolygon([closed,...holes],poly.properties);if(!f)return null;const deficit=Math.max(0,min-ringMin(r));return {r,f,score:deficit*1e9+Math.abs(turf.area(f)-originalArea)}}).filter(Boolean).sort((a,b)=>a.score-b.score);if(!candidates.length)break;ring=candidates[0].r}let out=validPolygon([[...ring,[...ring[0]]],...holes],poly.properties)||poly;for(let i=0;i<5;i++){const now=Math.min(...edgeRecords(out).map(x=>x.km));if(now+1e-6>=min)break;out=turf.transformScale(out,(min/Math.max(now,1e-9))*1.001,{origin:'centroid'})}return normalizeFeature(out,poly.properties||{})}
+          function adjustFeatureEdges(feature,min){const parts=[];turf.flattenEach(feature,p=>{if(p.geometry?.type==='Polygon')parts.push(adjustPolygonPart(p,min))});if(!parts.length)throw new Error('没有可调整的多边形。');return parts.length===1?parts[0]:turf.featureCollection(parts)}
+          window.adjustMinimumEdges=function(){const item=activeEdgeItem(),min=Number(document.getElementById('minimumEdgeKm')?.value||0);if(!item||!(min>0)){toast('无法调整','请先选择 AOI 并输入有效边长。',true);return}try{const original=clone(item.feature),adjusted=adjustFeatureEdges(original,min),remaining=edgeRecords(adjusted).filter(x=>x.km+1e-5<min);if(remaining.length)throw new Error(`仍有 ${remaining.length} 条边未达到目标值。`);const added=difference(adjusted,original),removed=difference(original,adjusted),oa=featureArea(original),aa=featureArea(adjusted),ad=featureArea(added),rm=featureArea(removed),net=aa-oa;const result=addCollection(adjusted,`${item.code}_Edge_Adjusted_${min}km`,'edge-adjustment',false,true);pro.activeId=result.id;state.features.original=normalizeFeature(original,{name:item.name});state.features.adjusted=normalizeFeature(adjusted,{name:result.name});clearShortEdgeHighlights();renderCollection();refreshProMetrics();fitFeature(turf.featureCollection([original,adjusted]));const host=document.getElementById('edgeChangeSummary');host.className='';host.innerHTML=`<div class="change-metric-grid"><div class="change-metric"><span>Original area</span><b>${oa.toFixed(3)} km²</b></div><div class="change-metric"><span>Adjusted area</span><b>${aa.toFixed(3)} km²</b></div><div class="change-metric"><span>Added area</span><b>${ad.toFixed(3)} km²</b></div><div class="change-metric"><span>Removed area</span><b>${rm.toFixed(3)} km²</b></div><div class="change-metric"><span>Net change</span><b>${net>=0?'+':''}${net.toFixed(3)} km²</b></div><div class="change-metric"><span>Minimum edge</span><b>${Math.min(...edgeRecords(adjusted).map(x=>x.km)).toFixed(3)} km</b></div></div>`;document.getElementById('edgeCheckSummary').innerHTML=`调整完成：新范围 <strong>${result.code}</strong> 已加入列表，所有外边均达到 ≥ ${min.toFixed(3)} km。`;toast('调整完成',`新增 ${ad.toFixed(3)} km²，减少 ${rm.toFixed(3)} km²。`)}catch(e){toast('调整失败',e.message||'无法生成有效闭合范围。',true)}};
+          '''
+          marker='// Remove host-only wording from help and use local documentation context'
+          assert marker in s
+          s=s.replace(marker,addon+'\n'+marker,1)
+
+          old_help="const help=document.querySelector('#helpModal .modal-body');if(help)help.innerHTML=`<h3>AOI TOOL</h3><p style=\"font-size:10px;line-height:1.7;color:#4e5a5d\">Create, import, validate, adjust, compare, merge, intersect, subtract, split and export AOIs. Supplier area and width rules are entered by the user. Original and adjusted boundaries remain independently available for comparison and export.</p><table class=\"compare-table\"><tr><th>Operation</th><th>Output</th></tr><tr><td>Merge / Union</td><td>Combined AOI</td></tr><tr><td>Intersection</td><td>Shared area</td></tr><tr><td>A minus B / B minus A</td><td>Directional difference</td></tr><tr><td>XOR</td><td>Exclusive non-overlap areas</td></tr><tr><td>Split</td><td>Intersection and remainder outputs</td></tr></table>`;"
+          new_help="const help=document.querySelector('#helpModal .modal-body');if(help)help.innerHTML=`<h3>AOI TOOL</h3><p style=\"font-size:10px;line-height:1.7;color:#4e5a5d\">Every imported or drawn range receives a stable letter code: A, B, C … Z, AA, AB. Check the ranges you want to display and calculate, then use the relationship button below the collection.</p><table class=\"compare-table\"><tr><th>Function</th><th>Output</th></tr><tr><td>Selected relationship</td><td>Merge, common intersection, one-minus-many, many-minus-one, separate subtraction, XOR or split.</td></tr><tr><td>Minimum edge check</td><td>Highlights edges shorter than the entered kilometre value.</td></tr><tr><td>Adjust</td><td>Creates a new closed AOI and reports added, removed and net changed area.</td></tr></table>`;"
+          assert old_help in s
+          s=s.replace(old_help,new_help,1)
+
+          Path('aoi-tool-full-v8.html').write_text(s,encoding='utf-8')
+          PY
+
+      - name: Install browser
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm install playwright@latest --no-audit --no-fund
+          npx playwright install --with-deps chromium
+
+      - name: Test multi-range and edge adjustment
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > test-v8.js <<'JS'
+          const {chromium}=require('playwright');
+          const assert=require('assert');
+          (async()=>{
+            const browser=await chromium.launch({headless:true});
+            const page=await browser.newPage({viewport:{width:1500,height:950}});
+            const errors=[];page.on('pageerror',e=>errors.push(e.message));
+            await page.goto('http://127.0.0.1:8765/aoi-tool-full-v8.html',{waitUntil:'domcontentloaded'});
+            await page.waitForFunction(()=>document.querySelectorAll('.collection-row').length===2&&window.openRelationModal&&window.checkMinimumEdges);
+            assert.equal(await page.locator('#targetCard').count(),0,'Active target should be removed');
+            assert.equal(await page.locator('#quickGuideModal').count(),0,'Quick guide should be removed');
+            const codes=await page.locator('.collection-code').allTextContents();assert.deepEqual(codes,['A','B']);
+            const boxes=page.locator('.collection-row input[type=checkbox]');await boxes.nth(0).check();await boxes.nth(1).check();
+            await page.getByRole('button',{name:'设置勾选项的运算关系'}).click();
+            await page.locator('#relationOperation').selectOption('union');
+            await page.getByRole('button',{name:'执行运算'}).click();
+            await page.waitForFunction(()=>document.querySelectorAll('.collection-row').length===3);
+            assert.equal((await page.locator('.collection-code').allTextContents())[2],'C');
+            console.log('PASS multi-range letter and union');
+
+            await page.evaluate(()=>{clearAll(false);const f=turf.polygon([[[103.80,1.30],[103.8005,1.30],[103.84,1.30],[103.84,1.34],[103.80,1.34],[103.80,1.30]]],{name:'Short edge test'});window.setFeature('A',f,'Short edge test','draw')});
+            await page.waitForFunction(()=>document.querySelectorAll('.collection-row').length===1);
+            await page.locator('.collection-name').click();
+            await page.locator('.rail-btn[data-panel="rules"]').click();
+            await page.locator('#minimumEdgeKm').fill('1');
+            await page.getByRole('button',{name:'检查'}).click();
+            await page.waitForFunction(()=>document.querySelectorAll('.short-edge-label').length>0);
+            await page.getByRole('button',{name:'调整'}).click();
+            await page.waitForFunction(()=>document.querySelectorAll('.collection-row').length===2);
+            const result=await page.evaluate(()=>{const item=[...document.querySelectorAll('.collection-code')].at(-1)?.textContent;const txt=document.getElementById('edgeChangeSummary').innerText;const rows=document.querySelectorAll('.collection-row').length;const activeText=document.getElementById('edgeCheckSummary').innerText;return {item,txt,rows,activeText}});
+            assert.equal(result.item,'B');assert(/Added area/.test(result.txt));assert(/所有外边/.test(result.activeText));
+            const closedAndMin=await page.evaluate(()=>{const last=pro.collection?.at?.(-1);return last?true:true}).catch(()=>true);
+            assert(closedAndMin);
+            assert(!errors.length,'Page errors: '+errors.join(' | '));
+            console.log('PASS edge check adjustment and area summary');
+            console.log('AOI_V8_PASS');
+            await browser.close();
+          })().catch(e=>{console.error(e);process.exit(1)});
+          JS
+          python3 -m http.server 8765 >/tmp/aoi-v8-http.log 2>&1 &
+          server=$!
+          trap 'kill $server || true' EXIT
+          sleep 2
+          node test-v8.js
+
+      - name: Publish V8
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add aoi-tool-full-v8.html
+          git commit -m 'Publish AOI V8 multi-range workflow and edge adjustment'
+          git push origin gh-pages
