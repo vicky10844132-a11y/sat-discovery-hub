@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/publish-tools-pages.yml'
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -13,7 +15,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  group: pages-${{ github.event_name }}
   cancel-in-progress: false
 
 jobs:
@@ -38,6 +40,7 @@ jobs:
           grep -qi '<!doctype html' _site/data-search.html
           grep -qi 'DATA SEARCH' _site/data-search.html
           grep -qi '</html>' _site/data-search.html
+          echo "DATA SEARCH bytes: $(wc -c < _site/data-search.html)"
       - name: Prepare AOI TOOL and hidden entry
         shell: bash
         run: |
@@ -47,14 +50,17 @@ jobs:
           printf '%s\n' 'User-agent: *' 'Disallow: /' > _site/robots.txt
           touch _site/.nojekyll
       - name: Configure GitHub Pages
+        if: github.event_name != 'pull_request'
         uses: actions/configure-pages@v5
         with:
           enablement: true
       - name: Upload Pages artifact
+        if: github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v3
         with:
           path: _site
   deploy:
+    if: github.event_name != 'pull_request'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
