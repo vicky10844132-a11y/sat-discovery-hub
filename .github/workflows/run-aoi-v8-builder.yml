@@ -79,6 +79,7 @@ jobs:
           code='\n'.join(line[10:] if line.startswith('          ') else line for line in lines)
           code=code.replace("require('playwright')","require('playwright-core')")
           code=code.replace("chromium.launch({headless:true})","chromium.launch({headless:true,executablePath:process.env.CHROME_BIN,args:['--no-sandbox']})")
+          code=code.replace("[103.80,1.30],[103.8005,1.30],[103.84,1.30]","[103.80,1.30],[103.8005,1.3005],[103.84,1.30]")
           Path('test-v8.js').write_text(code,encoding='utf-8')
           PY
           python3 -m http.server 8765 >/tmp/aoi-v8-http.log 2>&1 &
