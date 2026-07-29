@@ -1,4 +1,4 @@
-# retry
+# low-level retry
 name: Debug AOI Shapefile runtime
 
 on:
@@ -22,11 +22,11 @@ jobs:
           npm init -y >/dev/null 2>&1
           npm install playwright@latest --no-audit --no-fund
           npx playwright install --with-deps chromium
-      - name: Print shp-write return value or error
+      - name: Verify low-level writer and modern ZIP
         run: |
           cat > debug.js <<'JS'
           const {chromium}=require('playwright');
-          (async()=>{const b=await chromium.launch({headless:true});const p=await b.newPage();await p.goto('http://127.0.0.1:8765/aoi-tool-full-v6.html',{waitUntil:'domcontentloaded'});await p.waitForFunction(()=>window.shpwrite&&window.turf&&document.querySelectorAll('.collection-row').length===2);const r=await p.evaluate(()=>{try{const f=enrichFeature(state.features.A,'A'),fc=f.type==='FeatureCollection'?f:turf.featureCollection([f]);const out=shpwrite.zip(fc,{folder:'AOI_EXPORT',types:{polygon:'aoi',polyline:'lines',point:'points'}});return {ok:true,type:typeof out,ctor:out?.constructor?.name,length:out?.length,head:typeof out==='string'?out.slice(0,60):null,keys:out&&typeof out==='object'?Object.keys(out).slice(0,20):null}}catch(e){return {ok:false,name:e.name,message:e.message,stack:e.stack}}});console.log('SHPWRITE_RUNTIME '+JSON.stringify(r,null,2));await b.close();if(!r.ok)process.exit(1)})().catch(e=>{console.error(e);process.exit(1)});
+          (async()=>{const b=await chromium.launch({headless:true});const p=await b.newPage();await p.goto('http://127.0.0.1:8765/aoi-tool-full-v6.html',{waitUntil:'domcontentloaded'});await p.waitForFunction(()=>window.shpwrite?.write&&window.JSZip&&window.turf&&document.querySelectorAll('.collection-row').length===2);const r=await p.evaluate(async()=>{try{const f=enrichFeature(state.features.A,'A'),parts=[];turf.flattenEach(f,x=>{if(x.geometry?.type==='Polygon')parts.push(x)});if(!parts.length)throw new Error('No polygon parts');const zip=new JSZip(),folder=zip.folder('AOI_EXPORT');for(let i=0;i<parts.length;i++){const poly=parts[i],files=await new Promise((resolve,reject)=>shpwrite.write([poly.properties||{}],'POLYGON',[poly.geometry.coordinates],(err,out)=>err?reject(err):resolve(out)));const base=parts.length>1?'aoi_'+(i+1):'aoi';folder.file(base+'.shp',files.shp.buffer,{binary:true});folder.file(base+'.shx',files.shx.buffer,{binary:true});folder.file(base+'.dbf',files.dbf.buffer||files.dbf,{binary:true});folder.file(base+'.prj',files.prj||'');}const blob=await zip.generateAsync({type:'blob',compression:'DEFLATE'});return {ok:true,parts:parts.length,size:blob.size,type:blob.type}}catch(e){return {ok:false,name:e.name,message:e.message,stack:e.stack}}});console.log('LOW_LEVEL_SHP '+JSON.stringify(r,null,2));await b.close();if(!r.ok||!r.size)process.exit(1)})().catch(e=>{console.error(e);process.exit(1)});
           JS
           python3 -m http.server 8765 >/tmp/shp-http.log 2>&1 &
           server=$!
