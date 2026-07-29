@@ -1,0 +1,109 @@
+name: Fix AOI V6 edit and measure
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fix-aoi-v6-edit-measure.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix-test-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout published branch
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 0
+
+      - name: Patch edit and measurement behavior
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('aoi-tool-full-v6.html')
+          s=p.read_text(encoding='utf-8')
+
+          css='''
+          .aoi-edit-actions{position:absolute;right:14px;top:58px;z-index:980;display:none;gap:7px;padding:7px;background:rgba(32,34,39,.94);border:1px solid rgba(225,90,139,.75);border-radius:9px;box-shadow:0 8px 24px rgba(0,0,0,.24)}
+          .aoi-edit-actions.show{display:flex}.aoi-edit-actions button{height:30px;border:1px solid #60656d;border-radius:7px;background:#fff;color:#30343a;padding:0 11px;font-size:9px;font-weight:800}.aoi-edit-actions button.primary{background:#c83f72;border-color:#c83f72;color:#fff}
+          '''
+          needle='/* V6 drawing UX */'
+          assert needle in s
+          s=s.replace(needle,css+'\n'+needle,1)
+
+          old="const state={target:'A',features:{A:null,B:null,original:null,adjusted:null,result:null,splitIntersection:null,splitRemainder:null},layers:{},resultHistory:[],geocode:[],drawControl:null,editGroup:null,comparisonLayers:[]};"
+          new="const state={target:'A',features:{A:null,B:null,original:null,adjusted:null,result:null,splitIntersection:null,splitRemainder:null},layers:{},resultHistory:[],geocode:[],drawControl:null,editGroup:null,comparisonLayers:[],measureMode:null};"
+          assert old in s
+          s=s.replace(old,new,1)
+
+          old="map.on(L.Draw.Event.CREATED,e=>{const f=e.layer.toGeoJSON();setFeature(state.target,f,`Drawn ${state.target}`);});"
+          new="map.on(L.Draw.Event.CREATED,e=>{if(state.measureMode)return;const f=e.layer.toGeoJSON();setFeature(state.target,f,`Drawn ${state.target}`);});"
+          assert old in s
+          s=s.replace(old,new,1)
+
+          old="function startEdit(){const layer=state.layers[state.target]||state.layers.adjusted;if(!layer){toast('No editable AOI','Create an AOI first.',true);return}state.editGroup.clearLayers();state.editGroup.addLayer(layer);new L.EditToolbar.Edit(map,{featureGroup:state.editGroup}).enable();toast('Edit mode','Drag vertices, then click Save in the map edit toolbar.')}"
+          new="""let activeEditHandler=null,activeEditKey=null,activeEditOriginal=null;
+          function editActions(){let box=document.getElementById('aoiEditActions');if(!box){box=document.createElement('div');box.id='aoiEditActions';box.className='aoi-edit-actions';box.innerHTML='<button class=\"primary\" onclick=\"saveActiveEdit()\">Save Edit</button><button onclick=\"cancelActiveEdit()\">Cancel</button>';document.querySelector('.map-shell').appendChild(box)}return box}
+          function finishEditUi(){editActions().classList.remove('show');activeEditHandler=null;activeEditKey=null;activeEditOriginal=null;state.editGroup.clearLayers()}
+          function cancelActiveEdit(show=true){if(!activeEditHandler)return;if(activeEditHandler.revertLayers)activeEditHandler.revertLayers();if(activeEditHandler.disable)activeEditHandler.disable();const key=activeEditKey,original=activeEditOriginal?normalizeFeature(turf.clone(activeEditOriginal),activeEditOriginal.properties||{}):null;finishEditUi();if(key&&original){state.features[key]=original;renderLayer(key);refreshAll()}if(show)toast('Edit cancelled','The AOI was restored without changes.')}
+          function saveActiveEdit(){if(!activeEditHandler||!activeEditKey)return;const key=activeEditKey,fc=state.editGroup.toGeoJSON(),feature=fc.features?.length===1?fc.features[0]:fc;if(!feature||!fc.features?.length){toast('Edit failed','No editable polygon was found.',true);return}state.features[key]=normalizeFeature(feature,{...(state.features[key]?.properties||{}),method:'edited',edited_at:new Date().toISOString()});if(activeEditHandler.save)activeEditHandler.save();if(activeEditHandler.disable)activeEditHandler.disable();finishEditUi();renderLayer(key);fitFeature(state.features[key]);refreshAll();toast('Edit saved','The active AOI and its measurements were updated.')}
+          function startEdit(){finishDrawUi();if(activeEditHandler)cancelActiveEdit(false);const key=state.features[state.target]?state.target:(state.features.adjusted?'adjusted':null),layer=key?state.layers[key]:null;if(!layer){toast('No editable AOI','Create or activate an AOI first.',true);return}activeEditKey=key;activeEditOriginal=turf.clone(state.features[key]);state.editGroup.clearLayers();const add=l=>{if(l&&l.editing)state.editGroup.addLayer(l)};if(layer.eachLayer)layer.eachLayer(add);else add(layer);if(!state.editGroup.getLayers().length){activeEditKey=null;activeEditOriginal=null;toast('Edit unavailable','The active geometry has no editable polygon layer.',true);return}activeEditHandler=new L.EditToolbar.Edit(map,{featureGroup:state.editGroup});activeEditHandler.enable();editActions().classList.add('show');toast('Edit mode','Drag vertices, then choose Save Edit or Cancel.')} 
+          window.saveActiveEdit=saveActiveEdit;window.cancelActiveEdit=cancelActiveEdit;"""
+          assert old in s
+          s=s.replace(old,new,1)
+
+          old="let measureLayer=null;window.startProMeasure=function(kind){if(measureLayer){map.removeLayer(measureLayer);measureLayer=null}const C=kind==='distance'?L.Draw.Polyline:L.Draw.Polygon;const tool=new C(map,{shapeOptions:{color:'#087f73',weight:2,fillOpacity:.08},showArea:true});const once=e=>{map.off(L.Draw.Event.CREATED,once);measureLayer=e.layer.addTo(map);const f=e.layer.toGeoJSON();if(kind==='distance'){let km=0;const cs=f.geometry.coordinates;for(let i=1;i<cs.length;i++)km+=turf.distance(turf.point(cs[i-1]),turf.point(cs[i]),{units:'kilometers'});toast('Distance',km.toFixed(3)+' km')}else toast('Area',(turf.area(f)/1e6).toFixed(3)+' km²')};map.on(L.Draw.Event.CREATED,once);tool.enable()};"
+          new="let measureLayer=null;window.startProMeasure=function(kind){finishDrawUi();if(activeEditHandler)cancelActiveEdit(false);if(measureLayer){map.removeLayer(measureLayer);measureLayer=null}state.measureMode=kind;const C=kind==='distance'?L.Draw.Polyline:L.Draw.Polygon;const tool=new C(map,{shapeOptions:{color:'#c83f72',weight:2.5,fillColor:'#c83f72',fillOpacity:.08},showArea:true,metric:true,feet:false,nautic:false});const once=e=>{map.off(L.Draw.Event.CREATED,once);state.measureMode=null;measureLayer=e.layer.addTo(map);const f=e.layer.toGeoJSON();if(kind==='distance'){let km=0;const cs=f.geometry.coordinates;for(let i=1;i<cs.length;i++)km+=turf.distance(turf.point(cs[i-1]),turf.point(cs[i]),{units:'kilometers'});toast('Distance',km.toFixed(3)+' km')}else toast('Area',(turf.area(f)/1e6).toFixed(3)+' km²')};map.on(L.Draw.Event.CREATED,once);map.once('draw:drawstop',()=>{setTimeout(()=>{if(state.measureMode===kind)state.measureMode=null},0)});tool.enable()};"
+          assert old in s
+          s=s.replace(old,new,1)
+
+          old="function clearAll(show=true){Object.values(state.layers).forEach(l=>l&&map.removeLayer(l));clearComparisonLayers();"
+          new="function clearAll(show=true){if(activeEditHandler)cancelActiveEdit(false);state.measureMode=null;Object.values(state.layers).forEach(l=>l&&map.removeLayer(l));clearComparisonLayers();"
+          assert old in s
+          s=s.replace(old,new,1)
+
+          s=s.replace('<!-- AOI_FULL_V6_FINAL_VALIDATED -->','<!-- AOI_FULL_V6_ALL_BUTTONS_VALIDATED -->',1)
+          p.write_text(s,encoding='utf-8')
+          print('patched',p.stat().st_size)
+          PY
+
+      - name: Install Chromium test engine
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm install playwright@latest --no-audit --no-fund
+          npx playwright install --with-deps chromium
+
+      - name: Validate repaired and unresolved controls
+        run: |
+          cat > validate.js <<'JS'
+          const {chromium}=require('playwright');
+          const assert=(x,m)=>{if(!x)throw new Error(m)};
+          (async()=>{const browser=await chromium.launch({headless:true});const context=await browser.newContext({viewport:{width:1600,height:1000},acceptDownloads:true});context.on('page',()=>{});const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>d.accept('DD'));
+          await page.goto('http://127.0.0.1:8765/aoi-tool-full-v6.html',{waitUntil:'domcontentloaded'});await page.waitForFunction(()=>window.L&&window.turf&&document.querySelectorAll('.collection-row').length===2);await page.waitForTimeout(1000);
+          await page.getByRole('button',{name:'Load Demo'}).click();await page.waitForFunction(()=>document.querySelectorAll('.collection-row').length===2);console.log('PASS Load Demo');
+          await page.locator('.collection-name').first().click();await page.getByRole('button',{name:'Edit Active'}).click();await page.waitForTimeout(250);assert(await page.locator('.leaflet-editing-icon').count()>0,'No edit vertex handles');assert(await page.locator('#aoiEditActions.show').count()===1,'Edit actions not visible');const before=await page.evaluate(()=>JSON.stringify(state.features.A));const marker=page.locator('.leaflet-editing-icon').first();const b=await marker.boundingBox();await page.mouse.move(b.x+b.width/2,b.y+b.height/2);await page.mouse.down();await page.mouse.move(b.x+28,b.y+18,{steps:5});await page.mouse.up();await page.getByRole('button',{name:'Save Edit'}).click();await page.waitForTimeout(250);const after=await page.evaluate(()=>JSON.stringify(state.features.A));assert(after!==before,'Saved edit did not change geometry');assert(await page.locator('#aoiEditActions.show').count()===0,'Edit actions remained visible');console.log('PASS Edit Active save');
+          const rows0=await page.locator('.collection-row').count(),geom0=await page.evaluate(()=>JSON.stringify(state.features.A));await page.locator('button[title="Measure distance"]').click();await page.evaluate(()=>map.fire(L.Draw.Event.CREATED,{layer:L.polyline([[1.30,103.78],[1.32,103.82]])}));await page.waitForTimeout(150);assert(await page.locator('.collection-row').count()===rows0,'Distance added AOI');assert(await page.evaluate(()=>JSON.stringify(state.features.A))===geom0,'Distance replaced AOI');await page.locator('button[title="Measure area"]').click();await page.evaluate(()=>map.fire(L.Draw.Event.CREATED,{layer:L.polygon([[1.30,103.78],[1.30,103.82],[1.34,103.82]])}));await page.waitForTimeout(150);assert(await page.locator('.collection-row').count()===rows0,'Area added AOI');assert(await page.evaluate(()=>JSON.stringify(state.features.A))===geom0,'Area replaced AOI');console.log('PASS Measure isolation');
+          await page.locator('.rail-btn[data-panel="overlay"]').click();const r0=await page.locator('.collection-row').count();await page.locator("button[onclick=\"runOverlay('intersection')\"]").click();await page.waitForFunction(n=>document.querySelectorAll('.collection-row').length>n,r0);console.log('PASS Intersection');
+          await page.waitForTimeout(1000);const z0=await page.evaluate(()=>map.getZoom());await page.locator('button[title="Zoom in"]').click();await page.waitForTimeout(900);const z1=await page.evaluate(()=>map.getZoom());assert(z1>z0,`Zoom in ${z0}->${z1}`);await page.locator('button[title="Zoom out"]').click();await page.waitForTimeout(900);const z2=await page.evaluate(()=>map.getZoom());assert(z2<z1,`Zoom out ${z1}->${z2}`);console.log('PASS Zoom controls');
+          await page.evaluate(()=>{const o=turf.clone(state.features.A),a=turf.transformTranslate(o,2,90,{units:'kilometers'});state.features.original=normalizeFeature(o);state.features.adjusted=normalizeFeature(a);renderLayer('original');renderLayer('adjusted');refreshAll()});await page.locator('.rail-btn[data-panel="export"]').click();const cases=[["exportData('geojson')",'.geojson'],["exportData('kml')",'.kml'],["exportData('kmz')",'.kmz'],["exportData('wkt')",'.wkt'],["exportData('csv')",'.csv'],["exportData('shp')",'.zip'],["exportData('package')",'.zip'],['exportComparisonReport()','.html']];for(const [call,ext] of cases){const dl=page.waitForEvent('download',{timeout:15000});await page.locator(`button[onclick="${call}"]`).click();const d=await dl;const f=d.suggestedFilename();assert(f.toLowerCase().endsWith(ext),call+' => '+f);console.log('PASS export',f)}
+          assert(!errors.length,'Page errors: '+errors.join(' | '));console.log('ALL_REPAIRED_BUTTONS_PASS');await browser.close()})().catch(e=>{console.error(e);process.exit(1)});
+          JS
+          python3 -m http.server 8765 >/tmp/fix-http.log 2>&1 &
+          server=$!
+          trap 'kill $server || true' EXIT
+          sleep 2
+          node validate.js
+
+      - name: Publish repaired AOI V6
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add aoi-tool-full-v6.html
+          git commit -m 'Repair AOI edit save controls and isolate measurement tools'
+          git push origin gh-pages
