@@ -1,4 +1,4 @@
-# refresh 8
+# refresh 9
 name: Inspect AOI V6 button check
 
 on:
@@ -26,8 +26,8 @@ jobs:
           python - <<'PY'
           import json
           d=json.load(open('/tmp/runs.json'))
-          names={'AOI V6 all buttons check','Fix AOI V6 edit and measure','Fix AOI V6 Shapefile final','Debug AOI Shapefile runtime','Publish AOI V6 all buttons final'}
+          names={'Publish AOI V6 all buttons final rerun','Publish AOI V6 all buttons final','Debug AOI Shapefile runtime','Fix AOI V6 edit and measure','AOI V6 all buttons check'}
           rows=[r for r in d.get('workflow_runs',[]) if r.get('name') in names]
           if not rows: raise SystemExit('No AOI check run found')
-          for r in rows[:32]: print('AOI_RUN',r['name'],r['id'],r['status'],r.get('conclusion'),r['head_sha'],r['html_url'])
+          for r in rows[:36]: print('AOI_RUN',r['name'],r['id'],r['status'],r.get('conclusion'),r['head_sha'],r['html_url'])
           PY
