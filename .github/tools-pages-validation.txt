@@ -1,2 +1,2 @@
 Validate DATA SEARCH and AOI TOOL GitHub Pages build.
-Bundle diagnostics run 3.
+Direct file transfer test.
