@@ -1,0 +1,95 @@
+name: AOI V6 custom polygon
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/aoi-v6-custom-polygon.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-test-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout published branch and all refs
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 0
+
+      - name: Extract original V6 scripts
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git show origin/main:.github/workflows/aoi-v6-drawing-ux.yml > /tmp/original-v6.yml
+          python - <<'PY'
+          from pathlib import Path
+          lines=Path('/tmp/original-v6.yml').read_text().splitlines()
+          def extract(step_name,out):
+              start=next(i for i,l in enumerate(lines) if l.strip()==f'- name: {step_name}')
+              run=next(i for i in range(start+1,len(lines)) if lines[i].strip()=='run: |')
+              indent=len(lines[run])-len(lines[run].lstrip())+2
+              body=[]
+              for l in lines[run+1:]:
+                  if l.strip() and len(l)-len(l.lstrip())<indent: break
+                  body.append(l[indent:] if len(l)>=indent else '')
+              Path(out).write_text('\n'.join(body)+'\n')
+          extract('Build V6 drawing experience','/tmp/build-v6.sh')
+          extract('Cross-browser drawing tests','/tmp/test-v6.sh')
+          PY
+          chmod +x /tmp/build-v6.sh /tmp/test-v6.sh
+
+      - name: Build custom polygon drawing
+        shell: bash
+        run: |
+          set -euo pipefail
+          /tmp/build-v6.sh
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('aoi-tool-full-v6.html')
+          s=p.read_text(encoding='utf-8')
+          pattern=r"let activeDrawHandler=null,activeDrawDblClick=null;.*?window\.__aoiDrawV6=\{get handler\(\)\{return activeDrawHandler\},finish:\(\)=>activeDrawHandler\?\.completeShape\?\.\(\)\};"
+          replacement=r'''let activeDrawHandler=null,activeDrawDblClick=null,activeDrawClick=null,activeDrawMove=null,activeDrawLayer=null,activeDrawPoints=[];
+          function drawPreview(cursorLatLng=null){if(activeDrawLayer)map.removeLayer(activeDrawLayer);if(!activeDrawPoints.length)return;const pts=cursorLatLng?[...activeDrawPoints,cursorLatLng]:activeDrawPoints;activeDrawLayer=L.polyline(pts,{color:COLORS[state.target],weight:2.5,dashArray:cursorLatLng?'6 5':null,interactive:false}).addTo(map)}
+          function finishDrawUi(){const container=map.getContainer();container.classList.remove('aoi-drawing');if(activeDrawClick)map.off('click',activeDrawClick);if(activeDrawMove)map.off('mousemove',activeDrawMove);if(activeDrawDblClick)container.removeEventListener('dblclick',activeDrawDblClick,true);activeDrawClick=activeDrawMove=activeDrawDblClick=null;if(activeDrawLayer){map.removeLayer(activeDrawLayer);activeDrawLayer=null}if(map.doubleClickZoom&&!map.doubleClickZoom.enabled())map.doubleClickZoom.enable();if(activeDrawHandler?.disable)try{activeDrawHandler.disable()}catch(e){}activeDrawHandler=null;activeDrawPoints=[]}
+          function closeCustomPolygon(){if(activeDrawPoints.length>1&&map.distance(activeDrawPoints[activeDrawPoints.length-1],activeDrawPoints[activeDrawPoints.length-2])<2)activeDrawPoints.pop();if(activeDrawPoints.length<3){toast('At least three points required','Single-click each vertex, then double-click the final position.',true);return}const coords=activeDrawPoints.map(p=>[p.lng,p.lat]);coords.push([...coords[0]]);const feature=turf.polygon([coords],{name:`Drawn ${state.target}`,method:'draw'});const target=state.target;finishDrawUi();window.setFeature(target,feature,`Drawn ${target}`,'draw')}
+          function startDraw(type){if(!window.L?.Draw){toast('Drawing unavailable','Leaflet Draw did not load.',true);return}finishDrawUi();const container=map.getContainer();container.classList.add('aoi-drawing');if(type==='rectangle'){const handler=new L.Draw.Rectangle(map,{shapeOptions:{color:COLORS[state.target],weight:2.5,fillOpacity:.13},showArea:true,metric:true});activeDrawHandler=handler;handler.enable();return}activeDrawPoints=[];activeDrawHandler={enabled:()=>true,disable:()=>{},completeShape:closeCustomPolygon};map.doubleClickZoom.disable();activeDrawClick=e=>{activeDrawPoints.push(e.latlng);drawPreview()};activeDrawMove=e=>drawPreview(e.latlng);activeDrawDblClick=e=>{e.preventDefault();setTimeout(()=>{if(activeDrawHandler)closeCustomPolygon()},0)};map.on('click',activeDrawClick);map.on('mousemove',activeDrawMove);container.addEventListener('dblclick',activeDrawDblClick,true)}
+          map.on(L.Draw.Event.CREATED,()=>setTimeout(finishDrawUi,0));map.on('draw:drawstop',()=>{if(activeDrawHandler instanceof L.Draw.Rectangle)finishDrawUi()});
+          window.__aoiDrawV6={get handler(){return activeDrawHandler},finish:closeCustomPolygon};'''
+          s2,n=re.subn(pattern,replacement,s,count=1,flags=re.S)
+          if n!=1: raise SystemExit(f'drawing block replacement count {n}')
+          s=s2.replace('<!-- AOI_FULL_V6_DRAWING_UX -->','<!-- AOI_FULL_V6_CUSTOM_POLYGON -->',1)
+          p.write_text(s,encoding='utf-8')
+          assert 'closeCustomPolygon' in s
+          assert 'Single-click each vertex' in s
+          assert 'AOI_FULL_V6_CUSTOM_POLYGON' in s
+          PY
+
+      - name: Install browser engines
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm init -y >/dev/null 2>&1
+          npm install playwright@latest --no-audit --no-fund
+          npx playwright install --with-deps chromium firefox webkit
+
+      - name: Test Chromium Firefox and WebKit
+        shell: bash
+        env:
+          NODE_PATH: ${{ github.workspace }}/node_modules
+        run: /tmp/test-v6.sh
+
+      - name: Publish V6
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add aoi-tool-full-v6.html
+          git commit -m 'Publish AOI V6 custom cross-browser polygon drawing'
+          git push origin gh-pages
