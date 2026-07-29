@@ -1,0 +1,134 @@
+name: Restore full tool runtime
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/localize-tool-libraries.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout published tools
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 0
+
+      - name: Download browser libraries into repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p vendor/images
+
+          get_file() {
+            local output="$1"; shift
+            rm -f "$output"
+            for url in "$@"; do
+              echo "Downloading $url"
+              if curl -fL --retry 3 --retry-delay 2 --connect-timeout 20 --max-time 180 "$url" -o "$output" && test -s "$output"; then
+                return 0
+              fi
+            done
+            echo "Unable to download $output" >&2
+            exit 1
+          }
+
+          get_file vendor/leaflet.js \
+            'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js' \
+            'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js'
+          get_file vendor/leaflet.css \
+            'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css' \
+            'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css'
+          get_file vendor/leaflet.draw.js \
+            'https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js' \
+            'https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js'
+          get_file vendor/leaflet.draw.css \
+            'https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css' \
+            'https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css'
+          get_file vendor/turf.min.js \
+            'https://cdn.jsdelivr.net/npm/@turf/turf@7.2.0/turf.min.js' \
+            'https://unpkg.com/@turf/turf@7.2.0/turf.min.js'
+          get_file vendor/jszip.min.js \
+            'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js' \
+            'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js'
+          get_file vendor/shpwrite.js \
+            'https://unpkg.com/shp-write@0.3.2/shpwrite.js' \
+            'https://cdn.jsdelivr.net/npm/shp-write@0.3.2/shpwrite.js'
+          get_file vendor/satellite.min.js \
+            'https://cdn.jsdelivr.net/npm/satellite.js@6.0.1/dist/satellite.min.js' \
+            'https://unpkg.com/satellite.js@6.0.1/dist/satellite.min.js'
+
+          for image in layers.png layers-2x.png marker-icon.png marker-icon-2x.png marker-shadow.png; do
+            get_file "vendor/images/$image" \
+              "https://unpkg.com/leaflet@1.9.4/dist/images/$image" \
+              "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/$image"
+          done
+          for image in spritesheet.png spritesheet-2x.png; do
+            get_file "vendor/images/$image" \
+              "https://unpkg.com/leaflet-draw@1.0.4/dist/images/$image" \
+              "https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/images/$image"
+          done
+
+      - name: Restore original runtime references and validate
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          def replace_core(path):
+              p=Path(path)
+              s=p.read_text(encoding='utf-8')
+              # Stylesheets
+              s=re.sub(r'<link[^>]+href=["\']https://unpkg\.com/leaflet@1\.9\.4/dist/leaflet\.css["\'][^>]*>', '<link rel="stylesheet" href="vendor/leaflet.css">', s, flags=re.I)
+              s=re.sub(r'<link[^>]+href=["\']https://cdnjs\.cloudflare\.com/ajax/libs/leaflet\.draw/1\.0\.4/leaflet\.draw\.css["\'][^>]*>', '<link rel="stylesheet" href="vendor/leaflet.draw.css">', s, flags=re.I)
+              # Scripts, including the temporary onerror fallbacks.
+              replacements={
+                r'<script[^>]+src=["\']https://unpkg\.com/leaflet@1\.9\.4/dist/leaflet\.js["\'][^>]*></script>':'<script src="vendor/leaflet.js"></script>',
+                r'<script[^>]+src=["\']https://unpkg\.com/leaflet-draw@1\.0\.4/dist/leaflet\.draw\.js["\'][^>]*></script>':'<script src="vendor/leaflet.draw.js"></script>',
+                r'<script[^>]+src=["\']https://cdn\.jsdelivr\.net/npm/@turf/turf@7\.2\.0/turf\.min\.js["\'][^>]*></script>':'<script src="vendor/turf.min.js"></script>',
+                r'<script[^>]+src=["\']https://cdnjs\.cloudflare\.com/ajax/libs/jszip/3\.10\.1/jszip\.min\.js["\'][^>]*></script>':'<script src="vendor/jszip.min.js"></script>',
+                r'<script[^>]+src=["\']https://unpkg\.com/shp-write@0\.3\.2/shpwrite\.js["\'][^>]*></script>':'<script src="vendor/shpwrite.js"></script>',
+                r'<script[^>]+src=["\']https://cdn\.jsdelivr\.net/npm/satellite\.js@6\.0\.1/dist/satellite\.min\.js["\'][^>]*></script>':'<script src="vendor/satellite.min.js"></script>',
+              }
+              for pattern,repl in replacements.items():
+                  s,n=re.subn(pattern,repl,s,count=1,flags=re.I)
+                  if n!=1:
+                      raise SystemExit(f'{path}: dependency reference not found for {pattern}')
+              p.write_text(s,encoding='utf-8')
+
+          replace_core('aoi-tool.html')
+          replace_core('data-search.html')
+
+          a=Path('aoi-tool.html').read_text(encoding='utf-8')
+          d=Path('data-search.html').read_text(encoding='utf-8')
+          assert '<script src="vendor/leaflet.js"></script>' in a and '<script src="vendor/turf.min.js"></script>' in a
+          assert '<script src="vendor/leaflet.js"></script>' in d and '<script src="vendor/satellite.min.js"></script>' in d
+          assert 'aoi-offline-map' in a
+          assert 'Selected AOI area:' in d
+          assert 'class="map-actions"' not in d
+          for name in ['leaflet.js','leaflet.css','leaflet.draw.js','leaflet.draw.css','turf.min.js','jszip.min.js','shpwrite.js','satellite.min.js']:
+              p=Path('vendor')/name
+              assert p.exists() and p.stat().st_size>1000, (name,p.stat().st_size if p.exists() else 0)
+          print('AOI bytes',Path('aoi-tool.html').stat().st_size)
+          print('DATA SEARCH bytes',Path('data-search.html').stat().st_size)
+          print('Local libraries ready')
+          PY
+
+      - name: Commit restored runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add aoi-tool.html data-search.html vendor
+          git diff --cached --check
+          git commit -m 'Restore full tool functionality with local map libraries'
+          git push origin gh-pages
