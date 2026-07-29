@@ -1,0 +1,89 @@
+name: AOI V6 final validation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/aoi-v6-final-validation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-test-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout published branch and all refs
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 0
+
+      - name: Extract build and browser test scripts
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git show origin/main:.github/workflows/aoi-v6-drawing-ux.yml > /tmp/original-v6.yml
+          git show origin/main:.github/workflows/aoi-v6-custom-polygon.yml > /tmp/custom-v6.yml
+          python - <<'PY'
+          from pathlib import Path
+          def extract(source,step_name,out):
+              lines=Path(source).read_text().splitlines()
+              start=next(i for i,l in enumerate(lines) if l.strip()==f'- name: {step_name}')
+              run=next(i for i in range(start+1,len(lines)) if lines[i].strip()=='run: |')
+              indent=len(lines[run])-len(lines[run].lstrip())+2
+              body=[]
+              for l in lines[run+1:]:
+                  if l.strip() and len(l)-len(l.lstrip())<indent: break
+                  body.append(l[indent:] if len(l)>=indent else '')
+              Path(out).write_text('\n'.join(body)+'\n')
+          extract('/tmp/original-v6.yml','Build V6 drawing experience','/tmp/build-v6.sh')
+          extract('/tmp/original-v6.yml','Cross-browser drawing tests','/tmp/test-v6.sh')
+          extract('/tmp/custom-v6.yml','Build custom polygon drawing','/tmp/custom-build.sh')
+          PY
+          chmod +x /tmp/build-v6.sh /tmp/test-v6.sh /tmp/custom-build.sh
+
+      - name: Build final V6 and repair removed status node
+        shell: bash
+        run: |
+          set -euo pipefail
+          /tmp/custom-build.sh
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('aoi-tool-full-v6.html')
+          s=p.read_text(encoding='utf-8')
+          old="function setTarget(t){state.target=t;document.getElementById('mapTarget').textContent=`AOI ${t}`;document.getElementById('targetA').classList.toggle('primary',t==='A');document.getElementById('targetB').classList.toggle('primary',t==='B');refreshAll()}"
+          new="function setTarget(t){state.target=t;const mt=document.getElementById('mapTarget'),a=document.getElementById('targetA'),b=document.getElementById('targetB');if(mt)mt.textContent=`AOI ${t}`;if(a)a.classList.toggle('primary',t==='A');if(b)b.classList.toggle('primary',t==='B');refreshAll()}"
+          if old not in s: raise SystemExit('setTarget block not found')
+          s=s.replace(old,new,1)
+          s=s.replace('<!-- AOI_FULL_V6_CUSTOM_POLYGON -->','<!-- AOI_FULL_V6_FINAL_VALIDATED -->',1)
+          p.write_text(s,encoding='utf-8')
+          assert 'AOI_FULL_V6_FINAL_VALIDATED' in s
+          assert "if(mt)mt.textContent" in s
+          PY
+
+      - name: Install browser engines
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm init -y >/dev/null 2>&1
+          npm install playwright@latest --no-audit --no-fund
+          npx playwright install --with-deps chromium firefox webkit
+
+      - name: Test Chromium Firefox and WebKit
+        shell: bash
+        env:
+          NODE_PATH: ${{ github.workspace }}/node_modules
+        run: /tmp/test-v6.sh
+
+      - name: Publish final V6
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add aoi-tool-full-v6.html
+          git commit -m 'Publish fully validated AOI V6 drawing experience'
+          git push origin gh-pages
