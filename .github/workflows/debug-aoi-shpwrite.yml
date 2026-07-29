@@ -1,3 +1,4 @@
+# retry
 name: Debug AOI Shapefile runtime
 
 on:
@@ -25,7 +26,7 @@ jobs:
         run: |
           cat > debug.js <<'JS'
           const {chromium}=require('playwright');
-          (async()=>{const b=await chromium.launch({headless:true});const p=await b.newPage();await p.goto('http://127.0.0.1:8765/aoi-tool-full-v6.html',{waitUntil:'domcontentloaded'});await p.waitForFunction(()=>window.shpwrite&&window.turf&&window.state?.features?.A);const r=await p.evaluate(()=>{try{const f=enrichFeature(state.features.A,'A'),fc=f.type==='FeatureCollection'?f:turf.featureCollection([f]);const out=shpwrite.zip(fc,{folder:'AOI_EXPORT',types:{polygon:'aoi',polyline:'lines',point:'points'}});return {ok:true,type:typeof out,ctor:out?.constructor?.name,length:out?.length,head:typeof out==='string'?out.slice(0,60):null,keys:out&&typeof out==='object'?Object.keys(out).slice(0,20):null}}catch(e){return {ok:false,name:e.name,message:e.message,stack:e.stack}}});console.log('SHPWRITE_RUNTIME '+JSON.stringify(r,null,2));await b.close();if(!r.ok)process.exit(1)})().catch(e=>{console.error(e);process.exit(1)});
+          (async()=>{const b=await chromium.launch({headless:true});const p=await b.newPage();await p.goto('http://127.0.0.1:8765/aoi-tool-full-v6.html',{waitUntil:'domcontentloaded'});await p.waitForFunction(()=>window.shpwrite&&window.turf&&document.querySelectorAll('.collection-row').length===2);const r=await p.evaluate(()=>{try{const f=enrichFeature(state.features.A,'A'),fc=f.type==='FeatureCollection'?f:turf.featureCollection([f]);const out=shpwrite.zip(fc,{folder:'AOI_EXPORT',types:{polygon:'aoi',polyline:'lines',point:'points'}});return {ok:true,type:typeof out,ctor:out?.constructor?.name,length:out?.length,head:typeof out==='string'?out.slice(0,60):null,keys:out&&typeof out==='object'?Object.keys(out).slice(0,20):null}}catch(e){return {ok:false,name:e.name,message:e.message,stack:e.stack}}});console.log('SHPWRITE_RUNTIME '+JSON.stringify(r,null,2));await b.close();if(!r.ok)process.exit(1)})().catch(e=>{console.error(e);process.exit(1)});
           JS
           python3 -m http.server 8765 >/tmp/shp-http.log 2>&1 &
           server=$!
