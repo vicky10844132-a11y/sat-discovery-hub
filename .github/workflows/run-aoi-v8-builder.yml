@@ -43,6 +43,19 @@ jobs:
           exec(compile(code,'build_aoi_v8.py','exec'),{'__name__':'__main__'})
           PY
 
+      - name: Add legacy refresh compatibility nodes
+        working-directory: site
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('aoi-tool-full-v8.html')
+          s=p.read_text(encoding='utf-8')
+          compat='''<div id="v8LegacyCompatibility" style="display:none!important"><div id="ruleMetrics"></div><input id="minArea" value="0"><input id="minWidth" value="0"><select id="adjustAnchor"><option value="center">center</option></select><div id="adjustSummary"></div><div id="overlayInputs"></div></div>'''
+          assert '</body>' in s
+          s=s.replace('</body>',compat+'\n</body>',1)
+          p.write_text(s,encoding='utf-8')
+          PY
+
       - name: Install Chromium
         working-directory: site
         run: |
