@@ -1,2 +1,2 @@
 Validate DATA SEARCH and AOI TOOL GitHub Pages build.
-GitHub Pages deployment diagnostics.
+Verify prepared gh-pages branch.
