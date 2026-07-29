@@ -1,0 +1,91 @@
+name: AOI V6 native double click
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/aoi-v6-native-dblclick.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-test-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout published branch and all refs
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 0
+
+      - name: Extract original V6 scripts
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git show origin/main:.github/workflows/aoi-v6-drawing-ux.yml > /tmp/original-v6.yml
+          python - <<'PY'
+          from pathlib import Path
+          lines=Path('/tmp/original-v6.yml').read_text().splitlines()
+          def extract(step_name,out):
+              start=next(i for i,l in enumerate(lines) if l.strip()==f'- name: {step_name}')
+              run=next(i for i in range(start+1,len(lines)) if lines[i].strip()=='run: |')
+              indent=len(lines[run])-len(lines[run].lstrip())+2
+              body=[]
+              for l in lines[run+1:]:
+                  if l.strip() and len(l)-len(l.lstrip())<indent: break
+                  body.append(l[indent:] if len(l)>=indent else '')
+              Path(out).write_text('\n'.join(body)+'\n')
+          extract('Build V6 drawing experience','/tmp/build-v6.sh')
+          extract('Cross-browser drawing tests','/tmp/test-v6.sh')
+          PY
+          chmod +x /tmp/build-v6.sh /tmp/test-v6.sh
+
+      - name: Build and repair double click capture
+        shell: bash
+        run: |
+          set -euo pipefail
+          /tmp/build-v6.sh
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('aoi-tool-full-v6.html')
+          s=p.read_text(encoding='utf-8')
+          old="function finishDrawUi(){map.getContainer().classList.remove('aoi-drawing');if(activeDrawDblClick){map.off('dblclick',activeDrawDblClick);activeDrawDblClick=null}if(map.doubleClickZoom&&!map.doubleClickZoom.enabled())map.doubleClickZoom.enable();activeDrawHandler=null}"
+          new="function finishDrawUi(){const container=map.getContainer();container.classList.remove('aoi-drawing');if(activeDrawDblClick){container.removeEventListener('dblclick',activeDrawDblClick,true);activeDrawDblClick=null}if(map.doubleClickZoom&&!map.doubleClickZoom.enabled())map.doubleClickZoom.enable();activeDrawHandler=null}"
+          assert old in s
+          s=s.replace(old,new,1)
+          old="activeDrawDblClick=e=>{const count=activeDrawHandler?._markers?.length||0;if(activeDrawHandler&&activeDrawHandler.enabled?.()&&count>=3){if(e.originalEvent){L.DomEvent.preventDefault(e.originalEvent);L.DomEvent.stopPropagation(e.originalEvent)}activeDrawHandler.completeShape()}};map.on('dblclick',activeDrawDblClick)"
+          new="activeDrawDblClick=e=>{const count=activeDrawHandler?._markers?.length||0;if(activeDrawHandler&&activeDrawHandler.enabled?.()&&count>=3){e.preventDefault();e.stopPropagation();activeDrawHandler.completeShape()}};map.getContainer().addEventListener('dblclick',activeDrawDblClick,true)"
+          assert old in s
+          s=s.replace(old,new,1)
+          s=s.replace('<!-- AOI_FULL_V6_DRAWING_UX -->','<!-- AOI_FULL_V6_NATIVE_DBLCLICK -->',1)
+          p.write_text(s,encoding='utf-8')
+          PY
+          grep -q 'addEventListener.*dblclick' aoi-tool-full-v6.html
+          grep -q 'AOI_FULL_V6_NATIVE_DBLCLICK' aoi-tool-full-v6.html
+
+      - name: Install browser engines
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm init -y >/dev/null 2>&1
+          npm install playwright@latest --no-audit --no-fund
+          npx playwright install --with-deps chromium firefox webkit
+
+      - name: Test Chromium Firefox and WebKit
+        shell: bash
+        env:
+          NODE_PATH: ${{ github.workspace }}/node_modules
+        run: /tmp/test-v6.sh
+
+      - name: Publish V6
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add aoi-tool-full-v6.html
+          git commit -m 'Publish AOI V6 with native double-click closure'
+          git push origin gh-pages
