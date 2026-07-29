@@ -1,0 +1,112 @@
+name: Fix AOI checkbox visibility
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fix-aoi-checkbox-visibility.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout published tools
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 0
+
+      - name: Make checkbox control visibility
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          files=['aoi-tool.html','aoi-tool-restored.html']
+          for filename in files:
+              p=Path(filename)
+              s=p.read_text(encoding='utf-8')
+
+              old="""function addCollection(feature,base='AOI',source='input',activate=true){if(!feature)return null;const f=normalizeFeature(clone(feature),feature.properties||{}),id='aoi-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),name=uniqueName(base,f);f.properties={...(f.properties||{}),name,source};const item={id,name,feature:f,source,visible:true,color:collectionStyle(pro.collection.length)};pro.collection.push(item);drawCollection(item);if(activate)activateCollection(id,false);renderCollection();return item}"""
+              new="""function addCollection(feature,base='AOI',source='input',activate=true){if(!feature)return null;const f=normalizeFeature(clone(feature),feature.properties||{}),id='aoi-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),name=uniqueName(base,f);f.properties={...(f.properties||{}),name,source};const item={id,name,feature:f,source,visible:true,color:collectionStyle(pro.collection.length)};pro.collection.push(item);pro.selected.add(id);drawCollection(item);if(activate)activateCollection(id,false);renderCollection();return item}"""
+              assert old in s, f'{filename}: addCollection snippet missing'
+              s=s.replace(old,new,1)
+
+              old="""function toggleCollection(id){const item=pro.collection.find(x=>x.id===id),l=pro.layers.get(id);if(!item||!l)return;item.visible=!item.visible;if(item.visible)l.addTo(map);else map.removeLayer(l);renderCollection()}"""
+              new="""function toggleCollection(id){const item=pro.collection.find(x=>x.id===id),l=pro.layers.get(id);if(!item||!l)return;item.visible=!item.visible;if(item.visible){pro.selected.add(id);if(!map.hasLayer(l))l.addTo(map)}else{pro.selected.delete(id);if(map.hasLayer(l))map.removeLayer(l)}renderCollection()}"""
+              assert old in s, f'{filename}: toggleCollection snippet missing'
+              s=s.replace(old,new,1)
+
+              old="""<input type=\"checkbox\" ${pro.selected.has(item.id)?'checked':''} onchange=\"proToggleSelect('${item.id}',this.checked)\">"""
+              new="""<input type=\"checkbox\" ${item.visible?'checked':''} onchange=\"proToggleSelect('${item.id}',this.checked)\" title=\"Show / hide AOI\">"""
+              assert old in s, f'{filename}: collection checkbox snippet missing'
+              s=s.replace(old,new,1)
+
+              old="""window.proToggleSelect=(id,on)=>{on?pro.selected.add(id):pro.selected.delete(id);renderCollection()};window.proActivate=id=>activateCollection(id,true);window.proDelete=id=>removeCollection(id);window.proVisible=id=>toggleCollection(id);"""
+              new="""window.proToggleSelect=(id,on)=>{const item=pro.collection.find(x=>x.id===id),l=pro.layers.get(id);if(!item||!l)return;item.visible=on;if(on){pro.selected.add(id);if(!map.hasLayer(l))l.addTo(map)}else{pro.selected.delete(id);if(map.hasLayer(l))map.removeLayer(l)}renderCollection()};window.proActivate=id=>activateCollection(id,true);window.proDelete=id=>removeCollection(id);window.proVisible=id=>toggleCollection(id);"""
+              assert old in s, f'{filename}: proToggleSelect snippet missing'
+              s=s.replace(old,new,1)
+
+              s=s.replace("Use the checkboxes in AOI Collection.","Check two AOIs to display and use them in the operation.")
+              s=s.replace("<span>${pro.selected.size} selected</span>","<span>${pro.selected.size} checked / visible</span>")
+
+              # Prevent stale checked IDs whenever the collection is rebuilt.
+              s=s.replace("pro.collection=[];pro.layers.forEach(l=>map.removeLayer(l));pro.layers.clear();if(state.features.A)","pro.collection=[];pro.layers.forEach(l=>map.removeLayer(l));pro.layers.clear();pro.selected.clear();if(state.features.A)")
+
+              assert "${item.visible?'checked':''}" in s
+              assert "item.visible=on" in s
+              assert "checked / visible" in s
+              p.write_text(s,encoding='utf-8')
+
+          print('AOI checkbox visibility patch applied')
+          PY
+
+      - name: Browser smoke test
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > checkbox-smoke.html <<'HTML'
+          <!doctype html><html><body><iframe id="tool" src="aoi-tool-restored.html" style="width:1400px;height:900px"></iframe><pre id="result">WAIT</pre><script>
+          const f=document.getElementById('tool');
+          f.addEventListener('load',()=>setTimeout(()=>{
+            try{
+              const w=f.contentWindow,d=w.document;
+              w.loadDemo();
+              setTimeout(()=>{
+                let boxes=[...d.querySelectorAll('#collectionMount input[type=checkbox]')];
+                if(boxes.length<2||!boxes.every(x=>x.checked))throw new Error('New AOIs are not checked and visible by default');
+                boxes[0].checked=false;boxes[0].dispatchEvent(new Event('change',{bubbles:true}));
+                boxes=[...d.querySelectorAll('#collectionMount input[type=checkbox]')];
+                if(boxes[0].checked)throw new Error('Unchecked AOI did not hide');
+                boxes[0].checked=true;boxes[0].dispatchEvent(new Event('change',{bubbles:true}));
+                boxes=[...d.querySelectorAll('#collectionMount input[type=checkbox]')];
+                if(!boxes[0].checked)throw new Error('Checked AOI did not show');
+                document.getElementById('result').textContent='PASS_AOI_CHECKBOX_VISIBILITY';
+              },500);
+            }catch(e){document.getElementById('result').textContent='FAIL '+e.stack;}
+          },2500));
+          </script></body></html>
+          HTML
+          python3 -m http.server 8765 >/tmp/http.log 2>&1 &
+          pid=$!
+          trap 'kill $pid || true' EXIT
+          sleep 2
+          browser="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          test -n "$browser"
+          "$browser" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --virtual-time-budget=10000 --dump-dom http://127.0.0.1:8765/checkbox-smoke.html > /tmp/check.html
+          grep 'PASS_AOI_CHECKBOX_VISIBILITY' /tmp/check.html
+
+      - name: Commit updated AOI pages
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add aoi-tool.html aoi-tool-restored.html
+          git commit -m 'Make AOI checkboxes control map visibility'
+          git push origin gh-pages
