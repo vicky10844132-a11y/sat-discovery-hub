@@ -26,26 +26,50 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: tools-pages
-      - name: Download and validate DATA SEARCH
+      - name: Restore and validate DATA SEARCH
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p _site
-          curl -L --retry 2 --connect-timeout 20 \
-            -o _site/data-search.html \
-            -w 'HTTP=%{http_code} BYTES=%{size_download}\n' \
-            'https://drive.usercontent.google.com/download?id=11q_y6JWgKvRMQGVTft0f3PeouWKyFY7x&export=download&confirm=t'
-          echo "Downloaded bytes: $(wc -c < _site/data-search.html)"
-          head -c 120 _site/data-search.html | tr '\n' ' '; echo
-          test "$(wc -c < _site/data-search.html)" -gt 400000
+          cat \
+            data-search-assets/part00.b64 \
+            data-search-assets/part01.b64 \
+            data-search-assets/r00.b64 \
+            data-search-assets/r01.b64 \
+            data-search-assets/part03.b64 \
+            data-search-assets/part04.b64 \
+            data-search-assets/part05.b64 \
+            data-search-assets/part06.b64 \
+            data-search-assets/part07.b64 \
+            data-search-assets/part08.b64 \
+            data-search-assets/part09.b64 \
+            | tr -d '\r\n ' \
+            | base64 --decode \
+            | gzip --decompress \
+            > _site/data-search.html
+          test "$(wc -c < _site/data-search.html)" -eq 490261
+          echo 'f18d068cac522bdcb5bebfeeaec7e12a0a64de73ddc8250aef3dc9387987a72c  _site/data-search.html' | sha256sum -c -
           grep -qi '<!doctype html' _site/data-search.html
           grep -qi 'DATA SEARCH' _site/data-search.html
           grep -qi '</html>' _site/data-search.html
-      - name: Prepare AOI TOOL and hidden entry
+      - name: Restore and validate AOI TOOL
         shell: bash
         run: |
           set -euo pipefail
-          cp aoi-tools.html _site/aoi-tool.html
+          cat aoi-tool-assets/part*.b64 \
+            | tr -d '\r\n ' \
+            | base64 --decode \
+            | gzip --decompress \
+            > _site/aoi-tool.html
+          test "$(wc -c < _site/aoi-tool.html)" -eq 85764
+          echo '53d214b46eaaddce532d898e5297bb22bf9acde67ce97664a1fe22feafd28aae  _site/aoi-tool.html' | sha256sum -c -
+          grep -qi '<!doctype html' _site/aoi-tool.html
+          grep -qi 'AOI TOOL' _site/aoi-tool.html
+          grep -qi '</html>' _site/aoi-tool.html
+      - name: Prepare hidden entry
+        shell: bash
+        run: |
+          set -euo pipefail
           printf '%s\n' '<!doctype html><html><head><meta charset="utf-8"><meta name="robots" content="noindex,nofollow"><title>Tools</title></head><body></body></html>' > _site/index.html
           printf '%s\n' 'User-agent: *' 'Disallow: /' > _site/robots.txt
           touch _site/.nojekyll
