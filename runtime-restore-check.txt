@@ -1,2 +1,2 @@
 Inspect the latest runtime restoration workflow run.
-Check 2.
+Check 3: browser smoke test.
