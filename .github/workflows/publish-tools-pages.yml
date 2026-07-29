@@ -1,0 +1,66 @@
+name: Publish DATA SEARCH and AOI TOOL
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-tools-pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout tools publishing branch
+        uses: actions/checkout@v4
+        with:
+          ref: tools-pages
+      - name: Restore and validate DATA SEARCH
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p _site
+          curl -fsSL "https://raw.githubusercontent.com/vicky10844132-a11y/sat-discovery-hub/8abb02bee1a8ee01a2ff06aac8b34ea626a981e0/data-search-assets/part00.b64" > /tmp/00
+          curl -fsSL "https://raw.githubusercontent.com/vicky10844132-a11y/sat-discovery-hub/9c6260ce18c35acf2fb030fe7abd9673772e4e03/data-search-assets/part01.b64" > /tmp/01
+          curl -fsSL "https://raw.githubusercontent.com/vicky10844132-a11y/sat-discovery-hub/f3f4ef40b7c29ff7cbde10eceb622fe7337bf2a0/data-search-assets/r00.b64" > /tmp/02
+          curl -fsSL "https://raw.githubusercontent.com/vicky10844132-a11y/sat-discovery-hub/cf30d35b1df89c6b12cb5d612c7cea3d6da83e3f/data-search-assets/r01.b64" > /tmp/03
+          cat /tmp/00 /tmp/01 /tmp/02 /tmp/03 | tr -d '\r\n ' | base64 --decode | gzip --decompress > _site/data-search.html
+          test "$(wc -c < _site/data-search.html)" -gt 400000
+          grep -qi '<!doctype html' _site/data-search.html
+          grep -qi 'DATA SEARCH' _site/data-search.html
+          grep -qi '</html>' _site/data-search.html
+      - name: Prepare AOI TOOL and hidden entry
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp aoi-tools.html _site/aoi-tool.html
+          printf '%s\n' '<!doctype html><html><head><meta charset="utf-8"><meta name="robots" content="noindex,nofollow"><title>Tools</title></head><body></body></html>' > _site/index.html
+          printf '%s\n' 'User-agent: *' 'Disallow: /' > _site/robots.txt
+          touch _site/.nojekyll
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
