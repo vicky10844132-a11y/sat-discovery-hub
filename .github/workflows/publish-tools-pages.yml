@@ -26,27 +26,21 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: tools-pages
-      - name: Restore and validate DATA SEARCH
+      - name: Download and validate DATA SEARCH
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p _site
-          curl -fsSL "https://raw.githubusercontent.com/vicky10844132-a11y/sat-discovery-hub/8abb02bee1a8ee01a2ff06aac8b34ea626a981e0/data-search-assets/part00.b64" > /tmp/00
-          curl -fsSL "https://raw.githubusercontent.com/vicky10844132-a11y/sat-discovery-hub/9c6260ce18c35acf2fb030fe7abd9673772e4e03/data-search-assets/part01.b64" > /tmp/01
-          curl -fsSL "https://raw.githubusercontent.com/vicky10844132-a11y/sat-discovery-hub/f3f4ef40b7c29ff7cbde10eceb622fe7337bf2a0/data-search-assets/r00.b64" > /tmp/02
-          curl -fsSL "https://raw.githubusercontent.com/vicky10844132-a11y/sat-discovery-hub/cf30d35b1df89c6b12cb5d612c7cea3d6da83e3f/data-search-assets/r01.b64" > /tmp/03
-          for f in /tmp/00 /tmp/01 /tmp/02 /tmp/03; do wc -c "$f"; sha256sum "$f"; done
-          cat /tmp/02 /tmp/03 | sha256sum
-          cat /tmp/00 /tmp/01 /tmp/02 /tmp/03 | tr -d '\r\n ' > /tmp/data.b64
-          echo "Combined base64 bytes: $(wc -c < /tmp/data.b64)"
-          base64 --decode /tmp/data.b64 > /tmp/data.gz
-          echo "Compressed bytes: $(wc -c < /tmp/data.gz)"
-          gzip --decompress --stdout /tmp/data.gz > _site/data-search.html
+          curl -L --retry 2 --connect-timeout 20 \
+            -o _site/data-search.html \
+            -w 'HTTP=%{http_code} BYTES=%{size_download}\n' \
+            'https://drive.usercontent.google.com/download?id=11q_y6JWgKvRMQGVTft0f3PeouWKyFY7x&export=download&confirm=t'
+          echo "Downloaded bytes: $(wc -c < _site/data-search.html)"
+          head -c 120 _site/data-search.html | tr '\n' ' '; echo
           test "$(wc -c < _site/data-search.html)" -gt 400000
           grep -qi '<!doctype html' _site/data-search.html
           grep -qi 'DATA SEARCH' _site/data-search.html
           grep -qi '</html>' _site/data-search.html
-          echo "DATA SEARCH bytes: $(wc -c < _site/data-search.html)"
       - name: Prepare AOI TOOL and hidden entry
         shell: bash
         run: |
