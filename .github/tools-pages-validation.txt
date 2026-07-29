@@ -1,2 +1,2 @@
 Validate DATA SEARCH and AOI TOOL GitHub Pages build.
-Complete repository bundle validation.
+Live GitHub Pages integrity verification.
