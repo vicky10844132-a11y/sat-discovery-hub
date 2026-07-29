@@ -36,6 +36,7 @@ jobs:
           curl -fsSL "https://raw.githubusercontent.com/vicky10844132-a11y/sat-discovery-hub/f3f4ef40b7c29ff7cbde10eceb622fe7337bf2a0/data-search-assets/r00.b64" > /tmp/02
           curl -fsSL "https://raw.githubusercontent.com/vicky10844132-a11y/sat-discovery-hub/cf30d35b1df89c6b12cb5d612c7cea3d6da83e3f/data-search-assets/r01.b64" > /tmp/03
           for f in /tmp/00 /tmp/01 /tmp/02 /tmp/03; do wc -c "$f"; sha256sum "$f"; done
+          cat /tmp/02 /tmp/03 | sha256sum
           cat /tmp/00 /tmp/01 /tmp/02 /tmp/03 | tr -d '\r\n ' > /tmp/data.b64
           echo "Combined base64 bytes: $(wc -c < /tmp/data.b64)"
           base64 --decode /tmp/data.b64 > /tmp/data.gz
