@@ -32,12 +32,13 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          import os, textwrap
+          import os
           raw=Path('source/.github/workflows/build-aoi-v8-multi.yml').read_text(encoding='utf-8')
           marker="python3 - <<'PY'\n"
           start=raw.index(marker)+len(marker)
           end=raw.index("\n          PY",start)
-          code=textwrap.dedent(raw[start:end])
+          lines=raw[start:end].splitlines()
+          code='\n'.join(line[10:] if line.startswith('          ') else line for line in lines)
           os.chdir('site')
           exec(compile(code,'build_aoi_v8.py','exec'),{'__name__':'__main__'})
           PY
@@ -54,12 +55,13 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          import textwrap
           raw=Path('../source/.github/workflows/build-aoi-v8-multi.yml').read_text(encoding='utf-8')
           marker="cat > test-v8.js <<'JS'\n"
           start=raw.index(marker)+len(marker)
           end=raw.index("\n          JS",start)
-          Path('test-v8.js').write_text(textwrap.dedent(raw[start:end]),encoding='utf-8')
+          lines=raw[start:end].splitlines()
+          code='\n'.join(line[10:] if line.startswith('          ') else line for line in lines)
+          Path('test-v8.js').write_text(code,encoding='utf-8')
           PY
           python3 -m http.server 8765 >/tmp/aoi-v8-http.log 2>&1 &
           server=$!
