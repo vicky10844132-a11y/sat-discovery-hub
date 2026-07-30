@@ -29,7 +29,6 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
 
-          # Remove redundant AOI top-right controls from the standalone V8 module.
           p=Path('aoi-tool-multi-v8.html')
           aoi=p.read_text(encoding='utf-8')
           old='<div class="top-actions"><button class="top-btn" onclick="loadDemo()">Load Demo</button><button class="top-btn" onclick="openStandaloneSettings()">Settings</button><button class="top-btn" onclick="showPanel(\'export\')">Export</button><button class="top-btn primary" onclick="openHelp()">Documentation</button></div>'
@@ -38,14 +37,8 @@ jobs:
           aoi=aoi.replace(old,'<div class="top-actions"></div>',1)
           aoi=aoi.replace('<!-- AOI_MULTI_RANGE_V8 -->','<!-- AOI_MULTI_RANGE_V8 -->\n<!-- AOI_TOP_ACTIONS_REMOVED -->',1)
           p.write_text(aoi,encoding='utf-8')
-
-          # Reuse the already reviewed integration builder from the previous workflow.
-          lines=Path('/tmp/integration.yml').read_text(encoding='utf-8').splitlines()
-          start=next(i for i,x in enumerate(lines) if "python3 - <<'PY'" in x)+1
-          end=next(i for i in range(start,len(lines)) if lines[i].strip()=='PY')
-          code='\n'.join((x[10:] if x.startswith('          ') else x) for x in lines[start:end])
-          Path('/tmp/build_integration.py').write_text(code,encoding='utf-8')
           PY
+
           git show origin/main:.github/workflows/integrate-aoi-v8-into-data-search.yml > /tmp/integration.yml
           python3 - <<'PY'
           from pathlib import Path
@@ -108,7 +101,7 @@ jobs:
             const page=await browser.newPage({viewport:{width:1600,height:1000}});
             const errors=[];page.on('pageerror',e=>errors.push(e.message));
             await page.goto('http://127.0.0.1:8765/data-search-integrated-v8.html',{waitUntil:'domcontentloaded'});
-            await page.waitForFunction(()=>document.querySelectorAll('#v11LoginBtn,#v11LogoutBtn').length===2,{timeout:20000});
+            await page.waitForFunction(()=>document.querySelectorAll('#v11LoginBtn,#v11LogoutBtn').length===2,null,{timeout:20000});
             await page.waitForTimeout(800);
             const top=await page.evaluate(()=>({
               buttons:[...document.querySelectorAll('.topbar button')].filter(x=>getComputedStyle(x).display!=='none').map(x=>x.textContent.trim()).sort(),
@@ -122,7 +115,7 @@ jobs:
             const frame=page.frames().find(f=>f.url().includes('aoi-tool-multi-v8-embed.html'));
             assert(frame,'Embedded AOI frame missing');
             await frame.waitForFunction(()=>window.aoiPro&&Array.isArray(window.aoiPro.collection),null,{timeout:20000});
-            if((await frame.evaluate(()=>window.aoiPro.collection.length))<2){await frame.evaluate(()=>window.loadDemo?.());}
+            if((await frame.evaluate(()=>window.aoiPro.collection.length))<2)await frame.evaluate(()=>window.loadDemo?.());
             await frame.waitForFunction(()=>window.aoiPro.collection.length>=2,null,{timeout:20000});
             assert.equal(await frame.locator('.topbar').evaluate(x=>getComputedStyle(x).display),'none');
             assert(await frame.locator('#useInDataSearchBtn').isVisible());
@@ -142,8 +135,7 @@ jobs:
             const standaloneErrors=[];standalone.on('pageerror',e=>standaloneErrors.push(e.message));
             await standalone.goto('http://127.0.0.1:8765/aoi-tool-multi-v8.html',{waitUntil:'domcontentloaded'});
             await standalone.waitForFunction(()=>window.aoiPro,null,{timeout:20000});
-            const actionCount=await standalone.locator('.topbar .top-actions button').count();
-            assert.equal(actionCount,0,'AOI redundant top buttons remain');
+            assert.equal(await standalone.locator('.topbar .top-actions button').count(),0,'AOI redundant top buttons remain');
             assert(!errors.length,'DATA SEARCH errors: '+errors.join(' | '));
             assert(!standaloneErrors.length,'AOI errors: '+standaloneErrors.join(' | '));
             console.log('DATA_SEARCH_AOI_V8_FINAL_PASS');
