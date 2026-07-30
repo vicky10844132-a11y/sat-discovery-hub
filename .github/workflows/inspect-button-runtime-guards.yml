@@ -1,4 +1,4 @@
-# refresh corrected regression
+# inspect final rerun
 name: Inspect button runtime guards
 on:
   push:
@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Read guard workflow status
+      - name: Read rerun status
         run: |
           python3 - <<'PY'
           import json,urllib.request,time
@@ -22,10 +22,10 @@ jobs:
           row={}
           for _ in range(50):
               data=json.load(urllib.request.urlopen(req))
-              rows=[r for r in data.get('workflow_runs',[]) if r.get('name')=='Fix button runtime guards']
+              rows=[r for r in data.get('workflow_runs',[]) if r.get('name')=='Rerun button runtime guards']
               if rows:
                   row=rows[0]
-                  if row.get('status')=='completed' and row.get('head_sha')=='3584b1975c35d96861015da1c3938d104772f5fc': break
+                  if row.get('status')=='completed': break
               time.sleep(5)
           open('button-runtime-guards-status.json','w').write(json.dumps({k:row.get(k) for k in ['id','status','conclusion','head_sha','jobs_url','html_url']},indent=2))
           PY
@@ -34,5 +34,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add button-runtime-guards-status.json
-          git commit -m 'Record corrected button guard status' || true
+          git commit -m 'Record final button guard rerun status' || true
           git push origin main
