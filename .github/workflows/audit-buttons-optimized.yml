@@ -1,0 +1,80 @@
+name: Optimized isolated audit of all buttons
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/audit-buttons-optimized.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 0
+      - name: Install Chromium
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm install playwright@latest --no-audit --no-fund
+          npx playwright install --with-deps chromium
+      - name: Run isolated button audit
+        run: |
+          cat > optimized-audit.js <<'JS'
+          const {chromium}=require('playwright');const fs=require('fs');
+          const BASE='http://127.0.0.1:8765/';const wait=ms=>new Promise(r=>setTimeout(r,ms));
+          const report={generated:new Date().toISOString(),pages:{},targeted:[],summary:{buttons:0,passed:0,failed:0,disabled:0,missingHandlers:0}};
+          async function openPage(browser,file){
+            const p=await browser.newPage({viewport:{width:1500,height:950},acceptDownloads:true});
+            await p.route('**/*',async r=>{const u=r.request().url();if(u.startsWith(BASE)||u.startsWith('data:')||u.startsWith('blob:'))return r.continue();if(u.includes('/search'))return r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({type:'FeatureCollection',features:[],numberMatched:0,context:{matched:0}})});return r.abort()});
+            p.on('dialog',d=>d.accept(d.type()==='prompt'?'1':'').catch(()=>{}));
+            await p.goto(BASE+file,{waitUntil:'domcontentloaded',timeout:20000});await wait(450);return p;
+          }
+          function handlerNames(code){const out=[],re=/(?:^|[;,(?:])\s*([A-Za-z_$][\w$]*)\s*\(/g;let m;while((m=re.exec(code||''))){if(!['if','for','while','switch','function','setTimeout','setInterval','confirm','prompt','alert'].includes(m[1]))out.push(m[1])}return [...new Set(out)]}
+          async function collect(browser,file,states,ready){
+            const p=await openPage(browser,file);if(ready)await p.waitForFunction(ready,{timeout:15000}).catch(()=>{});const staticErrors=[];p.on('pageerror',e=>staticErrors.push(e.message));
+            const all=[];
+            for(const st of states){if(st.setup)await p.evaluate(st.setup).catch(()=>{});await wait(120);const rows=await p.locator('button').evaluateAll((bs,label)=>{const seen={};return bs.filter(b=>label==='ALL'||getComputedStyle(b).display!=='none').map(b=>{const id=b.id||'',text=(b.textContent||'').trim().replace(/\s+/g,' ').slice(0,100),onclick=b.getAttribute('onclick')||'',key=id||onclick||text,occ=seen[key]||0;seen[key]=occ+1;return {state:label,id,text,onclick,occ,disabled:b.disabled}})},st.label);all.push(...rows)}
+            const unique=new Map();for(const r of all)unique.set([r.state,r.id,r.onclick,r.text,r.occ].join('|'),r);
+            const missing=[];for(const r of unique.values())for(const n of handlerNames(r.onclick)){const ok=await p.evaluate(n=>typeof window[n]==='function'||['document','window','location','Math','JSON','Date','URL','Blob'].includes(n),n);if(!ok)missing.push({...r,handler:n})}
+            await p.close();return {descriptors:[...unique.values()],missing,loadErrors:[...new Set(staticErrors)]};
+          }
+          async function clickOne(browser,file,stateSetup,d){
+            const r={...d,ok:false,errors:[]};let p;
+            try{p=await openPage(browser,file);const errs=[];p.on('pageerror',e=>errs.push(e.message));if(stateSetup)await p.evaluate(stateSetup).catch(e=>r.errors.push('setup: '+e.message));await wait(100);
+              const outcome=await p.evaluate(d=>{const bs=[...document.querySelectorAll('button')];let matches;if(d.id)matches=bs.filter(b=>b.id===d.id);else if(d.onclick)matches=bs.filter(b=>(b.getAttribute('onclick')||'')===d.onclick);else matches=bs.filter(b=>(b.textContent||'').trim().replace(/\s+/g,' ').slice(0,100)===d.text);const b=matches[d.occ||0];if(!b)return {notFound:true};if(b.disabled)return {disabled:true};b.click();return {clicked:true}},d).catch(e=>({navigation:true,error:e.message}));
+              await wait(180).catch(()=>{});r.outcome=outcome;if(outcome.notFound)r.errors.push('button not found');if(outcome.disabled){r.disabled=true;r.ok=true}else if(errs.length){r.errors.push(...errs);r.ok=false}else r.ok=true;
+            }catch(e){r.errors.push(e.message)}finally{if(p)await p.close().catch(()=>{})}return r;
+          }
+          async function auditPage(browser,file,name,states,ready){
+            const collected=await collect(browser,file,states,ready);const results=[];for(const d of collected.descriptors){const st=states.find(x=>x.label===d.state);results.push(await clickOne(browser,file,st?.setup,d))}
+            return {name,total:results.length,missingHandlers:collected.missing,loadErrors:collected.loadErrors,results};
+          }
+          async function target(browser,name,file,fn){const r={name,ok:false,errors:[]};let p;try{p=await openPage(browser,file);const es=[];p.on('pageerror',e=>es.push(e.message));await fn(p);await wait(250);if(es.length)r.errors.push(...es);r.ok=!r.errors.length}catch(e){r.errors.push(e.message)}finally{if(p)await p.close().catch(()=>{})}report.targeted.push(r)}
+          (async()=>{const b=await chromium.launch({headless:true});
+            const dsStates=[
+              {label:'ALL',setup:null},{label:'AOI',setup:()=>window.selectPanel?.('aoi')},{label:'SEARCH_ARCHIVE',setup:()=>{window.selectPanel?.('search');window.setSearchTab?.('archive')}},{label:'SEARCH_TASKING',setup:()=>{window.selectPanel?.('search');window.setSearchTab?.('tasking')}},{label:'SEARCH_SUBSCRIBE',setup:()=>{window.selectPanel?.('search');window.setSearchTab?.('subscribe')}},{label:'ORBIT',setup:()=>window.selectPanel?.('orbit')},{label:'SOURCES',setup:()=>window.selectPanel?.('sources')},{label:'DATA',setup:()=>window.selectPanel?.('data')},{label:'ORDERS',setup:()=>window.selectPanel?.('orders')},{label:'ACCOUNT',setup:()=>window.selectPanel?.('account')}
+            ];
+            const aoiStates=[{label:'ALL',setup:null},{label:'BUILD',setup:()=>window.showPanel?.('build')},{label:'RULES',setup:()=>window.showPanel?.('rules')},{label:'OVERLAY',setup:()=>window.showPanel?.('overlay')},{label:'COMPARE',setup:()=>window.showPanel?.('compare')},{label:'EXPORT',setup:()=>window.showPanel?.('export')}];
+            report.pages.dataSearch=await auditPage(b,'data-search-integrated-v8.html','DATA SEARCH',dsStates,()=>document.querySelectorAll('#v11LoginBtn,#v11LogoutBtn').length===2);
+            report.pages.aoi=await auditPage(b,'aoi-tool-multi-v8.html','AOI TOOL',aoiStates,()=>!!window.aoiPro);
+            await target(b,'DATA SEARCH top only Login and Logout','data-search-integrated-v8.html',async p=>{await p.waitForFunction(()=>document.querySelectorAll('#v11LoginBtn,#v11LogoutBtn').length===2,{timeout:15000});const texts=await p.locator('.topbar button:visible').allTextContents();if(texts.map(x=>x.trim()).sort().join('|')!=='Login|Logout')throw Error('unexpected top buttons: '+texts.join(','));await p.locator('#v11LogoutBtn').click();await p.locator('#v11LoginBtn').click();if(!await p.locator('#v11LoginModal.show').count())throw Error('login modal not opened')});
+            await target(b,'DATA SEARCH AOI bridge','data-search-integrated-v8.html',async p=>{await p.waitForFunction(()=>document.querySelector('#embeddedAoiFrame'),{timeout:15000});const f=p.frames().find(x=>x.url().includes('aoi-tool-multi-v8-embed.html'));if(!f)throw Error('embedded AOI missing');await f.waitForFunction(()=>window.aoiPro?.collection?.length>=2,{timeout:18000});await f.evaluate(()=>{for(const x of window.aoiPro.collection.slice(0,2))window.aoiPro.selected.add(x.id);window.sendEmbeddedSelection()});await p.waitForFunction(()=>!!window.__embeddedAoiGeometry,{timeout:10000})});
+            await target(b,'DATA SEARCH archive search','data-search-integrated-v8.html',async p=>{await p.evaluate(()=>{window.selectPanel('search');window.setSearchTab('archive')});await p.waitForFunction(()=>document.getElementById('archiveStartDate'),{timeout:8000});await p.evaluate(()=>window.runArchiveSearch());await p.waitForFunction(()=>/No matching items|loaded|did not complete/.test(document.getElementById('searchContent')?.textContent||''),{timeout:10000})});
+            const relationTypes=['merge','intersection','one-minus-many','many-minus-one','separate-minus-one','xor','split'];for(const type of relationTypes)await target(b,'AOI relation '+type,'aoi-tool-multi-v8.html',async p=>{await p.waitForFunction(()=>window.aoiPro?.collection?.length>=2,{timeout:16000});await p.evaluate(type=>{for(const x of window.aoiPro.collection.slice(0,2))window.aoiPro.selected.add(x.id);window.openRelationModal();document.getElementById('relationType').value=type;window.updateRelationUI?.();window.executeRelationOperation()},type);await wait(300)});
+            await target(b,'AOI edge check and adjustment','aoi-tool-multi-v8.html',async p=>{await p.waitForFunction(()=>window.aoiPro?.collection?.length>=2,{timeout:16000});await p.evaluate(()=>{window.showPanel('rules');const s=document.getElementById('edgeTargetSelect');if(s&&s.options.length)s.selectedIndex=0;document.getElementById('multiMinEdge').value='20';window.checkMinimumEdges()});await p.waitForFunction(()=>/Below|All edges/.test(document.getElementById('edgeCheckResult')?.textContent||''),{timeout:8000});if(!await p.locator('#adjustEdgesButton').isDisabled()){await p.locator('#adjustEdgesButton').click();await p.waitForFunction(()=>/Closed/.test(document.getElementById('edgeAreaResult')?.textContent||''),{timeout:10000})}});
+            await b.close();const pages=Object.values(report.pages);const results=pages.flatMap(x=>x.results);report.summary.buttons=results.length;report.summary.missingHandlers=pages.reduce((s,x)=>s+x.missingHandlers.length,0);report.summary.disabled=results.filter(x=>x.disabled).length;report.summary.failed=results.filter(x=>!x.ok).length+report.summary.missingHandlers+pages.reduce((s,x)=>s+x.loadErrors.length,0)+report.targeted.filter(x=>!x.ok).length;report.summary.passed=results.filter(x=>x.ok).length+report.targeted.filter(x=>x.ok).length;fs.writeFileSync('optimized-all-buttons-audit.json',JSON.stringify(report,null,2));console.log('OPTIMIZED_AUDIT '+JSON.stringify(report.summary))})().catch(e=>{report.fatal=e.stack||e.message;report.summary.failed++;fs.writeFileSync('optimized-all-buttons-audit.json',JSON.stringify(report,null,2));console.error(e)});
+          JS
+          python3 -m http.server 8765 >/tmp/optimized-audit-http.log 2>&1 &
+          server=$!;trap 'kill $server || true' EXIT;sleep 2;node optimized-audit.js
+      - name: Save optimized audit
+        if: always()
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add optimized-all-buttons-audit.json
+          git commit -m 'Record optimized isolated button audit' || true
+          git push origin gh-pages
