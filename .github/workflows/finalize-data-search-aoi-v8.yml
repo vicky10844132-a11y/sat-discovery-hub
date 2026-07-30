@@ -1,0 +1,166 @@
+name: Finalize DATA SEARCH AOI V8 integration
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/finalize-data-search-aoi-v8.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - name: Checkout published site
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 0
+
+      - name: Rebuild and finalize integration
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          python3 - <<'PY'
+          from pathlib import Path
+
+          # Remove redundant AOI top-right controls from the standalone V8 module.
+          p=Path('aoi-tool-multi-v8.html')
+          aoi=p.read_text(encoding='utf-8')
+          old='<div class="top-actions"><button class="top-btn" onclick="loadDemo()">Load Demo</button><button class="top-btn" onclick="openStandaloneSettings()">Settings</button><button class="top-btn" onclick="showPanel(\'export\')">Export</button><button class="top-btn primary" onclick="openHelp()">Documentation</button></div>'
+          if old not in aoi:
+              raise SystemExit('AOI top action block not found')
+          aoi=aoi.replace(old,'<div class="top-actions"></div>',1)
+          aoi=aoi.replace('<!-- AOI_MULTI_RANGE_V8 -->','<!-- AOI_MULTI_RANGE_V8 -->\n<!-- AOI_TOP_ACTIONS_REMOVED -->',1)
+          p.write_text(aoi,encoding='utf-8')
+
+          # Reuse the already reviewed integration builder from the previous workflow.
+          lines=Path('/tmp/integration.yml').read_text(encoding='utf-8').splitlines()
+          start=next(i for i,x in enumerate(lines) if "python3 - <<'PY'" in x)+1
+          end=next(i for i in range(start,len(lines)) if lines[i].strip()=='PY')
+          code='\n'.join((x[10:] if x.startswith('          ') else x) for x in lines[start:end])
+          Path('/tmp/build_integration.py').write_text(code,encoding='utf-8')
+          PY
+          git show origin/main:.github/workflows/integrate-aoi-v8-into-data-search.yml > /tmp/integration.yml
+          python3 - <<'PY'
+          from pathlib import Path
+          lines=Path('/tmp/integration.yml').read_text(encoding='utf-8').splitlines()
+          start=next(i for i,x in enumerate(lines) if "python3 - <<'PY'" in x)+1
+          end=next(i for i in range(start,len(lines)) if lines[i].strip()=='PY')
+          code='\n'.join((x[10:] if x.startswith('          ') else x) for x in lines[start:end])
+          Path('/tmp/build_integration.py').write_text(code,encoding='utf-8')
+          PY
+          python3 /tmp/build_integration.py
+
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('aoi-tool-multi-v8-embed.html')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace('onclick="sendSelectedToHost()"','onclick="sendEmbeddedSelection()"',1)
+          bridge=r'''
+          <script id="embeddedMultiAoiSender">
+          window.sendEmbeddedSelection=function(){
+            const pro=window.aoiPro;
+            const all=Array.isArray(pro?.collection)?pro.collection:[];
+            let chosen=all.filter(x=>pro.selected?.has(x.id));
+            if(!chosen.length&&pro?.activeId)chosen=all.filter(x=>x.id===pro.activeId);
+            if(!chosen.length&&all.length)chosen=[all[0]];
+            if(!chosen.length){window.toast?.('Nothing selected','Check at least one AOI first.',true);return;}
+            const feature=chosen.length===1?JSON.parse(JSON.stringify(chosen[0].feature)):{type:'FeatureCollection',features:chosen.map(x=>JSON.parse(JSON.stringify(x.feature)))};
+            const name=chosen.map(x=>x.code||x.name).join(' + ');
+            window.parent.postMessage({type:'IMAGE_COVERY_AOI_WORKBENCH_RESULT',feature,name,items:chosen.map(x=>({code:x.code,name:x.name}))},'*');
+            window.toast?.('Sent to DATA SEARCH',name+' is now available as the search range.');
+          };
+          </script>
+          '''
+          idx=s.rfind('</body>')
+          if idx<0: raise SystemExit('embedded AOI body tag missing')
+          s=s[:idx]+bridge+s[idx:]
+          p.write_text(s,encoding='utf-8')
+          PY
+
+          grep -q 'AOI_TOP_ACTIONS_REMOVED' aoi-tool-multi-v8.html
+          grep -q 'embeddedMultiAoiSender' aoi-tool-multi-v8-embed.html
+          grep -q 'DATA_SEARCH_AOI_V8_INTEGRATED' data-search-integrated-v8.html
+
+      - name: Install browser
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm init -y >/dev/null 2>&1
+          npm install playwright@latest --no-audit --no-fund
+          npx playwright install --with-deps chromium
+
+      - name: Full browser validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > final-test.js <<'JS'
+          const {chromium}=require('playwright');
+          const assert=require('assert');
+          (async()=>{
+            const browser=await chromium.launch({headless:true});
+            const page=await browser.newPage({viewport:{width:1600,height:1000}});
+            const errors=[];page.on('pageerror',e=>errors.push(e.message));
+            await page.goto('http://127.0.0.1:8765/data-search-integrated-v8.html',{waitUntil:'domcontentloaded'});
+            await page.waitForFunction(()=>document.querySelectorAll('#v11LoginBtn,#v11LogoutBtn').length===2,{timeout:20000});
+            await page.waitForTimeout(800);
+            const top=await page.evaluate(()=>({
+              buttons:[...document.querySelectorAll('.topbar button')].filter(x=>getComputedStyle(x).display!=='none').map(x=>x.textContent.trim()).sort(),
+              nav:getComputedStyle(document.documentElement).getPropertyValue('--nav2').trim(),
+              rose:getComputedStyle(document.documentElement).getPropertyValue('--blue').trim(),
+              integrated:document.querySelector('.app').classList.contains('aoi-integrated')
+            }));
+            assert.deepStrictEqual(top.buttons,['Login','Logout']);
+            assert.equal(top.nav,'#17191d');assert.equal(top.rose,'#c83f72');assert(top.integrated);
+
+            const frame=page.frames().find(f=>f.url().includes('aoi-tool-multi-v8-embed.html'));
+            assert(frame,'Embedded AOI frame missing');
+            await frame.waitForFunction(()=>window.aoiPro&&Array.isArray(window.aoiPro.collection),null,{timeout:20000});
+            if((await frame.evaluate(()=>window.aoiPro.collection.length))<2){await frame.evaluate(()=>window.loadDemo?.());}
+            await frame.waitForFunction(()=>window.aoiPro.collection.length>=2,null,{timeout:20000});
+            assert.equal(await frame.locator('.topbar').evaluate(x=>getComputedStyle(x).display),'none');
+            assert(await frame.locator('#useInDataSearchBtn').isVisible());
+            const boxes=frame.locator('.collection-row input[type=checkbox]');
+            for(let i=0;i<2;i++)if(!(await boxes.nth(i).isChecked()))await boxes.nth(i).check();
+            await frame.locator('#useInDataSearchBtn').click();
+            await page.waitForFunction(()=>!document.querySelector('.app').classList.contains('aoi-integrated'),null,{timeout:12000});
+            await page.waitForFunction(()=>/area:/.test(document.getElementById('mapStatus')?.textContent||''),null,{timeout:12000});
+            const applied=await page.evaluate(()=>({geom:!!window.__embeddedAoiGeometry,label:document.getElementById('activeAoiLabel')?.textContent||'',status:document.getElementById('mapStatus')?.textContent||''}));
+            assert(applied.geom);assert(applied.label.includes('exact polygon search'));assert(applied.status.includes('km²'));
+
+            await page.locator('#v11LogoutBtn').click();
+            await page.locator('#v11LoginBtn').click();
+            assert(await page.locator('#v11LoginModal.show').count());
+
+            const standalone=await browser.newPage({viewport:{width:1400,height:900}});
+            const standaloneErrors=[];standalone.on('pageerror',e=>standaloneErrors.push(e.message));
+            await standalone.goto('http://127.0.0.1:8765/aoi-tool-multi-v8.html',{waitUntil:'domcontentloaded'});
+            await standalone.waitForFunction(()=>window.aoiPro,null,{timeout:20000});
+            const actionCount=await standalone.locator('.topbar .top-actions button').count();
+            assert.equal(actionCount,0,'AOI redundant top buttons remain');
+            assert(!errors.length,'DATA SEARCH errors: '+errors.join(' | '));
+            assert(!standaloneErrors.length,'AOI errors: '+standaloneErrors.join(' | '));
+            console.log('DATA_SEARCH_AOI_V8_FINAL_PASS');
+            await browser.close();
+          })().catch(e=>{console.error(e);process.exit(1)});
+          JS
+          python3 -m http.server 8765 >/tmp/final-integration-http.log 2>&1 &
+          server=$!;trap 'kill $server || true' EXIT
+          sleep 2
+          node final-test.js
+
+      - name: Publish final integration
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add aoi-tool-multi-v8.html aoi-tool-multi-v8-embed.html data-search-integrated-v8.html data-search-restored.html data-search.html
+          git commit -m 'Finalize DATA SEARCH AOI V8 integration and simplify AOI header'
+          git push origin gh-pages
