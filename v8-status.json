@@ -1,4 +1,12 @@
 {
+  "Build AOI V8 multi-range rerun": {
+    "id": 30511781210,
+    "status": "completed",
+    "conclusion": "failure",
+    "head_sha": "e86881abf7a35cdb1df807a77e77138f8a13206c",
+    "jobs_url": "https://api.github.com/repos/vicky10844132-a11y/sat-discovery-hub/actions/runs/30511781210/jobs",
+    "html_url": "https://github.com/vicky10844132-a11y/sat-discovery-hub/actions/runs/30511781210"
+  },
   "Debug AOI V8 initialization": {
     "id": 30511692327,
     "status": "completed",
