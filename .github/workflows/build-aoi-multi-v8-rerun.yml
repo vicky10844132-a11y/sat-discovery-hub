@@ -1,0 +1,61 @@
+name: Build AOI V8 multi-range rerun
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/build-aoi-multi-v8-rerun.yml'
+permissions:
+  contents: write
+jobs:
+  build-test-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 0
+      - name: Rebuild with final body insertion
+        run: |
+          git fetch origin main
+          git show origin/main:.github/workflows/build-aoi-multi-v8.yml > /tmp/v8.yml
+          python3 - <<'PY'
+          from pathlib import Path
+          lines=Path('/tmp/v8.yml').read_text().splitlines()
+          start=next(i for i,x in enumerate(lines) if "python3 - <<'PY'" in x)+1
+          end=next(i for i in range(start,len(lines)) if lines[i].strip()=='PY')
+          code='\n'.join((x[10:] if x.startswith('          ') else x) for x in lines[start:end])
+          old="s=s.replace('</body>',script+'</body>',1)"
+          new="idx=s.rfind('</body>')\n          if idx<0: raise SystemExit('final body tag missing')\n          s=s[:idx]+script+s[idx:]"
+          if old not in code: raise SystemExit('body insertion source missing')
+          code=code.replace(old,new)
+          Path('/tmp/build_v8_fixed.py').write_text(code)
+          PY
+          python3 /tmp/build_v8_fixed.py
+          grep -q 'AOI_MULTI_RANGE_V8' aoi-tool-multi-v8.html
+          test "$(grep -c 'id="multiRangeV8Script"' aoi-tool-multi-v8.html)" -eq 1
+      - name: Install browser
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm install playwright@latest --no-audit --no-fund
+          npx playwright install --with-deps chromium
+      - name: Validate V8 workflow
+        run: |
+          cat > test.js <<'JS'
+          const {chromium}=require('playwright');const assert=require('assert');
+          (async()=>{const b=await chromium.launch({headless:true});const p=await b.newPage({viewport:{width:1500,height:950}});const errors=[];p.on('pageerror',e=>errors.push(e.message));await p.goto('http://127.0.0.1:8765/aoi-tool-multi-v8.html',{waitUntil:'domcontentloaded'});await p.waitForFunction(()=>window.aoiPro?.collection?.length===2,{timeout:20000});await p.waitForFunction(()=>document.querySelectorAll('.multi-code').length===2);
+          assert(!await p.locator('#targetCard').count(),'old A/B block remains');assert(!await p.locator('#quickGuideModal').count(),'quick guide remains');
+          const boxes=p.locator('.collection-row input[type=checkbox]');for(let i=0;i<2;i++)if(!(await boxes.nth(i).isChecked()))await boxes.nth(i).check();
+          await p.locator('.rail-btn[data-panel="overlay"]').click();await p.getByRole('button',{name:'Operation Relationship'}).click();assert(await p.locator('#relationModal.show').count());await p.selectOption('#relationType','merge');await p.getByRole('button',{name:'Execute Operation'}).click();await p.waitForFunction(()=>window.aoiPro.collection.length===3);assert(await p.locator('.multi-code').count()===3);
+          await p.locator('.rail-btn[data-panel="rules"]').click();await p.selectOption('#edgeTargetSelect',{index:0});await p.fill('#multiMinEdge','20');await p.getByRole('button',{name:'Start Check'}).click();assert((await p.locator('#edgeCheckResult').innerText()).includes('Below'));if(!(await p.locator('#adjustEdgesButton').isDisabled())){await p.locator('#adjustEdgesButton').click();await p.waitForFunction(()=>window.aoiPro.collection.length>=4);assert((await p.locator('#edgeAreaResult').innerText()).includes('Closed'))}
+          assert(!errors.length,'Page errors: '+errors.join(' | '));console.log('AOI_MULTI_V8_FINAL_PASS');await b.close()})().catch(e=>{console.error(e);process.exit(1)});
+          JS
+          python3 -m http.server 8765 >/tmp/v8-http.log 2>&1 &
+          server=$!;trap 'kill $server || true' EXIT;sleep 2;node test.js
+      - name: Publish
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add aoi-tool-multi-v8.html
+          git commit -m 'Publish AOI V8 multi-range and edge adjustment'
+          git push origin gh-pages
