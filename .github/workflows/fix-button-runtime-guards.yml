@@ -1,0 +1,97 @@
+name: Fix button runtime guards
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fix-button-runtime-guards.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  fix-test-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 0
+      - name: Patch DATA SEARCH and AOI guards
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          data_files=['data-search-integrated-v8.html','data-search-restored.html','data-search.html']
+          for fn in data_files:
+              p=Path(fn); s=p.read_text(encoding='utf-8')
+              reps=[
+                ("const v11BaseSwitchSettings=window.switchSettingsTab;",
+                 "const v11BaseSwitchSettings=typeof window.switchSettingsTab==='function'?window.switchSettingsTab:function(tab){document.querySelectorAll('[data-v9-settings]').forEach(x=>x.classList.toggle('active',x.dataset.v9Settings===tab));document.querySelectorAll('[data-v9-pane]').forEach(x=>x.classList.toggle('active',x.dataset.v9Pane===tab));const save=document.getElementById('v9SaveSettingsBtn');if(save)save.style.display=tab==='help'?'none':'inline-block';};"),
+                ("function renderOrderFormControls(){const o=currentOrder(),f=o.form,box=document.getElementById('v9OrderFormControls');box.innerHTML=",
+                 "function renderOrderFormControls(){const o=currentOrder(),box=document.getElementById('v9OrderFormControls');if(!o||!o.form){if(box)box.innerHTML='<div class=\"v9-admin-note\">Select or create an Order Form first.</div>';return}const f=o.form;box.innerHTML="),
+                ("window.updateOrderFormFromControls=function(){const o=currentOrder(),f=o.form;if(!f)return;",
+                 "window.updateOrderFormFromControls=function(){const o=currentOrder();if(!o||!o.form)return;const f=o.form;"),
+                ("window.saveCurrentOrderForm=function(){updateOrderFormFromControls();persistV9();notify('Order Form saved',currentOrder().form.formNo+' remains available in Order Center.');}",
+                 "window.saveCurrentOrderForm=function(){const o=currentOrder();if(!o||!o.form){notify('Order Form required','Open or create an Order Form first.');return}updateOrderFormFromControls();persistV9();notify('Order Form saved',o.form.formNo+' remains available in Order Center.');}"),
+                ("window.submitCurrentOrderForm=function(){updateOrderFormFromControls();const o=currentOrder(),f=o.form;if(!f.requesterSignature)",
+                 "window.submitCurrentOrderForm=function(){const o=currentOrder();if(!o||!o.form){notify('Order Form required','Open or create an Order Form first.');return}updateOrderFormFromControls();const f=o.form;if(!f.requesterSignature)"),
+                ("window.downloadCurrentOrderForm=function(){const o=currentOrder();downloadFile(o.form.formNo+'.html',standaloneDoc(o.form.formNo,orderFormInner(o)))}",
+                 "window.downloadCurrentOrderForm=function(){const o=currentOrder();if(!o||!o.form){notify('Order Form required','Open or create an Order Form first.');return}downloadFile(o.form.formNo+'.html',standaloneDoc(o.form.formNo,orderFormInner(o)))}"),
+                ("window.printV9Document=function(id){document.body.classList.add('v9-print-doc');const mask=document.getElementById(id);mask.classList.add('v9-print-target');",
+                 "window.printV9Document=function(id){const mask=document.getElementById(id);if(!mask){notify('Document unavailable','Open a document before printing.');return}document.body.classList.add('v9-print-doc');mask.classList.add('v9-print-target');"),
+                ("window.openSettlement=function(id){currentSettlementId=id;renderSettlementControls();renderSettlementDocument();const s=currentSettlement();document.getElementById('v9SettlementHeadMeta').textContent=s.statementNo+' · '+s.orderIds.length+' Order Form(s)';openV9('settlementModal')}",
+                 "window.openSettlement=function(id){const s=settlements.find(x=>x.id===id);if(!s){notify('Settlement unavailable','Select an existing settlement statement first.');return}currentSettlementId=id;renderSettlementControls();renderSettlementDocument();document.getElementById('v9SettlementHeadMeta').textContent=s.statementNo+' · '+s.orderIds.length+' Order Form(s)';openV9('settlementModal')}"),
+                ("window.saveCurrentSettlement=function(){updateSettlement();persistV9();notify('Settlement saved',currentSettlement().statementNo+' was updated.');}",
+                 "window.saveCurrentSettlement=function(){const s=currentSettlement();if(!s){notify('Settlement required','Open a settlement statement first.');return}updateSettlement();persistV9();notify('Settlement saved',s.statementNo+' was updated.');}"),
+                ("window.downloadCurrentSettlement=function(){const s=currentSettlement();downloadFile(s.statementNo+'.html',standaloneDoc(s.statementNo,settlementInner(s)))}",
+                 "window.downloadCurrentSettlement=function(){const s=currentSettlement();if(!s){notify('Settlement required','Open a settlement statement first.');return}downloadFile(s.statementNo+'.html',standaloneDoc(s.statementNo,settlementInner(s)))}"),
+                ("window.openDocumentEmail=function(type){emailContext={type,id:type==='orderForm'?currentOrderId:currentSettlementId};",
+                 "window.openDocumentEmail=function(type){const selected=type==='orderForm'?currentOrder():currentSettlement();if(type==='orderForm'&&(!selected||!selected.form)){notify('Order Form required','Open or create an Order Form before preparing email.');return}if(type!=='orderForm'&&!selected){notify('Settlement required','Open a settlement statement before preparing email.');return}emailContext={type,id:type==='orderForm'?currentOrderId:currentSettlementId};"),
+                ("function emailDocumentHtml(){if(!emailContext)return'';if(emailContext.type==='orderForm'){const o=orders.find(x=>x.id===emailContext.id);return standaloneDoc(o.form.formNo,orderFormInner(o))}const s=settlements.find(x=>x.id===emailContext.id);return standaloneDoc(s.statementNo,settlementInner(s))}",
+                 "function emailDocumentHtml(){if(!emailContext)return'';if(emailContext.type==='orderForm'){const o=orders.find(x=>x.id===emailContext.id);if(!o||!o.form)return'';return standaloneDoc(o.form.formNo,orderFormInner(o))}const s=settlements.find(x=>x.id===emailContext.id);if(!s)return'';return standaloneDoc(s.statementNo,settlementInner(s))}"),
+                ("window.sendV9Email=function(){const mb=mailboxes.find(x=>x.id===document.getElementById('v9EmailMailbox').value);",
+                 "window.sendV9Email=function(){if(!emailContext||!emailDocumentHtml()){notify('Document required','Open a valid Order Form or settlement statement first.');return}const mb=mailboxes.find(x=>x.id===document.getElementById('v9EmailMailbox').value);"),
+              ]
+              for old,new in reps:
+                  if old not in s:
+                      raise SystemExit(f'{fn}: source fragment missing: {old[:80]}')
+                  s=s.replace(old,new,1)
+              if '<!-- BUTTON_RUNTIME_GUARDS_V1 -->' not in s:
+                  s=s.replace('<!-- DATA_SEARCH_AOI_V8_INTEGRATED -->','<!-- DATA_SEARCH_AOI_V8_INTEGRATED -->\n<!-- BUTTON_RUNTIME_GUARDS_V1 -->',1)
+              p.write_text(s,encoding='utf-8')
+
+          for fn in ['aoi-tool-multi-v8.html','aoi-tool-multi-v8-embed.html']:
+              p=Path(fn); s=p.read_text(encoding='utf-8')
+              old="window.toggleProFullscreen=function(){const el=document.querySelector('.map-shell');if(!document.fullscreenElement)el.requestFullscreen?.();else document.exitFullscreen?.()};"
+              new="window.toggleProFullscreen=function(){const el=document.querySelector('.map-shell');try{const action=!document.fullscreenElement?el?.requestFullscreen?.():document.exitFullscreen?.();if(action&&typeof action.catch==='function')action.catch(()=>toast('Fullscreen unavailable','The browser blocked fullscreen for this action.',true));}catch(e){toast('Fullscreen unavailable','The browser blocked fullscreen for this action.',true)}};"
+              if old not in s: raise SystemExit(f'{fn}: fullscreen source missing')
+              s=s.replace(old,new,1)
+              if '<!-- AOI_FULLSCREEN_GUARD_V1 -->' not in s:
+                  s=s.replace('<!-- AOI_TOP_ACTIONS_REMOVED -->','<!-- AOI_TOP_ACTIONS_REMOVED -->\n<!-- AOI_FULLSCREEN_GUARD_V1 -->',1)
+              p.write_text(s,encoding='utf-8')
+          PY
+      - name: Install Chromium
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm install playwright@latest --no-audit --no-fund
+          npx playwright install --with-deps chromium
+      - name: Focused runtime regression
+        run: |
+          cat > regression.js <<'JS'
+          const {chromium}=require('playwright');const assert=require('assert');
+          const BASE='http://127.0.0.1:8765/';const wait=ms=>new Promise(r=>setTimeout(r,ms));
+          (async()=>{const b=await chromium.launch({headless:true});
+            const p=await b.newPage({viewport:{width:1600,height:1000},acceptDownloads:true});const errors=[];p.on('pageerror',e=>errors.push(e.message));p.on('dialog',d=>d.accept('').catch(()=>{}));await p.goto(BASE+'data-search-integrated-v8.html',{waitUntil:'domcontentloaded'});await p.waitForFunction(()=>document.querySelectorAll('#v11LoginBtn,#v11LogoutBtn').length===2,{timeout:20000});
+            await p.evaluate(()=>{window.openPlatformSettings('help');window.switchSettingsTab('identity');window.switchSettingsTab('numbering');window.switchSettingsTab('help');window.downloadCurrentOrderForm();window.saveCurrentOrderForm();window.submitCurrentOrderForm();window.openSettlement('missing');window.saveCurrentSettlement();window.downloadCurrentSettlement();window.openDocumentEmail('orderForm');window.openDocumentEmail('settlement');window.printV9Document('missing-document');});await wait(500);assert.equal(errors.length,0,'DATA SEARCH errors: '+errors.join(' | '));
+            await p.evaluate(()=>window.createNewOrderForm());await p.waitForFunction(()=>document.getElementById('orderFormModal')?.classList.contains('show'),{timeout:8000});await p.evaluate(()=>{window.saveCurrentOrderForm();window.downloadCurrentOrderForm();});await wait(300);assert.equal(errors.length,0,'DATA SEARCH valid order errors: '+errors.join(' | '));await p.close();
+            const a=await b.newPage({viewport:{width:1400,height:900});const ae=[];a.on('pageerror',e=>ae.push(e.message));await a.goto(BASE+'aoi-tool-multi-v8.html',{waitUntil:'domcontentloaded'});await a.waitForFunction(()=>window.aoiPro?.collection?.length>=2,{timeout:20000});await a.evaluate(()=>window.toggleProFullscreen());await wait(300);assert.equal(ae.length,0,'AOI fullscreen errors: '+ae.join(' | '));await a.evaluate(()=>{window.showPanel('rules');const s=document.getElementById('edgeTargetSelect');if(s&&s.options.length)s.selectedIndex=0;document.getElementById('multiMinEdge').value='20';window.checkSelectedEdges();});await a.waitForFunction(()=>/Below|All edges/.test(document.getElementById('edgeCheckResult')?.textContent||''),{timeout:8000});if(!await a.locator('#adjustEdgesButton').isDisabled()){await a.locator('#adjustEdgesButton').click();await a.waitForFunction(()=>/Closed/.test(document.getElementById('edgeAreaResult')?.textContent||''),{timeout:12000});}assert.equal(ae.length,0,'AOI edge errors: '+ae.join(' | '));await a.close();await b.close();console.log('BUTTON_RUNTIME_GUARDS_PASS')})().catch(e=>{console.error(e);process.exit(1)});
+          JS
+          python3 -m http.server 8765 >/tmp/guard-http.log 2>&1 &
+          server=$!;trap 'kill $server || true' EXIT;sleep 2;node regression.js
+      - name: Publish guarded files
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data-search-integrated-v8.html data-search-restored.html data-search.html aoi-tool-multi-v8.html aoi-tool-multi-v8-embed.html
+          git commit -m 'Fix button runtime guards from full audit'
+          git push origin gh-pages
