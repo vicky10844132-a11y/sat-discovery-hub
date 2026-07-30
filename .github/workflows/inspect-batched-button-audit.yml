@@ -1,3 +1,4 @@
+# refresh corrected batched audit
 name: Inspect batched button audit
 on:
   push:
@@ -24,7 +25,7 @@ jobs:
               rows=[r for r in data.get('workflow_runs',[]) if r.get('name')=='Batched module audit of all buttons']
               if rows:
                   row=rows[0]
-                  if row.get('status')=='completed': break
+                  if row.get('status')=='completed' and row.get('head_sha')=='3f69bd839cc24cbb101f0b7098bc98d05212de3a': break
               time.sleep(5)
           open('batched-button-audit-status.json','w').write(json.dumps({k:row.get(k) for k in ['id','status','conclusion','head_sha','jobs_url','html_url']},indent=2))
           PY
@@ -33,5 +34,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add batched-button-audit-status.json
-          git commit -m 'Record batched button audit status' || true
+          git commit -m 'Record corrected batched audit status' || true
           git push origin main
