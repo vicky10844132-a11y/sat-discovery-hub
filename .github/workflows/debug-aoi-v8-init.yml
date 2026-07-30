@@ -28,6 +28,10 @@ jobs:
           Path('/tmp/build_v8.py').write_text(code)
           PY
           python3 /tmp/build_v8.py
+          echo '--- GENERATED LINES 380-425 ---'
+          nl -ba aoi-tool-multi-v8.html | sed -n '380,425p'
+          echo '--- SCRIPT TAGS ---'
+          grep -n '<script\|</script>' aoi-tool-multi-v8.html | tail -20
       - name: Install browser
         run: |
           npm init -y >/dev/null 2>&1
@@ -37,7 +41,7 @@ jobs:
         run: |
           cat > debug.js <<'JS'
           const {chromium}=require('playwright');
-          (async()=>{const b=await chromium.launch({headless:true});const p=await b.newPage({viewport:{width:1500,height:950}});const logs=[],errs=[];p.on('console',m=>logs.push(m.type()+': '+m.text()));p.on('pageerror',e=>errs.push(e.stack||e.message));await p.goto('http://127.0.0.1:8765/aoi-tool-multi-v8.html',{waitUntil:'domcontentloaded'});await p.waitForTimeout(6000);const state=await p.evaluate(()=>({ready:document.readyState,pro:!!window.aoiPro,count:window.aoiPro?.collection?.length,codes:document.querySelectorAll('.multi-code').length,rows:document.querySelectorAll('.collection-row').length,target:!!document.querySelector('#targetCard'),relation:!!document.querySelector('#relationModal'),scripts:[...document.scripts].map(x=>x.id||x.src).filter(Boolean).slice(-12)}));console.log('V8_STATE '+JSON.stringify(state,null,2));console.log('V8_ERRORS '+JSON.stringify(errs,null,2));console.log('V8_LOGS '+JSON.stringify(logs.slice(-30),null,2));await b.close();if(errs.length||!state.pro)process.exit(1)})().catch(e=>{console.error(e);process.exit(1)});
+          (async()=>{const b=await chromium.launch({headless:true});const p=await b.newPage({viewport:{width:1500,height:950}});const logs=[],errs=[];p.on('console',m=>logs.push(m.type()+': '+m.text()));p.on('pageerror',e=>errs.push(e.stack||e.message));await p.goto('http://127.0.0.1:8765/aoi-tool-multi-v8.html',{waitUntil:'domcontentloaded'});await p.waitForTimeout(3000);const state=await p.evaluate(()=>({ready:document.readyState,pro:!!window.aoiPro,count:window.aoiPro?.collection?.length,codes:document.querySelectorAll('.multi-code').length,rows:document.querySelectorAll('.collection-row').length,target:!!document.querySelector('#targetCard'),relation:!!document.querySelector('#relationModal')}));console.log('V8_STATE '+JSON.stringify(state,null,2));console.log('V8_ERRORS '+JSON.stringify(errs,null,2));console.log('V8_LOGS '+JSON.stringify(logs.slice(-30),null,2));await b.close();if(errs.length||!state.pro)process.exit(1)})().catch(e=>{console.error(e);process.exit(1)});
           JS
           python3 -m http.server 8765 >/tmp/v8-debug-http.log 2>&1 &
           server=$!;trap 'kill $server || true' EXIT;sleep 2;node debug.js
