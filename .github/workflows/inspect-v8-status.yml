@@ -1,4 +1,4 @@
-# refresh final-rerun
+# refresh corrected-rerun
 name: Inspect AOI V8 status
 on:
   push:
@@ -28,7 +28,7 @@ jobs:
               for name in names:
                   rows=[r for r in d.get('workflow_runs',[]) if r.get('name')==name]
                   if rows: found[name]=rows[0]
-              if found.get(names[0],{}).get('status')=='completed': break
+              if found.get(names[0],{}).get('status')=='completed' and found.get(names[0],{}).get('head_sha')=='4ad04ae7c2d8b6f7a44dcd5b22b97bd6cfc4671a': break
               time.sleep(10)
           out={name:{'id':r.get('id'),'status':r.get('status'),'conclusion':r.get('conclusion'),'head_sha':r.get('head_sha'),'jobs_url':r.get('jobs_url'),'html_url':r.get('html_url')} for name,r in found.items()}
           open('v8-status.json','w').write(json.dumps(out,indent=2))
@@ -38,5 +38,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add v8-status.json
-          git commit -m 'Record AOI V8 final rerun status' || exit 0
+          git commit -m 'Record AOI V8 corrected rerun status' || exit 0
           git push origin main
