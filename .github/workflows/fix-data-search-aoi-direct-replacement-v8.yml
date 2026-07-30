@@ -1,0 +1,170 @@
+name: Fix DATA SEARCH AOI direct replacement V8
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fix-data-search-aoi-direct-replacement-v8.yml'
+permissions:
+  contents: write
+jobs:
+  build-test-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 0
+      - name: Patch DATA SEARCH directly
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          source=Path('data-search-integrated-v8.html')
+          s=source.read_text(encoding='utf-8')
+          if '<!-- DATA_SEARCH_AOI_V9_DIRECT_REPLACEMENT -->' not in s:
+              s=s.replace('<!-- DATA_SEARCH_AOI_V8_INTEGRATED -->','<!-- DATA_SEARCH_AOI_V8_INTEGRATED -->\n<!-- DATA_SEARCH_AOI_V9_DIRECT_REPLACEMENT -->',1)
+
+          # The old compact AOI panel is retired; Search is the default module.
+          s=s.replace('<button class="rail-btn active" data-panel="aoi"','<button class="rail-btn" data-panel="aoi"',1)
+          s=s.replace('<button class="rail-btn" data-panel="search"','<button class="rail-btn active" data-panel="search"',1)
+          s=s.replace('<section class="panel-view active" id="panel-aoi">','<section class="panel-view" id="panel-aoi" hidden>',1)
+          s=s.replace('<section class="panel-view" id="panel-search">','<section class="panel-view active" id="panel-search">',1)
+
+          # The full AOI TOOL lives inside the DATA SEARCH workspace and is never recreated.
+          if 'id="embeddedAoiStage"' not in s:
+              s=s.replace('<main class="mapstage">','''<main class="mapstage">
+              <section class="embedded-aoi-stage" id="embeddedAoiStage" aria-label="AOI TOOL">
+                <iframe id="embeddedAoiFrame" title="AOI TOOL" src="aoi-tool-multi-v8-embed.html"></iframe>
+              </section>''',1)
+
+          direct_css='''<style id="dataSearchAoiV9DirectCss">
+          #panel-aoi{display:none!important}
+          .app.aoi-tool-open .sidepanel{display:none!important}
+          .app.aoi-tool-open .mapstage{grid-column:2/4!important}
+          .app.aoi-tool-open .embedded-aoi-stage{display:block!important;visibility:visible!important;pointer-events:auto!important}
+          .app:not(.aoi-tool-open) .embedded-aoi-stage{display:none!important;visibility:hidden!important;pointer-events:none!important}
+          </style>'''
+          if 'id="dataSearchAoiV9DirectCss"' not in s:s=s.replace('</head>',direct_css+'</head>',1)
+
+          bridge=r'''<script id="dataSearchAoiV9Bridge">
+          (function(){
+            'use strict';
+            const baseSelect=window.selectPanel;
+            const app=()=>document.querySelector('.app');
+            const stage=()=>document.getElementById('embeddedAoiStage');
+            const frame=()=>document.getElementById('embeddedAoiFrame');
+
+            function ensureAoiButton(){
+              const rail=document.querySelector('.rail');if(!rail)return null;
+              let btn=rail.querySelector('.rail-btn[data-panel="aoi"]');
+              if(!btn){
+                btn=document.createElement('button');btn.type='button';btn.className='rail-btn';btn.dataset.panel='aoi';btn.title='AOI Center';btn.setAttribute('aria-label','AOI Center');
+                btn.innerHTML='<svg class="ds-icon" viewBox="0 0 24 24"><path d="M4 7l5-3 5 3 6-2v12l-6 3-5-3-5 2z"></path><path d="M9 4v13M14 7v13"></path></svg><span class="tip">AOI Center</span>';
+                rail.insertBefore(btn,rail.firstChild);
+              }
+              [...rail.querySelectorAll('.rail-btn[data-panel="aoi"]')].slice(1).forEach(x=>x.remove());
+              return btn;
+            }
+            function markRail(name){document.querySelectorAll('.rail-btn[data-panel]').forEach(x=>x.classList.toggle('active',x.dataset.panel===name));}
+            function showAoi(){
+              app()?.classList.add('aoi-tool-open','aoi-integrated');
+              document.querySelectorAll('.panel-view').forEach(x=>x.classList.remove('active'));
+              markRail('aoi');
+              const host=stage();if(host){host.style.display='block';host.setAttribute('aria-hidden','false');}
+              setTimeout(()=>{frame()?.contentWindow?.postMessage({type:'DATA_SEARCH_AOI_EMBED_ACTIVE'},'*');try{frame()?.contentWindow?.map?.invalidateSize?.();}catch(_e){}},80);
+              return true;
+            }
+            function showData(name){
+              app()?.classList.remove('aoi-tool-open','aoi-integrated');
+              const host=stage();if(host){host.style.display='none';host.setAttribute('aria-hidden','true');}
+              return typeof baseSelect==='function'?baseSelect.call(window,name):undefined;
+            }
+            window.openDataSearchAoiTool=showAoi;
+            window.selectPanel=function(name){return name==='aoi'?showAoi():showData(name);};
+            function bindRail(){
+              ensureAoiButton();
+              document.querySelectorAll('.rail-btn[data-panel]').forEach(btn=>{btn.onclick=function(ev){ev?.preventDefault?.();ev?.stopPropagation?.();window.selectPanel(btn.dataset.panel);};});
+            }
+
+            function geometryFromFeature(f){
+              if(!f)return null;if(f.type==='Feature')return f.geometry||null;
+              if(f.type==='FeatureCollection'){const gs=(f.features||[]).map(x=>x.geometry).filter(Boolean);return gs.length===1?gs[0]:{type:'GeometryCollection',geometries:gs};}
+              if(f.type&&f.coordinates)return f;return null;
+            }
+            function ringArea(r){return sphericalPolygonAreaKm2((r||[]).map(c=>[Number(c[1]),Number(c[0])]));}
+            function geometryArea(g){
+              if(!g)return 0;if(g.type==='Polygon')return Math.max(0,ringArea(g.coordinates[0])-g.coordinates.slice(1).reduce((a,r)=>a+ringArea(r),0));
+              if(g.type==='MultiPolygon')return g.coordinates.reduce((a,p)=>a+geometryArea({type:'Polygon',coordinates:p}),0);
+              if(g.type==='GeometryCollection')return (g.geometries||[]).reduce((a,x)=>a+geometryArea(x),0);return 0;
+            }
+            const oldGetActive=window.getActiveGeometry;
+            window.getActiveGeometry=function(){return window.__embeddedAoiGeometry||(typeof oldGetActive==='function'?oldGetActive():null);};
+            window.addEventListener('message',function(e){
+              const d=e.data||{};if(d.type!=='IMAGE_COVERY_AOI_WORKBENCH_RESULT'||!d.feature)return;
+              const geom=geometryFromFeature(d.feature);if(!geom)return;
+              window.__embeddedAoiGeometry=geom;activeAoiName=(d.name||'Selected AOI').replace(/_/g,' ');
+              if(window.L&&map){
+                if(activeAOI)try{map.removeLayer(activeAOI)}catch(_e){}
+                activeAOI=L.geoJSON(d.feature,{style:{color:'#d9467a',weight:2.8,fillColor:'#d9467a',fillOpacity:.14}}).addTo(map).bindTooltip(activeAoiName,{sticky:true});
+                const bounds=activeAOI.getBounds?.();if(bounds?.isValid())map.fitBounds(bounds,{padding:[60,60],maxZoom:11});
+              }
+              const status=document.getElementById('mapStatus'),area=geometryArea(geom);if(status)status.textContent=`${activeAoiName} area: ${formatAreaKm2(area)} km²`;
+              window.selectPanel('search');if(typeof setSearchTab==='function')setSearchTab('archive');
+              setTimeout(()=>{const label=document.getElementById('activeAoiLabel');if(label)label.textContent=activeAoiName+' · exact polygon search';},0);
+              window.notify?.('AOI applied',activeAoiName+' is now the DATA SEARCH search range.');
+            });
+
+            function keepOnlyAuthButtons(){const top=document.querySelector('.top-actions');if(!top)return;top.querySelectorAll(':scope > *:not(.v11-auth-actions)').forEach(x=>x.remove());top.querySelector('.v11-auth-email')?.remove();}
+            function init(){
+              keepOnlyAuthButtons();ensureAoiButton();bindRail();
+              const top=document.querySelector('.top-actions');if(top)new MutationObserver(()=>keepOnlyAuthButtons()).observe(top,{childList:true,subtree:true});
+              const rail=document.querySelector('.rail');if(rail)new MutationObserver(()=>{ensureAoiButton();bindRail();}).observe(rail,{childList:true});
+              setTimeout(()=>{ensureAoiButton();bindRail();window.selectPanel('search');},220);
+            }
+            if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+          })();
+          </script>'''
+          s,n=re.subn(r'<script id="dataSearchAoiV8Bridge">.*?</script>\s*</body>',bridge+'\n</body>',s,count=1,flags=re.S)
+          if n!=1:raise SystemExit('Existing AOI bridge not found')
+          for name in ['data-search-aoi-v9.html','data-search-integrated-v8.html','data-search-restored.html','data-search.html']:
+              Path(name).write_text(s,encoding='utf-8')
+          PY
+          grep -q 'function ensureAoiButton()' data-search-aoi-v9.html
+          grep -q 'dataSearchAoiV9Bridge' data-search-aoi-v9.html
+      - name: Install browser
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm install playwright@latest --no-audit --no-fund
+          npx playwright install --with-deps chromium
+      - name: Validate visible controls and persistent AOI state
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > test.js <<'JS'
+          const {chromium}=require('playwright');const assert=require('assert');
+          (async()=>{
+            const browser=await chromium.launch({headless:true});const page=await browser.newPage({viewport:{width:1600,height:1000},acceptDownloads:true});const errors=[];page.on('pageerror',e=>errors.push(e.message));
+            await page.goto('http://127.0.0.1:8765/data-search-aoi-v9.html',{waitUntil:'domcontentloaded'});await page.waitForFunction(()=>document.querySelectorAll('#v11LoginBtn,#v11LogoutBtn').length===2,{timeout:20000});await page.waitForFunction(()=>document.querySelector('.rail-btn[data-panel="aoi"]'),{timeout:10000});await page.waitForTimeout(700);
+            assert(await page.locator('#panel-search.active').count());const aoiButton=page.locator('.rail-btn[data-panel="aoi"]').first();await aoiButton.click();await page.waitForFunction(()=>document.querySelector('.app')?.classList.contains('aoi-tool-open'));assert(await page.locator('#embeddedAoiStage').isVisible());
+            const frame=page.frames().find(f=>f.url().includes('aoi-tool-multi-v8-embed.html'));assert(frame);await frame.waitForFunction(()=>window.aoiPro&&Array.isArray(window.aoiPro.collection),null,{timeout:20000});if((await frame.evaluate(()=>window.aoiPro.collection.length))<2)await frame.evaluate(()=>window.loadDemo?.());await frame.waitForFunction(()=>window.aoiPro.collection.length>=2);const initial=await frame.evaluate(()=>window.aoiPro.collection.length);
+            const visiblePanels=await frame.locator('.rail-btn[data-panel]:visible').evaluateAll(bs=>bs.map(b=>b.dataset.panel));assert(visiblePanels.length>=4);for(const name of visiblePanels){await frame.locator(`.rail-btn[data-panel="${name}"]:visible`).first().click();await frame.waitForTimeout(100);assert(await frame.locator(`#panel-${name}.active`).count(),name);}
+            await page.locator('.rail-btn[data-panel="search"]').click();await page.waitForFunction(()=>!document.querySelector('.app')?.classList.contains('aoi-tool-open'));await page.locator('.rail-btn[data-panel="aoi"]').first().click();await page.waitForFunction(()=>document.querySelector('.app')?.classList.contains('aoi-tool-open'));assert.equal(await frame.evaluate(()=>window.aoiPro.collection.length),initial);
+            await frame.locator('.rail-btn[data-panel="build"]:visible').click();const boxes=frame.locator('.collection-row input[type=checkbox]');for(let i=0;i<2;i++)if(!(await boxes.nth(i).isChecked()))await boxes.nth(i).check();await frame.locator('.rail-btn[data-panel="overlay"]:visible').click();await frame.getByRole('button',{name:'Operation Relationship'}).click();await frame.selectOption('#relationType','merge');await frame.getByRole('button',{name:'Execute Operation'}).click();await frame.waitForFunction(n=>window.aoiPro.collection.length>n,initial);
+            await frame.locator('.rail-btn[data-panel="rules"]:visible').click();await frame.selectOption('#edgeTargetSelect',{index:0});await frame.fill('#multiMinEdge','20');await frame.getByRole('button',{name:'Start Check'}).click();assert((await frame.locator('#edgeCheckResult').innerText()).trim().length>0);
+            await frame.locator('.rail-btn[data-panel="build"]:visible').click();await frame.locator('#useInDataSearchBtn').click();await page.waitForFunction(()=>!!window.__embeddedAoiGeometry,{timeout:12000});await page.waitForFunction(()=>!document.querySelector('.app')?.classList.contains('aoi-tool-open'));assert((await page.locator('#activeAoiLabel').innerText()).includes('exact polygon search'));await page.locator('.rail-btn[data-panel="aoi"]').first().click();await page.waitForFunction(()=>document.querySelector('.app')?.classList.contains('aoi-tool-open'));assert(await page.locator('#embeddedAoiStage').isVisible());
+            for(const name of ['search','orbit','sources','clientapi','subscriptions','data','orders','account']){const btn=page.locator(`.rail-btn[data-panel="${name}"]:visible`).first();if(await btn.count()){await btn.click();await page.waitForTimeout(100);assert(!(await page.locator('.app').evaluate(x=>x.classList.contains('aoi-tool-open'))));}}
+            const top=(await page.locator('.topbar button:visible').allTextContents()).map(x=>x.trim()).filter(Boolean);assert(top.every(x=>['Login','Logout'].includes(x)));await page.locator('#v11LogoutBtn').click();await page.locator('#v11LoginBtn').click();assert(await page.locator('#v11LoginModal.show').count());assert(!errors.length,'Page errors: '+errors.join(' | '));console.log('DATA_SEARCH_AOI_DIRECT_REPLACEMENT_PASS');await browser.close();
+          })().catch(e=>{console.error(e);process.exit(1)});
+          JS
+          python3 -m http.server 8765 >/tmp/aoi-direct-v8-http.log 2>&1 &
+          server=$!;trap 'kill $server || true' EXIT;sleep 2;node test.js
+      - name: Publish
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data-search-aoi-v9.html data-search-integrated-v8.html data-search-restored.html data-search.html
+          git commit -m 'Replace DATA SEARCH AOI with persistent AOI TOOL module'
+          git push origin gh-pages
