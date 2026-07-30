@@ -1,8 +1,0 @@
-{
-  "id": 30518137631,
-  "status": "completed",
-  "conclusion": "failure",
-  "head_sha": "7a1a2cf245f4cdb9cb6033329d1ad50e250e340a",
-  "jobs_url": "https://api.github.com/repos/vicky10844132-a11y/sat-discovery-hub/actions/runs/30518137631/jobs",
-  "html_url": "https://github.com/vicky10844132-a11y/sat-discovery-hub/actions/runs/30518137631"
-}
