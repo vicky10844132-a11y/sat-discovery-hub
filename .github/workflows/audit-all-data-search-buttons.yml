@@ -1,3 +1,4 @@
+# trigger audit
 name: Audit all DATA SEARCH buttons
 on:
   push:
@@ -32,13 +33,10 @@ jobs:
             page.on('console',m=>{if(m.type()==='error')consoleErrors.push(m.text())});
             await page.goto('http://127.0.0.1:8765/data-search-integrated-v8.html',{waitUntil:'domcontentloaded'});
             await page.waitForTimeout(1200);
-            async function test(name,fn){
-              try{await fn();results.push({name,status:'PASS'});}catch(e){results.push({name,status:'FAIL',error:e.message});}
-            }
+            async function test(name,fn){try{await fn();results.push({name,status:'PASS'});}catch(e){results.push({name,status:'FAIL',error:e.message});}}
             await test('Top Login',async()=>{await page.locator('#v11LogoutBtn').click();await page.locator('#v11LoginBtn').click();if(!(await page.locator('#v11LoginModal.show').count()))throw new Error('login modal did not open');await page.evaluate(()=>v11Close('v11LoginModal'));});
             await test('Top Logout',async()=>{await page.locator('#v11LogoutBtn').click();});
-            const panels=['aoi','search','orbit','sources','clientapi','subscriptions','data','orders','account'];
-            for(const p of panels)await test('Panel '+p,async()=>{await page.evaluate(n=>window.selectPanel(n),p);await page.waitForTimeout(180);});
+            for(const p of ['aoi','search','orbit','sources','clientapi','subscriptions','data','orders','account'])await test('Panel '+p,async()=>{await page.evaluate(n=>window.selectPanel(n),p);await page.waitForTimeout(180);});
             await test('Search tabs',async()=>{await page.evaluate(()=>window.selectPanel('search'));for(const t of ['archive','tasking','subscribe']){await page.evaluate(x=>window.setSearchTab(x),t);await page.waitForTimeout(80)}});
             await test('Location search',async()=>{await page.fill('#coordinateInput','1.3521, 103.8198');await page.evaluate(()=>window.searchLocation());await page.waitForTimeout(120)});
             await test('Map zoom in/out',async()=>{await page.evaluate(()=>window.zoomMap(1));await page.evaluate(()=>window.zoomMap(-1));});
@@ -56,11 +54,7 @@ jobs:
               await test('AOI edge check',async()=>{await frame.locator('.rail-btn[data-panel="rules"]').click();const sel=frame.locator('#edgeTargetSelect');if(await sel.count()){await sel.selectOption({index:0});await frame.fill('#multiMinEdge','1');await frame.getByRole('button',{name:'Start Check'}).click();}});
               await test('AOI send to DATA SEARCH',async()=>{await frame.locator('#useInDataSearchBtn').click();await page.waitForFunction(()=>!!window.__embeddedAoiGeometry,{timeout:10000});});
             }
-            const failed=results.filter(x=>x.status==='FAIL');
-            fs.writeFileSync('button-audit-report.json',JSON.stringify({results,pageErrors,consoleErrors},null,2));
-            console.log('BUTTON_AUDIT '+JSON.stringify({total:results.length,passed:results.length-failed.length,failed:failed.length}));
-            if(failed.length||pageErrors.length){console.error(JSON.stringify({failed,pageErrors,consoleErrors},null,2));process.exit(1)}
-            await browser.close();
+            const failed=results.filter(x=>x.status==='FAIL');fs.writeFileSync('button-audit-report.json',JSON.stringify({results,pageErrors,consoleErrors},null,2));console.log('BUTTON_AUDIT '+JSON.stringify({total:results.length,passed:results.length-failed.length,failed:failed.length}));if(failed.length||pageErrors.length){console.error(JSON.stringify({failed,pageErrors,consoleErrors},null,2));process.exit(1)}await browser.close();
           })().catch(e=>{console.error(e);process.exit(1)});
           JS
           python3 -m http.server 8765 >/tmp/audit-http.log 2>&1 &
