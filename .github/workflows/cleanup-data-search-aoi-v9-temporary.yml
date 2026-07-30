@@ -1,0 +1,50 @@
+name: Cleanup DATA SEARCH AOI temporary workflows
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/cleanup-data-search-aoi-v9-temporary.yml'
+permissions:
+  contents: write
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Remove one-time workflows and status files
+        run: |
+          git rm -f \
+            .github/workflows/fix-data-search-aoi-direct-replacement.yml \
+            .github/workflows/fix-data-search-aoi-direct-replacement-v2.yml \
+            .github/workflows/fix-data-search-aoi-direct-replacement-v3.yml \
+            .github/workflows/fix-data-search-aoi-direct-replacement-v4.yml \
+            .github/workflows/fix-data-search-aoi-direct-replacement-v5.yml \
+            .github/workflows/fix-data-search-aoi-direct-replacement-v6.yml \
+            .github/workflows/fix-data-search-aoi-direct-replacement-v7.yml \
+            .github/workflows/fix-data-search-aoi-direct-replacement-v8.yml \
+            .github/workflows/inspect-data-search-aoi-v9.yml \
+            .github/workflows/inspect-data-search-aoi-v9-v2.yml \
+            .github/workflows/inspect-data-search-aoi-v9-v3.yml \
+            .github/workflows/inspect-data-search-aoi-v9-v4.yml \
+            .github/workflows/inspect-data-search-aoi-v9-v5.yml \
+            .github/workflows/inspect-data-search-aoi-v9-v6.yml \
+            .github/workflows/inspect-data-search-aoi-v9-v7.yml \
+            .github/workflows/inspect-data-search-aoi-direct-v8.yml \
+            .github/workflows/inspect-data-search-aoi-direct-v8b.yml \
+            .github/workflows/cleanup-data-search-aoi-v9-temporary.yml \
+            data-search-aoi-v9-status.json \
+            data-search-aoi-v9-v2-status.json \
+            data-search-aoi-v9-v3-status.json \
+            data-search-aoi-v9-v4-status.json \
+            data-search-aoi-v9-v5-status.json \
+            data-search-aoi-v9-v6-status.json \
+            data-search-aoi-v9-v7-status.json \
+            data-search-aoi-direct-v8-status.json \
+            data-search-aoi-direct-v8b-status.json || true
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Remove one-time DATA SEARCH AOI integration workflows' || exit 0
+          git push origin main
