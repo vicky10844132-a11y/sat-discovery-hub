@@ -1,0 +1,69 @@
+name: Build AOI V8 multi-range final
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/build-aoi-multi-v8-final.yml'
+permissions:
+  contents: write
+jobs:
+  build-test-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 0
+      - name: Build final V8
+        run: |
+          git fetch origin main
+          git show origin/main:.github/workflows/build-aoi-multi-v8.yml > /tmp/v8.yml
+          python3 - <<'PY'
+          from pathlib import Path
+          lines=Path('/tmp/v8.yml').read_text().splitlines()
+          start=next(i for i,x in enumerate(lines) if "python3 - <<'PY'" in x)+1
+          end=next(i for i in range(start,len(lines)) if lines[i].strip()=='PY')
+          code='\n'.join((x[10:] if x.startswith('          ') else x) for x in lines[start:end])
+          code=code.replace("s=s.replace('</body>',script+'</body>',1)","idx=s.rfind('</body>')\nif idx<0: raise SystemExit('final body tag missing')\ns=s[:idx]+script+s[idx:]")
+          Path('/tmp/build_v8.py').write_text(code)
+          PY
+          python3 /tmp/build_v8.py
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('aoi-tool-multi-v8.html');s=p.read_text(encoding='utf-8')
+          compat='''<div id="v8LegacyCompatibility" style="display:none!important"><span id="complianceBadge"></span><div id="ruleMetrics"></div><input id="minArea" value="0"><input id="minWidth" value="0"><select id="adjustAnchor"><option value="center" selected>center</option></select><div id="adjustSummary"></div><div id="overlayInputs"></div><span id="overlayBadge"></span><div id="resultList"></div></div>'''
+          anchor='<div class="toast-wrap" id="toasts"></div>'
+          if anchor not in s: raise SystemExit('toast anchor missing')
+          s=s.replace(anchor,compat+anchor,1)
+          s=s.replace('.legacy-compare-hidden{display:none!important}', '.legacy-compare-hidden,.collection-ops{display:none!important}',1)
+          p.write_text(s,encoding='utf-8')
+          PY
+          grep -q 'AOI_MULTI_RANGE_V8' aoi-tool-multi-v8.html
+          grep -q 'v8LegacyCompatibility' aoi-tool-multi-v8.html
+      - name: Install browser
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm install playwright@latest --no-audit --no-fund
+          npx playwright install --with-deps chromium
+      - name: Validate all V8 core flows
+        run: |
+          cat > test.js <<'JS'
+          const {chromium}=require('playwright');const assert=require('assert');
+          (async()=>{const b=await chromium.launch({headless:true});const p=await b.newPage({viewport:{width:1500,height:950}});const errors=[];p.on('pageerror',e=>errors.push(e.message));await p.goto('http://127.0.0.1:8765/aoi-tool-multi-v8.html',{waitUntil:'domcontentloaded'});await p.waitForFunction(()=>window.aoiPro?.collection?.length===2,{timeout:20000});await p.waitForFunction(()=>document.querySelectorAll('.multi-code').length===2);
+          assert(!await p.locator('#targetCard').count(),'old A/B block remains');assert(!await p.locator('#quickGuideModal').count(),'quick guide remains');assert(await p.locator('.collection-ops').evaluate(el=>getComputedStyle(el).display)==='none','old operation buttons visible');
+          const boxes=p.locator('.collection-row input[type=checkbox]');for(let i=0;i<2;i++)if(!(await boxes.nth(i).isChecked()))await boxes.nth(i).check();
+          await p.locator('.rail-btn[data-panel="overlay"]').click();await p.getByRole('button',{name:'Operation Relationship'}).click();assert(await p.locator('#relationModal.show').count());await p.selectOption('#relationType','merge');await p.getByRole('button',{name:'Execute Operation'}).click();await p.waitForFunction(()=>window.aoiPro.collection.length===3);assert(await p.locator('.multi-code').count()===3);
+          const labels=await p.locator('.multi-code').allTextContents();assert.deepStrictEqual(labels.slice(0,3),['A','B','C']);
+          await p.locator('.rail-btn[data-panel="rules"]').click();await p.selectOption('#edgeTargetSelect',{index:0});await p.fill('#multiMinEdge','20');await p.getByRole('button',{name:'Start Check'}).click();assert((await p.locator('#edgeCheckResult').innerText()).includes('Below'));if(!(await p.locator('#adjustEdgesButton').isDisabled())){await p.locator('#adjustEdgesButton').click();await p.waitForFunction(()=>window.aoiPro.collection.length>=4);const txt=await p.locator('#edgeAreaResult').innerText();assert(txt.includes('Closed')&&txt.includes('Added area')&&txt.includes('Removed area'))}
+          assert(!errors.length,'Page errors: '+errors.join(' | '));console.log('AOI_MULTI_V8_ALL_PASS');await b.close()})().catch(e=>{console.error(e);process.exit(1)});
+          JS
+          python3 -m http.server 8765 >/tmp/v8-final-http.log 2>&1 &
+          server=$!;trap 'kill $server || true' EXIT;sleep 2;node test.js
+      - name: Publish final V8
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add aoi-tool-multi-v8.html
+          git commit -m 'Publish final AOI V8 multi-range workflow'
+          git push origin gh-pages
