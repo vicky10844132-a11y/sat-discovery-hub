@@ -1,0 +1,49 @@
+name: Rerun batched button audit after guards
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/rerun-batched-audit-after-guards.yml'
+permissions:
+  contents: write
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 0
+      - name: Prepare corrected audit script
+        run: |
+          git fetch origin main
+          git show origin/main:.github/workflows/audit-buttons-batched.yml > /tmp/audit.yml
+          python3 - <<'PY'
+          from pathlib import Path
+          lines=Path('/tmp/audit.yml').read_text().splitlines()
+          start=next(i for i,x in enumerate(lines) if "cat > batched-audit.js <<'JS'" in x)+1
+          end=next(i for i in range(start,len(lines)) if lines[i].strip()=='JS')
+          code='\n'.join((x[10:] if x.startswith('          ') else x) for x in lines[start:end])
+          code=code.replace('window.checkMinimumEdges()','window.checkSelectedEdges()')
+          Path('batched-audit.js').write_text(code)
+          PY
+      - name: Install Chromium
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm install playwright@latest --no-audit --no-fund
+          npx playwright install --with-deps chromium
+      - name: Run post-fix audit
+        run: |
+          python3 -m http.server 8765 >/tmp/post-fix-audit-http.log 2>&1 &
+          server=$!;trap 'kill $server || true' EXIT;sleep 2;node batched-audit.js
+          mv batched-all-buttons-audit.json post-fix-all-buttons-audit.json
+      - name: Save post-fix report
+        if: always()
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          test -f post-fix-all-buttons-audit.json || echo '{"fatal":"audit report missing","summary":{"failed":1}}' > post-fix-all-buttons-audit.json
+          git add post-fix-all-buttons-audit.json
+          git commit -m 'Record post-fix full button audit' || true
+          git push origin gh-pages
