@@ -26,7 +26,7 @@ jobs:
           end=next(i for i in range(start,len(lines)) if lines[i].strip()=='PY')
           code='\n'.join((x[10:] if x.startswith('          ') else x) for x in lines[start:end])
           old="s=s.replace('</body>',script+'</body>',1)"
-          new="idx=s.rfind('</body>')\n          if idx<0: raise SystemExit('final body tag missing')\n          s=s[:idx]+script+s[idx:]"
+          new="idx=s.rfind('</body>')\nif idx<0: raise SystemExit('final body tag missing')\ns=s[:idx]+script+s[idx:]"
           if old not in code: raise SystemExit('body insertion source missing')
           code=code.replace(old,new)
           Path('/tmp/build_v8_fixed.py').write_text(code)
