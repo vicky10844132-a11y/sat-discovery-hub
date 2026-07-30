@@ -1,0 +1,66 @@
+name: Fast audit all DATA SEARCH and AOI buttons
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/audit-all-buttons-fast.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 0
+      - name: Install Chromium
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm install playwright@latest --no-audit --no-fund
+          npx playwright install --with-deps chromium
+      - name: Audit buttons
+        run: |
+          cat > fast-audit.js <<'JS'
+          const {chromium}=require('playwright');const fs=require('fs');
+          const BASE='http://127.0.0.1:8765/';
+          const report={generated:new Date().toISOString(),pages:{},summary:{passed:0,failed:0,buttons:0,missingHandlers:0}};
+          const wait=ms=>new Promise(r=>setTimeout(r,ms));
+          async function pageFor(browser,file){const p=await browser.newPage({viewport:{width:1600,height:1000},acceptDownloads:true});await p.route('**/*',r=>{const u=r.request().url();u.startsWith(BASE)||u.startsWith('data:')||u.startsWith('blob:')?r.continue():r.abort()});p.on('dialog',d=>d.accept(d.type()==='prompt'?'1':'').catch(()=>{}));await p.goto(BASE+file,{waitUntil:'domcontentloaded',timeout:30000});await wait(800);return p}
+          async function auditPage(browser,file,name,ready){const p=await pageFor(browser,file);const errors=[];p.on('pageerror',e=>errors.push(e.message));if(ready)await p.waitForFunction(ready,{timeout:20000}).catch(()=>{});
+            const data=await p.evaluate(async()=>{
+              const rows=[...document.querySelectorAll('button')].map((b,i)=>({i,id:b.id||'',text:(b.textContent||'').trim().replace(/\s+/g,' ').slice(0,90),onclick:b.getAttribute('onclick')||'',disabled:b.disabled}));
+              const missing=[];const re=/(?:^|[;,(?:])\s*([A-Za-z_$][\w$]*)\s*\(/g;
+              for(const row of rows){let m;while((m=re.exec(row.onclick))){const n=m[1];if(['if','for','while','switch','function','setTimeout','setInterval','confirm','prompt','alert'].includes(n))continue;if(!['document','window','location'].includes(n)&&typeof window[n]!=='function')missing.push({...row,handler:n});}}
+              const results=[];const buttons=[...document.querySelectorAll('button')];
+              for(let i=0;i<buttons.length;i++){
+                const b=buttons[i],row=rows[i],before=window.__auditErrors?.length||0;let clickError='';
+                try{b.click();await new Promise(r=>setTimeout(r,25));}catch(e){clickError=e.message;}
+                document.querySelectorAll('.show').forEach(x=>{if(x.classList.contains('show')&&/modal|mask|backdrop/i.test(x.className))x.classList.remove('show')});
+                results.push({...row,clickError});
+              }
+              return {rows,missing,results};
+            });
+            await wait(500);const allErrors=[...new Set(errors)];
+            await p.close();return {name,total:data.rows.length,missing:data.missing,clickErrors:data.results.filter(x=>x.clickError),pageErrors:allErrors};}
+          async function targeted(browser){const out=[];async function run(name,file,fn){const r={name,ok:false,errors:[]};try{const p=await pageFor(browser,file);const es=[];p.on('pageerror',e=>es.push(e.message));await fn(p);await wait(300);r.ok=!es.length;if(es.length)r.errors.push(...es);await p.close()}catch(e){r.errors.push(e.message)}out.push(r)}
+            await run('DATA SEARCH login/logout','data-search-integrated-v8.html',async p=>{await p.waitForFunction(()=>document.querySelectorAll('#v11LoginBtn,#v11LogoutBtn').length===2,{timeout:20000});await p.locator('#v11LogoutBtn').click();await p.locator('#v11LoginBtn').click();if(!await p.locator('#v11LoginModal.show').count())throw Error('login modal did not open')});
+            await run('DATA SEARCH panel navigation','data-search-integrated-v8.html',async p=>{for(const n of ['aoi','search','orbit','sources','data','orders','account']){await p.evaluate(n=>window.selectPanel(n),n);await wait(80)}});
+            await run('DATA SEARCH AOI bridge','data-search-integrated-v8.html',async p=>{await p.waitForFunction(()=>document.querySelector('#embeddedAoiFrame'),{timeout:15000});const f=p.frames().find(x=>x.url().includes('aoi-tool-multi-v8-embed.html'));if(!f)throw Error('frame missing');await f.waitForFunction(()=>window.aoiPro?.collection?.length>=2,{timeout:20000});await f.evaluate(()=>{for(const x of window.aoiPro.collection.slice(0,2))window.aoiPro.selected.add(x.id);window.sendEmbeddedSelection()});await p.waitForFunction(()=>!!window.__embeddedAoiGeometry,{timeout:12000})});
+            await run('AOI relation operation','aoi-tool-multi-v8.html',async p=>{await p.waitForFunction(()=>window.aoiPro?.collection?.length>=2,{timeout:20000});await p.evaluate(()=>{for(const x of window.aoiPro.collection.slice(0,2))window.aoiPro.selected.add(x.id);window.openRelationModal();document.getElementById('relationType').value='merge';window.executeRelationOperation()});await p.waitForFunction(()=>window.aoiPro.collection.length>=3,{timeout:12000})});
+            await run('AOI edge check','aoi-tool-multi-v8.html',async p=>{await p.waitForFunction(()=>window.aoiPro?.collection?.length>=2,{timeout:20000});await p.evaluate(()=>{window.showPanel('rules');const s=document.getElementById('edgeTargetSelect');if(s&&s.options.length)s.selectedIndex=0;document.getElementById('multiMinEdge').value='20';window.checkMinimumEdges()});await p.waitForFunction(()=>/Below|All edges/.test(document.getElementById('edgeCheckResult')?.textContent||''),{timeout:10000})});
+            return out}
+          (async()=>{const b=await chromium.launch({headless:true});const ds=await auditPage(b,'data-search-integrated-v8.html','DATA SEARCH',()=>document.querySelectorAll('#v11LoginBtn,#v11LogoutBtn').length===2);const aoi=await auditPage(b,'aoi-tool-multi-v8.html','AOI TOOL',()=>!!window.aoiPro);const t=await targeted(b);await b.close();report.pages={dataSearch:ds,aoi,targeted:t};report.summary.buttons=ds.total+aoi.total;report.summary.missingHandlers=ds.missing.length+aoi.missing.length;report.summary.failed=report.summary.missingHandlers+ds.clickErrors.length+aoi.clickErrors.length+ds.pageErrors.length+aoi.pageErrors.length+t.filter(x=>!x.ok).length;report.summary.passed=report.summary.buttons-report.summary.failed;fs.writeFileSync('fast-all-buttons-audit.json',JSON.stringify(report,null,2));console.log('FAST_BUTTON_AUDIT '+JSON.stringify(report.summary))})().catch(e=>{report.fatal=e.stack||e.message;report.summary.failed++;fs.writeFileSync('fast-all-buttons-audit.json',JSON.stringify(report,null,2));console.error(e)});
+          JS
+          python3 -m http.server 8765 >/tmp/fast-audit-http.log 2>&1 &
+          server=$!;trap 'kill $server || true' EXIT;sleep 2;node fast-audit.js
+      - name: Save report
+        if: always()
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add fast-all-buttons-audit.json
+          git commit -m 'Record fast full button audit' || true
+          git push origin gh-pages
