@@ -1,0 +1,62 @@
+name: Publish button guards with lightweight Chrome test
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-button-runtime-guards-light.yml'
+permissions:
+  contents: write
+jobs:
+  validate-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 0
+      - name: Apply audited guard patch
+        run: |
+          git fetch origin main
+          git show origin/main:.github/workflows/fix-button-runtime-guards.yml > /tmp/guard.yml
+          python3 - <<'PY'
+          from pathlib import Path
+          lines=Path('/tmp/guard.yml').read_text().splitlines()
+          start=next(i for i,x in enumerate(lines) if "python3 - <<'PY'" in x)+1
+          end=next(i for i in range(start,len(lines)) if lines[i].strip()=='PY')
+          code='\n'.join((x[10:] if x.startswith('          ') else x) for x in lines[start:end])
+          Path('/tmp/apply_guards.py').write_text(code)
+          PY
+          python3 /tmp/apply_guards.py
+      - name: Run lightweight Chrome regression
+        run: |
+          cat > guard-test.html <<'HTML'
+          <!doctype html><meta charset="utf-8"><title>Guard Test</title>
+          <iframe id="data" src="data-search-integrated-v8.html"></iframe>
+          <iframe id="aoi" src="aoi-tool-multi-v8.html"></iframe>
+          <pre id="result">RUNNING</pre>
+          <script>
+          const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+          const waitFor=async(fn,ms=20000)=>{const end=Date.now()+ms;while(Date.now()<end){try{if(fn())return}catch(e){}await sleep(100)}throw new Error('wait timeout')};
+          (async()=>{const errors=[];window.addEventListener('error',e=>errors.push(e.message));window.addEventListener('unhandledrejection',e=>errors.push(String(e.reason?.message||e.reason)));
+            const d=document.getElementById('data'),a=document.getElementById('aoi');await waitFor(()=>d.contentWindow?.document?.readyState==='complete'&&a.contentWindow?.document?.readyState==='complete');const dw=d.contentWindow,aw=a.contentWindow;
+            await waitFor(()=>dw.document.querySelectorAll('#v11LoginBtn,#v11LogoutBtn').length===2);await waitFor(()=>aw.aoiPro?.collection?.length>=2);
+            dw.openPlatformSettings('help');dw.switchSettingsTab('identity');dw.switchSettingsTab('numbering');dw.switchSettingsTab('help');dw.downloadCurrentOrderForm();dw.saveCurrentOrderForm();dw.submitCurrentOrderForm();dw.openSettlement('missing');dw.saveCurrentSettlement();dw.downloadCurrentSettlement();dw.openDocumentEmail('orderForm');dw.openDocumentEmail('settlement');dw.printV9Document('missing-document');await sleep(300);
+            dw.createNewOrderForm();await waitFor(()=>dw.document.getElementById('orderFormModal')?.classList.contains('show'));dw.saveCurrentOrderForm();dw.closeV9Modal?.('orderFormModal');
+            aw.toggleProFullscreen();await sleep(300);aw.showPanel('rules');const s=aw.document.getElementById('edgeTargetSelect');if(s&&s.options.length)s.selectedIndex=0;aw.document.getElementById('multiMinEdge').value='20';aw.checkSelectedEdges();await waitFor(()=>/Below|All edges/.test(aw.document.getElementById('edgeCheckResult')?.textContent||''));if(!aw.document.getElementById('adjustEdgesButton').disabled){aw.adjustSelectedEdges();await waitFor(()=>/Closed/.test(aw.document.getElementById('edgeAreaResult')?.textContent||''));}
+            if(errors.length)throw new Error(errors.join(' | '));document.getElementById('result').textContent='BUTTON_RUNTIME_GUARDS_PASS';document.body.dataset.result='PASS';
+          })().catch(e=>{document.getElementById('result').textContent='FAIL: '+e.message;document.body.dataset.result='FAIL'});
+          </script>
+          HTML
+          python3 -m http.server 8765 >/tmp/light-http.log 2>&1 &
+          server=$!;trap 'kill $server || true' EXIT;sleep 2
+          google-chrome --headless --no-sandbox --disable-gpu --disable-dev-shm-usage --virtual-time-budget=25000 --dump-dom http://127.0.0.1:8765/guard-test.html > /tmp/guard-dom.html 2>/tmp/chrome.err || true
+          cat /tmp/chrome.err
+          grep -q 'data-result="PASS"' /tmp/guard-dom.html || { cat /tmp/guard-dom.html; exit 1; }
+      - name: Publish guarded files
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data-search-integrated-v8.html data-search-restored.html data-search.html aoi-tool-multi-v8.html aoi-tool-multi-v8-embed.html
+          git commit -m 'Publish audited runtime guards for all buttons'
+          git push origin gh-pages
