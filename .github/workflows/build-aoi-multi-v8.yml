@@ -1,0 +1,157 @@
+name: Build AOI V8 multi-range workflow
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/build-aoi-multi-v8.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-test-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 0
+
+      - name: Build multi-AOI V8
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          src=Path('aoi-tool-full-v7.html')
+          s=src.read_text(encoding='utf-8')
+          s=s.replace('<!-- AOI_QUICK_GUIDE_V7 -->','<!-- AOI_MULTI_RANGE_V8 -->')
+
+          # Remove fixed A/B target card and quick guide modal.
+          s,n=re.subn(r'<div class="card soft" id="targetCard">.*?</div></div>', '', s, count=1, flags=re.S)
+          if n!=1: raise SystemExit('targetCard replacement failed')
+          s,n=re.subn(r'<div class="modal-backdrop" id="quickGuideModal">.*?</div></div></div>', '', s, count=1, flags=re.S)
+          if n!=1: raise SystemExit('quickGuideModal removal failed')
+
+          # Replace old Rules panel with focused edge-length workspace.
+          edge_panel='''<section class="panel" id="panel-rules">
+          <div class="panel-head"><div><h2>Edge Length Adjustment</h2><p>Check and correct short polygon edges while preserving closure</p></div><span class="badge wait" id="edgeCheckBadge"><span class="dot"></span>Awaiting AOI</span></div>
+          <div class="panel-body">
+            <div class="card soft"><div class="card-head"><div><strong>Minimum edge length</strong></div><span>USER-DEFINED</span></div>
+              <div class="field"><label>Minimum length (km)</label><input id="multiMinEdge" min="0.001" step="0.1" type="number" value="3"/></div>
+              <div class="field"><label>AOI to inspect</label><select id="edgeTargetSelect"></select></div>
+              <div class="btn-row"><button class="btn primary" onclick="checkSelectedEdges()">Start Check</button><button class="btn" id="adjustEdgesButton" onclick="adjustSelectedEdges()" disabled>Adjust</button><button class="btn" onclick="clearEdgeCheck()">Clear Marks</button></div>
+              <div class="hint">Edges shorter than the entered value are marked in bright orange. Adjustment keeps the polygon closed and creates a new AOI instead of overwriting the original.</div>
+            </div>
+            <div class="card"><div class="card-head"><div><strong>Check result</strong></div><span>EDGE-BY-EDGE</span></div><div class="empty" id="edgeCheckResult">Select an AOI and start the check.</div></div>
+            <div class="card"><div class="card-head"><div><strong>Area change</strong></div><span>ORIGINAL VS ADJUSTED</span></div><div class="empty" id="edgeAreaResult">No adjustment has been made.</div></div>
+          </div></section>'''
+          s,n=re.subn(r'<section class="panel" id="panel-rules">.*?</section>', edge_panel, s, count=1, flags=re.S)
+          if n!=1: raise SystemExit('rules panel replacement failed')
+
+          # Replace overlay panel with selected-range relationship workflow.
+          relation_panel='''<section class="panel" id="panel-overlay">
+          <div class="panel-head"><div><h2>Selected AOI Relationship</h2><p>Choose ranges first, then define how they interact</p></div><span class="badge wait" id="multiRelationBadge"><span class="dot"></span>0 selected</span></div>
+          <div class="panel-body">
+            <div class="card soft"><div class="card-head"><div><strong>Selected ranges</strong></div><span>A / B / C / D…</span></div><div class="empty" id="multiSelectedSummary">Tick at least two AOIs in the collection.</div></div>
+            <button class="btn primary wide relation-launch" onclick="openRelationModal()">Operation Relationship</button>
+            <div class="card" style="margin-top:12px"><div class="card-head"><div><strong>Latest expression</strong></div><span>BEFORE EXECUTION</span></div><div class="empty" id="multiExpression">No operation selected.</div></div>
+          </div></section>'''
+          s,n=re.subn(r'<section class="panel" id="panel-overlay">.*?</section>', relation_panel, s, count=1, flags=re.S)
+          if n!=1: raise SystemExit('overlay panel replacement failed')
+
+          # Hide old comparison panel from navigation; edge adjustment now reports change.
+          s=s.replace('<button class="rail-btn" data-panel="compare"', '<button class="rail-btn legacy-compare-hidden" data-panel="compare"')
+
+          relation_modal='''<div class="modal-backdrop" id="relationModal"><div class="modal relation-modal"><div class="modal-head"><h3>Operation Relationship</h3><button class="close" onclick="closeRelationModal()">×</button></div><div class="modal-body">
+          <div class="field"><label>Relationship</label><select id="relationType" onchange="renderRelationRoles()"><option value="merge">Merge all selected</option><option value="intersection">Common intersection of all selected</option><option value="one-minus-many">One minus multiple</option><option value="many-minus-one">Multiple merged minus one</option><option value="separate-minus-one">Each selected range minus one</option><option value="xor">Non-overlap / XOR</option><option value="split">Split one range with multiple cutters</option></select></div>
+          <div id="relationRoles"></div><div class="relation-expression" id="relationExpressionPreview"></div>
+          <button class="btn primary wide" onclick="executeRelationOperation()">Execute Operation</button>
+          </div></div></div>'''
+          s=s.replace('<div class="modal-backdrop" id="settingsModal">', relation_modal+'<div class="modal-backdrop" id="settingsModal">',1)
+
+          css='''<style id="multiRangeV8Styles">
+          .legacy-compare-hidden{display:none!important}.quick-guide-btn{display:none!important}
+          .relation-launch{background:#c83f72!important;color:#fff!important;border-color:#c83f72!important;margin-top:4px}
+          .relation-modal{max-width:620px}.relation-expression{margin:12px 0;padding:12px;border:1px solid #e0b4c5;background:#fff4f8;border-radius:10px;font-weight:800;color:#8f284e;line-height:1.55}
+          .multi-code{display:inline-grid;place-items:center;min-width:27px;height:27px;padding:0 7px;border-radius:8px;background:#2b2e34;color:#fff;font-weight:900;margin-right:8px;font-size:11px}
+          .short-edge-label{background:#ff7a00;color:#fff;border:0;border-radius:6px;padding:3px 6px;font-weight:900;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+          .edge-change-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.edge-change-grid div{padding:9px;border:1px solid #d7dddd;border-radius:8px;background:#fff}.edge-change-grid b{display:block;color:#c83f72;font-size:14px;margin-top:3px}
+          </style>'''
+          s=s.replace('</head>',css+'</head>',1)
+
+          # Expose collection state/functions from the existing collection controller.
+          s=s.replace("const pro={collection:[]", "const pro=window.aoiPro={collection:[]",1)
+          marker='const oldSet=window.setFeature;'
+          if marker not in s: raise SystemExit('collection exposure marker missing')
+          s=s.replace(marker,"window.aoiAddCollection=addCollection;window.aoiRenderCollection=renderCollection;window.aoiActivateCollection=activateCollection;"+marker,1)
+
+          script=r'''<script id="multiRangeV8Script">
+          (function(){
+          'use strict';
+          const shortEdgeGroup=L.layerGroup().addTo(map);let edgeCheckState=null;
+          const codeFor=i=>{let n=i+1,out='';while(n){n--;out=String.fromCharCode(65+n%26)+out;n=Math.floor(n/26)}return out};
+          const itemCode=item=>codeFor(aoiPro.collection.indexOf(item));
+          function checkedItems(){return aoiPro.collection.filter(x=>aoiPro.selected.has(x.id))}
+          function activeItem(){return aoiPro.collection.find(x=>x.id===aoiPro.activeId)||checkedItems()[0]||aoiPro.collection[0]}
+          function refreshCodes(){document.querySelectorAll('.collection-row').forEach((row,i)=>{const name=row.querySelector('.collection-name');if(name&&!name.querySelector('.multi-code'))name.insertAdjacentHTML('afterbegin',`<span class="multi-code">${codeFor(i)}</span>`)});refreshMultiSummary();refreshEdgeTargets()}
+          const obs=new MutationObserver(()=>refreshCodes());const cm=document.getElementById('collectionMount');if(cm)obs.observe(cm,{childList:true,subtree:true});
+          function refreshMultiSummary(){const items=checkedItems(),codes=items.map(itemCode);const sum=document.getElementById('multiSelectedSummary'),badge=document.getElementById('multiRelationBadge');if(sum)sum.innerHTML=items.length?`Selected: <strong>${codes.join(', ')}</strong> · ${items.length} AOIs`:'Tick at least two AOIs in the collection.';if(badge){badge.className='badge '+(items.length>=2?'good':'wait');badge.innerHTML=`<span class="dot"></span>${items.length} selected`}}
+          function refreshEdgeTargets(){const sel=document.getElementById('edgeTargetSelect');if(!sel)return;const old=sel.value;sel.innerHTML=aoiPro.collection.map((x,i)=>`<option value="${x.id}">${codeFor(i)} · ${escapeHtml(x.name)}</option>`).join('');if([...sel.options].some(o=>o.value===old))sel.value=old;const b=document.getElementById('edgeCheckBadge');if(b){b.className='badge '+(aoiPro.collection.length?'good':'wait');b.innerHTML=`<span class="dot"></span>${aoiPro.collection.length?'Ready':'Awaiting AOI'}`}}
+          window.openRelationModal=function(){if(checkedItems().length<2){toast('Select at least two AOIs','Tick the ranges that should participate in the operation.',true);return}document.getElementById('relationModal').classList.add('show');renderRelationRoles()};
+          window.closeRelationModal=function(){document.getElementById('relationModal').classList.remove('show')};
+          window.renderRelationRoles=function(){const items=checkedItems(),type=document.getElementById('relationType').value,host=document.getElementById('relationRoles');let html='';if(['one-minus-many','split'].includes(type))html=`<div class="field"><label>${type==='split'?'Range to split':'Range to keep'}</label><select id="relationPrimary">${items.map(x=>`<option value="${x.id}">${itemCode(x)} · ${escapeHtml(x.name)}</option>`).join('')}</select></div>`;if(['many-minus-one','separate-minus-one'].includes(type))html=`<div class="field"><label>Range to subtract</label><select id="relationPrimary">${items.map(x=>`<option value="${x.id}">${itemCode(x)} · ${escapeHtml(x.name)}</option>`).join('')}</select></div>`;host.innerHTML=html;const sel=document.getElementById('relationPrimary');if(sel)sel.onchange=updateRelationExpression;updateRelationExpression()};
+          window.updateRelationExpression=function(){const items=checkedItems(),type=document.getElementById('relationType').value,pid=document.getElementById('relationPrimary')?.value,p=items.find(x=>x.id===pid)||items[0],others=items.filter(x=>x!==p),c=x=>itemCode(x);let e='';if(type==='merge')e=items.map(c).join(' + ');if(type==='intersection')e=items.map(c).join(' ∩ ');if(type==='one-minus-many')e=`${c(p)} − (${others.map(c).join(' + ')})`;if(type==='many-minus-one')e=`(${others.map(c).join(' + ')}) − ${c(p)}`;if(type==='separate-minus-one')e=others.map(x=>`${c(x)} − ${c(p)}`).join(' ; ');if(type==='xor')e=items.map(c).join(' XOR ');if(type==='split')e=`Split ${c(p)} by (${others.map(c).join(' + ')})`;document.getElementById('relationExpressionPreview').textContent=e;document.getElementById('multiExpression').textContent=e};
+          function unionItems(items){if(!items.length)return null;let out=cloneFeature(items[0].feature);for(let i=1;i<items.length;i++)out=turf.union(turf.featureCollection([out,items[i].feature]));return out}
+          function intersectItems(items){if(!items.length)return null;let out=cloneFeature(items[0].feature);for(let i=1;i<items.length&&out;i++)out=turf.intersect(turf.featureCollection([out,items[i].feature]));return out}
+          function diff(a,b){return a&&b?turf.difference(turf.featureCollection([a,b])):a}
+          function cloneFeature(f){return JSON.parse(JSON.stringify(f))}
+          function addResult(f,name){if(!f)return false;aoiAddCollection(normalizeFeature(f,{name,method:'multi-operation'}),name,'multi-operation',false,true);refreshCodes();return true}
+          window.executeRelationOperation=function(){const items=checkedItems(),type=document.getElementById('relationType').value,pid=document.getElementById('relationPrimary')?.value,p=items.find(x=>x.id===pid)||items[0],others=items.filter(x=>x!==p);try{let out=null;if(type==='merge')out=unionItems(items);if(type==='intersection')out=intersectItems(items);if(type==='one-minus-many')out=diff(p.feature,unionItems(others));if(type==='many-minus-one')out=diff(unionItems(others),p.feature);if(type==='xor'){let u=unionItems(items),overlap=null;for(let i=0;i<items.length;i++)for(let j=i+1;j<items.length;j++){const x=turf.intersect(turf.featureCollection([items[i].feature,items[j].feature]));if(x)overlap=overlap?turf.union(turf.featureCollection([overlap,x])):x}out=overlap?diff(u,overlap):u}if(type==='split'){const cutter=unionItems(others),inside=turf.intersect(turf.featureCollection([p.feature,cutter])),outside=diff(p.feature,cutter);if(inside)addResult(inside,`${itemCode(p)}_Split_Overlap`);if(outside)addResult(outside,`${itemCode(p)}_Split_Remainder`);if(!inside&&!outside)throw new Error('No valid split output.');closeRelationModal();toast('Split completed','Overlap and remainder were added as new AOIs.');return}if(type==='separate-minus-one'){let made=0;for(const x of others){const r=diff(x.feature,p.feature);if(r){addResult(r,`${itemCode(x)}_Minus_${itemCode(p)}`);made++}}if(!made)throw new Error('All results were empty.');closeRelationModal();toast('Batch subtraction completed',`${made} results were added.`);return}if(!out)throw new Error('The selected relationship produced an empty geometry.');addResult(out,`Result_${type.replaceAll('-','_')}`);closeRelationModal();toast('Operation completed','The result was added as the next AOI.')}catch(e){toast('Operation failed',e.message||'Unable to process the selected ranges.',true)}};
+          function exteriorRings(f){const rings=[];turf.flattenEach(f,p=>{if(p.geometry?.type==='Polygon'&&p.geometry.coordinates[0])rings.push(p.geometry.coordinates[0])});return rings}
+          function edgeRows(f){const rows=[];exteriorRings(f).forEach((ring,ri)=>{for(let i=0;i<ring.length-1;i++){const a=ring[i],b=ring[i+1],km=turf.distance(turf.point(a),turf.point(b),{units:'kilometers'});rows.push({ring:ri,index:i,a,b,km})}});return rows}
+          window.clearEdgeCheck=function(){shortEdgeGroup.clearLayers();edgeCheckState=null;const r=document.getElementById('edgeCheckResult');if(r)r.textContent='Select an AOI and start the check.';const b=document.getElementById('adjustEdgesButton');if(b)b.disabled=true};
+          window.checkSelectedEdges=function(){clearEdgeCheck();const id=document.getElementById('edgeTargetSelect').value,item=aoiPro.collection.find(x=>x.id===id),min=Number(document.getElementById('multiMinEdge').value);if(!item||!(min>0)){toast('AOI and minimum length required','Select an AOI and enter a positive kilometre value.',true);return}const rows=edgeRows(item.feature),bad=rows.filter(x=>x.km+1e-9<min);bad.forEach(x=>{const line=L.polyline([[x.a[1],x.a[0]],[x.b[1],x.b[0]]],{color:'#ff5a00',weight:7,opacity:.95}).addTo(shortEdgeGroup);const mid=[(x.a[1]+x.b[1])/2,(x.a[0]+x.b[0])/2];L.marker(mid,{icon:L.divIcon({className:'',html:`<div class="short-edge-label">${x.km.toFixed(3)} km</div>`})}).addTo(shortEdgeGroup)});edgeCheckState={item,min,rows,bad};document.getElementById('adjustEdgesButton').disabled=!bad.length;document.getElementById('edgeCheckResult').innerHTML=`Total edges: <strong>${rows.length}</strong><br>Shortest edge: <strong>${Math.min(...rows.map(x=>x.km)).toFixed(3)} km</strong><br>Below ${min.toFixed(3)} km: <strong style="color:#ff5a00">${bad.length}</strong>`;if(bad.length)fitFeature(item.feature);toast('Edge check completed',bad.length?`${bad.length} short edges were marked.`:'All edges meet the requirement.')};
+          function adjustedRing(ring,min){let pts=ring.slice(0,-1).map(x=>[x[0],x[1]]);let guard=0;while(pts.length>3&&guard++<500){let shortest=Infinity,idx=-1;for(let i=0;i<pts.length;i++){const d=turf.distance(turf.point(pts[i]),turf.point(pts[(i+1)%pts.length]),{units:'kilometers'});if(d<shortest){shortest=d;idx=i}}if(shortest>=min-1e-7)break;const prev=(idx-1+pts.length)%pts.length,next=(idx+1)%pts.length,next2=(idx+2)%pts.length;const areaRemoveNext=Math.abs(turf.area(turf.polygon([[pts[idx],pts[next],pts[next2],pts[idx]]])));const areaRemoveCurrent=Math.abs(turf.area(turf.polygon([[pts[prev],pts[idx],pts[next],pts[prev]]])));pts.splice(areaRemoveNext<=areaRemoveCurrent?next:idx,1)}let minNow=Infinity;for(let i=0;i<pts.length;i++)minNow=Math.min(minNow,turf.distance(turf.point(pts[i]),turf.point(pts[(i+1)%pts.length]),{units:'kilometers'}));if(minNow<min){const poly=turf.polygon([[...pts,pts[0]]]),center=turf.centroid(poly).geometry.coordinates,scale=(min/minNow)*1.0005;pts=pts.map(p=>{const d=turf.distance(turf.point(center),turf.point(p),{units:'kilometers'}),b=turf.bearing(turf.point(center),turf.point(p));return turf.destination(turf.point(center),d*scale,b,{units:'kilometers'}).geometry.coordinates})}return [...pts,pts[0]]}
+          window.adjustSelectedEdges=function(){if(!edgeCheckState||!edgeCheckState.bad.length){toast('Run the check first','No short-edge check is available.',true);return}const {item,min}=edgeCheckState;try{const adjusted=[];turf.flattenEach(item.feature,p=>{if(p.geometry?.type==='Polygon'){const rings=[adjustedRing(p.geometry.coordinates[0],min),...p.geometry.coordinates.slice(1)];adjusted.push(turf.polygon(rings,p.properties||{}))}});let result=adjusted.length===1?adjusted[0]:turf.featureCollection(adjusted);result=normalizeFeature(result,{name:`${itemCode(item)}_Edge_Adjusted`,method:'minimum-edge-adjustment'});const after=edgeRows(result),still=after.filter(x=>x.km<min-1e-5);if(still.length)throw new Error(`${still.length} edges remain below the minimum.`);const added=diff(result,item.feature),removed=diff(item.feature,result),oldArea=turf.area(item.feature)/1e6,newArea=turf.area(result)/1e6,addedArea=added?turf.area(added)/1e6:0,removedArea=removed?turf.area(removed)/1e6:0;addResult(result,`${itemCode(item)}_Edge_Adjusted`);if(added)L.geoJSON(added,{style:{color:'#d9467a',fillColor:'#d9467a',fillOpacity:.28,weight:2}}).addTo(shortEdgeGroup);if(removed)L.geoJSON(removed,{style:{color:'#ff7a00',fillColor:'#ff7a00',fillOpacity:.28,weight:2,dashArray:'6 4'}}).addTo(shortEdgeGroup);document.getElementById('edgeAreaResult').innerHTML=`<div class="edge-change-grid"><div>Original area<b>${oldArea.toFixed(4)} km²</b></div><div>Adjusted area<b>${newArea.toFixed(4)} km²</b></div><div>Added area<b>${addedArea.toFixed(4)} km²</b></div><div>Removed area<b>${removedArea.toFixed(4)} km²</b></div><div>Net change<b>${(newArea-oldArea).toFixed(4)} km²</b></div><div>Closure<b>Closed ✓</b></div></div>`;document.getElementById('adjustEdgesButton').disabled=true;toast('Edge adjustment completed','A closed adjusted AOI was added and the changed area was calculated.')}catch(e){toast('Adjustment failed',e.message||'Unable to create a valid closed polygon.',true)}};
+          const oldRender=window.aoiRenderCollection;window.aoiRenderCollection=function(){oldRender();setTimeout(refreshCodes,0)};
+          document.addEventListener('change',e=>{if(e.target.matches('.collection-row input[type=checkbox]'))setTimeout(refreshMultiSummary,0)});
+          window.addEventListener('keydown',e=>{if(e.key==='Escape')closeRelationModal()});
+          setTimeout(()=>{refreshCodes();refreshEdgeTargets()},250);
+          })();
+          </script>'''
+          s=s.replace('</body>',script+'</body>',1)
+          Path('aoi-tool-multi-v8.html').write_text(s,encoding='utf-8')
+          PY
+
+      - name: Install browser
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm install playwright@latest --no-audit --no-fund
+          npx playwright install --with-deps chromium
+
+      - name: Validate multi AOI and edge adjustment
+        shell: bash
+        run: |
+          cat > test-v8.js <<'JS'
+          const {chromium}=require('playwright');const assert=require('assert');
+          (async()=>{const b=await chromium.launch({headless:true});const p=await b.newPage({viewport:{width:1500,height:950}});const errors=[];p.on('pageerror',e=>errors.push(e.message));await p.goto('http://127.0.0.1:8765/aoi-tool-multi-v8.html',{waitUntil:'domcontentloaded'});await p.waitForFunction(()=>window.aoiPro?.collection?.length===2&&document.querySelectorAll('.multi-code').length===2);
+          assert(!p.locator('#targetCard').count(),'target card remains');assert(!p.locator('#quickGuideModal').count(),'quick guide remains');
+          const boxes=p.locator('.collection-row input[type=checkbox]');for(let i=0;i<2;i++){if(!(await boxes.nth(i).isChecked()))await boxes.nth(i).check()}
+          await p.locator('.rail-btn[data-panel="overlay"]').click();await p.getByRole('button',{name:'Operation Relationship'}).click();assert(await p.locator('#relationModal.show').count(),'relation modal not open');await p.selectOption('#relationType','merge');await p.getByRole('button',{name:'Execute Operation'}).click();await p.waitForFunction(()=>window.aoiPro.collection.length===3);assert(await p.locator('.multi-code').count()===3,'result code missing');
+          await p.locator('.rail-btn[data-panel="rules"]').click();await p.selectOption('#edgeTargetSelect',{index:0});await p.fill('#multiMinEdge','20');await p.getByRole('button',{name:'Start Check'}).click();assert((await p.locator('#edgeCheckResult').innerText()).includes('Below'),'edge check failed');if(!(await p.locator('#adjustEdgesButton').isDisabled())){await p.locator('#adjustEdgesButton').click();await p.waitForFunction(()=>window.aoiPro.collection.length>=4);assert((await p.locator('#edgeAreaResult').innerText()).includes('Closed'),'closure result missing')}
+          assert(!errors.length,'Page errors: '+errors.join(' | '));console.log('AOI_MULTI_V8_PASS');await b.close()})().catch(e=>{console.error(e);process.exit(1)});
+          JS
+          python3 -m http.server 8765 >/tmp/v8-http.log 2>&1 &
+          server=$!;trap 'kill $server || true' EXIT;sleep 2;node test-v8.js
+
+      - name: Publish
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add aoi-tool-multi-v8.html
+          git commit -m 'Publish AOI V8 multi-range workflow'
+          git push origin gh-pages
