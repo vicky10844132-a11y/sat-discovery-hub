@@ -1,8 +1,18 @@
 {
-  "id": 30511475951,
-  "status": "completed",
-  "conclusion": "failure",
-  "head_sha": "51469b1eb34cf3e598167858d1212da8876d463c",
-  "jobs_url": "https://api.github.com/repos/vicky10844132-a11y/sat-discovery-hub/actions/runs/30511475951/jobs",
-  "html_url": "https://github.com/vicky10844132-a11y/sat-discovery-hub/actions/runs/30511475951"
+  "Debug AOI V8 initialization": {
+    "id": 30511583722,
+    "status": "completed",
+    "conclusion": "failure",
+    "head_sha": "65aea345a123e69d6fe3c553614d85c9041c2ad4",
+    "jobs_url": "https://api.github.com/repos/vicky10844132-a11y/sat-discovery-hub/actions/runs/30511583722/jobs",
+    "html_url": "https://github.com/vicky10844132-a11y/sat-discovery-hub/actions/runs/30511583722"
+  },
+  "Build AOI V8 multi-range workflow": {
+    "id": 30511475951,
+    "status": "completed",
+    "conclusion": "failure",
+    "head_sha": "51469b1eb34cf3e598167858d1212da8876d463c",
+    "jobs_url": "https://api.github.com/repos/vicky10844132-a11y/sat-discovery-hub/actions/runs/30511475951/jobs",
+    "html_url": "https://github.com/vicky10844132-a11y/sat-discovery-hub/actions/runs/30511475951"
+  }
 }
