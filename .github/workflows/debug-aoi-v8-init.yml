@@ -15,7 +15,7 @@ jobs:
         with:
           ref: gh-pages
           fetch-depth: 0
-      - name: Rebuild from V8 workflow source
+      - name: Rebuild corrected V8
         run: |
           git fetch origin main
           git show origin/main:.github/workflows/build-aoi-multi-v8.yml > /tmp/v8.yml
@@ -25,23 +25,20 @@ jobs:
           start=next(i for i,x in enumerate(lines) if "python3 - <<'PY'" in x)+1
           end=next(i for i in range(start,len(lines)) if lines[i].strip()=='PY')
           code='\n'.join((x[10:] if x.startswith('          ') else x) for x in lines[start:end])
+          code=code.replace("s=s.replace('</body>',script+'</body>',1)","idx=s.rfind('</body>')\nif idx<0: raise SystemExit('final body tag missing')\ns=s[:idx]+script+s[idx:]")
           Path('/tmp/build_v8.py').write_text(code)
           PY
           python3 /tmp/build_v8.py
-          echo '--- GENERATED LINES 380-425 ---'
-          nl -ba aoi-tool-multi-v8.html | sed -n '380,425p'
-          echo '--- SCRIPT TAGS ---'
-          grep -n '<script\|</script>' aoi-tool-multi-v8.html | tail -20
       - name: Install browser
         run: |
           npm init -y >/dev/null 2>&1
           npm install playwright@latest --no-audit --no-fund
           npx playwright install --with-deps chromium
-      - name: Print runtime state
+      - name: Print corrected runtime state
         run: |
           cat > debug.js <<'JS'
           const {chromium}=require('playwright');
-          (async()=>{const b=await chromium.launch({headless:true});const p=await b.newPage({viewport:{width:1500,height:950}});const logs=[],errs=[];p.on('console',m=>logs.push(m.type()+': '+m.text()));p.on('pageerror',e=>errs.push(e.stack||e.message));await p.goto('http://127.0.0.1:8765/aoi-tool-multi-v8.html',{waitUntil:'domcontentloaded'});await p.waitForTimeout(3000);const state=await p.evaluate(()=>({ready:document.readyState,pro:!!window.aoiPro,count:window.aoiPro?.collection?.length,codes:document.querySelectorAll('.multi-code').length,rows:document.querySelectorAll('.collection-row').length,target:!!document.querySelector('#targetCard'),relation:!!document.querySelector('#relationModal')}));console.log('V8_STATE '+JSON.stringify(state,null,2));console.log('V8_ERRORS '+JSON.stringify(errs,null,2));console.log('V8_LOGS '+JSON.stringify(logs.slice(-30),null,2));await b.close();if(errs.length||!state.pro)process.exit(1)})().catch(e=>{console.error(e);process.exit(1)});
+          (async()=>{const b=await chromium.launch({headless:true});const p=await b.newPage({viewport:{width:1500,height:950}});const logs=[],errs=[];p.on('console',m=>logs.push(m.type()+': '+m.text()));p.on('pageerror',e=>errs.push(e.stack||e.message));await p.goto('http://127.0.0.1:8765/aoi-tool-multi-v8.html',{waitUntil:'domcontentloaded'});await p.waitForTimeout(5000);const state=await p.evaluate(()=>({ready:document.readyState,pro:!!window.aoiPro,count:window.aoiPro?.collection?.length,codes:document.querySelectorAll('.multi-code').length,rows:document.querySelectorAll('.collection-row').length,target:!!document.querySelector('#targetCard'),relation:!!document.querySelector('#relationModal'),features:{A:!!window.state?.features?.A,B:!!window.state?.features?.B},setFeature:typeof window.setFeature,add:typeof window.aoiAddCollection}));console.log('V8_STATE '+JSON.stringify(state,null,2));console.log('V8_ERRORS '+JSON.stringify(errs,null,2));console.log('V8_LOGS '+JSON.stringify(logs.slice(-30),null,2));await b.close();if(errs.length)process.exit(1)})().catch(e=>{console.error(e);process.exit(1)});
           JS
           python3 -m http.server 8765 >/tmp/v8-debug-http.log 2>&1 &
           server=$!;trap 'kill $server || true' EXIT;sleep 2;node debug.js
