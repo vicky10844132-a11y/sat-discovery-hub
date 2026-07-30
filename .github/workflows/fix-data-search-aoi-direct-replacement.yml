@@ -1,0 +1,257 @@
+name: Fix DATA SEARCH AOI direct replacement
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fix-data-search-aoi-direct-replacement.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build-test-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 0
+      - name: Build direct AOI replacement
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          src=Path('data-search-integrated-v8.html')
+          s=src.read_text(encoding='utf-8')
+
+          # Version marker and stable rail ids/default state.
+          if '<!-- DATA_SEARCH_AOI_V9_DIRECT_REPLACEMENT -->' not in s:
+              s=s.replace('<!-- DATA_SEARCH_AOI_V8_INTEGRATED -->','<!-- DATA_SEARCH_AOI_V8_INTEGRATED -->\n<!-- DATA_SEARCH_AOI_V9_DIRECT_REPLACEMENT -->',1)
+          s=re.sub(r'<button class="rail-btn active"([^>]*data-panel="aoi")',r'<button class="rail-btn" id="dataSearchAoiButton"\1',s,count=1)
+          if 'id="dataSearchAoiButton"' not in s:
+              s=re.sub(r'<button class="rail-btn"([^>]*data-panel="aoi")',r'<button class="rail-btn" id="dataSearchAoiButton"\1',s,count=1)
+          s=re.sub(r'<button class="rail-btn"([^>]*data-panel="search")',r'<button class="rail-btn active"\1',s,count=1)
+          s=s.replace('<section class="panel-view active" id="panel-aoi">','<section class="panel-view" id="panel-aoi" hidden>',1)
+          s=s.replace('<section class="panel-view" id="panel-search">','<section class="panel-view active" id="panel-search">',1)
+
+          # Ensure the full AOI TOOL iframe is physically inside the DATA SEARCH workspace.
+          if 'id="embeddedAoiStage"' not in s:
+              stage='''<section class="embedded-aoi-stage" id="embeddedAoiStage" aria-label="AOI TOOL">
+                <iframe id="embeddedAoiFrame" title="AOI TOOL" src="aoi-tool-multi-v8-embed.html"></iframe>
+              </section>'''
+              s=s.replace('<main class="mapstage">','<main class="mapstage">\n'+stage,1)
+
+          css='''
+          <style id="dataSearchAoiV9DirectCss">
+          #panel-aoi{display:none!important}
+          .app.aoi-tool-open .sidepanel{display:none!important}
+          .app.aoi-tool-open .mapstage{grid-column:2/4!important}
+          .app.aoi-tool-open .embedded-aoi-stage{display:block!important;visibility:visible!important;pointer-events:auto!important}
+          .app:not(.aoi-tool-open) .embedded-aoi-stage{display:none!important;visibility:hidden!important;pointer-events:none!important}
+          </style>
+          '''
+          if 'id="dataSearchAoiV9DirectCss"' not in s:
+              s=s.replace('</head>',css+'</head>',1)
+
+          bridge=r'''
+          <script id="dataSearchAoiV9Bridge">
+          (function(){
+            'use strict';
+            const previousSelect=window.selectPanel;
+            const app=()=>document.querySelector('.app');
+            const stage=()=>document.getElementById('embeddedAoiStage');
+            const frame=()=>document.getElementById('embeddedAoiFrame');
+
+            function markRail(name){
+              document.querySelectorAll('.rail-btn[data-panel]').forEach(x=>x.classList.toggle('active',x.dataset.panel===name));
+            }
+            function openAoiTool(){
+              app()?.classList.add('aoi-tool-open','aoi-integrated');
+              document.querySelectorAll('.panel-view').forEach(x=>x.classList.remove('active'));
+              markRail('aoi');
+              const host=stage();if(host){host.style.display='block';host.setAttribute('aria-hidden','false');}
+              setTimeout(()=>{
+                frame()?.contentWindow?.postMessage({type:'DATA_SEARCH_AOI_EMBED_ACTIVE'},'*');
+                try{frame()?.contentWindow?.map?.invalidateSize?.();}catch(_e){}
+              },80);
+              return true;
+            }
+            function openDataPanel(name){
+              app()?.classList.remove('aoi-tool-open','aoi-integrated');
+              const host=stage();if(host){host.style.display='none';host.setAttribute('aria-hidden','true');}
+              return typeof previousSelect==='function'?previousSelect.call(window,name):undefined;
+            }
+            window.openDataSearchAoiTool=openAoiTool;
+            window.selectPanel=function(name){return name==='aoi'?openAoiTool():openDataPanel(name);};
+
+            function bindRail(){
+              document.querySelectorAll('.rail-btn[data-panel]').forEach(btn=>{
+                btn.onclick=function(ev){ev?.preventDefault?.();ev?.stopPropagation?.();window.selectPanel(btn.dataset.panel);};
+              });
+            }
+
+            function geometryFromFeature(f){
+              if(!f)return null;
+              if(f.type==='Feature')return f.geometry||null;
+              if(f.type==='FeatureCollection'){
+                const gs=(f.features||[]).map(x=>x.geometry).filter(Boolean);
+                return gs.length===1?gs[0]:{type:'GeometryCollection',geometries:gs};
+              }
+              if(f.type&&f.coordinates)return f;
+              return null;
+            }
+            function ringArea(r){return sphericalPolygonAreaKm2((r||[]).map(c=>[Number(c[1]),Number(c[0])]));}
+            function geometryArea(g){
+              if(!g)return 0;
+              if(g.type==='Polygon')return Math.max(0,ringArea(g.coordinates[0])-g.coordinates.slice(1).reduce((a,r)=>a+ringArea(r),0));
+              if(g.type==='MultiPolygon')return g.coordinates.reduce((a,p)=>a+geometryArea({type:'Polygon',coordinates:p}),0);
+              if(g.type==='GeometryCollection')return (g.geometries||[]).reduce((a,x)=>a+geometryArea(x),0);
+              return 0;
+            }
+            const oldGetActive=window.getActiveGeometry;
+            window.getActiveGeometry=function(){return window.__embeddedAoiGeometry||(typeof oldGetActive==='function'?oldGetActive():null);};
+
+            window.addEventListener('message',function(e){
+              const d=e.data||{};
+              if(d.type!=='IMAGE_COVERY_AOI_WORKBENCH_RESULT'||!d.feature)return;
+              const geom=geometryFromFeature(d.feature);if(!geom)return;
+              window.__embeddedAoiGeometry=geom;
+              activeAoiName=(d.name||'Selected AOI').replace(/_/g,' ');
+              if(window.L&&map){
+                if(activeAOI)try{map.removeLayer(activeAOI)}catch(_e){}
+                activeAOI=L.geoJSON(d.feature,{style:{color:'#d9467a',weight:2.8,fillColor:'#d9467a',fillOpacity:.14}}).addTo(map).bindTooltip(activeAoiName,{sticky:true});
+                const bounds=activeAOI.getBounds?.();if(bounds?.isValid())map.fitBounds(bounds,{padding:[60,60],maxZoom:11});
+              }
+              const area=geometryArea(geom),status=document.getElementById('mapStatus');
+              if(status)status.textContent=`${activeAoiName} area: ${formatAreaKm2(area)} km²`;
+              window.selectPanel('search');
+              if(typeof setSearchTab==='function')setSearchTab('archive');
+              setTimeout(()=>{const label=document.getElementById('activeAoiLabel');if(label)label.textContent=activeAoiName+' · exact polygon search';},0);
+              window.notify?.('AOI applied',activeAoiName+' is now the DATA SEARCH search range.');
+            });
+
+            function keepOnlyAuthButtons(){
+              const top=document.querySelector('.top-actions');if(!top)return;
+              top.querySelectorAll(':scope > *:not(.v11-auth-actions)').forEach(x=>x.remove());
+              top.querySelector('.v11-auth-email')?.remove();
+            }
+            const observer=new MutationObserver(()=>{keepOnlyAuthButtons();bindRail();});
+            function init(){
+              keepOnlyAuthButtons();bindRail();
+              const top=document.querySelector('.top-actions');if(top)observer.observe(top,{childList:true,subtree:true});
+              setTimeout(()=>window.selectPanel('search'),180);
+            }
+            if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+          })();
+          </script>
+          '''
+          s=re.sub(r'<script id="dataSearchAoiV8Bridge">.*?</script>\s*</body>',bridge+'\n</body>',s,count=1,flags=re.S)
+          if 'id="dataSearchAoiV9Bridge"' not in s:
+              raise SystemExit('V9 bridge replacement failed')
+
+          for name in ['data-search-aoi-v9.html','data-search-integrated-v8.html','data-search-restored.html','data-search.html']:
+              Path(name).write_text(s,encoding='utf-8')
+          PY
+      - name: Install browser
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm install playwright@latest --no-audit --no-fund
+          npx playwright install --with-deps chromium
+      - name: Navigation and button validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > test-aoi-v9.js <<'JS'
+          const {chromium}=require('playwright');
+          const assert=require('assert');
+          (async()=>{
+            const browser=await chromium.launch({headless:true});
+            const page=await browser.newPage({viewport:{width:1600,height:1000},acceptDownloads:true});
+            const errors=[];page.on('pageerror',e=>errors.push(e.message));
+            await page.goto('http://127.0.0.1:8765/data-search-aoi-v9.html',{waitUntil:'domcontentloaded'});
+            await page.waitForFunction(()=>document.querySelectorAll('#v11LoginBtn,#v11LogoutBtn').length===2,{timeout:20000});
+            await page.waitForTimeout(700);
+            assert(!(await page.locator('.app').evaluate(x=>x.classList.contains('aoi-tool-open'))),'DATA SEARCH should open on Search');
+            assert(await page.locator('#panel-search.active').count(),'Search panel should be active initially');
+
+            const aoiButton=page.locator('#dataSearchAoiButton');
+            await aoiButton.click();
+            await page.waitForFunction(()=>document.querySelector('.app')?.classList.contains('aoi-tool-open'));
+            assert(await page.locator('#embeddedAoiStage').isVisible(),'AOI TOOL did not replace the DATA SEARCH workspace');
+            const frame=page.frames().find(f=>f.url().includes('aoi-tool-multi-v8-embed.html'));
+            assert(frame,'Embedded AOI frame missing');
+            await frame.waitForFunction(()=>window.aoiPro&&Array.isArray(window.aoiPro.collection),null,{timeout:20000});
+            if((await frame.evaluate(()=>window.aoiPro.collection.length))<2)await frame.evaluate(()=>window.loadDemo?.());
+            await frame.waitForFunction(()=>window.aoiPro.collection.length>=2);
+            const before=await frame.evaluate(()=>window.aoiPro.collection.length);
+
+            // Verify every AOI navigation button opens its own panel.
+            const aoiPanels=await frame.locator('.rail-btn[data-panel]').evaluateAll(bs=>bs.map(b=>b.dataset.panel));
+            for(const name of aoiPanels){
+              await frame.locator(`.rail-btn[data-panel="${name}"]`).click();
+              await frame.waitForTimeout(80);
+              assert(await frame.locator(`#panel-${name}.active`).count(),`AOI panel ${name} did not open`);
+            }
+
+            // Return to DATA SEARCH, then reopen AOI and confirm state remains.
+            await page.locator('.rail-btn[data-panel="search"]').click();
+            await page.waitForFunction(()=>!document.querySelector('.app')?.classList.contains('aoi-tool-open'));
+            await aoiButton.click();
+            await page.waitForFunction(()=>document.querySelector('.app')?.classList.contains('aoi-tool-open'));
+            assert.equal(await frame.evaluate(()=>window.aoiPro.collection.length),before,'AOI state was lost after reopening');
+
+            // Exercise relationship operation.
+            await frame.locator('.rail-btn[data-panel="build"]').click();
+            const boxes=frame.locator('.collection-row input[type=checkbox]');
+            for(let i=0;i<2;i++)if(!(await boxes.nth(i).isChecked()))await boxes.nth(i).check();
+            await frame.locator('.rail-btn[data-panel="overlay"]').click();
+            await frame.getByRole('button',{name:'Operation Relationship'}).click();
+            assert(await frame.locator('#relationModal.show').count());
+            await frame.selectOption('#relationType','merge');
+            await frame.getByRole('button',{name:'Execute Operation'}).click();
+            await frame.waitForFunction(n=>window.aoiPro.collection.length>n,before);
+
+            // Exercise minimum-edge check.
+            await frame.locator('.rail-btn[data-panel="rules"]').click();
+            await frame.selectOption('#edgeTargetSelect',{index:0});
+            await frame.fill('#multiMinEdge','20');
+            await frame.getByRole('button',{name:'Start Check'}).click();
+            assert((await frame.locator('#edgeCheckResult').innerText()).length>0);
+
+            // Send selected AOI to DATA SEARCH and then reopen AOI again.
+            await frame.locator('.rail-btn[data-panel="build"]').click();
+            await frame.locator('#useInDataSearchBtn').click();
+            await page.waitForFunction(()=>!!window.__embeddedAoiGeometry,{timeout:12000});
+            await page.waitForFunction(()=>!document.querySelector('.app')?.classList.contains('aoi-tool-open'));
+            assert((await page.locator('#activeAoiLabel').innerText()).includes('exact polygon search'));
+            await aoiButton.click();
+            await page.waitForFunction(()=>document.querySelector('.app')?.classList.contains('aoi-tool-open'));
+            assert(await page.locator('#embeddedAoiStage').isVisible(),'AOI TOOL could not be reopened after applying range');
+
+            // DATA SEARCH rail buttons and authentication controls must remain clickable.
+            for(const name of ['search','orbit','sources','clientapi','subscriptions','data','orders','account']){
+              const btn=page.locator(`.rail-btn[data-panel="${name}"]`);
+              if(await btn.count()){await btn.click();await page.waitForTimeout(80);assert(!(await page.locator('.app').evaluate(x=>x.classList.contains('aoi-tool-open'))));}
+            }
+            await page.locator('#v11LogoutBtn').click();
+            await page.locator('#v11LoginBtn').click();
+            assert(await page.locator('#v11LoginModal.show').count(),'Login button did not open the login dialog');
+            assert(!errors.length,'Page errors: '+errors.join(' | '));
+            console.log('DATA_SEARCH_AOI_V9_DIRECT_REPLACEMENT_PASS');
+            await browser.close();
+          })().catch(e=>{console.error(e);process.exit(1)});
+          JS
+          python3 -m http.server 8765 >/tmp/ds-aoi-v9-http.log 2>&1 &
+          server=$!;trap 'kill $server || true' EXIT
+          sleep 2
+          node test-aoi-v9.js
+      - name: Publish
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data-search-aoi-v9.html data-search-integrated-v8.html data-search-restored.html data-search.html
+          git commit -m 'Make AOI TOOL the persistent DATA SEARCH AOI module'
+          git push origin gh-pages
