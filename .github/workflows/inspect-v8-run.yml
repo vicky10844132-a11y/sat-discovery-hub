@@ -1,4 +1,4 @@
-name: Audit first-linked DATA SEARCH restoration run
+name: Restore exact first-linked DATA SEARCH page
 
 on:
   pull_request:
@@ -7,124 +7,60 @@ on:
       - '.github/restore-first-link-trigger.txt'
 
 permissions:
-  actions: read
-  contents: read
+  contents: write
 
 jobs:
-  audit-original-run:
+  restore-exact-page:
     runs-on: ubuntu-latest
     steps:
-      - name: Inspect completed runs from the original restoration window
-        env:
-          GH_TOKEN: ${{ github.token }}
-          CURRENT_RUN_ID: ${{ github.run_id }}
+      - name: Checkout complete published history
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 0
+          path: site
+
+      - name: Restore the exact source blob used by the first link
         shell: bash
         run: |
           set -euo pipefail
-          repo="${{ github.repository }}"
-          mkdir -p /tmp/audit
+          cd site
+          source_commit='c164791a6276fae743b8541b9ff0481d4acf32f9'
+          expected_blob='b19000123369353e4fc386a5f14171c5521c80c5'
 
-          for page in 1 2 3; do
-            curl --max-time 20 -fsSL \
-              -H "Authorization: Bearer $GH_TOKEN" \
-              -H "Accept: application/vnd.github+json" \
-              "https://api.github.com/repos/$repo/actions/runs?per_page=100&page=$page" \
-              > "/tmp/audit/runs-$page.json"
-          done
+          actual_source_blob="$(git rev-parse "$source_commit:data-search.html")"
+          test "$actual_source_blob" = "$expected_blob"
 
-          python3 - <<'PY' > /tmp/audit/candidates.tsv
-          import json,os
-          from pathlib import Path
+          git show "$source_commit:data-search.html" > data-search-restored.html
+          restored_blob="$(git hash-object data-search-restored.html)"
+          test "$restored_blob" = "$expected_blob"
 
-          current=int(os.environ['CURRENT_RUN_ID'])
-          rows=[]
-          for path in sorted(Path('/tmp/audit').glob('runs-*.json')):
-              rows.extend(json.loads(path.read_text()).get('workflow_runs',[]))
+          grep -q '<div class="coordinate-search"' data-search-restored.html
+          grep -q '<div class="top-actions"' data-search-restored.html
+          test "$(grep -c 'dataSearchFrame' data-search-restored.html || true)" -eq 0
+          test "$(grep -c 'RESTORED_TOP_REMOVED' data-search-restored.html || true)" -eq 0
+          test "$(grep -c 'ITEM1_AOI_STANDALONE' data-search-restored.html || true)" -eq 0
 
-          start='2026-07-31T12:15:00Z'
-          end='2026-07-31T12:40:00Z'
-          selected=[]
-          for run in rows:
-              created=run.get('created_at') or ''
-              if not (start <= created <= end):
-                  continue
-              if int(run.get('id') or 0)==current:
-                  continue
-              if run.get('status')!='completed':
-                  continue
-              selected.append(run)
+          echo "SOURCE_COMMIT=$source_commit"
+          echo "SOURCE_BLOB=$actual_source_blob"
+          echo "RESTORED_BLOB=$restored_blob"
+          echo "RESTORED_BYTES=$(wc -c < data-search-restored.html)"
+          sha256sum data-search-restored.html
 
-          selected.sort(key=lambda r:(r.get('created_at') or '',r.get('id') or 0))
-          for run in selected:
-              values=[
-                  str(run.get('id')),
-                  run.get('created_at') or '',
-                  run.get('name') or '',
-                  run.get('path') or '',
-                  run.get('event') or '',
-                  run.get('conclusion') or '',
-                  run.get('head_sha') or '',
-                  ((run.get('head_commit') or {}).get('message') or '').replace('\t',' ').replace('\n',' '),
-                  run.get('html_url') or '',
-              ]
-              print('\t'.join(values))
-          PY
-
-          echo 'CANDIDATE_RUNS_BEGIN'
-          cat /tmp/audit/candidates.tsv
-          echo 'CANDIDATE_RUNS_END'
-
-          while IFS=$'\t' read -r run_id created name path event conclusion head_sha message url; do
-            [ -n "$run_id" ] || continue
-            echo "RUN_BEGIN id=$run_id created=$created name=$name path=$path head=$head_sha"
-
-            curl --max-time 20 -fsSL \
-              -H "Authorization: Bearer $GH_TOKEN" \
-              -H "Accept: application/vnd.github+json" \
-              "https://api.github.com/repos/$repo/actions/runs/$run_id/jobs?per_page=100" \
-              > "/tmp/audit/jobs-$run_id.json"
-
-            python3 - "$run_id" <<'PY' > "/tmp/audit/job-ids-$run_id.txt"
-          import json,sys
-          run_id=sys.argv[1]
-          payload=json.load(open(f'/tmp/audit/jobs-{run_id}.json'))
-          for job in payload.get('jobs',[]):
-              if job.get('status')=='completed':
-                  print(job.get('id'),job.get('name',''),job.get('conclusion',''),sep='\t')
-          PY
-
-            while IFS=$'\t' read -r job_id job_name job_conclusion; do
-              [ -n "$job_id" ] || continue
-              log_file="/tmp/audit/job-$job_id.log"
-              curl --max-time 30 -fsSL -L \
-                -H "Authorization: Bearer $GH_TOKEN" \
-                -H "Accept: application/vnd.github+json" \
-                "https://api.github.com/repos/$repo/actions/jobs/$job_id/logs" \
-                -o "$log_file" || true
-              echo "JOB_LOG_MATCHES_BEGIN job=$job_id name=$job_name conclusion=$job_conclusion"
-              if [ -s "$log_file" ]; then
-                grep -Eai -C 4 \
-                  'Source bytes|Published bytes|Original bytes|RESTORED_BYTES|SHA256|cached source|raw\.githack|recovered|recover|restored|data-search-restored|coordinate-search|top-actions|top controls|fallback|source file|cp data-search|curl' \
-                  "$log_file" | tail -n 700 || true
-              else
-                echo 'No downloadable log content.'
-              fi
-              echo "JOB_LOG_MATCHES_END job=$job_id"
-            done < "/tmp/audit/job-ids-$run_id.txt"
-
-            curl --max-time 20 -fsSL \
-              -H "Authorization: Bearer $GH_TOKEN" \
-              -H "Accept: application/vnd.github+json" \
-              "https://api.github.com/repos/$repo/actions/runs/$run_id/artifacts?per_page=100" \
-              > "/tmp/audit/artifacts-$run_id.json"
-            echo "ARTIFACTS_BEGIN run=$run_id"
-            python3 - "$run_id" <<'PY'
-          import json,sys
-          run_id=sys.argv[1]
-          payload=json.load(open(f'/tmp/audit/artifacts-{run_id}.json'))
-          for artifact in payload.get('artifacts',[]):
-              print(artifact.get('id'),artifact.get('name'),artifact.get('size_in_bytes'),artifact.get('expired'),artifact.get('created_at'),sep='\t')
-          PY
-            echo "ARTIFACTS_END run=$run_id"
-            echo "RUN_END id=$run_id"
-          done < /tmp/audit/candidates.tsv
+      - name: Publish only data-search-restored.html
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd site
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data-search-restored.html
+          git diff --cached --check
+          if git diff --cached --quiet; then
+            echo 'Exact first-linked source is already published.'
+            exit 0
+          fi
+          git commit -m 'Restore exact first-linked DATA SEARCH page'
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" gh-pages
