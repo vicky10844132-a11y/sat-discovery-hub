@@ -1641,3 +1641,63 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 })();
 </script>
 <!-- NAVIGATION_LAYOUT_V3_END -->
+<!-- DATA_ACCOUNT_NAV_FIX_START -->
+<script id="data-account-nav-fix-v1">
+(function(){
+  function label(button,text){
+    if(!button)return;
+    button.title=text;
+    button.setAttribute('aria-label',text);
+    var tip=button.querySelector('.tip');
+    if(!tip){tip=document.createElement('span');tip.className='tip';button.appendChild(tip);}
+    tip.textContent=text;
+  }
+  function activate(button){
+    document.querySelectorAll('.rail .rail-btn').forEach(function(item){item.classList.remove('active');});
+    if(button)button.classList.add('active');
+  }
+  function bind(button,panel){
+    if(!button)return;
+    button.type='button';
+    button.onclick=function(event){
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      if(typeof window.selectPanel==='function')window.selectPanel(panel);
+      else{
+        document.querySelectorAll('.panel-view').forEach(function(view){view.classList.remove('active');});
+        var target=document.getElementById('panel-'+panel);
+        if(target)target.classList.add('active');
+      }
+      activate(button);
+      if(panel!=='account'&&window.map&&typeof window.map.invalidateSize==='function')setTimeout(function(){window.map.invalidateSize();},80);
+      return false;
+    };
+  }
+  function apply(){
+    var rail=document.querySelector('.rail');
+    if(!rail)return;
+    var order=rail.querySelector('.rail-btn[data-panel="orders"]');
+    var data=rail.querySelector('.rail-btn[data-panel="data"]');
+    var account=rail.querySelector('.rail-btn[data-panel="account"]');
+    label(order,'Order');
+    label(data,'Data');
+    label(account,'Account');
+    bind(order,'orders');
+    bind(data,'data');
+    bind(account,'account');
+    var bottom=rail.querySelector('.rail-bottom');
+    if(bottom&&data){
+      var settings=Array.prototype.find.call(bottom.querySelectorAll('.rail-btn'),function(button){
+        var text=((button.querySelector('.tip')||{}).textContent||button.title||'').trim();
+        return /settings|support|help/i.test(text);
+      });
+      if(settings&&data.nextElementSibling!==settings)bottom.insertBefore(data,settings);
+    }
+  }
+  function schedule(){[0,100,300,800,1600].forEach(function(ms){setTimeout(apply,ms);});}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule,{once:true});else schedule();
+  window.addEventListener('load',schedule,{once:true});
+  document.addEventListener('click',function(){setTimeout(apply,0);},true);
+})();
+</script>
+<!-- DATA_ACCOUNT_NAV_FIX_END -->
