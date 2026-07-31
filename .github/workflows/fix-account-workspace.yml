@@ -1,0 +1,133 @@
+name: Fix Account Center workspace
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fix-account-workspace.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout current published page
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+
+      - name: Convert Account Center to full business workspace
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          path = Path('data-search.html')
+          text = path.read_text(encoding='utf-8')
+
+          old_patterns = [
+              r'<style id="account-center-no-map-style">.*?</style>\s*<script id="account-center-no-map-fix-v1">.*?</script>',
+              r'<style id="account-center-workspace-style">.*?</style>\s*<script id="account-center-workspace-fix-v2">.*?</script>',
+          ]
+          for pattern in old_patterns:
+              text = re.sub(pattern, '', text, flags=re.S)
+
+          block = r'''
+<style id="account-center-workspace-style">
+/* Account Center uses the same full-width, non-map workspace model as Order Center. */
+.app.account-center-workspace{grid-template-columns:62px minmax(0,1fr) 0!important}
+.app.account-center-workspace .sidepanel{grid-column:2/4!important;border-right:0!important;box-shadow:none!important;min-width:0!important}
+.app.account-center-workspace .mapstage{display:none!important}
+.app.account-center-workspace .coordinate-search{visibility:hidden!important}
+.app.account-center-workspace #panel-account{width:100%!important;max-width:none!important;background:#f4f7fb!important}
+.app.account-center-workspace #panel-account .panel-head{padding:0 24px!important;background:#fff!important}
+.app.account-center-workspace #panel-account .panel-body.account-workspace-body{display:grid!important;grid-template-columns:repeat(12,minmax(0,1fr))!important;gap:14px!important;align-content:start!important;padding:18px 24px 30px!important;background:#f4f7fb!important;overflow:auto!important}
+.app.account-center-workspace #panel-account .usage-box{grid-column:span 4!important;margin:0!important;min-height:150px!important;padding:18px!important;border-radius:12px!important;box-shadow:0 7px 20px rgba(25,52,105,.12)!important}
+.app.account-center-workspace #panel-account .account-grid{grid-column:span 8!important;display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:12px!important}
+.app.account-center-workspace #panel-account .account-kpi{min-height:88px!important;padding:14px!important;border-radius:10px!important;background:#fff!important;box-shadow:0 4px 14px rgba(25,52,85,.05)!important}
+.app.account-center-workspace #panel-account .account-kpi span{font-size:8px!important;text-transform:uppercase!important;letter-spacing:.45px!important}
+.app.account-center-workspace #panel-account .account-kpi strong{font-size:15px!important;line-height:1.25!important;overflow-wrap:anywhere!important}
+.app.account-center-workspace #panel-account .account-workspace-section{grid-column:span 6!important;min-width:0!important;min-height:145px!important;border:1px solid #dce4ed!important;border-radius:11px!important;background:#fff!important;padding:14px 16px!important;box-shadow:0 4px 15px rgba(21,49,80,.04)!important}
+.app.account-center-workspace #panel-account .account-workspace-section .tree-title{margin:0 0 11px!important;color:#52657a!important;font-size:8px!important;font-weight:800!important;letter-spacing:.65px!important}
+.app.account-center-workspace #panel-account .account-workspace-section>div:last-child{line-height:1.9!important}
+.app.account-center-workspace #panel-account .v11-email-rule{grid-column:span 6!important;margin:0!important;min-height:92px!important;padding:14px 16px!important;border-radius:10px!important}
+.app.account-center-workspace #panel-account #v12ExportCenterMount{grid-column:span 6!important;min-width:0!important}
+.app.account-center-workspace #panel-account #v12ExportCenterMount .v12-export-center{height:100%!important;margin:0!important;background:#fff!important}
+.app.account-center-workspace #panel-account .v9-admin-settings-card{grid-column:1/-1!important;margin:0!important;padding:15px 16px!important;border-radius:11px!important;background:#fff!important}
+.app.account-center-workspace #panel-account>.panel-body>.v11-note{grid-column:1/-1!important;margin:0!important;max-width:none!important;padding:18px!important;background:#fff!important}
+.app.account-center-workspace #panel-account>.panel-body>.primary-wide{grid-column:1/5!important;width:100%!important;max-width:320px!important}
+@media(max-width:1200px){
+  .app.account-center-workspace #panel-account .usage-box{grid-column:1/-1!important}
+  .app.account-center-workspace #panel-account .account-grid{grid-column:1/-1!important}
+}
+@media(max-width:900px){
+  .app.account-center-workspace #panel-account .panel-body.account-workspace-body{grid-template-columns:1fr!important;padding:14px!important}
+  .app.account-center-workspace #panel-account .usage-box,.app.account-center-workspace #panel-account .account-grid,.app.account-center-workspace #panel-account .account-workspace-section,.app.account-center-workspace #panel-account .v11-email-rule,.app.account-center-workspace #panel-account #v12ExportCenterMount,.app.account-center-workspace #panel-account .v9-admin-settings-card{grid-column:1!important}
+  .app.account-center-workspace #panel-account .account-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+</style>
+<script id="account-center-workspace-fix-v2">
+(function(){
+  function decorateAccount(){
+    var panel=document.getElementById('panel-account');
+    var body=panel&&panel.querySelector('.panel-body');
+    if(!body)return;
+    body.classList.add('account-workspace-body');
+    body.querySelectorAll(':scope > .usage-box').forEach(function(el){el.classList.add('account-workspace-summary');});
+    body.querySelectorAll(':scope > .account-grid').forEach(function(el){el.classList.add('account-workspace-kpis');});
+    Array.prototype.slice.call(body.querySelectorAll(':scope > .tree-title')).forEach(function(title){
+      var content=title.nextElementSibling;
+      if(!content||content.classList.contains('tree-title'))return;
+      var section=document.createElement('section');
+      section.className='account-workspace-section';
+      if(/assigned functions/i.test(title.textContent||''))section.classList.add('account-functions-section');
+      if(/assigned export rights/i.test(title.textContent||''))section.classList.add('account-export-rights-section');
+      title.parentNode.insertBefore(section,title);
+      section.appendChild(title);
+      section.appendChild(content);
+    });
+  }
+
+  function syncAccountWorkspace(){
+    var app=document.querySelector('.app');
+    var panel=document.getElementById('panel-account');
+    if(!app||!panel)return;
+    var active=panel.classList.contains('active');
+    app.classList.toggle('account-center-workspace',active);
+    if(active)decorateAccount();
+  }
+
+  function installAccountWorkspace(){
+    var panel=document.getElementById('panel-account');
+    if(!panel)return;
+    var observer=new MutationObserver(function(){
+      syncAccountWorkspace();
+      if(panel.classList.contains('active'))decorateAccount();
+    });
+    observer.observe(panel,{attributes:true,attributeFilter:['class'],childList:true,subtree:true});
+    document.addEventListener('click',function(){setTimeout(syncAccountWorkspace,0);},true);
+    syncAccountWorkspace();
+  }
+
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installAccountWorkspace,{once:true});
+  else installAccountWorkspace();
+})();
+</script>
+'''
+
+          text = text.rstrip() + '\n' + block.strip() + '\n'
+          path.write_text(text, encoding='utf-8')
+
+      - name: Commit published page only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data-search.html
+          git diff --cached --quiet && exit 0
+          git commit -m 'Make Account Center a full business workspace'
+          git push origin gh-pages
