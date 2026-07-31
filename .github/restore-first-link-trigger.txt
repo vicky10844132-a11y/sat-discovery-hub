@@ -1,1 +1,1 @@
-Run the exact historical transformation matcher and identify the first-linked source.
+Verify the literal guard reversal against the unique c164 source candidate.
