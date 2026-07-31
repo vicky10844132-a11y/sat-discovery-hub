@@ -113,41 +113,82 @@ jobs:
           })();
           </script>
           NAVFIX
-          cat >> _site/data-search.html <<'ACCOUNTMAP'
-          <style id="account-center-no-map-style">
-          .app.account-center-no-map .mapstage{display:none!important}
-          .app.account-center-no-map .sidepanel{grid-column:2/4!important;border-right:0!important}
-          .app.account-center-no-map #panel-account{width:100%;max-width:none}
+          cat >> _site/data-search.html <<'ACCOUNTWORKSPACE'
+          <style id="account-center-workspace-style">
+          .app.account-center-workspace{grid-template-columns:62px minmax(0,1fr) 0!important}
+          .app.account-center-workspace .sidepanel{grid-column:2/4!important;border-right:0!important;box-shadow:none!important;min-width:0!important}
+          .app.account-center-workspace .mapstage{display:none!important}
+          .app.account-center-workspace .coordinate-search{visibility:hidden!important}
+          .app.account-center-workspace #panel-account{width:100%!important;max-width:none!important;background:#f4f7fb!important}
+          .app.account-center-workspace #panel-account .panel-head{padding:0 24px!important;background:#fff!important}
+          .app.account-center-workspace #panel-account .panel-body.account-workspace-body{display:grid!important;grid-template-columns:repeat(12,minmax(0,1fr))!important;gap:14px!important;align-content:start!important;padding:18px 24px 30px!important;background:#f4f7fb!important;overflow:auto!important}
+          .app.account-center-workspace #panel-account .usage-box{grid-column:span 4!important;margin:0!important;min-height:150px!important;padding:18px!important;border-radius:12px!important;box-shadow:0 7px 20px rgba(25,52,105,.12)!important}
+          .app.account-center-workspace #panel-account .account-grid{grid-column:span 8!important;display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:12px!important}
+          .app.account-center-workspace #panel-account .account-kpi{min-height:88px!important;padding:14px!important;border-radius:10px!important;background:#fff!important;box-shadow:0 4px 14px rgba(25,52,85,.05)!important}
+          .app.account-center-workspace #panel-account .account-kpi span{font-size:8px!important;text-transform:uppercase!important;letter-spacing:.45px!important}
+          .app.account-center-workspace #panel-account .account-kpi strong{font-size:15px!important;line-height:1.25!important;overflow-wrap:anywhere!important}
+          .app.account-center-workspace #panel-account .account-workspace-section{grid-column:span 6!important;min-width:0!important;min-height:145px!important;border:1px solid #dce4ed!important;border-radius:11px!important;background:#fff!important;padding:14px 16px!important;box-shadow:0 4px 15px rgba(21,49,80,.04)!important}
+          .app.account-center-workspace #panel-account .account-workspace-section .tree-title{margin:0 0 11px!important;color:#52657a!important;font-size:8px!important;font-weight:800!important;letter-spacing:.65px!important}
+          .app.account-center-workspace #panel-account .account-workspace-section>div:last-child{line-height:1.9!important}
+          .app.account-center-workspace #panel-account .v11-email-rule{grid-column:span 6!important;margin:0!important;min-height:92px!important;padding:14px 16px!important;border-radius:10px!important}
+          .app.account-center-workspace #panel-account #v12ExportCenterMount{grid-column:span 6!important;min-width:0!important}
+          .app.account-center-workspace #panel-account #v12ExportCenterMount .v12-export-center{height:100%!important;margin:0!important;background:#fff!important}
+          .app.account-center-workspace #panel-account .v9-admin-settings-card{grid-column:1/-1!important;margin:0!important;padding:15px 16px!important;border-radius:11px!important;background:#fff!important}
+          .app.account-center-workspace #panel-account>.panel-body>.v11-note{grid-column:1/-1!important;margin:0!important;max-width:none!important;padding:18px!important;background:#fff!important}
+          .app.account-center-workspace #panel-account>.panel-body>.primary-wide{grid-column:1/5!important;width:100%!important;max-width:320px!important}
+          @media(max-width:1200px){
+            .app.account-center-workspace #panel-account .usage-box{grid-column:1/-1!important}
+            .app.account-center-workspace #panel-account .account-grid{grid-column:1/-1!important}
+          }
+          @media(max-width:900px){
+            .app.account-center-workspace #panel-account .panel-body.account-workspace-body{grid-template-columns:1fr!important;padding:14px!important}
+            .app.account-center-workspace #panel-account .usage-box,.app.account-center-workspace #panel-account .account-grid,.app.account-center-workspace #panel-account .account-workspace-section,.app.account-center-workspace #panel-account .v11-email-rule,.app.account-center-workspace #panel-account #v12ExportCenterMount,.app.account-center-workspace #panel-account .v9-admin-settings-card{grid-column:1!important}
+            .app.account-center-workspace #panel-account .account-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+          }
           </style>
-          <script id="account-center-no-map-fix-v1">
+          <script id="account-center-workspace-fix-v2">
           (function(){
-            function syncAccountLayout(){
-              var app=document.querySelector('.app');
-              var accountPanel=document.getElementById('panel-account');
-              if(!app||!accountPanel)return;
-              var accountActive=accountPanel.classList.contains('active');
-              app.classList.toggle('account-center-no-map',accountActive);
-              var mapstage=document.querySelector('.mapstage');
-              if(mapstage)mapstage.setAttribute('aria-hidden',accountActive?'true':'false');
-              if(!accountActive&&window.map&&typeof window.map.invalidateSize==='function'){
-                setTimeout(function(){window.map.invalidateSize();},80);
-              }
-            }
-            function installAccountLayout(){
-              var sidepanel=document.querySelector('.sidepanel');
-              if(!sidepanel)return;
-              var observer=new MutationObserver(syncAccountLayout);
-              sidepanel.querySelectorAll('.panel-view').forEach(function(panel){
-                observer.observe(panel,{attributes:true,attributeFilter:['class']});
+            function decorateAccount(){
+              var panel=document.getElementById('panel-account');
+              var body=panel&&panel.querySelector('.panel-body');
+              if(!body)return;
+              body.classList.add('account-workspace-body');
+              body.querySelectorAll(':scope > .usage-box').forEach(function(el){el.classList.add('account-workspace-summary');});
+              body.querySelectorAll(':scope > .account-grid').forEach(function(el){el.classList.add('account-workspace-kpis');});
+              Array.prototype.slice.call(body.querySelectorAll(':scope > .tree-title')).forEach(function(title){
+                var content=title.nextElementSibling;
+                if(!content||content.classList.contains('tree-title'))return;
+                var section=document.createElement('section');
+                section.className='account-workspace-section';
+                if(/assigned functions/i.test(title.textContent||''))section.classList.add('account-functions-section');
+                if(/assigned export rights/i.test(title.textContent||''))section.classList.add('account-export-rights-section');
+                title.parentNode.insertBefore(section,title);
+                section.appendChild(title);
+                section.appendChild(content);
               });
-              document.querySelector('.rail')?.addEventListener('click',function(){setTimeout(syncAccountLayout,0);});
-              syncAccountLayout();
             }
-            if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installAccountLayout,{once:true});
-            else installAccountLayout();
+            function syncAccountWorkspace(){
+              var app=document.querySelector('.app');
+              var panel=document.getElementById('panel-account');
+              if(!app||!panel)return;
+              var active=panel.classList.contains('active');
+              app.classList.toggle('account-center-workspace',active);
+              if(active)decorateAccount();
+              if(!active&&window.map&&typeof window.map.invalidateSize==='function')setTimeout(function(){window.map.invalidateSize();},80);
+            }
+            function installAccountWorkspace(){
+              var panel=document.getElementById('panel-account');
+              if(!panel)return;
+              var observer=new MutationObserver(function(){syncAccountWorkspace();});
+              observer.observe(panel,{attributes:true,attributeFilter:['class'],childList:true,subtree:true});
+              document.querySelector('.rail')?.addEventListener('click',function(){setTimeout(syncAccountWorkspace,0);});
+              syncAccountWorkspace();
+            }
+            if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installAccountWorkspace,{once:true});
+            else installAccountWorkspace();
           })();
           </script>
-          ACCOUNTMAP
+          ACCOUNTWORKSPACE
           printf '%s\n' '<!doctype html><html><head><meta charset="utf-8"><meta name="robots" content="noindex,nofollow"><title>Tools</title></head><body></body></html>' > _site/index.html
           printf '%s\n' 'User-agent: *' 'Disallow: /' > _site/robots.txt
           touch _site/.nojekyll
@@ -163,5 +204,5 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git checkout -b gh-pages
           git add .
-          git commit -m 'Publish DATA SEARCH account layout fix'
+          git commit -m 'Publish DATA SEARCH account workspace layout'
           git push --force "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" gh-pages
