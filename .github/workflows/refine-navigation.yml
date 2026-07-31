@@ -1,4 +1,4 @@
-name: Clean selected DATA SEARCH top
+name: Restore exact selected DATA SEARCH page
 
 on:
   push:
@@ -11,88 +11,125 @@ permissions:
   contents: write
 
 jobs:
-  clean-restored-page:
+  restore-exact-page:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout published page
+      - name: Checkout complete published history
         uses: actions/checkout@v4
         with:
           ref: gh-pages
           fetch-depth: 0
           path: site
 
-      - name: Remove top controls once
+      - name: Recover the original restored page and remove only its top controls
         shell: bash
         run: |
           set -euo pipefail
           cd site
+          rm -f /tmp/original-restored.html /tmp/candidate.html
+          found=''
+
+          # First preference: the exact previously published restored page.
+          for path in data-search-restored.html data-search.html; do
+            for commit in $(git rev-list --all -- "$path"); do
+              git show "$commit:$path" > /tmp/candidate.html 2>/dev/null || continue
+              if grep -q 'public-admin@datasearch.example' /tmp/candidate.html \
+                 && grep -q 'Public experience mode' /tmp/candidate.html \
+                 && grep -q 'title="AOI Center"' /tmp/candidate.html \
+                 && grep -q 'title="Search Center"' /tmp/candidate.html \
+                 && grep -q 'title="Orbit Prediction"' /tmp/candidate.html \
+                 && ! grep -q 'RESTORED_TOP_REMOVED' /tmp/candidate.html \
+                 && ! grep -q 'NAVIGATION_LAYOUT_V3' /tmp/candidate.html \
+                 && ! grep -q 'CLEAN_NAVIGATION_FIX' /tmp/candidate.html; then
+                cp /tmp/candidate.html /tmp/original-restored.html
+                echo "Recovered exact original from $commit:$path"
+                found='exact'
+                break 2
+              fi
+            done
+          done
+
+          # Fallback to the matching pre-publication source only if the exact
+          # restored artifact is unavailable in Git history.
+          if [ -z "$found" ]; then
+            for commit in $(git rev-list --all -- data-search.html); do
+              git show "$commit:data-search.html" > /tmp/candidate.html 2>/dev/null || continue
+              if grep -q 'local.admin@data-search.local' /tmp/candidate.html \
+                 && grep -q 'function forceAllOpen' /tmp/candidate.html \
+                 && grep -q 'title="AOI Center"' /tmp/candidate.html \
+                 && grep -q 'title="Search Center"' /tmp/candidate.html \
+                 && grep -q 'title="Orbit Prediction"' /tmp/candidate.html \
+                 && ! grep -q 'NAVIGATION_LAYOUT_V3' /tmp/candidate.html \
+                 && ! grep -q 'CLEAN_NAVIGATION_FIX' /tmp/candidate.html; then
+                cp /tmp/candidate.html /tmp/original-restored.html
+                echo "Recovered matching original source from $commit:data-search.html"
+                found='fallback'
+                break
+              fi
+            done
+          fi
+
+          test -s /tmp/original-restored.html
+
           python3 - <<'PY'
           from pathlib import Path
           import re
 
-          path = Path('data-search-restored.html')
-          html = path.read_text(encoding='utf-8')
-          if '<!doctype html' not in html[:500].lower():
-              raise SystemExit('Restored page is not valid HTML')
+          source = Path('/tmp/original-restored.html').read_text(encoding='utf-8')
 
-          # Remove every previously inserted guard, including copies that were
-          # accidentally placed inside generated-document template strings.
-          html = re.sub(
-              r'\n?<!-- RESTORED_TOP_REMOVED -->.*?<!-- RESTORED_TOP_REMOVED_END -->\n?',
-              '\n',
-              html,
-              flags=re.S,
-          )
+          def remove_first_div_by_class(html, class_name):
+              pattern = re.compile(r'<div\b[^>]*\bclass=["\'][^"\']*\b' + re.escape(class_name) + r'\b[^"\']*["\'][^>]*>', re.I)
+              match = pattern.search(html)
+              if not match:
+                  raise SystemExit(f'Missing top element: {class_name}')
+              start = match.start()
+              token_re = re.compile(r'<div\b[^>]*>|</div\s*>', re.I)
+              depth = 0
+              for token in token_re.finditer(html, match.start()):
+                  if token.group(0).lower().startswith('</div'):
+                      depth -= 1
+                      if depth == 0:
+                          end = token.end()
+                          while end < len(html) and html[end] in ' \t':
+                              end += 1
+                          if end < len(html) and html[end] == '\r':
+                              end += 1
+                          if end < len(html) and html[end] == '\n':
+                              end += 1
+                          return html[:start] + html[end:], html[start:end]
+                  else:
+                      depth += 1
+              raise SystemExit(f'Unclosed top element: {class_name}')
 
-          # Remove the actual visible top controls from the document source.
-          html = re.sub(
-              r'\s*<div class="coordinate-search"[^>]*>.*?</div>\s*',
-              '\n',
-              html,
-              count=1,
-              flags=re.S,
-          )
-          html = re.sub(
-              r'\s*<div class="top-actions"[^>]*>.*?</div>\s*',
-              '\n',
-              html,
-              count=1,
-              flags=re.S,
-          )
+          result, removed_search = remove_first_div_by_class(source, 'coordinate-search')
+          result, removed_actions = remove_first_div_by_class(result, 'top-actions')
 
-          guard = '''
-<!-- RESTORED_TOP_REMOVED -->
-<style id="restored-top-removed-style">
-.coordinate-search,.top-actions,.v11-auth-actions,.account-menu-button,.lang-mini,.v9-help-button{display:none!important}
-.topbar{justify-content:flex-start!important}
-</style>
-<script id="restored-top-removed-script">
-(function(){
-  function clean(){
-    document.querySelectorAll('.coordinate-search,.top-actions').forEach(function(node){node.remove();});
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',clean,{once:true});else clean();
-  window.addEventListener('load',clean,{once:true});
-  new MutationObserver(clean).observe(document.documentElement,{childList:true,subtree:true});
-})();
-</script>
-<!-- RESTORED_TOP_REMOVED_END -->
-'''
+          # No other source text is modified or appended.
+          Path('data-search-restored.html').write_text(result, encoding='utf-8')
 
-          closing = html.lower().rfind('</body>')
-          if closing < 0:
-              raise SystemExit('Closing body tag not found')
-          html = html[:closing] + guard + html[closing:]
-          path.write_text(html, encoding='utf-8')
-
-          result = path.read_text(encoding='utf-8')
-          assert result.count('<!-- RESTORED_TOP_REMOVED -->') == 1
-          assert result.count('<!-- RESTORED_TOP_REMOVED_END -->') == 1
           assert '<div class="coordinate-search"' not in result
           assert '<div class="top-actions"' not in result
+          assert result.count('RESTORED_TOP_REMOVED') == 0
+          assert result.count('NAVIGATION_LAYOUT_V3') == 0
+          assert result.count('CLEAN_NAVIGATION_FIX') == 0
+          assert result.count('FINAL_NAVIGATION_FIX') == 0
+          assert result.count('split-aoi-archive-support-fix') == 0
+          for label in (
+              'AOI Center', 'Search Center', 'Orbit Prediction',
+              'Data Source Library', 'Customer API', 'Subscription Center',
+              'Data Center', 'Order Center', 'Account Center'
+          ):
+              assert label in result, label
+
+          removed = len(source.encode('utf-8')) - len(result.encode('utf-8'))
+          expected = len(removed_search.encode('utf-8')) + len(removed_actions.encode('utf-8'))
+          assert removed == expected
+          print('Original bytes:', len(source.encode('utf-8')))
+          print('Published bytes:', len(result.encode('utf-8')))
+          print('Only removed bytes:', removed)
           PY
 
-      - name: Publish corrected restored page
+      - name: Publish only the corrected restored page
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
@@ -102,6 +139,7 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add data-search-restored.html
+          git diff --cached --check
           if git diff --cached --quiet; then exit 0; fi
-          git commit -m 'Clean top controls on restored DATA SEARCH page'
+          git commit -m 'Restore original DATA SEARCH page with only top controls removed'
           git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" gh-pages
