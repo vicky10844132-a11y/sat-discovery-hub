@@ -29,6 +29,90 @@ jobs:
           test "$(wc -c < _site/aoi-tool.html)" -eq 85764
           echo 'f18d068cac522bdcb5bebfeeaec7e12a0a64de73ddc8250aef3dc9387987a72c  _site/data-search.html' | sha256sum -c -
           echo '53d214b46eaaddce532d898e5297bb22bf9acde67ce97664a1fe22feafd28aae  _site/aoi-tool.html' | sha256sum -c -
+          cat >> _site/data-search.html <<'NAVFIX'
+          <script id="split-aoi-archive-support-fix-v1">
+          (function(){
+            function setRailActive(button){
+              document.querySelectorAll('.rail .rail-btn').forEach(function(item){item.classList.remove('active');});
+              if(button)button.classList.add('active');
+            }
+            function configureSearchPanel(module){
+              var panel=document.getElementById('panel-search');
+              if(!panel)return;
+              var tabs=panel.querySelector('.tabs');
+              if(!tabs)return;
+              var aoiTab=tabs.querySelector('[data-tab="aoi"]');
+              var archiveTab=tabs.querySelector('[data-tab="archive"]');
+              var monitoringTab=tabs.querySelector('[data-tab="monitoring"]');
+              if(module==='aoi'){
+                tabs.style.display='none';
+              }else{
+                tabs.style.display='flex';
+                if(aoiTab)aoiTab.style.display='none';
+                if(archiveTab){archiveTab.style.display='';archiveTab.textContent='Archive Search';}
+                if(monitoringTab)monitoringTab.style.display='';
+              }
+            }
+            function openSplitModule(module,button){
+              try{if(typeof window.selectPanel==='function')window.selectPanel('search');}catch(e){}
+              try{if(typeof window.setSearchTab==='function')window.setSearchTab(module);}catch(e){}
+              configureSearchPanel(module);
+              setRailActive(button);
+              if(window.map&&typeof window.map.invalidateSize==='function')setTimeout(function(){window.map.invalidateSize();},80);
+            }
+            function installFix(){
+              var rail=document.querySelector('.rail');
+              if(!rail)return;
+              var oldStandaloneAoi=document.getElementById('panel-aoi');
+              if(oldStandaloneAoi)oldStandaloneAoi.remove();
+              if(!rail.querySelector('[data-ds-module="aoi"]')){
+                var oldSearch=rail.querySelector(':scope > .rail-btn[data-panel="search"]')||rail.querySelector('.rail-btn[data-panel="search"]');
+                if(oldSearch){
+                  var aoiButton=document.createElement('button');
+                  aoiButton.className='rail-btn';
+                  aoiButton.type='button';
+                  aoiButton.setAttribute('data-ds-module','aoi');
+                  aoiButton.title='AOI';
+                  aoiButton.setAttribute('aria-label','AOI');
+                  aoiButton.innerHTML='<svg class="ds-icon" viewBox="0 0 24 24"><path d="M4 7l5-3 5 3 6-2v12l-6 3-5-3-5 2z"></path><path d="M9 4v13M14 7v13"></path></svg><span class="tip">AOI</span>';
+                  var archiveButton=oldSearch.cloneNode(true);
+                  archiveButton.className='rail-btn';
+                  archiveButton.type='button';
+                  archiveButton.removeAttribute('data-panel');
+                  archiveButton.setAttribute('data-ds-module','archive');
+                  archiveButton.title='Archive Search';
+                  archiveButton.setAttribute('aria-label','Archive Search');
+                  var archiveTip=archiveButton.querySelector('.tip');
+                  if(archiveTip)archiveTip.textContent='Archive Search';
+                  rail.insertBefore(aoiButton,oldSearch);
+                  rail.insertBefore(archiveButton,oldSearch);
+                  oldSearch.remove();
+                  aoiButton.addEventListener('click',function(event){event.preventDefault();event.stopPropagation();openSplitModule('aoi',aoiButton);});
+                  archiveButton.addEventListener('click',function(event){event.preventDefault();event.stopPropagation();openSplitModule('archive',archiveButton);});
+                  openSplitModule('aoi',aoiButton);
+                }
+              }
+              var supportButton=Array.prototype.find.call(rail.querySelectorAll('.rail-bottom .rail-btn'),function(button){
+                var tip=button.querySelector('.tip');
+                return tip&&tip.textContent.trim()==='Support';
+              });
+              if(supportButton){
+                supportButton.type='button';
+                supportButton.title='Support';
+                supportButton.setAttribute('aria-label','Support');
+                supportButton.onclick=function(event){
+                  event.preventDefault();
+                  event.stopPropagation();
+                  if(typeof window.openPlatformSettings==='function')window.openPlatformSettings('help');
+                  else if(typeof window.notify==='function')window.notify('Support','Support center is loading.');
+                };
+              }
+            }
+            if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installFix,{once:true});
+            else installFix();
+          })();
+          </script>
+          NAVFIX
           printf '%s\n' '<!doctype html><html><head><meta charset="utf-8"><meta name="robots" content="noindex,nofollow"><title>Tools</title></head><body></body></html>' > _site/index.html
           printf '%s\n' 'User-agent: *' 'Disallow: /' > _site/robots.txt
           touch _site/.nojekyll
@@ -44,5 +128,5 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git checkout -b gh-pages
           git add .
-          git commit -m 'Publish DATA SEARCH and AOI TOOL'
+          git commit -m 'Publish DATA SEARCH navigation fix'
           git push --force "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" gh-pages
