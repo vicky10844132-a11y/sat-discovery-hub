@@ -1,157 +1,72 @@
-name: Verify and publish AOI item 1
+name: Restore first-linked DATA SEARCH page
 
 on:
   pull_request:
     branches: [main]
     paths:
-      - '.github/aoi-item1-trigger.txt'
+      - '.github/restore-first-link-trigger.txt'
 
 permissions:
   contents: write
 
 jobs:
-  verify-aoi-item-1:
+  restore-first-linked-page:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout published page
+      - name: Checkout published history and preserved payload
         uses: actions/checkout@v4
         with:
           ref: gh-pages
-          fetch-depth: 1
+          fetch-depth: 0
           path: site
 
-      - name: Apply only standalone AOI behavior
+      - name: Rebuild exact original page from preserved compressed parts
         shell: bash
         run: |
           set -euo pipefail
           cd site
           python3 - <<'PY'
           from pathlib import Path
-          import re
+          import base64, gzip, hashlib
 
-          path=Path('data-search-restored.html')
-          source=path.read_text(encoding='utf-8')
-          base=re.sub(r'\n?<!-- ITEM1_AOI_STANDALONE_START -->.*?<!-- ITEM1_AOI_STANDALONE_END -->\n?','\n',source,flags=re.S).rstrip()
+          payload_dir = Path('assets/data-search-restored-c3fea2f7')
+          parts = sorted(payload_dir.glob('part-*.b64'))
+          if len(parts) != 3:
+              raise SystemExit(f'Expected 3 preserved parts, found {len(parts)}')
 
-          patch=r'''
+          encoded = ''.join(p.read_text(encoding='utf-8').strip() for p in parts)
+          original = gzip.decompress(base64.b64decode(encoded))
+          digest = hashlib.sha256(original).hexdigest()
+          text = original.decode('utf-8')
 
-<!-- ITEM1_AOI_STANDALONE_START -->
-<style id="item1-aoi-standalone-style">
-#panel-search .tab[data-tab="aoi"]{display:none!important}
-</style>
-<script id="item1-aoi-standalone-script">
-(function(){
-  'use strict';
-  var applying=false;
-  var initialOpened=false;
+          if not digest.startswith('c3fea2f7'):
+              raise SystemExit(f'Preserved payload hash mismatch: {digest}')
+          required = (
+              '<!DOCTYPE html>',
+              '<title>DATA SEARCH</title>',
+              'Public experience mode',
+              'public-admin@datasearch.example',
+              'title="AOI Center"',
+              'title="Search Center"',
+              'title="Orbit Prediction"',
+              'Data Center',
+              'Order Center',
+              'Account Center',
+          )
+          missing = [item for item in required if item not in text]
+          if missing:
+              raise SystemExit(f'Preserved original is missing expected markers: {missing}')
 
-  function makeAoiButton(){
-    var button=document.createElement('button');
-    button.type='button';
-    button.className='rail-btn item1-aoi-fixed';
-    button.setAttribute('data-panel','aoi');
-    button.setAttribute('title','AOI Center');
-    button.innerHTML='<svg class="ds-icon" viewBox="0 0 24 24"><path d="M4 7l5-3 5 3 6-2v12l-6 3-5-3-5 2z"></path><path d="M9 4v13M14 7v13"></path></svg><span class="tip">AOI Center</span>';
-    return button;
-  }
-
-  function setActive(button){
-    document.querySelectorAll('.rail .rail-btn').forEach(function(item){item.classList.remove('active');});
-    if(button)button.classList.add('active');
-  }
-
-  function openAoi(button){
-    var app=document.querySelector('.app');
-    if(app)app.classList.remove('account-center-workspace','account-panel-active','account-mode');
-    var mapstage=document.querySelector('.mapstage');
-    if(mapstage)mapstage.style.removeProperty('display');
-    document.querySelectorAll('.panel-view').forEach(function(panel){panel.classList.remove('active');});
-    var aoiPanel=document.getElementById('panel-aoi');
-    if(aoiPanel)aoiPanel.classList.add('active');
-    setActive(button);
-    if(window.map&&typeof window.map.invalidateSize==='function')setTimeout(function(){window.map.invalidateSize();},80);
-  }
-
-  function bindAoi(button){
-    if(button.getAttribute('data-item1-bound')==='1')return button;
-    var clean=button.cloneNode(true);
-    clean.classList.add('item1-aoi-fixed');
-    clean.setAttribute('data-panel','aoi');
-    clean.setAttribute('title','AOI Center');
-    clean.setAttribute('data-item1-bound','1');
-    button.replaceWith(clean);
-    clean.addEventListener('click',function(event){
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      openAoi(clean);
-    },true);
-    return clean;
-  }
-
-  function ensureStandaloneAoi(){
-    if(applying)return;
-    applying=true;
-    try{
-      var rail=document.querySelector('.rail');
-      if(!rail)return;
-      var button=rail.querySelector('.rail-btn[data-panel="aoi"]');
-      if(!button){
-        button=makeAoiButton();
-        rail.insertBefore(button,rail.firstElementChild);
-      }
-      button=bindAoi(button);
-      if(rail.firstElementChild!==button)rail.insertBefore(button,rail.firstElementChild);
-      document.querySelectorAll('#panel-search .tab[data-tab="aoi"]').forEach(function(tab){tab.remove();});
-    }finally{
-      applying=false;
-    }
-  }
-
-  function initialise(){
-    ensureStandaloneAoi();
-    if(!initialOpened){
-      var button=document.querySelector('.rail .rail-btn[data-panel="aoi"]');
-      if(button){openAoi(button);initialOpened=true;}
-    }
-  }
-
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initialise,{once:true});
-  else initialise();
-  window.addEventListener('load',initialise,{once:true});
-  setTimeout(initialise,0);
-  setTimeout(initialise,150);
-  new MutationObserver(function(){ensureStandaloneAoi();}).observe(document.documentElement,{childList:true,subtree:true});
-})();
-</script>
-<!-- ITEM1_AOI_STANDALONE_END -->
-'''
-
-          result=base+patch
-          path.write_text(result,encoding='utf-8')
-
-          assert result.count('<!-- ITEM1_AOI_STANDALONE_START -->')==1
-          assert result.count('<!-- ITEM1_AOI_STANDALONE_END -->')==1
-          assert 'id="panel-aoi"' in result
-          assert 'data-panel="aoi"' in result
-          assert '#panel-search .tab[data-tab="aoi"]{display:none!important}' in result
-          assert 'Monitoring' in result
-          assert 'Data Center' in result
-          assert 'Account Center' in result
-          assert result.startswith(base)
-          print('Only item 1 was appended. Existing source content is unchanged.')
+          Path('data-search-restored.html').write_bytes(original)
+          print('RESTORED_SHA256=' + digest)
+          print('RESTORED_BYTES=' + str(len(original)))
           PY
 
-          python3 - <<'PY'
-          from pathlib import Path
-          import re
-          html=Path('data-search-restored.html').read_text(encoding='utf-8')
-          m=re.search(r'<script id="item1-aoi-standalone-script">(.*?)</script>',html,re.S)
-          assert m
-          Path('/tmp/item1-aoi.js').write_text(m.group(1),encoding='utf-8')
-          PY
-          node --check /tmp/item1-aoi.js
+          test "$(grep -c '<!DOCTYPE html>' data-search-restored.html)" -eq 1
+          test "$(grep -c 'dataSearchFrame' data-search-restored.html || true)" -eq 0
+          test "$(grep -c 'ITEM1_AOI_STANDALONE' data-search-restored.html || true)" -eq 0
 
-      - name: Publish verified item 1
+      - name: Publish exact preserved original
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
@@ -162,6 +77,9 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add data-search-restored.html
           git diff --cached --check
-          if git diff --cached --quiet; then exit 0; fi
-          git commit -m 'Item 1: keep AOI standalone and first'
+          if git diff --cached --quiet; then
+            echo 'The exact preserved original is already published.'
+            exit 0
+          fi
+          git commit -m 'Restore exact first-linked DATA SEARCH page'
           git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" gh-pages
