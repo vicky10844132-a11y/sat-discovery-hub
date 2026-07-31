@@ -1,1 +1,1 @@
-Audit the original restoration run logs and artifacts from the first-linked DATA SEARCH page.
+Run the narrowed audit for completed restoration jobs from 2026-07-31 12:15–12:40 UTC.
