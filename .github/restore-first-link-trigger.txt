@@ -1,1 +1,1 @@
-Inspect the exact parent of the top-control removal commit.
+Run the exact historical transformation matcher and identify the first-linked source.
