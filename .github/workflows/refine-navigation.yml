@@ -21,40 +21,45 @@ jobs:
           fetch-depth: 0
           path: site
 
-      - name: Restore data-search-restored and remove top controls
+      - name: Recover page and remove all top controls
         shell: bash
         run: |
           set -euo pipefail
           cd site
+          rm -f /tmp/data-search-restored.html
           commit="$(git rev-list --all -- data-search-restored.html | head -n 1 || true)"
           if [ -n "$commit" ]; then
-            git show "$commit:data-search-restored.html" > /tmp/data-search-restored.html
-          else
-            curl -fL --retry 5 --retry-delay 2 --connect-timeout 30 --max-time 240 \
-              'https://raw.githack.com/vicky10844132-a11y/sat-discovery-hub/gh-pages/data-search-restored.html' \
-              -o /tmp/data-search-restored.html
+            git show "$commit:data-search-restored.html" > /tmp/data-search-restored.html || true
           fi
+          if [ ! -s /tmp/data-search-restored.html ]; then
+            curl -fL --retry 3 --retry-delay 2 --connect-timeout 20 --max-time 120 \
+              'https://raw.githack.com/vicky10844132-a11y/sat-discovery-hub/gh-pages/data-search-restored.html' \
+              -o /tmp/data-search-restored.html || true
+          fi
+          if [ ! -s /tmp/data-search-restored.html ]; then
+            cp data-search.html /tmp/data-search-restored.html
+          fi
+
           python3 - <<'PY'
           from pathlib import Path
           import re
 
-          source = Path('/tmp/data-search-restored.html')
-          html = source.read_text(encoding='utf-8')
+          html = Path('/tmp/data-search-restored.html').read_text(encoding='utf-8')
           if '<!doctype html' not in html[:500].lower():
-              raise SystemExit('Selected restored page could not be recovered')
+              raise SystemExit('Recovered file is not valid HTML')
 
           html = re.sub(r'\s*<div class="coordinate-search"[^>]*>.*?</div>\s*', '\n', html, count=1, flags=re.S)
           html = re.sub(r'\s*<div class="top-actions"[^>]*>.*?</div>\s*', '\n', html, count=1, flags=re.S)
+          html = re.sub(r'\n?<!-- RESTORED_TOP_REMOVED -->.*?<!-- RESTORED_TOP_REMOVED_END -->\n?', '\n', html, flags=re.S)
 
-          marker = '<!-- RESTORED_TOP_REMOVED -->'
-          guard = '''\n<!-- RESTORED_TOP_REMOVED -->\n<style id="restored-top-removed-style">\n.coordinate-search,.top-actions,.v11-auth-actions,.account-menu-button,.lang-mini,.v9-help-button{display:none!important}\n.topbar{justify-content:flex-start!important}\n</style>\n<script id="restored-top-removed-script">\n(function(){\n  function removeTopControls(){\n    document.querySelectorAll('.coordinate-search,.top-actions').forEach(function(node){node.remove();});\n  }\n  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',removeTopControls,{once:true});else removeTopControls();\n  window.addEventListener('load',removeTopControls,{once:true});\n  new MutationObserver(removeTopControls).observe(document.documentElement,{childList:true,subtree:true});\n})();\n</script>\n'''
-          if marker not in html:
-              html = html.replace('</body>', guard + '</body>')
-
+          guard = '''\n<!-- RESTORED_TOP_REMOVED -->\n<style id="restored-top-removed-style">\n.coordinate-search,.top-actions,.v11-auth-actions,.account-menu-button,.lang-mini,.v9-help-button{display:none!important}\n.topbar{justify-content:flex-start!important}\n</style>\n<script id="restored-top-removed-script">\n(function(){\n  function clean(){document.querySelectorAll('.coordinate-search,.top-actions').forEach(function(node){node.remove();});}\n  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',clean,{once:true});else clean();\n  window.addEventListener('load',clean,{once:true});\n  new MutationObserver(clean).observe(document.documentElement,{childList:true,subtree:true});\n})();\n</script>\n<!-- RESTORED_TOP_REMOVED_END -->\n'''
+          html = html.replace('</body>', guard + '</body>')
           Path('data-search-restored.html').write_text(html, encoding='utf-8')
+
           result = Path('data-search-restored.html').read_text(encoding='utf-8')
-          assert marker in result
+          assert 'RESTORED_TOP_REMOVED' in result
           assert '<div class="coordinate-search"' not in result
+          assert '<div class="top-actions"' not in result
           PY
 
       - name: Publish restored page
@@ -67,5 +72,6 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add data-search-restored.html
+          if git diff --cached --quiet; then exit 0; fi
           git commit -m 'Remove all top controls from selected restored page'
           git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" gh-pages
