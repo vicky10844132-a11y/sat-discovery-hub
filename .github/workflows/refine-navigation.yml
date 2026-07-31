@@ -1,45 +1,71 @@
-name: Publish DATA SEARCH navigation fix
+name: Recover selected DATA SEARCH page
 
 on:
   push:
     branches: [main]
     paths:
       - '.github/workflows/refine-navigation.yml'
-      - '.github/nav-patch.html'
-      - '.github/scripts/apply_nav_patch.py'
   workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
-  publish-navigation:
+  recover-restored-page:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout published page
+      - name: Checkout gh-pages with history
         uses: actions/checkout@v4
         with:
           ref: gh-pages
+          fetch-depth: 0
           path: site
 
-      - name: Checkout navigation patch
-        uses: actions/checkout@v4
-        with:
-          ref: main
-          path: source
+      - name: Restore data-search-restored and remove top controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd site
+          commit="$(git rev-list --all -- data-search-restored.html | head -n 1 || true)"
+          if [ -n "$commit" ]; then
+            git show "$commit:data-search-restored.html" > /tmp/data-search-restored.html
+          else
+            curl -fL --retry 5 --retry-delay 2 --connect-timeout 30 --max-time 240 \
+              'https://raw.githack.com/vicky10844132-a11y/sat-discovery-hub/gh-pages/data-search-restored.html' \
+              -o /tmp/data-search-restored.html
+          fi
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
 
-      - name: Apply validated navigation patch
-        run: python3 source/.github/scripts/apply_nav_patch.py site/data-search.html source/.github/nav-patch.html
+          source = Path('/tmp/data-search-restored.html')
+          html = source.read_text(encoding='utf-8')
+          if '<!doctype html' not in html[:500].lower():
+              raise SystemExit('Selected restored page could not be recovered')
 
-      - name: Publish corrected page
+          html = re.sub(r'\s*<div class="coordinate-search"[^>]*>.*?</div>\s*', '\n', html, count=1, flags=re.S)
+          html = re.sub(r'\s*<div class="top-actions"[^>]*>.*?</div>\s*', '\n', html, count=1, flags=re.S)
+
+          marker = '<!-- RESTORED_TOP_REMOVED -->'
+          guard = '''\n<!-- RESTORED_TOP_REMOVED -->\n<style id="restored-top-removed-style">\n.coordinate-search,.top-actions,.v11-auth-actions,.account-menu-button,.lang-mini,.v9-help-button{display:none!important}\n.topbar{justify-content:flex-start!important}\n</style>\n<script id="restored-top-removed-script">\n(function(){\n  function removeTopControls(){\n    document.querySelectorAll('.coordinate-search,.top-actions').forEach(function(node){node.remove();});\n  }\n  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',removeTopControls,{once:true});else removeTopControls();\n  window.addEventListener('load',removeTopControls,{once:true});\n  new MutationObserver(removeTopControls).observe(document.documentElement,{childList:true,subtree:true});\n})();\n</script>\n'''
+          if marker not in html:
+              html = html.replace('</body>', guard + '</body>')
+
+          Path('data-search-restored.html').write_text(html, encoding='utf-8')
+          result = Path('data-search-restored.html').read_text(encoding='utf-8')
+          assert marker in result
+          assert '<div class="coordinate-search"' not in result
+          PY
+
+      - name: Publish restored page
         env:
           GH_TOKEN: ${{ github.token }}
+        shell: bash
         run: |
           set -euo pipefail
           cd site
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add data-search.html
-          if git diff --cached --quiet; then exit 0; fi
-          git commit -m 'Publish stable DATA SEARCH navigation'
+          git add data-search-restored.html
+          git commit -m 'Remove all top controls from selected restored page'
           git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" gh-pages
