@@ -1,4 +1,4 @@
-name: Match exact first-linked DATA SEARCH source
+name: Verify exact first-linked DATA SEARCH source
 
 on:
   pull_request:
@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 jobs:
-  match-exact-source:
+  verify-exact-source:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout complete repository history
@@ -20,114 +20,74 @@ jobs:
           fetch-depth: 0
           path: site
 
-      - name: Reproduce the historical transformation byte for byte
+      - name: Reverse the historical transformation exactly
         shell: bash
         run: |
           set -euo pipefail
           cd site
           python3 - <<'PY'
+          import difflib
           import hashlib
           import re
           import subprocess
-          from datetime import datetime, timezone
 
           published=subprocess.check_output([
               'git','show','1ea89955d25fa460d12547a56fbe0faf7122661d:data-search-restored.html'
           ]).decode('utf-8')
+          source=subprocess.check_output([
+              'git','show','c164791a6276fae743b8541b9ff0481d4acf32f9:data-search.html'
+          ]).decode('utf-8')
 
-          guard_re=re.compile(
-              r'\n?<!-- RESTORED_TOP_REMOVED -->.*?<!-- RESTORED_TOP_REMOVED_END -->\n?',
-              re.S,
+          guard='''
+<!-- RESTORED_TOP_REMOVED -->
+<style id="restored-top-removed-style">
+.coordinate-search,.top-actions,.v11-auth-actions,.account-menu-button,.lang-mini,.v9-help-button{display:none!important}
+.topbar{justify-content:flex-start!important}
+</style>
+<script id="restored-top-removed-script">
+(function(){
+  function clean(){document.querySelectorAll('.coordinate-search,.top-actions').forEach(function(node){node.remove();});}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',clean,{once:true});else clean();
+  window.addEventListener('load',clean,{once:true});
+  new MutationObserver(clean).observe(document.documentElement,{childList:true,subtree:true});
+})();
+</script>
+<!-- RESTORED_TOP_REMOVED_END -->
+'''
+          if published.count(guard)!=1:
+              raise SystemExit('Literal historical guard was not found exactly once')
+          target_base=published.replace(guard,'',1)
+
+          transformed=re.sub(
+              r'\s*<div class="coordinate-search"[^>]*>.*?</div>\s*',
+              '\n',source,count=1,flags=re.S,
           )
-          target_base=guard_re.sub('\n',published)
+          transformed=re.sub(
+              r'\s*<div class="top-actions"[^>]*>.*?</div>\s*',
+              '\n',transformed,count=1,flags=re.S,
+          )
+          transformed=re.sub(
+              r'\n?<!-- RESTORED_TOP_REMOVED -->.*?<!-- RESTORED_TOP_REMOVED_END -->\n?',
+              '\n',transformed,flags=re.S,
+          )
 
-          def historical_transform(source):
-              transformed=re.sub(
-                  r'\s*<div class="coordinate-search"[^>]*>.*?</div>\s*',
-                  '\n',source,count=1,flags=re.S,
-              )
-              transformed=re.sub(
-                  r'\s*<div class="top-actions"[^>]*>.*?</div>\s*',
-                  '\n',transformed,count=1,flags=re.S,
-              )
-              transformed=guard_re.sub('\n',transformed)
-              return transformed
+          print('SOURCE_BYTES='+str(len(source.encode('utf-8'))))
+          print('SOURCE_SHA256='+hashlib.sha256(source.encode('utf-8')).hexdigest())
+          print('TARGET_BASE_BYTES='+str(len(target_base.encode('utf-8'))))
+          print('TARGET_BASE_SHA256='+hashlib.sha256(target_base.encode('utf-8')).hexdigest())
+          print('TRANSFORMED_BYTES='+str(len(transformed.encode('utf-8'))))
+          print('TRANSFORMED_SHA256='+hashlib.sha256(transformed.encode('utf-8')).hexdigest())
+          print('EXACT_EQUAL='+str(transformed==target_base))
 
-          paths=[
-              'data-search.html',
-              'data-search-restored.html',
-              'data-search-fixed.html',
-              'data-search-v13.html',
-              'tools-pages/data-search.html',
-              'site/data-search.html',
-          ]
-          exact=[]
-          closest=[]
-          seen=set()
-          target_bytes=target_base.encode('utf-8')
-
-          for path in paths:
-              commits=subprocess.run(
-                  ['git','rev-list','--all','--',path],
-                  text=True,capture_output=True,check=True,
-              ).stdout.splitlines()
-              for sha in commits:
-                  if (sha,path) in seen:
+          if transformed!=target_base:
+              matcher=difflib.SequenceMatcher(None,transformed,target_base,autojunk=False)
+              print('DIFF_BEGIN')
+              for tag,i1,i2,j1,j2 in matcher.get_opcodes():
+                  if tag=='equal':
                       continue
-                  seen.add((sha,path))
-                  if subprocess.run(
-                      ['git','cat-file','-e',f'{sha}:{path}'],
-                      stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,
-                  ).returncode:
-                      continue
-                  raw=subprocess.check_output(['git','show',f'{sha}:{path}'])
-                  try:
-                      source=raw.decode('utf-8')
-                  except UnicodeDecodeError:
-                      continue
-                  if '<div class="coordinate-search"' not in source or '<div class="top-actions"' not in source:
-                      continue
-                  transformed=historical_transform(source)
-                  transformed_bytes=transformed.encode('utf-8')
-                  meta=subprocess.check_output(
-                      ['git','show','-s','--format=%ct%x09%s',sha],text=True
-                  ).rstrip('\n')
-                  epoch,subject=meta.split('\t',1)
-                  stamp=datetime.fromtimestamp(int(epoch),tz=timezone.utc).isoformat()
-                  row=(
-                      sha,path,len(raw),hashlib.sha256(raw).hexdigest(),
-                      len(transformed_bytes),hashlib.sha256(transformed_bytes).hexdigest(),
-                      stamp,subject,
-                  )
-                  if transformed_bytes==target_bytes:
-                      exact.append(row)
-                  else:
-                      delta=abs(len(transformed_bytes)-len(target_bytes))
-                      if delta<=8192:
-                          prefix=0
-                          for a,b in zip(transformed_bytes,target_bytes):
-                              if a!=b:
-                                  break
-                              prefix+=1
-                          closest.append((delta,-prefix,row))
-
-          print('PUBLISHED_BYTES='+str(len(published.encode('utf-8'))))
-          print('PUBLISHED_SHA256='+hashlib.sha256(published.encode('utf-8')).hexdigest())
-          print('TARGET_BASE_BYTES='+str(len(target_bytes)))
-          print('TARGET_BASE_SHA256='+hashlib.sha256(target_bytes).hexdigest())
-          print('EXACT_BEGIN')
-          for row in exact:
-              print('EXACT_SOURCE\t'+'\t'.join(map(str,row)))
-          print('EXACT_END')
-
-          if not exact:
-              print('CLOSEST_BEGIN')
-              for delta,neg_prefix,row in sorted(closest,key=lambda x:(x[0],x[1]))[:30]:
-                  print('CLOSEST\t{}\t{}\t{}'.format(delta,-neg_prefix,'\t'.join(map(str,row))))
-              print('CLOSEST_END')
-              raise SystemExit('No source exactly reproduces the published top-removed page')
-
-          hashes={row[3] for row in exact}
-          if len(hashes)!=1:
-              raise SystemExit('Exact transformed matches came from different source bytes')
+                  print('DIFF\t{}\t{}:{}\t{}:{}\tLEFT={}\tRIGHT={}'.format(
+                      tag,i1,i2,j1,j2,repr(transformed[max(0,i1-80):min(len(transformed),i2+80)]),repr(target_base[max(0,j1-80):min(len(target_base),j2+80)])
+                  ))
+              print('DIFF_END')
+              raise SystemExit('The literal reverse comparison is not exact')
           PY
