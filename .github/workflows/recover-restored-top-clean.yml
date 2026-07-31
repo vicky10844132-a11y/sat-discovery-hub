@@ -26,22 +26,19 @@ jobs:
           set -euo pipefail
           url='https://raw.githack.com/vicky10844132-a11y/sat-discovery-hub/gh-pages/data-search-restored.html'
           curl -fL --retry 5 --retry-delay 2 --connect-timeout 30 --max-time 240 \
-            -H 'Cache-Control: no-cache' \
-            "$url?recover-source=20260731" -o /tmp/data-search-restored.html
+            "$url" -o /tmp/data-search-restored.html
           python3 - <<'PY'
           from pathlib import Path
           import re
 
           src = Path('/tmp/data-search-restored.html')
           html = src.read_text(encoding='utf-8')
-          if '<!DOCTYPE html' not in html[:500].upper() and '<!doctype html' not in html[:500]:
+          if '<!doctype html' not in html[:500].lower():
               raise SystemExit('Recovered response is not the HTML page')
 
-          # Remove the visible search window and all top-right controls from the source.
           html = re.sub(r'\s*<div class="coordinate-search"[^>]*>.*?</div>\s*', '\n', html, count=1, flags=re.S)
           html = re.sub(r'\s*<div class="top-actions"[^>]*>.*?</div>\s*', '\n', html, count=1, flags=re.S)
 
-          # Prevent later scripts from recreating any top controls.
           guard = '''\n<style id="restored-top-clean">\n.coordinate-search,.top-actions,.v11-auth-actions,.account-menu-button,.lang-mini,.v9-help-button{display:none!important}\n.topbar{justify-content:flex-start!important}\n</style>\n<script id="restored-top-clean-script">\n(function(){\n  function cleanTop(){\n    document.querySelectorAll('.coordinate-search,.top-actions').forEach(function(el){el.remove();});\n  }\n  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',cleanTop,{once:true});else cleanTop();\n  window.addEventListener('load',cleanTop,{once:true});\n  new MutationObserver(cleanTop).observe(document.documentElement,{childList:true,subtree:true});\n})();\n</script>\n'''
           html = html.replace('</body>', guard + '</body>')
           Path('data-search-restored.html').write_text(html, encoding='utf-8')
