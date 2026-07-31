@@ -1,0 +1,88 @@
+name: Patch DATA SEARCH left navigation
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/patch-data-search-left-nav.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 0
+      - name: Apply exact navigation change
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path('data-search.html')
+          text = path.read_text(encoding='utf-8')
+          original = text
+
+          old_aoi_button = '''    <button class="rail-btn" data-panel="aoi" title="AOI Center"><svg class="ds-icon" viewBox="0 0 24 24"><path d="M4 7l5-3 5 3 6-2v12l-6 3-5-3-5 2z"></path><path d="M9 4v13M14 7v13"></path></svg><span class="tip">AOI Center</span></button>\n'''
+          if text.count(old_aoi_button) != 1:
+              raise SystemExit(f'Expected one old AOI rail button, found {text.count(old_aoi_button)}')
+          text = text.replace(old_aoi_button, '', 1)
+
+          panel_pattern = re.compile(
+              r'\n    <section class="panel-view" id="panel-aoi" hidden>.*?</section>\n\n'
+              r'(?=    <section class="panel-view active" id="panel-search">)',
+              re.S,
+          )
+          text, removed = panel_pattern.subn('\n', text, count=1)
+          if removed != 1:
+              raise SystemExit(f'Expected one old AOI panel, removed {removed}')
+
+          old_search_button = '''    <button class="rail-btn active" data-panel="search" title="Search Center"><svg class="ds-icon" viewBox="0 0 24 24"><rect x="4" y="4" width="11" height="11" rx="2"></rect><circle cx="15.5" cy="15.5" r="4.5"></circle><path d="M19 19l2 2M7 8h5M7 11h3"></path></svg><span class="tip">Search Center</span></button>'''
+          new_search_button = '''    <button class="rail-btn active" data-panel="search" title="Archive Search"><svg class="ds-icon" viewBox="0 0 24 24"><rect x="4" y="4" width="11" height="11" rx="2"></rect><circle cx="15.5" cy="15.5" r="4.5"></circle><path d="M19 19l2 2M7 8h5M7 11h3"></path></svg><span class="tip">Archive Search</span></button>'''
+          if text.count(old_search_button) != 1:
+              raise SystemExit(f'Expected one Search Center rail button, found {text.count(old_search_button)}')
+          text = text.replace(old_search_button, new_search_button, 1)
+
+          bridge_old = "btn.title='AOI Center';btn.setAttribute('aria-label','AOI Center');"
+          bridge_new = "btn.title='AOI';btn.setAttribute('aria-label','AOI');"
+          if text.count(bridge_old) != 1:
+              raise SystemExit(f'Expected one AOI bridge label block, found {text.count(bridge_old)}')
+          text = text.replace(bridge_old, bridge_new, 1)
+
+          bridge_tip_old = '<span class="tip">AOI Center</span>'
+          bridge_tip_new = '<span class="tip">AOI</span>'
+          if text.count(bridge_tip_old) != 1:
+              raise SystemExit(f'Expected one AOI bridge tooltip, found {text.count(bridge_tip_old)}')
+          text = text.replace(bridge_tip_old, bridge_tip_new, 1)
+
+          if text == original:
+              raise SystemExit('No changes made')
+          if 'id="panel-aoi"' in text:
+              raise SystemExit('Old AOI panel still exists')
+          if '<button class="rail-btn" data-panel="aoi" title="AOI Center">' in text:
+              raise SystemExit('Old static AOI button still exists')
+          if 'data-panel="search" title="Archive Search"' not in text:
+              raise SystemExit('Archive Search rail button not found')
+          if "btn.title='AOI';btn.setAttribute('aria-label','AOI');" not in text:
+              raise SystemExit('Runtime AOI button label not updated')
+          if 'data-tab="tasking"' not in text or 'data-tab="subscribe"' not in text:
+              raise SystemExit('Unrelated Search Center functions were changed')
+
+          path.write_text(text, encoding='utf-8')
+          print('PATCH_OK')
+          PY
+      - name: Verify only intended file changed
+        run: |
+          git diff --check
+          test "$(git diff --name-only | tr -d '\r')" = "data-search.html"
+          grep -q 'data-panel="search" title="Archive Search"' data-search.html
+          ! grep -q 'id="panel-aoi"' data-search.html
+      - name: Publish navigation update
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data-search.html
+          git commit -m 'Separate AOI and Archive Search navigation'
+          git push origin gh-pages
