@@ -1,4 +1,4 @@
-name: Audit first-linked DATA SEARCH history
+name: Find exact first-linked DATA SEARCH source
 
 on:
   pull_request:
@@ -10,72 +10,136 @@ permissions:
   contents: read
 
 jobs:
-  audit-restored-page-history:
+  find-exact-original:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout complete gh-pages history
+      - name: Checkout complete repository history
         uses: actions/checkout@v4
         with:
           ref: gh-pages
           fetch-depth: 0
           path: site
 
-      - name: List every historical restored-page version and deletion
+      - name: Find source whose top-only removal matches preserved page exactly
         shell: bash
         run: |
           set -euo pipefail
           cd site
           python3 - <<'PY'
-          import hashlib, subprocess
+          import hashlib
+          import re
+          import subprocess
           from datetime import datetime, timezone
 
-          path='data-search-restored.html'
-          rows=subprocess.check_output([
-              'git','log','--all','--follow','--format=%H%x09%ct%x09%s','--',path
-          ],text=True).splitlines()
+          target_ref='1ea89955d25fa460d12547a56fbe0faf7122661d:data-search-restored.html'
+          target=subprocess.check_output(['git','show',target_ref])
+          target_hash=hashlib.sha256(target).hexdigest()
+          target_text=target.decode('utf-8')
 
-          print('HISTORY_BEGIN')
-          for row in rows:
-              sha, epoch, subject = row.split('\t',2)
-              stamp=datetime.fromtimestamp(int(epoch),tz=timezone.utc).isoformat()
-              exists=subprocess.run(['git','cat-file','-e',f'{sha}:{path}'],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL).returncode==0
-              if not exists:
-                  print(f'DELETED\t{sha}\t{stamp}\t{subject}')
-                  continue
-              data=subprocess.check_output(['git','show',f'{sha}:{path}'])
-              text=data.decode('utf-8','replace')
-              flags={
-                  'topSearch': '<div class="coordinate-search"' in text,
-                  'topActions': '<div class="top-actions"' in text,
-                  'publicMode': 'Public experience mode' in text,
-                  'publicAdmin': 'public-admin@datasearch.example' in text,
-                  'aoiCenter': 'title="AOI Center"' in text,
-                  'searchCenter': 'title="Search Center"' in text,
-                  'orbitPrediction': 'title="Orbit Prediction"' in text,
-                  'navV3': 'NAVIGATION_LAYOUT_V3' in text,
-                  'cleanNav': 'CLEAN_NAVIGATION_FIX' in text,
-                  'finalNav': 'FINAL_NAVIGATION_FIX' in text,
-                  'iframeWrapper': 'dataSearchFrame' in text,
-                  'topRemoved': 'RESTORED_TOP_REMOVED' in text,
-              }
-              flag_text=','.join(k for k,v in flags.items() if v) or 'none'
-              print('VERSION\t{}\t{}\t{}\t{}\t{}\t{}'.format(
-                  sha,stamp,len(data),hashlib.sha256(data).hexdigest(),flag_text,subject
-              ))
-          print('HISTORY_END')
+          def remove_first_div_by_class(html, class_name):
+              pattern=re.compile(
+                  r'<div\b[^>]*\bclass=["\'][^"\']*\b'+re.escape(class_name)+r'\b[^"\']*["\'][^>]*>',
+                  re.I,
+              )
+              match=pattern.search(html)
+              if not match:
+                  raise ValueError('missing '+class_name)
+              start=match.start()
+              token_re=re.compile(r'<div\b[^>]*>|</div\s*>',re.I)
+              depth=0
+              for token in token_re.finditer(html,match.start()):
+                  if token.group(0).lower().startswith('</div'):
+                      depth-=1
+                      if depth==0:
+                          end=token.end()
+                          while end<len(html) and html[end] in ' \t':
+                              end+=1
+                          if end<len(html) and html[end]=='\r':
+                              end+=1
+                          if end<len(html) and html[end]=='\n':
+                              end+=1
+                          return html[:start]+html[end:], html[start:end]
+                  else:
+                      depth+=1
+              raise ValueError('unclosed '+class_name)
 
-          print('DELETION_EVENTS_BEGIN')
-          deleted=subprocess.check_output([
-              'git','log','--all','--diff-filter=D','--format=%H%x09%ct%x09%s','--',path
-          ],text=True).splitlines()
-          for row in deleted:
-              sha, epoch, subject=row.split('\t',2)
-              parents=subprocess.check_output(['git','show','-s','--format=%P',sha],text=True).strip().split()
-              for parent in parents:
-                  if subprocess.run(['git','cat-file','-e',f'{parent}:{path}'],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL).returncode==0:
-                      data=subprocess.check_output(['git','show',f'{parent}:{path}'])
-                      print('DELETION_PARENT\t{}\t{}\t{}\t{}\t{}'.format(
-                          sha,parent,len(data),hashlib.sha256(data).hexdigest(),subject
-                      ))
-          print('DELETION_EVENTS_END')
+          candidate_paths=[
+              'data-search.html',
+              'data-search-restored.html',
+              'data-search-fixed.html',
+              'tools-pages/data-search.html',
+              'site/data-search.html',
+          ]
+
+          exact=[]
+          closest=[]
+          seen=set()
+          for path in candidate_paths:
+              result=subprocess.run(
+                  ['git','rev-list','--all','--',path],
+                  text=True,capture_output=True,check=True,
+              )
+              for sha in result.stdout.splitlines():
+                  key=(sha,path)
+                  if key in seen:
+                      continue
+                  seen.add(key)
+                  exists=subprocess.run(
+                      ['git','cat-file','-e',f'{sha}:{path}'],
+                      stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,
+                  ).returncode==0
+                  if not exists:
+                      continue
+                  raw=subprocess.check_output(['git','show',f'{sha}:{path}'])
+                  try:
+                      text=raw.decode('utf-8')
+                      transformed, removed_search=remove_first_div_by_class(text,'coordinate-search')
+                      transformed, removed_actions=remove_first_div_by_class(transformed,'top-actions')
+                      transformed_bytes=transformed.encode('utf-8')
+                  except (UnicodeDecodeError,ValueError):
+                      continue
+
+                  digest=hashlib.sha256(transformed_bytes).hexdigest()
+                  delta=abs(len(transformed_bytes)-len(target))
+                  meta=subprocess.check_output(
+                      ['git','show','-s','--format=%ct%x09%s',sha],text=True
+                  ).rstrip('\n')
+                  epoch,subject=meta.split('\t',1)
+                  stamp=datetime.fromtimestamp(int(epoch),tz=timezone.utc).isoformat()
+                  removed_bytes=len(removed_search.encode('utf-8'))+len(removed_actions.encode('utf-8'))
+                  row=(sha,path,len(raw),hashlib.sha256(raw).hexdigest(),len(transformed_bytes),digest,removed_bytes,stamp,subject)
+                  if transformed_bytes==target:
+                      exact.append(row)
+                  elif delta<=4096:
+                      # Rank only close-sized candidates; hash equality remains the acceptance criterion.
+                      prefix=0
+                      for a,b in zip(transformed_bytes,target):
+                          if a!=b:
+                              break
+                          prefix+=1
+                      closest.append((delta,-prefix,row))
+
+          print('TARGET_BYTES='+str(len(target)))
+          print('TARGET_SHA256='+target_hash)
+          print('TARGET_FLAGS=' + ','.join([
+              'topSearch='+str('<div class="coordinate-search"' in target_text),
+              'topActions='+str('<div class="top-actions"' in target_text),
+              'publicMode='+str('Public experience mode' in target_text),
+          ]))
+          print('EXACT_MATCHES_BEGIN')
+          for row in exact:
+              print('EXACT_MATCH\t'+'\t'.join(map(str,row)))
+          print('EXACT_MATCHES_END')
+
+          if not exact:
+              print('CLOSEST_BEGIN')
+              for delta,neg_prefix,row in sorted(closest,key=lambda x:(x[0],x[1]))[:20]:
+                  print('CLOSEST\t{}\t{}\t{}'.format(delta,-neg_prefix,'\t'.join(map(str,row))))
+              print('CLOSEST_END')
+              raise SystemExit('No exact byte-for-byte source match found')
+
+          # More than one match is acceptable only when the original bytes are identical.
+          original_hashes={row[3] for row in exact}
+          if len(original_hashes)!=1:
+              raise SystemExit('Multiple exact matches have different original hashes')
           PY
