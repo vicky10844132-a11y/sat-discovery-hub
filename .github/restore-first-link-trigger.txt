@@ -1,1 +1,1 @@
-Run the linear exact source comparison and report only the differing byte range.
+Audit the original restoration run logs and artifacts from the first-linked DATA SEARCH page.
