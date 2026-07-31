@@ -5,6 +5,10 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/refine-navigation.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/aoi-item1-trigger.txt'
   workflow_dispatch:
 
 permissions:
@@ -33,7 +37,6 @@ jobs:
           path = Path('data-search-restored.html')
           source = path.read_text(encoding='utf-8')
 
-          # Re-running this workflow replaces only its own prior block.
           base = re.sub(
               r'\n?<!-- ITEM1_AOI_STANDALONE_START -->.*?<!-- ITEM1_AOI_STANDALONE_END -->\n?',
               '\n',
@@ -70,18 +73,14 @@ jobs:
 
   function openAoi(button){
     var app=document.querySelector('.app');
-    if(app){
-      app.classList.remove('account-center-workspace','account-panel-active','account-mode');
-    }
+    if(app)app.classList.remove('account-center-workspace','account-panel-active','account-mode');
     var mapstage=document.querySelector('.mapstage');
     if(mapstage)mapstage.style.removeProperty('display');
     document.querySelectorAll('.panel-view').forEach(function(panel){panel.classList.remove('active');});
     var aoiPanel=document.getElementById('panel-aoi');
     if(aoiPanel)aoiPanel.classList.add('active');
     setActive(button);
-    if(window.map&&typeof window.map.invalidateSize==='function'){
-      setTimeout(function(){window.map.invalidateSize();},80);
-    }
+    if(window.map&&typeof window.map.invalidateSize==='function')setTimeout(function(){window.map.invalidateSize();},80);
   }
 
   function bindAoi(button){
@@ -113,7 +112,6 @@ jobs:
       }
       button=bindAoi(button);
       if(rail.firstElementChild!==button)rail.insertBefore(button,rail.firstElementChild);
-
       document.querySelectorAll('#panel-search .tab[data-tab="aoi"]').forEach(function(tab){tab.remove();});
     }finally{
       applying=false;
@@ -133,7 +131,6 @@ jobs:
   window.addEventListener('load',initialise,{once:true});
   setTimeout(initialise,0);
   setTimeout(initialise,150);
-
   new MutationObserver(function(){ensureStandaloneAoi();}).observe(document.documentElement,{childList:true,subtree:true});
 })();
 </script>
@@ -143,8 +140,6 @@ jobs:
           result = base + patch
           path.write_text(result, encoding='utf-8')
 
-          # Item 1 static checks: exactly one fix, AOI remains an independent panel,
-          # AOI is removed from Search tabs, and no requested later item is renamed.
           assert result.count('<!-- ITEM1_AOI_STANDALONE_START -->') == 1
           assert result.count('<!-- ITEM1_AOI_STANDALONE_END -->') == 1
           assert 'id="panel-aoi"' in result
