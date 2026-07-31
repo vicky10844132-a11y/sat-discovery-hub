@@ -1,1 +1,1 @@
-Run the corrected exact source verification without multiline YAML literals.
+Run the linear exact source comparison and report only the differing byte range.
