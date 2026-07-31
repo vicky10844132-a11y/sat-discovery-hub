@@ -38,25 +38,14 @@ jobs:
               'git','show','c164791a6276fae743b8541b9ff0481d4acf32f9:data-search.html'
           ]).decode('utf-8')
 
-          guard='''
-<!-- RESTORED_TOP_REMOVED -->
-<style id="restored-top-removed-style">
-.coordinate-search,.top-actions,.v11-auth-actions,.account-menu-button,.lang-mini,.v9-help-button{display:none!important}
-.topbar{justify-content:flex-start!important}
-</style>
-<script id="restored-top-removed-script">
-(function(){
-  function clean(){document.querySelectorAll('.coordinate-search,.top-actions').forEach(function(node){node.remove();});}
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',clean,{once:true});else clean();
-  window.addEventListener('load',clean,{once:true});
-  new MutationObserver(clean).observe(document.documentElement,{childList:true,subtree:true});
-})();
-</script>
-<!-- RESTORED_TOP_REMOVED_END -->
-'''
-          if published.count(guard)!=1:
-              raise SystemExit('Literal historical guard was not found exactly once')
-          target_base=published.replace(guard,'',1)
+          guard_match=re.search(
+              r'\n<!-- RESTORED_TOP_REMOVED -->\n.*?\n<!-- RESTORED_TOP_REMOVED_END -->\n',
+              published,
+              flags=re.S,
+          )
+          if not guard_match:
+              raise SystemExit('Historical guard block was not found')
+          target_base=published[:guard_match.start()]+published[guard_match.end():]
 
           transformed=re.sub(
               r'\s*<div class="coordinate-search"[^>]*>.*?</div>\s*',
@@ -85,9 +74,11 @@ jobs:
               for tag,i1,i2,j1,j2 in matcher.get_opcodes():
                   if tag=='equal':
                       continue
+                  left=repr(transformed[max(0,i1-80):min(len(transformed),i2+80)])
+                  right=repr(target_base[max(0,j1-80):min(len(target_base),j2+80)])
                   print('DIFF\t{}\t{}:{}\t{}:{}\tLEFT={}\tRIGHT={}'.format(
-                      tag,i1,i2,j1,j2,repr(transformed[max(0,i1-80):min(len(transformed),i2+80)]),repr(target_base[max(0,j1-80):min(len(target_base),j2+80)])
+                      tag,i1,i2,j1,j2,left,right
                   ))
               print('DIFF_END')
-              raise SystemExit('The literal reverse comparison is not exact')
+              raise SystemExit('The exact reverse comparison is not equal')
           PY
