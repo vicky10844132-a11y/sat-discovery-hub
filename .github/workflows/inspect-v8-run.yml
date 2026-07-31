@@ -20,13 +20,12 @@ jobs:
           fetch-depth: 0
           path: site
 
-      - name: Reverse the historical transformation exactly
+      - name: Reverse and compare the historical transformation
         shell: bash
         run: |
           set -euo pipefail
           cd site
           python3 - <<'PY'
-          import difflib
           import hashlib
           import re
           import subprocess
@@ -45,7 +44,7 @@ jobs:
           )
           if not guard_match:
               raise SystemExit('Historical guard block was not found')
-          target_base=published[:guard_match.start()]+published[guard_match.end():]
+          target=published[:guard_match.start()]+published[guard_match.end():]
 
           transformed=re.sub(
               r'\s*<div class="coordinate-search"[^>]*>.*?</div>\s*',
@@ -62,23 +61,28 @@ jobs:
 
           print('SOURCE_BYTES='+str(len(source.encode('utf-8'))))
           print('SOURCE_SHA256='+hashlib.sha256(source.encode('utf-8')).hexdigest())
-          print('TARGET_BASE_BYTES='+str(len(target_base.encode('utf-8'))))
-          print('TARGET_BASE_SHA256='+hashlib.sha256(target_base.encode('utf-8')).hexdigest())
+          print('TARGET_BYTES='+str(len(target.encode('utf-8'))))
+          print('TARGET_SHA256='+hashlib.sha256(target.encode('utf-8')).hexdigest())
           print('TRANSFORMED_BYTES='+str(len(transformed.encode('utf-8'))))
           print('TRANSFORMED_SHA256='+hashlib.sha256(transformed.encode('utf-8')).hexdigest())
-          print('EXACT_EQUAL='+str(transformed==target_base))
+          print('EXACT_EQUAL='+str(transformed==target))
 
-          if transformed!=target_base:
-              matcher=difflib.SequenceMatcher(None,transformed,target_base,autojunk=False)
-              print('DIFF_BEGIN')
-              for tag,i1,i2,j1,j2 in matcher.get_opcodes():
-                  if tag=='equal':
-                      continue
-                  left=repr(transformed[max(0,i1-80):min(len(transformed),i2+80)])
-                  right=repr(target_base[max(0,j1-80):min(len(target_base),j2+80)])
-                  print('DIFF\t{}\t{}:{}\t{}:{}\tLEFT={}\tRIGHT={}'.format(
-                      tag,i1,i2,j1,j2,left,right
-                  ))
-              print('DIFF_END')
-              raise SystemExit('The exact reverse comparison is not equal')
+          if transformed!=target:
+              prefix=0
+              limit=min(len(transformed),len(target))
+              while prefix<limit and transformed[prefix]==target[prefix]:
+                  prefix+=1
+              suffix=0
+              max_suffix=min(len(transformed)-prefix,len(target)-prefix)
+              while suffix<max_suffix and transformed[len(transformed)-1-suffix]==target[len(target)-1-suffix]:
+                  suffix+=1
+              left_end=len(transformed)-suffix if suffix else len(transformed)
+              right_end=len(target)-suffix if suffix else len(target)
+              print('COMMON_PREFIX='+str(prefix))
+              print('COMMON_SUFFIX='+str(suffix))
+              print('LEFT_DIFFERENCE='+repr(transformed[prefix:left_end]))
+              print('RIGHT_DIFFERENCE='+repr(target[prefix:right_end]))
+              print('LEFT_CONTEXT='+repr(transformed[max(0,prefix-120):min(len(transformed),left_end+120)]))
+              print('RIGHT_CONTEXT='+repr(target[max(0,prefix-120):min(len(target),right_end+120)]))
+              raise SystemExit('Exact source differs after literal reverse transformation')
           PY
