@@ -1490,3 +1490,120 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   else installAccountWorkspace();
 })();
 </script>
+<!-- NAVIGATION_LAYOUT_V3_START -->
+<style id="navigation-layout-v3">
+:root{--ds-rail-width:86px}
+.app{grid-template-columns:var(--ds-rail-width) 336px minmax(0,1fr)!important}
+.app.v11-order-full,.app.account-center-workspace{grid-template-columns:var(--ds-rail-width) minmax(0,1fr) 0!important}
+.brand{width:calc(var(--ds-rail-width) + 336px)!important}
+.top-actions>:not(.v11-auth-actions){display:none!important}
+.top-actions .v11-auth-actions{display:flex!important;align-items:center!important;gap:7px!important}
+.top-actions .v11-auth-actions>:not(#v11LoginBtn):not(#v11LogoutBtn){display:none!important}
+.top-actions #v11LoginBtn,.top-actions #v11LogoutBtn{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-width:68px!important}
+.rail{align-items:stretch!important;padding:8px 6px!important;overflow-x:hidden!important;overflow-y:auto!important}
+.rail::-webkit-scrollbar{width:0}
+.rail-btn{width:72px!important;height:58px!important;min-height:58px!important;margin:2px auto!important;padding:5px 3px!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:5px!important;line-height:1!important}
+.rail-btn .ds-icon{width:19px!important;height:19px!important;flex:0 0 19px!important}
+.rail-btn .tip{position:static!important;left:auto!important;display:block!important;width:100%!important;min-height:15px!important;padding:0!important;background:transparent!important;color:inherit!important;border-radius:0!important;box-shadow:none!important;opacity:1!important;transform:none!important;white-space:normal!important;text-align:center!important;font-size:7px!important;font-weight:700!important;line-height:1.12!important;letter-spacing:.05px!important;pointer-events:none!important}
+.rail-btn:hover .tip{opacity:1!important;transform:none!important}
+.rail-btn.active:before{left:-6px!important;height:34px!important}
+.rail-bottom{width:100%!important;margin-top:auto!important;display:flex!important;flex-direction:column!important;align-items:center!important}
+@media(max-height:700px){
+  .rail-btn{height:52px!important;min-height:52px!important;gap:3px!important}
+  .rail-btn .tip{font-size:6.5px!important}
+}
+</style>
+<script id="navigation-layout-v3-script">
+(function(){
+  var normalizing=false;
+  function tipText(button,label){
+    if(!button)return;
+    button.title=label;
+    button.setAttribute('aria-label',label);
+    var tip=button.querySelector('.tip');
+    if(!tip){tip=document.createElement('span');tip.className='tip';button.appendChild(tip);}
+    tip.textContent=label;
+  }
+  function normalizeTop(){
+    var top=document.querySelector('.top-actions');
+    if(!top)return;
+    var auth=top.querySelector('.v11-auth-actions');
+    if(!auth)return;
+    Array.prototype.slice.call(top.children).forEach(function(child){if(child!==auth)child.remove();});
+    Array.prototype.slice.call(auth.children).forEach(function(child){
+      if(child.id!=='v11LoginBtn'&&child.id!=='v11LogoutBtn')child.remove();
+    });
+  }
+  function normalizeTaskingText(){
+    var task=document.querySelector('.rail-btn[data-panel="orbit"]');
+    tipText(task,'Tasking');
+    var panelTitle=document.querySelector('#panel-orbit .panel-title');
+    if(panelTitle)panelTitle.textContent='Tasking';
+    var walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
+    var nodes=[];
+    while(walker.nextNode()){
+      var node=walker.currentNode;
+      var parent=node.parentElement;
+      if(!parent||parent.closest('script,style'))continue;
+      var value=(node.nodeValue||'').trim();
+      if(value==='Tasking Prediction'||value==='Orbit Prediction')nodes.push(node);
+    }
+    nodes.forEach(function(node){
+      var before=(node.nodeValue||'').match(/^\s*/)[0];
+      var after=(node.nodeValue||'').match(/\s*$/)[0];
+      node.nodeValue=before+'Tasking'+after;
+    });
+  }
+  function normalizeRail(){
+    var rail=document.querySelector('.rail');
+    if(!rail)return;
+    tipText(rail.querySelector('[data-ds-module="aoi"]'),'AOI');
+    tipText(rail.querySelector('[data-ds-module="archive"]'),'Archive Search');
+    tipText(rail.querySelector('.rail-btn[data-panel="orbit"]'),'Tasking');
+    tipText(rail.querySelector('.rail-btn[data-panel="orders"]'),'Order Center');
+    tipText(rail.querySelector('.rail-btn[data-panel="account"]'),'Account');
+
+    var bottom=rail.querySelector('.rail-bottom');
+    if(!bottom){bottom=document.createElement('div');bottom.className='rail-bottom';rail.appendChild(bottom);}
+    var data=rail.querySelector('.rail-btn[data-panel="data"]');
+    var bottomButtons=Array.prototype.slice.call(bottom.querySelectorAll('.rail-btn'));
+    var settings=bottomButtons.find(function(button){
+      var value=((button.querySelector('.tip')||{}).textContent||button.title||'').trim();
+      return /support|settings|help/i.test(value);
+    })||bottomButtons[bottomButtons.length-1];
+    if(settings){
+      tipText(settings,'Settings');
+      settings.type='button';
+      settings.onclick=function(event){
+        event.preventDefault();
+        event.stopPropagation();
+        if(typeof window.openPlatformSettings==='function')window.openPlatformSettings('identity');
+        else if(typeof window.notify==='function')window.notify('Settings','Platform settings are loading.');
+      };
+    }
+    if(data){
+      tipText(data,'Data Center');
+      if(settings)bottom.insertBefore(data,settings);else bottom.appendChild(data);
+    }
+    Array.prototype.slice.call(bottom.querySelectorAll('.rail-btn')).forEach(function(button){
+      if(button===data||button===settings)return;
+      var value=((button.querySelector('.tip')||{}).textContent||button.title||'').trim();
+      if(/language/i.test(value))tipText(button,'Language');
+    });
+  }
+  function normalize(){
+    if(normalizing)return;
+    normalizing=true;
+    try{normalizeTop();normalizeRail();normalizeTaskingText();}
+    finally{normalizing=false;}
+  }
+  function schedule(){[0,80,250,700,1500].forEach(function(delay){setTimeout(normalize,delay);});}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule,{once:true});
+  else schedule();
+  window.addEventListener('load',schedule,{once:true});
+  document.addEventListener('click',function(){setTimeout(normalize,0);},true);
+  var observer=new MutationObserver(function(){setTimeout(normalize,0);});
+  observer.observe(document.documentElement,{childList:true,subtree:true});
+})();
+</script>
+<!-- NAVIGATION_LAYOUT_V3_END -->
