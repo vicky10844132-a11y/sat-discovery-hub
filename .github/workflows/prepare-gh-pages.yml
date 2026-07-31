@@ -113,6 +113,41 @@ jobs:
           })();
           </script>
           NAVFIX
+          cat >> _site/data-search.html <<'ACCOUNTMAP'
+          <style id="account-center-no-map-style">
+          .app.account-center-no-map .mapstage{display:none!important}
+          .app.account-center-no-map .sidepanel{grid-column:2/4!important;border-right:0!important}
+          .app.account-center-no-map #panel-account{width:100%;max-width:none}
+          </style>
+          <script id="account-center-no-map-fix-v1">
+          (function(){
+            function syncAccountLayout(){
+              var app=document.querySelector('.app');
+              var accountPanel=document.getElementById('panel-account');
+              if(!app||!accountPanel)return;
+              var accountActive=accountPanel.classList.contains('active');
+              app.classList.toggle('account-center-no-map',accountActive);
+              var mapstage=document.querySelector('.mapstage');
+              if(mapstage)mapstage.setAttribute('aria-hidden',accountActive?'true':'false');
+              if(!accountActive&&window.map&&typeof window.map.invalidateSize==='function'){
+                setTimeout(function(){window.map.invalidateSize();},80);
+              }
+            }
+            function installAccountLayout(){
+              var sidepanel=document.querySelector('.sidepanel');
+              if(!sidepanel)return;
+              var observer=new MutationObserver(syncAccountLayout);
+              sidepanel.querySelectorAll('.panel-view').forEach(function(panel){
+                observer.observe(panel,{attributes:true,attributeFilter:['class']});
+              });
+              document.querySelector('.rail')?.addEventListener('click',function(){setTimeout(syncAccountLayout,0);});
+              syncAccountLayout();
+            }
+            if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installAccountLayout,{once:true});
+            else installAccountLayout();
+          })();
+          </script>
+          ACCOUNTMAP
           printf '%s\n' '<!doctype html><html><head><meta charset="utf-8"><meta name="robots" content="noindex,nofollow"><title>Tools</title></head><body></body></html>' > _site/index.html
           printf '%s\n' 'User-agent: *' 'Disallow: /' > _site/robots.txt
           touch _site/.nojekyll
@@ -128,5 +163,5 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git checkout -b gh-pages
           git add .
-          git commit -m 'Publish DATA SEARCH navigation fix'
+          git commit -m 'Publish DATA SEARCH account layout fix'
           git push --force "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" gh-pages
