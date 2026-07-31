@@ -1,2 +1,2 @@
 Trigger the isolated AOI standalone workflow only.
-Run: 2
+Run: 3
