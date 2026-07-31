@@ -1,1 +1,1 @@
-Restore the exact first-linked DATA SEARCH page from preserved backup.
+Audit the full gh-pages history and identify the exact version shown by the first link.
