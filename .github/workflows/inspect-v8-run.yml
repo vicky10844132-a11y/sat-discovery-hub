@@ -1,4 +1,4 @@
-name: Verify exact first-linked DATA SEARCH source
+name: Audit first-linked DATA SEARCH restoration run
 
 on:
   pull_request:
@@ -7,82 +7,131 @@ on:
       - '.github/restore-first-link-trigger.txt'
 
 permissions:
+  actions: read
   contents: read
 
 jobs:
-  verify-exact-source:
+  audit-original-run:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout complete repository history
-        uses: actions/checkout@v4
-        with:
-          ref: gh-pages
-          fetch-depth: 0
-          path: site
-
-      - name: Reverse and compare the historical transformation
+      - name: Find restoration runs and inspect logs
+        env:
+          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
-          cd site
-          python3 - <<'PY'
-          import hashlib
-          import re
-          import subprocess
+          repo="${{ github.repository }}"
+          mkdir -p /tmp/audit
 
-          published=subprocess.check_output([
-              'git','show','1ea89955d25fa460d12547a56fbe0faf7122661d:data-search-restored.html'
-          ]).decode('utf-8')
-          source=subprocess.check_output([
-              'git','show','c164791a6276fae743b8541b9ff0481d4acf32f9:data-search.html'
-          ]).decode('utf-8')
+          for page in 1 2 3 4 5; do
+            curl -fsSL \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/$repo/actions/runs?per_page=100&page=$page" \
+              > "/tmp/audit/runs-$page.json"
+          done
 
-          guard_match=re.search(
-              r'\n<!-- RESTORED_TOP_REMOVED -->\n.*?\n<!-- RESTORED_TOP_REMOVED_END -->\n',
-              published,
-              flags=re.S,
-          )
-          if not guard_match:
-              raise SystemExit('Historical guard block was not found')
-          target=published[:guard_match.start()]+published[guard_match.end():]
+          python3 - <<'PY' > /tmp/audit/candidates.tsv
+          import json
+          from pathlib import Path
 
-          transformed=re.sub(
-              r'\s*<div class="coordinate-search"[^>]*>.*?</div>\s*',
-              '\n',source,count=1,flags=re.S,
-          )
-          transformed=re.sub(
-              r'\s*<div class="top-actions"[^>]*>.*?</div>\s*',
-              '\n',transformed,count=1,flags=re.S,
-          )
-          transformed=re.sub(
-              r'\n?<!-- RESTORED_TOP_REMOVED -->.*?<!-- RESTORED_TOP_REMOVED_END -->\n?',
-              '\n',transformed,flags=re.S,
-          )
+          rows=[]
+          for path in sorted(Path('/tmp/audit').glob('runs-*.json')):
+              payload=json.loads(path.read_text())
+              rows.extend(payload.get('workflow_runs',[]))
 
-          print('SOURCE_BYTES='+str(len(source.encode('utf-8'))))
-          print('SOURCE_SHA256='+hashlib.sha256(source.encode('utf-8')).hexdigest())
-          print('TARGET_BYTES='+str(len(target.encode('utf-8'))))
-          print('TARGET_SHA256='+hashlib.sha256(target.encode('utf-8')).hexdigest())
-          print('TRANSFORMED_BYTES='+str(len(transformed.encode('utf-8'))))
-          print('TRANSFORMED_SHA256='+hashlib.sha256(transformed.encode('utf-8')).hexdigest())
-          print('EXACT_EQUAL='+str(transformed==target))
+          start='2026-07-31T12:15:00Z'
+          end='2026-07-31T12:40:00Z'
+          keywords=('restore','recover','top','selected','data search','restored')
+          selected=[]
+          for run in rows:
+              created=run.get('created_at') or ''
+              name=(run.get('name') or '').lower()
+              path=(run.get('path') or '').lower()
+              message=((run.get('head_commit') or {}).get('message') or '').lower()
+              in_window=start <= created <= end
+              relevant=any(k in name or k in path or k in message for k in keywords)
+              if in_window or relevant:
+                  selected.append(run)
 
-          if transformed!=target:
-              prefix=0
-              limit=min(len(transformed),len(target))
-              while prefix<limit and transformed[prefix]==target[prefix]:
-                  prefix+=1
-              suffix=0
-              max_suffix=min(len(transformed)-prefix,len(target)-prefix)
-              while suffix<max_suffix and transformed[len(transformed)-1-suffix]==target[len(target)-1-suffix]:
-                  suffix+=1
-              left_end=len(transformed)-suffix if suffix else len(transformed)
-              right_end=len(target)-suffix if suffix else len(target)
-              print('COMMON_PREFIX='+str(prefix))
-              print('COMMON_SUFFIX='+str(suffix))
-              print('LEFT_DIFFERENCE='+repr(transformed[prefix:left_end]))
-              print('RIGHT_DIFFERENCE='+repr(target[prefix:right_end]))
-              print('LEFT_CONTEXT='+repr(transformed[max(0,prefix-120):min(len(transformed),left_end+120)]))
-              print('RIGHT_CONTEXT='+repr(target[max(0,prefix-120):min(len(target),right_end+120)]))
-              raise SystemExit('Exact source differs after literal reverse transformation')
+          selected.sort(key=lambda r:(r.get('created_at') or '',r.get('id') or 0))
+          seen=set()
+          for run in selected:
+              run_id=run.get('id')
+              if run_id in seen:
+                  continue
+              seen.add(run_id)
+              values=[
+                  str(run_id),
+                  run.get('created_at') or '',
+                  run.get('updated_at') or '',
+                  run.get('name') or '',
+                  run.get('path') or '',
+                  run.get('event') or '',
+                  run.get('status') or '',
+                  run.get('conclusion') or '',
+                  run.get('head_sha') or '',
+                  ((run.get('head_commit') or {}).get('message') or '').replace('\t',' ').replace('\n',' '),
+                  run.get('html_url') or '',
+              ]
+              print('\t'.join(values))
           PY
+
+          echo 'CANDIDATE_RUNS_BEGIN'
+          cat /tmp/audit/candidates.tsv
+          echo 'CANDIDATE_RUNS_END'
+
+          while IFS=$'\t' read -r run_id created updated name path event status conclusion head_sha message url; do
+            [ -n "$run_id" ] || continue
+            echo "RUN_BEGIN id=$run_id created=$created name=$name path=$path head=$head_sha"
+
+            curl -fsSL \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/$repo/actions/runs/$run_id/jobs?per_page=100" \
+              > "/tmp/audit/jobs-$run_id.json"
+
+            python3 - "$run_id" <<'PY' > "/tmp/audit/job-ids-$run_id.txt"
+          import json,sys
+          run_id=sys.argv[1]
+          payload=json.load(open(f'/tmp/audit/jobs-{run_id}.json'))
+          for job in payload.get('jobs',[]):
+              print(job.get('id'),job.get('name',''),job.get('status',''),job.get('conclusion',''),sep='\t')
+          PY
+
+            cat "/tmp/audit/job-ids-$run_id.txt"
+            while IFS=$'\t' read -r job_id job_name job_status job_conclusion; do
+              [ -n "$job_id" ] || continue
+              log_file="/tmp/audit/job-$job_id.log"
+              curl -fsSL -L \
+                -H "Authorization: Bearer $GH_TOKEN" \
+                -H "Accept: application/vnd.github+json" \
+                "https://api.github.com/repos/$repo/actions/jobs/$job_id/logs" \
+                -o "$log_file" || true
+              echo "JOB_LOG_MATCHES_BEGIN job=$job_id name=$job_name"
+              if [ -s "$log_file" ]; then
+                grep -Eai -C 3 \
+                  'Source bytes|Published bytes|Original bytes|RESTORED_BYTES|SHA256|cached source|raw\.githack|recovered|recover|restored|data-search-restored|coordinate-search|top-actions|top controls|fallback|source file|cp data-search|curl' \
+                  "$log_file" | tail -n 500 || true
+              else
+                echo 'No downloadable log content.'
+              fi
+              echo "JOB_LOG_MATCHES_END job=$job_id"
+            done < "/tmp/audit/job-ids-$run_id.txt"
+
+            curl -fsSL \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/$repo/actions/runs/$run_id/artifacts?per_page=100" \
+              > "/tmp/audit/artifacts-$run_id.json"
+            echo "ARTIFACTS_BEGIN run=$run_id"
+            python3 - "$run_id" <<'PY'
+          import json,sys
+          run_id=sys.argv[1]
+          payload=json.load(open(f'/tmp/audit/artifacts-{run_id}.json'))
+          for artifact in payload.get('artifacts',[]):
+              print(artifact.get('id'),artifact.get('name'),artifact.get('size_in_bytes'),artifact.get('expired'),artifact.get('created_at'),sep='\t')
+          PY
+            echo "ARTIFACTS_END run=$run_id"
+            echo "RUN_END id=$run_id"
+          done < /tmp/audit/candidates.tsv
