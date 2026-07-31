@@ -1,4 +1,4 @@
-name: Inspect first-linked page parent
+name: Match exact first-linked DATA SEARCH source
 
 on:
   pull_request:
@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 jobs:
-  inspect-removal-parent:
+  match-exact-source:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout complete repository history
@@ -20,44 +20,114 @@ jobs:
           fetch-depth: 0
           path: site
 
-      - name: Inspect exact parent content of top-removal commit
+      - name: Reproduce the historical transformation byte for byte
         shell: bash
         run: |
           set -euo pipefail
           cd site
           python3 - <<'PY'
-          import hashlib, subprocess
+          import hashlib
+          import re
+          import subprocess
+          from datetime import datetime, timezone
 
-          commit='1ea89955d25fa460d12547a56fbe0faf7122661d'
-          path='data-search-restored.html'
-          parents=subprocess.check_output(['git','show','-s','--format=%P',commit],text=True).strip().split()
-          print('COMMIT='+commit)
-          print('PARENTS='+' '.join(parents))
-          current=subprocess.check_output(['git','show',f'{commit}:{path}'])
-          print('CURRENT_BYTES='+str(len(current)))
-          print('CURRENT_SHA256='+hashlib.sha256(current).hexdigest())
+          published=subprocess.check_output([
+              'git','show','1ea89955d25fa460d12547a56fbe0faf7122661d:data-search-restored.html'
+          ]).decode('utf-8')
 
-          found=False
-          for parent in parents:
-              exists=subprocess.run(
-                  ['git','cat-file','-e',f'{parent}:{path}'],
-                  stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,
-              ).returncode==0
-              print(f'PARENT_EXISTS\t{parent}\t{exists}')
-              if not exists:
-                  continue
-              found=True
-              data=subprocess.check_output(['git','show',f'{parent}:{path}'])
-              text=data.decode('utf-8','replace')
-              print('PARENT_VERSION\t{}\t{}\t{}\ttopSearch={}\ttopActions={}\tiframe={}\ttopRemoved={}'.format(
-                  parent,
-                  len(data),
-                  hashlib.sha256(data).hexdigest(),
-                  '<div class="coordinate-search"' in text,
-                  '<div class="top-actions"' in text,
-                  'dataSearchFrame' in text,
-                  'RESTORED_TOP_REMOVED' in text,
-              ))
-          if not found:
-              raise SystemExit('No parent contains data-search-restored.html')
+          guard_re=re.compile(
+              r'\n?<!-- RESTORED_TOP_REMOVED -->.*?<!-- RESTORED_TOP_REMOVED_END -->\n?',
+              re.S,
+          )
+          target_base=guard_re.sub('\n',published)
+
+          def historical_transform(source):
+              transformed=re.sub(
+                  r'\s*<div class="coordinate-search"[^>]*>.*?</div>\s*',
+                  '\n',source,count=1,flags=re.S,
+              )
+              transformed=re.sub(
+                  r'\s*<div class="top-actions"[^>]*>.*?</div>\s*',
+                  '\n',transformed,count=1,flags=re.S,
+              )
+              transformed=guard_re.sub('\n',transformed)
+              return transformed
+
+          paths=[
+              'data-search.html',
+              'data-search-restored.html',
+              'data-search-fixed.html',
+              'data-search-v13.html',
+              'tools-pages/data-search.html',
+              'site/data-search.html',
+          ]
+          exact=[]
+          closest=[]
+          seen=set()
+          target_bytes=target_base.encode('utf-8')
+
+          for path in paths:
+              commits=subprocess.run(
+                  ['git','rev-list','--all','--',path],
+                  text=True,capture_output=True,check=True,
+              ).stdout.splitlines()
+              for sha in commits:
+                  if (sha,path) in seen:
+                      continue
+                  seen.add((sha,path))
+                  if subprocess.run(
+                      ['git','cat-file','-e',f'{sha}:{path}'],
+                      stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,
+                  ).returncode:
+                      continue
+                  raw=subprocess.check_output(['git','show',f'{sha}:{path}'])
+                  try:
+                      source=raw.decode('utf-8')
+                  except UnicodeDecodeError:
+                      continue
+                  if '<div class="coordinate-search"' not in source or '<div class="top-actions"' not in source:
+                      continue
+                  transformed=historical_transform(source)
+                  transformed_bytes=transformed.encode('utf-8')
+                  meta=subprocess.check_output(
+                      ['git','show','-s','--format=%ct%x09%s',sha],text=True
+                  ).rstrip('\n')
+                  epoch,subject=meta.split('\t',1)
+                  stamp=datetime.fromtimestamp(int(epoch),tz=timezone.utc).isoformat()
+                  row=(
+                      sha,path,len(raw),hashlib.sha256(raw).hexdigest(),
+                      len(transformed_bytes),hashlib.sha256(transformed_bytes).hexdigest(),
+                      stamp,subject,
+                  )
+                  if transformed_bytes==target_bytes:
+                      exact.append(row)
+                  else:
+                      delta=abs(len(transformed_bytes)-len(target_bytes))
+                      if delta<=8192:
+                          prefix=0
+                          for a,b in zip(transformed_bytes,target_bytes):
+                              if a!=b:
+                                  break
+                              prefix+=1
+                          closest.append((delta,-prefix,row))
+
+          print('PUBLISHED_BYTES='+str(len(published.encode('utf-8'))))
+          print('PUBLISHED_SHA256='+hashlib.sha256(published.encode('utf-8')).hexdigest())
+          print('TARGET_BASE_BYTES='+str(len(target_bytes)))
+          print('TARGET_BASE_SHA256='+hashlib.sha256(target_bytes).hexdigest())
+          print('EXACT_BEGIN')
+          for row in exact:
+              print('EXACT_SOURCE\t'+'\t'.join(map(str,row)))
+          print('EXACT_END')
+
+          if not exact:
+              print('CLOSEST_BEGIN')
+              for delta,neg_prefix,row in sorted(closest,key=lambda x:(x[0],x[1]))[:30]:
+                  print('CLOSEST\t{}\t{}\t{}'.format(delta,-neg_prefix,'\t'.join(map(str,row))))
+              print('CLOSEST_END')
+              raise SystemExit('No source exactly reproduces the published top-removed page')
+
+          hashes={row[3] for row in exact}
+          if len(hashes)!=1:
+              raise SystemExit('Exact transformed matches came from different source bytes')
           PY
