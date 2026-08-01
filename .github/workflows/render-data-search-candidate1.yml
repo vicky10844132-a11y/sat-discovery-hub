@@ -64,14 +64,15 @@ jobs:
           trap 'kill $server_pid || true' EXIT
           sleep 2
           chrome="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser)"
-          "$chrome" --headless=new --no-sandbox --disable-dev-shm-usage --disable-gpu --hide-scrollbars --window-size=1536,1024 --virtual-time-budget=3500 --screenshot=candidate-one.png http://127.0.0.1:8766/index.html?visual-check=1
+          "$chrome" --headless=new --no-sandbox --disable-dev-shm-usage --disable-gpu --hide-scrollbars --window-size=1536,1024 --virtual-time-budget=3500 --screenshot=candidate-one.png http://127.0.0.1:8766/index.html?visual-check=2
           test -s candidate-one.png
 
-      - name: Upload candidate one
+      - name: Upload candidate one source and screenshot
         uses: actions/upload-artifact@v4
         with:
-          name: data-search-candidate-one
+          name: data-search-candidate-one-source
           path: |
+            site/candidate-one/index.html
             site/candidate-one/candidate-one.png
             site/candidate-one/sha256.txt
           retention-days: 3
