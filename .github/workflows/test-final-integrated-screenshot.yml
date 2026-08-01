@@ -1,0 +1,127 @@
+name: Test final integrated screenshot version
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/final-integrated-test-trigger.txt'
+
+permissions:
+  contents: read
+
+jobs:
+  validate-final-integrated-page:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout published page
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 1
+          path: site
+
+      - name: Checkout final screenshot patch
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+          path: source
+
+      - name: Build final integrated screenshot page
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd site
+          canonical='df608c5bc8dfdaff49c7bf031149e6db4cf8140a682dd0276abd6b3a5003520f'
+          final='b204eeb0a956e981dad9abfbed432deac79dda3c74f865c81fc0cc586c46d082'
+          before="$(sha256sum data-search-restored.html | awk '{print $1}')"
+          if test "$before" = "$canonical"; then
+            base64 --decode ../source/.github/assets/canonical-to-final-screenshot.patch.gz.b64 | gzip --decompress > /tmp/canonical-to-final.patch
+            patch --silent data-search-restored.html /tmp/canonical-to-final.patch
+          elif test "$before" = "$final"; then
+            echo 'Final integrated page is already present.'
+          else
+            echo "Unexpected published page SHA-256: $before" >&2
+            exit 1
+          fi
+          after="$(sha256sum data-search-restored.html | awk '{print $1}')"
+          test "$after" = "$final"
+          grep -q 'map.__screenshotTransformApplied=true' data-search-restored.html
+          grep -q "stage.dataset.screenshotMapRestoreBound='1'" data-search-restored.html
+          echo "FINAL_INTEGRATED_SHA256=$after"
+
+      - name: Validate JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd site
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          html=Path('data-search-restored.html').read_text(encoding='utf-8')
+          scripts=re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>',html,flags=re.S|re.I)
+          Path('/tmp/final-integrated.js').write_text('\n;\n'.join(scripts),encoding='utf-8')
+          PY
+          node --check /tmp/final-integrated.js
+
+      - name: Capture final integrated page after all map tiles load
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd site
+          mkdir -p verification
+          python3 -m http.server 8778 >/tmp/final-integrated-http.log 2>&1 &
+          server_pid=$!
+          chrome="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser)"
+          rm -rf /tmp/final-integrated-profile
+          "$chrome" --headless=new --no-sandbox --disable-dev-shm-usage --disable-gpu --no-first-run --no-default-browser-check --remote-debugging-port=9226 --user-data-dir=/tmp/final-integrated-profile about:blank >/tmp/final-integrated-chrome.log 2>&1 &
+          chrome_pid=$!
+          trap 'kill $chrome_pid $server_pid 2>/dev/null || true' EXIT
+
+          cat >/tmp/capture-final-integrated.mjs <<'JS'
+          import fs from 'node:fs';
+          const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+          let tabs=[];
+          for(let i=0;i<120;i++){try{tabs=await fetch('http://127.0.0.1:9226/json').then(r=>r.json());if(tabs.length)break}catch{}await sleep(100)}
+          const tab=tabs.find(t=>t.type==='page')||tabs[0];if(!tab)throw new Error('No page target');
+          const ws=new WebSocket(tab.webSocketDebuggerUrl);await new Promise((r,j)=>{ws.onopen=r;ws.onerror=j});
+          let id=0;const pending=new Map();ws.onmessage=e=>{const m=JSON.parse(e.data);if(m.id&&pending.has(m.id)){const p=pending.get(m.id);pending.delete(m.id);m.error?p.reject(new Error(JSON.stringify(m.error))):p.resolve(m.result)}};
+          const send=(method,params={})=>{const n=++id;ws.send(JSON.stringify({id:n,method,params}));return new Promise((resolve,reject)=>pending.set(n,{resolve,reject}))};
+          await send('Runtime.enable');await send('Page.enable');
+          await send('Emulation.setDeviceMetricsOverride',{width:937,height:635,deviceScaleFactor:2,mobile:false,screenWidth:937,screenHeight:635});
+          await send('Page.navigate',{url:'http://127.0.0.1:8778/data-search-restored.html?final-integrated-test=1'});await sleep(4000);
+          let status=null;
+          for(let i=0;i<100;i++){
+            const r=await send('Runtime.evaluate',{expression:String.raw`JSON.stringify((()=>{const t=[...document.querySelectorAll('.leaflet-tile')];const pane=(typeof map!=='undefined'&&map&&map._mapPane)?map._mapPane:null;return {count:t.length,loaded:t.filter(x=>x.complete&&x.naturalWidth>0).length,failed:t.filter(x=>x.complete&&x.naturalWidth===0).length,ready:t.length>=12&&t.every(x=>x.complete&&x.naturalWidth>0),transform:pane?pane.style.transform:null,applied:(typeof map!=='undefined'&&map)?!!map.__screenshotTransformApplied:false}})())`,returnByValue:true});
+            status=JSON.parse(r.result.value);
+            if(status.ready&&status.applied)break;
+            await sleep(500);
+          }
+          if(!status?.ready||!status?.applied)throw new Error('Final screenshot state did not become ready: '+JSON.stringify(status));
+          const shot=await send('Page.captureScreenshot',{format:'png',fromSurface:true,captureBeyondViewport:false});
+          fs.writeFileSync('verification/data-search-restored.png',Buffer.from(shot.data,'base64'));
+          fs.writeFileSync('verification/status.json',JSON.stringify(status,null,2));
+          ws.close();
+          JS
+
+          node /tmp/capture-final-integrated.mjs
+          test -s verification/data-search-restored.png
+          python3 - <<'PY'
+          import struct
+          with open('verification/data-search-restored.png','rb') as handle: header=handle.read(24)
+          assert header[:8]==b'\x89PNG\r\n\x1a\n'
+          width,height=struct.unpack('>II',header[16:24])
+          assert (width,height)==(1874,1270),(width,height)
+          print(f'FINAL_SCREENSHOT_SIZE={width}x{height}')
+          PY
+
+      - name: Upload final integrated verification
+        uses: actions/upload-artifact@v4
+        with:
+          name: final-integrated-screenshot-verification
+          path: |
+            site/verification/data-search-restored.png
+            site/verification/status.json
+            site/data-search-restored.html
+          retention-days: 3
