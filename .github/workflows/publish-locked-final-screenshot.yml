@@ -1,0 +1,243 @@
+name: Publish locked final screenshot DATA SEARCH
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/final-locked-publish-trigger.txt'
+
+permissions:
+  contents: write
+
+jobs:
+  publish-and-verify-live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout published branch
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 1
+          path: site
+
+      - name: Checkout locked final patch
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+          path: source
+
+      - name: Build locked final screenshot page
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd site
+          canonical='df608c5bc8dfdaff49c7bf031149e6db4cf8140a682dd0276abd6b3a5003520f'
+          final='b204eeb0a956e981dad9abfbed432deac79dda3c74f865c81fc0cc586c46d082'
+          before="$(sha256sum data-search-restored.html | awk '{print $1}')"
+          if test "$before" = "$canonical"; then
+            base64 --decode ../source/.github/assets/canonical-to-final-screenshot.patch.gz.b64 \
+              | gzip --decompress > /tmp/canonical-to-final.patch
+            patch --silent data-search-restored.html /tmp/canonical-to-final.patch
+          elif test "$before" = "$final"; then
+            echo 'Locked final page is already present.'
+          else
+            echo "Unexpected published source SHA-256: $before" >&2
+            exit 1
+          fi
+          after="$(sha256sum data-search-restored.html | awk '{print $1}')"
+          test "$after" = "$final"
+          echo "LOCKED_FINAL_SHA256=$after"
+
+      - name: Validate page structure and JavaScript
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd site
+          grep -q 'SCREENSHOT_VERSION_EXACT_START' data-search-restored.html
+          grep -q 'AOI is part of Search' data-search-restored.html
+          grep -q 'Regional Projects' data-search-restored.html
+          grep -q 'data-tab="aoi"' data-search-restored.html
+          grep -q 'data-tab="archive"' data-search-restored.html
+          grep -q 'data-tab="monitoring"' data-search-restored.html
+          grep -q 'Kenya AOI area: 627,479 km²' data-search-restored.html
+          grep -q "badge.dataset.count='2'" data-search-restored.html
+          grep -q 'map.__screenshotTransformApplied=true' data-search-restored.html
+          grep -q "stage.dataset.screenshotMapRestoreBound='1'" data-search-restored.html
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          html=Path('data-search-restored.html').read_text(encoding='utf-8')
+          scripts=re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>',html,flags=re.S|re.I)
+          Path('/tmp/locked-final-inline.js').write_text('\n;\n'.join(scripts),encoding='utf-8')
+          PY
+          node --check /tmp/locked-final-inline.js
+
+      - name: Publish only data-search-restored.html
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd site
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data-search-restored.html
+          git diff --cached --check
+          changed="$(git diff --cached --name-only)"
+          if git diff --cached --quiet; then
+            echo 'Locked final page is already published.'
+          else
+            test "$changed" = 'data-search-restored.html'
+            git commit -m 'Publish locked screenshot DATA SEARCH version'
+            git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" gh-pages
+          fi
+
+      - name: Wait for the public GitHub Pages file
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected='b204eeb0a956e981dad9abfbed432deac79dda3c74f865c81fc0cc586c46d082'
+          live='https://vicky10844132-a11y.github.io/sat-discovery-hub/data-search-restored.html'
+          matched=''
+          for attempt in $(seq 1 120); do
+            url="${live}?locked-final=${GITHUB_SHA}-${attempt}"
+            if curl -fsSL --retry 2 -H 'Cache-Control: no-cache' "$url" -o /tmp/live-data-search.html; then
+              actual="$(sha256sum /tmp/live-data-search.html | awk '{print $1}')"
+              echo "attempt=$attempt live_sha256=$actual"
+              if test "$actual" = "$expected"; then
+                matched="$url"
+                break
+              fi
+            fi
+            sleep 5
+          done
+          test -n "$matched"
+          echo "LIVE_URL=$matched" >> "$GITHUB_ENV"
+          echo "LIVE_SHA256=$expected" >> "$GITHUB_ENV"
+
+      - name: Capture and verify the live deployed page
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p live-verification
+          chrome="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser)"
+          rm -rf /tmp/live-locked-profile
+          "$chrome" \
+            --headless=new \
+            --no-sandbox \
+            --disable-dev-shm-usage \
+            --disable-gpu \
+            --no-first-run \
+            --no-default-browser-check \
+            --remote-debugging-port=9227 \
+            --user-data-dir=/tmp/live-locked-profile \
+            about:blank >/tmp/live-locked-chrome.log 2>&1 &
+          chrome_pid=$!
+          trap 'kill $chrome_pid 2>/dev/null || true' EXIT
+
+          cat >/tmp/capture-live-locked.mjs <<'JS'
+          import fs from 'node:fs';
+          const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+          let tabs=[];
+          for(let i=0;i<120;i++){
+            try{tabs=await fetch('http://127.0.0.1:9227/json').then(r=>r.json());if(tabs.length)break}catch{}
+            await sleep(100);
+          }
+          const tab=tabs.find(t=>t.type==='page')||tabs[0];
+          if(!tab)throw new Error('No live-page browser target');
+          const ws=new WebSocket(tab.webSocketDebuggerUrl);
+          await new Promise((resolve,reject)=>{ws.onopen=resolve;ws.onerror=reject});
+          let id=0;
+          const pending=new Map();
+          ws.onmessage=event=>{
+            const message=JSON.parse(event.data);
+            if(message.id&&pending.has(message.id)){
+              const request=pending.get(message.id);
+              pending.delete(message.id);
+              message.error?request.reject(new Error(JSON.stringify(message.error))):request.resolve(message.result);
+            }
+          };
+          const send=(method,params={})=>{
+            const current=++id;
+            ws.send(JSON.stringify({id:current,method,params}));
+            return new Promise((resolve,reject)=>pending.set(current,{resolve,reject}));
+          };
+          await send('Runtime.enable');
+          await send('Page.enable');
+          await send('Emulation.setDeviceMetricsOverride',{
+            width:937,height:635,deviceScaleFactor:2,mobile:false,screenWidth:937,screenHeight:635
+          });
+          const live=process.env.LIVE_URL+'&browser-check=1';
+          await send('Page.navigate',{url:live});
+          await sleep(4000);
+          let status=null;
+          for(let i=0;i<120;i++){
+            const evaluated=await send('Runtime.evaluate',{
+              expression:String.raw`JSON.stringify((()=>{
+                const tiles=[...document.querySelectorAll('.leaflet-tile')];
+                const pane=(typeof map!=='undefined'&&map&&map._mapPane)?map._mapPane:null;
+                const stage=document.querySelector('.mapstage');
+                const rect=stage&&stage.getBoundingClientRect();
+                return {
+                  title:document.title,
+                  href:location.href,
+                  tileCount:tiles.length,
+                  loaded:tiles.filter(tile=>tile.complete&&tile.naturalWidth>0).length,
+                  failed:tiles.filter(tile=>tile.complete&&tile.naturalWidth===0).length,
+                  ready:tiles.length>=12&&tiles.every(tile=>tile.complete&&tile.naturalWidth>0),
+                  transform:pane?pane.style.transform:null,
+                  transformApplied:(typeof map!=='undefined'&&map)?!!map.__screenshotTransformApplied:false,
+                  stage:rect?{x:rect.x,y:rect.y,width:rect.width,height:rect.height}:null,
+                  mapSize:(typeof map!=='undefined'&&map)?map.getSize():null,
+                  zoom:(typeof map!=='undefined'&&map)?map.getZoom():null,
+                  alertCount:(document.getElementById('globalOrderNotify')||{}).dataset?.count||null,
+                  toast:(document.getElementById('screenshotAoiToast')||{}).textContent||null
+                };
+              })())`,
+              returnByValue:true
+            });
+            status=JSON.parse(evaluated.result.value);
+            if(status.ready&&status.transformApplied&&status.alertCount==='2'&&status.toast==='Kenya AOI area: 627,479 km²')break;
+            await sleep(500);
+          }
+          if(!status?.ready||!status?.transformApplied||status?.alertCount!=='2'){
+            throw new Error('Live page did not reach locked screenshot state: '+JSON.stringify(status));
+          }
+          const screenshot=await send('Page.captureScreenshot',{
+            format:'png',fromSurface:true,captureBeyondViewport:false
+          });
+          fs.writeFileSync('live-verification/data-search-restored.png',Buffer.from(screenshot.data,'base64'));
+          fs.writeFileSync('live-verification/status.json',JSON.stringify(status,null,2));
+          ws.close();
+          JS
+
+          node /tmp/capture-live-locked.mjs
+          test -s live-verification/data-search-restored.png
+          python3 - <<'PY'
+          import json,struct
+          with open('live-verification/data-search-restored.png','rb') as handle:
+              header=handle.read(24)
+          assert header[:8]==b'\x89PNG\r\n\x1a\n'
+          width,height=struct.unpack('>II',header[16:24])
+          assert (width,height)==(1874,1270),(width,height)
+          status=json.load(open('live-verification/status.json',encoding='utf-8'))
+          assert status['tileCount']>=12 and status['loaded']==status['tileCount'] and status['failed']==0,status
+          assert status['transformApplied'] is True,status
+          assert status['stage']=={'x':396,'y':62,'width':541,'height':573},status
+          assert status['mapSize']=={'x':541,'y':573},status
+          print(f'LIVE_SCREENSHOT_SIZE={width}x{height}')
+          print('LIVE_STATUS='+json.dumps(status,separators=(',',':')))
+          PY
+          sha256sum live-verification/data-search-restored.png
+
+      - name: Upload live deployed verification
+        uses: actions/upload-artifact@v4
+        with:
+          name: locked-final-live-verification
+          path: |
+            live-verification/data-search-restored.png
+            live-verification/status.json
+            site/data-search-restored.html
+          retention-days: 3
