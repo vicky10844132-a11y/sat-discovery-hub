@@ -1,0 +1,3 @@
+Publish and live-verify only gh-pages/data-search-restored.html.
+Expected SHA-256: b204eeb0a956e981dad9abfbed432deac79dda3c74f865c81fc0cc586c46d082
+Trigger: 2026-08-01T15:15:00+08:00
