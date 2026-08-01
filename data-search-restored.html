@@ -146,16 +146,16 @@ button,input,select{font:inherit}button{cursor:pointer}
   </header>
 
   <aside class="rail">
-    <button class="rail-btn active" data-ds-module="aoi" title="AOI Tool"><svg class="ds-icon" viewBox="0 0 24 24"><path d="M4 7l5-3 5 3 6-2v12l-6 3-5-3-5 2z"></path><path d="M9 4v13M14 7v13"></path></svg><span class="rail-core-label">AOI</span><span class="tip">AOI Tool</span></button>
-    <button class="rail-btn" data-ds-module="archive" title="Archive Search"><svg class="ds-icon" viewBox="0 0 24 24"><rect x="4" y="4" width="11" height="11" rx="2"></rect><circle cx="15.5" cy="15.5" r="4.5"></circle><path d="M19 19l2 2M7 8h5M7 11h3"></path></svg><span class="rail-core-label">ARCHIVE</span><span class="tip">Archive Search</span></button>
-    <button class="rail-btn" data-ds-module="tasking" title="Tasking"><svg class="ds-icon" viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="9" ry="4.2" transform="rotate(-25 12 12)"></ellipse><circle cx="12" cy="12" r="2.3"></circle><path d="M4 19c4-7 9-11 16-14"></path></svg><span class="rail-core-label">TASKING</span><span class="tip">Tasking</span></button>
-    <button class="rail-btn" data-ds-module="data" data-panel="data" title="Data Center"><svg class="ds-icon" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="7" ry="3"></ellipse><path d="M5 5v6c0 1.7 3.1 3 7 3s7-1.3 7-3V5M5 11v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"></path></svg><span class="tip">Data Center</span></button>
-    <button class="rail-btn" data-ds-module="orders" data-panel="orders" title="Order Center"><svg class="ds-icon" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"></rect><path d="M9 4.5V3h6v1.5M8 9h8M8 13h8M8 17h5"></path></svg><span class="tip">Order Center</span></button>
-    <button class="rail-btn" data-ds-module="account" data-panel="account" title="Account"><svg class="ds-icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M4.5 21a7.5 7.5 0 0 1 15 0"></path></svg><span class="tip">Account</span></button>
-    <div class="rail-bottom">
-      <button class="rail-btn rail-notify" data-ds-module="alerts" id="globalOrderNotify" data-count="3" onclick="openApiOrderInbox()" title="Orders & Alerts"><svg class="ds-icon" viewBox="0 0 24 24"><path d="M6.5 9.5a5.5 5.5 0 0 1 11 0v3.4l1.5 2.6H5l1.5-2.6z"></path><path d="M9.5 18a2.5 2.5 0 0 0 5 0"></path></svg><span class="tip">Orders & Alerts</span></button>
-      <button class="rail-btn" data-ds-module="support" onclick="openPlatformSettings('help')" title="Help & Company Contact"><svg class="ds-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M9.7 9a2.5 2.5 0 1 1 3.2 2.4c-.9.35-1.4.9-1.4 1.8v.3M12 17.2h.01"></path></svg><span class="tip">Help & Company Contact</span></button>
-    </div>
+    <button class="rail-btn active" data-panel="aoi" title="AOI Center"><svg class="ds-icon" viewBox="0 0 24 24"><path d="M4 7l5-3 5 3 6-2v12l-6 3-5-3-5 2z"></path><path d="M9 4v13M14 7v13"></path></svg><span class="tip">AOI Center</span></button>
+    <button class="rail-btn" data-panel="search" title="Search Center"><svg class="ds-icon" viewBox="0 0 24 24"><rect x="4" y="4" width="11" height="11" rx="2"></rect><circle cx="15.5" cy="15.5" r="4.5"></circle><path d="M19 19l2 2M7 8h5M7 11h3"></path></svg><span class="tip">Search Center</span></button>
+    <button class="rail-btn" data-panel="orbit" title="Orbit Prediction"><svg class="ds-icon" viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="9" ry="4.2" transform="rotate(-25 12 12)"></ellipse><circle cx="12" cy="12" r="2.3"></circle><path d="M4 19c4-7 9-11 16-14"></path></svg><span class="tip">Orbit Prediction</span></button>
+    <button class="rail-btn" data-panel="sources" title="Data Source Library"><svg class="ds-icon" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="7" ry="3"></ellipse><path d="M5 5v6c0 1.7 3.1 3 7 3s7-1.3 7-3V5M5 11v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"></path></svg><span class="tip">Data Source Library</span></button>
+    <button class="rail-btn" data-panel="clientapi" title="Customer API"><svg class="ds-icon" viewBox="0 0 24 24"><path d="M8 7H6a3 3 0 0 0-3 3v4a3 3 0 0 0 3 3h2M16 7h2a3 3 0 0 1 3 3v4a3 3 0 0 1-3 3h-2M8 12h8"></path><path d="M10 9l-3 3 3 3M14 9l3 3-3 3"></path></svg><span class="tip">Customer API</span></button>
+    <button class="rail-btn" data-panel="subscriptions" title="Subscription Center"><svg class="ds-icon" viewBox="0 0 24 24"><path d="M7 4h10v16l-5-3-5 3z"></path><path d="M9.5 9h5M12 6.5v5"></path></svg><span class="tip">Subscription Center</span></button>
+    <button class="rail-btn" data-panel="data" title="Data Center"><svg class="ds-icon" viewBox="0 0 24 24"><path d="M4 7l8-4 8 4-8 4z"></path><path d="M4 7v10l8 4 8-4V7M12 11v10"></path></svg><span class="tip">Data Center</span></button>
+    <button class="rail-btn" data-panel="orders" title="Order Center"><svg class="ds-icon" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"></rect><path d="M9 4.5V3h6v1.5M8 9h8M8 13h8M8 17h5"></path></svg><span class="tip">Order Center</span></button>
+    <button class="rail-btn" data-panel="account" title="Account Center"><svg class="ds-icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M4.5 21a7.5 7.5 0 0 1 15 0"></path></svg><span class="tip">Account Center</span></button>
+    <div class="rail-bottom"><button class="rail-btn rail-notify" id="globalOrderNotify" data-count="3" onclick="openApiOrderInbox()" title="New orders and alerts" aria-label="New orders and alerts"><svg class="ds-icon" viewBox="0 0 24 24"><path d="M6.5 9.5a5.5 5.5 0 0 1 11 0v3.4l1.5 2.6H5l1.5-2.6z"></path><path d="M9.5 18a2.5 2.5 0 0 0 5 0"></path></svg><span class="tip">Orders & Alerts</span></button><button class="rail-btn"><svg class="ds-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="4"></circle><path d="M5.6 5.6l3.6 3.6M14.8 14.8l3.6 3.6M18.4 5.6l-3.6 3.6M9.2 14.8l-3.6 3.6"></path></svg><span class="tip">Support</span></button></div>
   </aside>
 
   <aside class="sidepanel">
@@ -1325,11 +1325,75 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 })();
 </script>
 
-<div class="library-warning" id="dataLibraryWarning"><strong>CONNECT NETWORK FOR ONLINE MAP</strong><br>The platform interface and local records are available. Online basemaps and external services require an internet connection. TLE connects separately from the Tasking Prediction module.<br><button onclick="location.reload()">RETRY ONLINE MAP</button></div>
-<div id="dsAoiToolHost" aria-label="AOI TOOL workspace">
-  <div id="dsAoiToolHeader" aria-hidden="true"></div>
-  <iframe id="dsAoiToolFrame" title="AOI TOOL"></iframe>
-  <button class="ds-aoi-floating-action" type="button" onclick="dsUseAoiForSearch()">USE AOI FOR ARCHIVE SEARCH</button>
-</div>
+<!-- SCREENSHOT_VERSION_EXACT_START -->
+<style id="screenshot-version-exact-style">
+html,body{width:100%;height:100%;margin:0!important;padding:0!important}
+.app{grid-template-columns:61.5px 334.5px minmax(0,1fr)!important;grid-template-rows:62px minmax(0,1fr)!important}
+.topbar{height:62px!important}
+.brand{width:394px!important;flex:0 0 394px!important;padding:0 18px!important;gap:12.5px!important}
+.logo{width:40px!important;height:40px!important;flex:0 0 40px!important}
+.brand-name{font-size:20px!important;letter-spacing:2.2px!important}
+.coordinate-search{margin-left:20px!important;width:304px!important;height:39px!important;flex:0 0 304px!important}
+.coordinate-search input{height:39px!important;padding-left:40px!important}
+.coordinate-search button{top:6.5px!important}
+.top-actions{gap:8px!important;padding-right:0!important}
+.lang-mini{width:45px!important;height:34px!important}
+.v11-auth-actions{gap:6px!important}
+.v11-auth-btn{height:34px!important;font-size:9px!important}
+#v11LoginBtn{width:53px!important;padding:0 13px!important}
+#v11LogoutBtn{width:60px!important;padding:0 13px!important}
+.v9-help-button{width:37px!important;height:38px!important}
+.v11-auth-email,#fixedAccessChip,.local-fixed-chip,.library-warning{display:none!important}
+.rail-btn{width:49px!important;height:49px!important;margin:2.5px 0!important}
+.tabs{height:46px!important}
+.tab{height:45px!important}
+.panel-view.active .module-note{position:relative;left:1.5px;width:301.25px!important;margin:12.5px 0 11px!important;padding:12px 12px 13px!important;font-size:9.5px!important;line-height:1.55!important}
+.panel-view.active .module-note strong{margin-bottom:4px!important}
+.panel-view.active .search-aoi-inner{position:relative;left:1.5px;width:301px!important;padding:13px!important}
+.panel-view.active .search-box{margin-bottom:10.5px!important}
+.panel-view.active .search-box input{height:38.5px!important}
+.panel-view.active .toolbar-row{margin-bottom:14px!important}
+.panel-view.active .small-action{height:34px!important}
+.panel-view.active .tree-title{margin:18px 2px 7px!important}
+.panel-view.active .aoi-item{padding:13px 8.5px 13px 8px!important;margin:4px 0!important}
+.panel-view.active .aoi-item:not(.selected){padding:11.5px 8.5px 11.5px 8px!important;margin:3.5px 0!important}
+.panel-view.active .eye-btn{width:30px!important;height:30px!important}
+.map-actions{display:none!important}
+#screenshotAoiToast{position:absolute;z-index:750;left:50%;bottom:2px;transform:translateX(-50%);width:286px;height:36px;border:1px solid #dce3ee;border-radius:8px;background:rgba(255,255,255,.97);box-shadow:0 5px 18px rgba(30,45,80,.16);display:flex;align-items:center;justify-content:center;color:#334664;font-size:10px;font-weight:800;white-space:nowrap;pointer-events:none}
+@media(max-width:980px){
+ .app{grid-template-columns:61.5px 334.5px minmax(0,1fr)!important;grid-template-rows:62px minmax(0,1fr)!important}
+ .brand{width:394px!important;flex-basis:394px!important}
+ .coordinate-search{margin-left:20px!important;width:304px!important;flex-basis:304px!important}
+}
+</style>
+<script id="screenshot-version-exact-script">
+(function(){
+  function exactScreenshotState(){
+    try{
+      if(typeof V11_SESSION_KEY!=='undefined')localStorage.setItem(V11_SESSION_KEY,'michael.xu@omeospace.com');
+      if(typeof v11LoadSession==='function')v11LoadSession();
+      if(typeof v11RenderAuth==='function')v11RenderAuth();
+    }catch(e){}
+    document.querySelectorAll('.v11-auth-email,#fixedAccessChip,.local-fixed-chip,.library-warning').forEach(function(el){el.remove()});
+    var login=document.getElementById('v11LoginBtn');
+    var logout=document.getElementById('v11LogoutBtn');
+    if(login){login.disabled=true;login.classList.remove('logout-active')}
+    if(logout){logout.disabled=false;logout.classList.add('logout-active')}
+    var badge=document.getElementById('globalOrderNotify');if(badge)badge.dataset.count='2';
+    document.querySelectorAll('.map-actions').forEach(function(el){el.style.display='none'});
+    document.querySelectorAll('.toast.show').forEach(function(el){if((el.innerText||'').indexOf('Map fallback active')>=0)el.classList.remove('show')});
+    try{if(typeof showAOI==='function')showAOI('kenya')}catch(e){}
+    var stage=document.querySelector('.mapstage');
+    if(stage&&!document.getElementById('screenshotAoiToast')){
+      var toast=document.createElement('div');toast.id='screenshotAoiToast';toast.textContent='Kenya AOI area: 627,479 km²';stage.appendChild(toast);
+    }
+    try{if(window.map&&typeof window.map.invalidateSize==='function')setTimeout(function(){window.map.invalidateSize();if(typeof showAOI==='function')showAOI('kenya')},80)}catch(e){}
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',exactScreenshotState);else exactScreenshotState();
+  window.addEventListener('load',exactScreenshotState);
+  setTimeout(exactScreenshotState,250);setTimeout(exactScreenshotState,900);
+})();
+</script>
+<!-- SCREENSHOT_VERSION_EXACT_END -->
 </body>
 </html>
