@@ -1,0 +1,178 @@
+{
+  "batch_id": "AUTO-SCAN-336-338",
+  "generated_at": "2026-07-13T12:01:08+08:00",
+  "records": [
+    {
+      "record_id": "AUTO-SCAN-336",
+      "title": "Deployable compact optical ground station as a commercial access model",
+      "category": ["optical ground station", "mobile station", "commercial service", "standards interoperability"],
+      "structured_summary": {
+        "core_concept": "Archangel Lightworks' TERRA-M is reported as a compact deployable optical ground station for secure, rapid LEO links, with a physical envelope of about 1.1 m height and 0.7 m diameter.",
+        "gs_linkops_relevance": "Introduces a mobile optical-station asset class that can be booked, purchased or deployed temporarily rather than treated as a permanently installed observatory.",
+        "reported_validation": "A June 2026 report states that TERRA-M completed multi-day tests against the U.S. Space Development Agency laser-communication standard and that purchase and service-contract options were available; these commercial and conformance claims require primary-source confirmation."
+      },
+      "suggested_entities": ["mobile_optical_station", "deployment_package", "optical_terminal_profile", "conformance_test", "service_contract"],
+      "suggested_fields": [
+        "station_height_m",
+        "station_diameter_m",
+        "fixed_or_mobile",
+        "deployment_time_minutes",
+        "transport_configuration",
+        "supported_orbit_regime",
+        "optical_standard_profile",
+        "conformance_test_date",
+        "conformance_evidence_url",
+        "purchase_available",
+        "service_contract_available",
+        "remote_site_power_requirement",
+        "backhaul_requirement",
+        "environmental_operating_limits"
+      ],
+      "commercial_risk_tags": [
+        "secondary_source_only",
+        "vendor_claim_requires_primary_confirmation",
+        "standard_conformance_scope_unknown",
+        "weather_sensitive",
+        "terminal_compatibility_required",
+        "defence_and_export_control_review_pending"
+      ],
+      "confidence": {
+        "source_quality": "medium",
+        "physical_configuration": "medium-high",
+        "commercial_availability": "medium",
+        "standards_conformance": "medium"
+      },
+      "pending_confirmation": [
+        "Official manufacturer datasheet",
+        "Optical wavelength and data-rate range",
+        "Pointing, acquisition and tracking performance",
+        "Exact SDA standard profile and test report",
+        "Deployment time and crew requirement",
+        "Power, environmental and backhaul requirements",
+        "Pricing, lead time and service territory",
+        "Export-control and end-user restrictions"
+      ],
+      "sources": [
+        {
+          "type": "industry_news",
+          "title": "World's smallest space laser station is changing global connectivity",
+          "date": "2026-06-03",
+          "url": "https://www.techradar.com/pro/worlds-smallest-space-laser-station-is-changing-global-connectivity-by-bypassing-vulnerabilities-associated-with-terrestrial-and-subsea-cables"
+        }
+      ]
+    },
+    {
+      "record_id": "AUTO-SCAN-337",
+      "title": "OptiSat cloud-aware onboard processing and optical ground-station selection",
+      "category": ["satellite", "optical communications", "onboard AI", "ground-station selection"],
+      "structured_summary": {
+        "core_concept": "OptiSat is a 6U Greek technology-demonstration CubeSat launched on 30 March 2026 with a TESAT SCOT20 optical terminal and onboard processing intended to support optical-link decisions, including selection of cloud-free ground stations.",
+        "gs_linkops_relevance": "Adds a satellite-side decision layer where ground-station choice is influenced by onboard cloud screening and optical-link suitability rather than only by precomputed visibility windows.",
+        "operational_implication": "The scheduling engine should accept spacecraft-generated station preference, cloud-avoidance flags and product-priority decisions as dynamic inputs."
+      },
+      "suggested_entities": ["satellite_optical_terminal", "onboard_processing_profile", "station_preference_event", "cloud_avoidance_decision", "optical_contact_candidate"],
+      "suggested_fields": [
+        "spacecraft_form_factor",
+        "launch_date",
+        "optical_terminal_model",
+        "onboard_processing_supported",
+        "cloud_screening_supported",
+        "ground_station_selection_mode",
+        "station_preference_timestamp",
+        "preferred_station_id",
+        "rejected_station_reason",
+        "cloud_confidence_score",
+        "contact_priority",
+        "fallback_rf_link_available"
+      ],
+      "commercial_risk_tags": [
+        "technology_demonstration",
+        "operational_service_unconfirmed",
+        "onboard_model_accuracy_unknown",
+        "cloud_forecast_and_image_latency_dependency",
+        "optical_terminal_ground_compatibility_required"
+      ],
+      "confidence": {
+        "mission_identity_and_launch": "medium-high",
+        "terminal_model": "medium-high",
+        "onboard_ground_station_selection_function": "medium",
+        "commercial_applicability": "low-medium"
+      },
+      "pending_confirmation": [
+        "Official mission operations status after launch",
+        "SCOT20 wavelength, line rate and protocol profile",
+        "Participating optical ground stations",
+        "Cloud-detection input and inference method",
+        "Decision latency and command authority",
+        "RF fallback path",
+        "Published link-test results",
+        "External scheduling or mission-operations interface"
+      ],
+      "sources": [
+        {
+          "type": "mission_summary",
+          "title": "OptiSat",
+          "date": "2026-03-30",
+          "url": "https://en.wikipedia.org/wiki/OptiSat"
+        }
+      ]
+    },
+    {
+      "record_id": "AUTO-SCAN-338",
+      "title": "Abu Dhabi quantum optical ground station readiness and link-performance evidence",
+      "category": ["research", "quantum optical ground station", "QKD", "space-ground compatibility test"],
+      "structured_summary": {
+        "core_concept": "A terrestrial readiness campaign used the engineering model of the SpeQtre satellite entangled-photon payload with the Abu Dhabi Quantum Optical Ground Station over a 1.8 km free-space link.",
+        "gs_linkops_relevance": "Provides an evidence model for recording pre-flight ground-segment compatibility tests, including protocol, test distance, secret-key rate, quantum-bit-error rate and atmospheric background-rejection configuration.",
+        "reported_result": "The paper reports a BBM92 secret-key rate of approximately 7.56 kbps and a mean QBER of 4.78% ± 0.24% under the stated terrestrial test conditions; these values are test evidence, not an orbital service SLA."
+      },
+      "suggested_entities": ["quantum_ground_station", "quantum_payload", "compatibility_test_campaign", "qkd_session", "link_performance_result"],
+      "suggested_fields": [
+        "qkd_protocol",
+        "entangled_photon_source",
+        "test_link_distance_km",
+        "secret_key_rate_kbps",
+        "mean_qber_percent",
+        "qber_uncertainty_percent",
+        "spectral_filter_profile",
+        "spatial_filter_profile",
+        "background_rejection_method",
+        "payload_engineering_model_used",
+        "orbital_test_pending",
+        "test_environment",
+        "evidence_level"
+      ],
+      "commercial_risk_tags": [
+        "terrestrial_test_not_orbital_service",
+        "weather_and_background_light_sensitive",
+        "quantum_terminal_pairing_required",
+        "key_management_and_certification_pending",
+        "research_infrastructure_not_public_gsaas"
+      ],
+      "confidence": {
+        "source_quality": "high",
+        "test_configuration": "high",
+        "reported_performance": "high",
+        "commercial_availability": "low"
+      },
+      "pending_confirmation": [
+        "Optical wavelength and telescope aperture",
+        "Pointing, acquisition and tracking subsystem",
+        "Planned orbital test schedule",
+        "Operational weather and daylight limits",
+        "Authentication and classical-channel architecture",
+        "Key-management interface",
+        "Commercial or institutional access route",
+        "Ground-station location and security restrictions"
+      ],
+      "sources": [
+        {
+          "type": "research_paper",
+          "title": "Terrestrial readiness campaign for space-to-ground quantum communications with a space-qualified entangled photon-pair system",
+          "date": "2026-05-19",
+          "url": "https://arxiv.org/abs/2605.19689"
+        }
+      ]
+    }
+  ]
+}

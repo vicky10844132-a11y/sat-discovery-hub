@@ -1,0 +1,154 @@
+{
+  "version": "0.1",
+  "batch": "AUTO-SCAN-318-320",
+  "created_at": "2026-07-13",
+  "purpose": "Candidate research records for GS LinkOps AI database enrichment. Records require source-level validation before operational use.",
+  "records": [
+    {
+      "record_id": "AUTO-SCAN-318",
+      "category": "ground_network_site_placement_optimization",
+      "name": "SCORE free-placement optimization for LEO ground station networks",
+      "source_title": "Free-Placement Optimization of Ground Station Locations for Low-Earth Orbit Satellites",
+      "source_url": "https://arxiv.org/abs/2606.12667",
+      "source_date": "2026-06-10",
+      "summary": "Introduces SCORE, a two-stage continuous-location optimization method for selecting or expanding ground station sites rather than choosing only from an existing provider catalogue. Evaluations use Capella Space, ICEYE and a synthetic Walker-Star constellation. The study reports up to 13% higher throughput than differential-evolution baselines, up to 15% higher total downlink than fixed-site methods, and retention of more than 92% of the gain when sites are constrained to proximity of existing fiber and power infrastructure.",
+      "database_targets": [
+        "Ground Network Planning",
+        "Candidate Site Database",
+        "Infrastructure Constraint Model",
+        "Capacity Expansion Planning"
+      ],
+      "extractable_fields": [
+        "candidate_site_latitude",
+        "candidate_site_longitude",
+        "placement_method",
+        "existing_site_expansion_option",
+        "new_site_build_option",
+        "distance_to_fiber_km",
+        "distance_to_power_km",
+        "infrastructure_constraint_radius_km",
+        "predicted_downlink_gain_percent",
+        "function_evaluation_count",
+        "constellation_case",
+        "site_portfolio_scenario"
+      ],
+      "commercial_risk_tags": [
+        "research_optimization_not_operational_commitment",
+        "construction_cost_not_fully_modelled",
+        "spectrum_and_permitting_not_inferred",
+        "infrastructure_proximity_required",
+        "weather_and_geopolitical_constraints_pending"
+      ],
+      "confidence_level": "High for the optimization method and reported experimental results; medium for direct commercial applicability.",
+      "pending_confirmation": [
+        "Full objective function and weighting parameters",
+        "Terrain, horizon mask and radio-frequency interference treatment",
+        "Country permitting and spectrum authorization constraints",
+        "Fiber capacity, power quality and site acquisition costs",
+        "Weather, maintenance and security constraints",
+        "Applicability to customer-specific orbit and data-generation profiles"
+      ],
+      "next_action": "Add site-planning entities separate from operational stations, and support comparison of existing-site expansion versus greenfield deployment."
+    },
+    {
+      "record_id": "AUTO-SCAN-319",
+      "category": "optical_ground_station_network_reference",
+      "name": "TeraNet three-node optical ground station network",
+      "source_title": "Commissioning of the TeraNet Optical Ground Station Network",
+      "source_url": "https://arxiv.org/abs/2510.25090",
+      "source_date": "2025-10-29",
+      "summary": "Describes a three-node optical ground station network in Western Australia designed for missions from LEO to lunar distance. TN-1 uses a 70 cm aperture and ultra-sensitive detectors for lunar-distance links; TN-2 uses a 70 cm aperture with adaptive optics and single-mode-fiber coupling for coherent communications and precision timing; TN-3 is a 43 cm mobile optical station designed for rapid tactical deployment, quantum communications and quantum-assured time transfer. The paper reports remote network operations, on-orbit links and interoperability tests with other optical stations.",
+      "database_targets": [
+        "Optical Ground Station Database",
+        "Mobile Station Asset Model",
+        "Adaptive Optics Capability Table",
+        "Optical Interoperability Evidence",
+        "Timing and Quantum Service Catalogue"
+      ],
+      "extractable_fields": [
+        "optical_station_node_id",
+        "aperture_cm",
+        "fixed_or_mobile",
+        "direct_detection_supported",
+        "bidirectional_optical_link",
+        "adaptive_optics_supported",
+        "single_mode_fiber_coupling",
+        "coherent_communications_supported",
+        "precision_timing_supported",
+        "quantum_communications_supported",
+        "deployment_time_minutes",
+        "day_night_operation_claim",
+        "remote_operation_supported",
+        "interoperability_test_status",
+        "supported_orbit_regime"
+      ],
+      "commercial_risk_tags": [
+        "research_network_not_public_gsaas",
+        "weather_dependency",
+        "pat_complexity",
+        "mission_specific_terminal_compatibility_required",
+        "quantum_service_commercial_availability_unconfirmed"
+      ],
+      "confidence_level": "High for the published node architecture and commissioning claims; medium for current service availability and commercial access.",
+      "pending_confirmation": [
+        "Exact optical wavelengths and modulation formats",
+        "Acquisition, pointing and tracking performance",
+        "Cloud statistics and annual availability by node",
+        "Supported optical terminal standards",
+        "Maximum sustained throughput and link margin",
+        "Commercial access, pricing and service-level terms",
+        "Data delivery and mission-control interfaces"
+      ],
+      "next_action": "Create optical_station, optical_terminal_capability and mobile_station_deployment tables, distinct from RF antenna assets."
+    },
+    {
+      "record_id": "AUTO-SCAN-320",
+      "category": "ground_segment_cybersecurity_risk_model",
+      "name": "Ground-based cyber threat taxonomy across LEO, MEO and GEO",
+      "source_title": "Satellite Cybersecurity Across Orbital Altitudes: Analyzing Ground-Based Threats to LEO, MEO, and GEO",
+      "source_url": "https://arxiv.org/abs/2512.21367",
+      "source_date": "2025-12-23",
+      "summary": "Synthesizes publicly documented satellite-security incidents and compares ground-originated cyber-physical threats across LEO, MEO and GEO. It highlights RF-link exposure, weak encryption, command-path anomalies, software-update pathways and supply-chain weaknesses, and argues that threat profiles differ by orbital regime. For GS LinkOps AI, the main value is a structured risk taxonomy for station onboarding, mission-interface approval and supplier assessment rather than direct operational threat scoring.",
+      "database_targets": [
+        "Cybersecurity Risk Library",
+        "Station Onboarding Controls",
+        "Mission Interface Approval",
+        "Supplier and Software Supply Chain Risk",
+        "Incident Evidence Database"
+      ],
+      "extractable_fields": [
+        "orbit_regime",
+        "command_link_encryption_status",
+        "telemetry_link_encryption_status",
+        "authentication_method",
+        "software_update_path",
+        "update_signing_required",
+        "ground_network_segmentation",
+        "remote_access_method",
+        "supply_chain_component_origin",
+        "ttc_anomaly_history",
+        "rf_interference_risk",
+        "incident_reference",
+        "security_evidence_level",
+        "mitigation_status"
+      ],
+      "commercial_risk_tags": [
+        "public_incident_dataset_may_be_incomplete",
+        "correlation_not_causation",
+        "classified_incidents_absent",
+        "operator_self_reporting_bias",
+        "security_details_require_access_control"
+      ],
+      "confidence_level": "Medium-high for taxonomy design and comparative risk framing; medium for individual incident completeness and quantitative prediction.",
+      "pending_confirmation": [
+        "Underlying incident list and source quality per case",
+        "Definition of successful adversarial outcome",
+        "Separation of cyberattack, interference and equipment fault",
+        "Applicability to commercial GSaaS providers",
+        "Minimum encryption and authentication control baseline",
+        "Data-retention and disclosure policy for sensitive findings"
+      ],
+      "next_action": "Add security control evidence and incident provenance fields to provider, station, interface and mission-profile onboarding workflows."
+    }
+  ]
+}

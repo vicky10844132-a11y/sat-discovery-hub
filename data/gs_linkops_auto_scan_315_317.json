@@ -1,0 +1,172 @@
+{
+  "version": "0.1",
+  "created_for": "GS LinkOps AI resource database building",
+  "created_at": "2026-07-13",
+  "scan_range": "AUTO-SCAN-315 to AUTO-SCAN-317",
+  "records": [
+    {
+      "record_id": "AUTO-SCAN-315",
+      "category": "satellite_operator_ownership_and_commercial_risk",
+      "name": "Rocket Lab announced acquisition of Iridium Communications",
+      "event_date": "2026-06-29",
+      "source_url": "https://www.reuters.com/business/media-telecom/rocket-lab-buy-satellite-communications-firm-iridium-8-billion-deal-2026-06-29/",
+      "structured_summary": "Rocket Lab announced an approximately USD 8 billion agreement to acquire Iridium Communications. The transaction would combine launch, spacecraft systems and an operational L-band LEO communications constellation, including globally coordinated spectrum and an established enterprise and government customer base. Closing is expected in 2027 and remains subject to shareholder and regulatory approvals.",
+      "database_targets": [
+        "Satellite Operator Library",
+        "Constellation Ownership History",
+        "Commercial and Regulatory Risk Library",
+        "Spectrum Asset Registry",
+        "Supplier Concentration and Vertical Integration Model"
+      ],
+      "extractable_fields": [
+        "operator_current_owner",
+        "operator_proposed_owner",
+        "transaction_announcement_date",
+        "transaction_value_usd",
+        "expected_close_date",
+        "regulatory_approval_status",
+        "shareholder_approval_status",
+        "constellation_band",
+        "spectrum_asset_significance",
+        "vertical_integration_scope",
+        "government_customer_exposure",
+        "ownership_change_effective_date"
+      ],
+      "commercial_tags": [
+        "operator_consolidation",
+        "vertical_integration",
+        "spectrum_driven_transaction",
+        "launch_and_network_integration"
+      ],
+      "risk_tags": [
+        "transaction_not_yet_closed",
+        "regulatory_review_pending",
+        "ownership_and_contracting_entity_may_change",
+        "supplier_concentration_risk",
+        "government_contract_review_possible"
+      ],
+      "confidence_level": "High for the announced transaction terms from Reuters; ownership change must not be treated as completed until closing is confirmed.",
+      "pending_confirmation_fields": [
+        "final closing date",
+        "regulatory conditions by jurisdiction",
+        "post-closing Iridium legal entity and contracting entity",
+        "changes to gateway or ground infrastructure ownership",
+        "changes to customer agreements and service pricing",
+        "spectrum licence transfer approvals",
+        "national-security review outcomes"
+      ],
+      "next_action": "Create ownership-event records rather than overwriting the current operator owner. Add effective_from and effective_to dates after the transaction closes."
+    },
+    {
+      "record_id": "AUTO-SCAN-316",
+      "category": "virtualized_ground_station_processing_architecture",
+      "name": "Service chaining and virtual network function placement for ground station networks",
+      "publication_date": "2020-06-23",
+      "source_url": "https://arxiv.org/abs/2006.12727",
+      "structured_summary": "The study models ground-station service processing as a chain of virtual network functions deployed on shared compute and network infrastructure. Satellite mission plans and predictable contact windows are used to place functions and route traffic before execution, with the optimization objective reducing link utilization and server consumption. The architecture supports separating physical antennas from software-defined processing resources.",
+      "database_targets": [
+        "Ground Station System Interface Database",
+        "Baseband and Processing Resource Library",
+        "Mission Profile Processing Chain",
+        "Compute and Network Capacity Model",
+        "Contact Execution Orchestrator"
+      ],
+      "extractable_fields": [
+        "service_chain_id",
+        "virtual_network_function_type",
+        "processing_order",
+        "compute_node_id",
+        "cpu_requirement",
+        "memory_requirement",
+        "network_bandwidth_requirement",
+        "processing_latency_budget",
+        "mission_plan_dependency",
+        "contact_window_dependency",
+        "function_placement_policy",
+        "traffic_route_id",
+        "resource_reservation_status"
+      ],
+      "architecture_tags": [
+        "NFV",
+        "software_defined_ground_segment",
+        "predictive_resource_allocation",
+        "shared_processing_pool",
+        "mission_aware_service_chaining"
+      ],
+      "risk_tags": [
+        "research_model_not_commercial_product",
+        "simulation_based_results",
+        "real_time_failover_not_demonstrated",
+        "hardware_acceleration_requirements_unknown"
+      ],
+      "confidence_level": "High for the proposed research architecture and optimization formulation; medium for operational applicability because results are simulation-based.",
+      "pending_confirmation_fields": [
+        "supported baseband functions",
+        "FPGA or GPU acceleration requirements",
+        "container or virtual-machine runtime",
+        "maximum deterministic processing latency",
+        "stateful function migration support",
+        "contact-to-contact isolation",
+        "security accreditation",
+        "commercial vendor implementations"
+      ],
+      "next_action": "Add processing_chain and compute_resource entities so antenna capability matching also checks whether required demodulation, decoding and delivery functions can be placed during the contact."
+    },
+    {
+      "record_id": "AUTO-SCAN-317",
+      "category": "optical_ground_segment_relay_architecture",
+      "name": "High-altitude ground stations for all-optical LEO constellations",
+      "publication_date": "2024-03-23",
+      "source_url": "https://arxiv.org/abs/2403.15659",
+      "structured_summary": "The paper proposes high-altitude platform stations acting as elevated optical relay nodes between LEO spacecraft and terrestrial ground infrastructure. The concept reduces the atmospheric path affecting space-to-ground optical links and creates a distinct asset class between spacecraft, conventional optical ground stations and airborne platforms. It is useful for modelling future optical service chains even though it is not yet a mature commercial GSaaS architecture.",
+      "database_targets": [
+        "Optical Ground Station Library",
+        "Relay and Hybrid Link Architecture Library",
+        "Future Ground Segment Technology Watchlist",
+        "Weather and Atmospheric Risk Model",
+        "Multi-Hop Delivery Path Model"
+      ],
+      "extractable_fields": [
+        "relay_platform_type",
+        "relay_altitude_km",
+        "space_to_platform_link_type",
+        "platform_to_ground_link_type",
+        "optical_terminal_aperture",
+        "atmospheric_path_reduction",
+        "platform_station_keeping_requirement",
+        "handover_strategy",
+        "multi_hop_latency",
+        "weather_bypass_capability",
+        "availability_model",
+        "regulatory_airspace_class"
+      ],
+      "technology_tags": [
+        "free_space_optical",
+        "high_altitude_platform",
+        "multi_hop_optical_relay",
+        "weather_mitigation",
+        "future_network_architecture"
+      ],
+      "risk_tags": [
+        "research_concept",
+        "commercial_service_unavailable_or_unconfirmed",
+        "airspace_authorization_required",
+        "platform_endurance_risk",
+        "pointing_acquisition_tracking_complexity",
+        "weather_not_fully_eliminated"
+      ],
+      "confidence_level": "High for the published architecture and simulation concept; low for near-term commercial availability.",
+      "pending_confirmation_fields": [
+        "operational platform endurance",
+        "terminal acquisition and tracking performance",
+        "airspace and spectrum authorization",
+        "weather-diversity performance",
+        "platform-to-ground backhaul design",
+        "commercial operator",
+        "service pricing",
+        "demonstrated end-to-end availability"
+      ],
+      "next_action": "Introduce relay_node and delivery_path_hop entities so GS LinkOps AI can represent future non-terrestrial relay assets without misclassifying them as conventional fixed ground stations."
+    }
+  ]
+}
