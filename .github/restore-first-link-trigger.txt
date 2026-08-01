@@ -1,1 +1,1 @@
-Restore data-search-restored.html from the exact c164 source blob used by the first link.
+Apply the bounded responsive display adaptation to data-search-restored.html without changing its modules or behavior.
