@@ -1,3 +1,3 @@
 Restore and publish only data-search-restored.html to the supplied screenshot version.
 Expected SHA-256: df608c5bc8dfdaff49c7bf031149e6db4cf8140a682dd0276abd6b3a5003520f
-Trigger: 2026-08-01T14:21:00+08:00
+Trigger: 2026-08-01T14:25:00+08:00
