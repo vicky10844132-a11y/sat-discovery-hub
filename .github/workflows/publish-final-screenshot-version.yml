@@ -1,0 +1,160 @@
+name: Publish final screenshot DATA SEARCH version
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/final-screenshot-trigger.txt'
+
+permissions:
+  contents: write
+
+jobs:
+  publish-screenshot-version:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout complete published history
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 0
+          path: site
+
+      - name: Checkout reconstruction assets
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+          path: source
+
+      - name: Reconstruct screenshot version
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd site
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          import subprocess
+
+          blob = '70a4d8c9819e96c10bbdad7a8a03cc87fea156f5'
+          raw = subprocess.run(
+              ['git', 'cat-file', '-p', blob],
+              check=True,
+              stdout=subprocess.PIPE,
+          ).stdout
+          html = raw.decode('utf-8')
+          remove = [
+              ('style', 'data-search-aoi-tool-replacement-style'),
+              ('style', 'v14-separated-core-modules-style'),
+              ('script', 'data-search-fixed-mode'),
+              ('script', 'data-search-aoi-tool-replacement-script'),
+              ('script', 'v14-separated-core-modules-script'),
+          ]
+          for tag, block_id in remove:
+              html = re.sub(
+                  rf'\s*<{tag} id="{re.escape(block_id)}">.*?</{tag}>\s*',
+                  '\n',
+                  html,
+                  flags=re.S,
+              )
+          Path('data-search-restored.html').write_text(html, encoding='utf-8')
+          PY
+
+          base64 --decode ../source/.github/assets/candidate1-to-screenshot-final.patch.gz.b64 \
+            | gzip --decompress > /tmp/candidate1-to-screenshot-final.patch
+          patch --silent data-search-restored.html /tmp/candidate1-to-screenshot-final.patch
+
+      - name: Verify exact identity and required screenshot structure
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd site
+          expected='66c882d0849ec2f075d7c1f1c95fc5200ff1a62d8a2b90ab8378dee03d0c872f'
+          actual="$(sha256sum data-search-restored.html | awk '{print $1}')"
+          test "$actual" = "$expected"
+
+          grep -q 'SCREENSHOT_VERSION_EXACT_START' data-search-restored.html
+          grep -q 'AOI is part of Search' data-search-restored.html
+          grep -q 'Regional Projects' data-search-restored.html
+          grep -q 'data-tab="aoi"' data-search-restored.html
+          grep -q 'data-tab="archive"' data-search-restored.html
+          grep -q 'data-tab="monitoring"' data-search-restored.html
+          grep -q 'id="coordinateInput"' data-search-restored.html
+          grep -q 'Kenya AOI area: 627,479 km²' data-search-restored.html
+          grep -q 'showAOI.*kenya' data-search-restored.html
+          grep -q 'data-count="2"' data-search-restored.html
+
+          echo "FINAL_SHA256=$actual"
+          echo "FINAL_BYTES=$(wc -c < data-search-restored.html)"
+
+      - name: Check JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd site
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          html = Path('data-search-restored.html').read_text(encoding='utf-8')
+          scripts = re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>', html, flags=re.S | re.I)
+          Path('/tmp/final-inline.js').write_text('\n;\n'.join(scripts), encoding='utf-8')
+          PY
+          node --check /tmp/final-inline.js
+
+      - name: Render production-sized verification screenshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd site
+          mkdir -p verification
+          python3 -m http.server 8772 >/tmp/final-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill $server_pid || true' EXIT
+          sleep 2
+          chrome="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser)"
+          test -n "$chrome"
+          "$chrome" \
+            --headless=new \
+            --no-sandbox \
+            --disable-dev-shm-usage \
+            --disable-gpu \
+            --hide-scrollbars \
+            --window-size=937,635 \
+            --force-device-scale-factor=2 \
+            --virtual-time-budget=12000 \
+            --run-all-compositor-stages-before-draw \
+            --screenshot=verification/data-search-restored.png \
+            'http://127.0.0.1:8772/data-search-restored.html?exact-screenshot=20260801'
+          test -s verification/data-search-restored.png
+          file verification/data-search-restored.png
+
+      - name: Upload final verification screenshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: final-data-search-screenshot-verification
+          path: |
+            site/verification/data-search-restored.png
+            site/data-search-restored.html
+          retention-days: 3
+
+      - name: Publish only the restored page
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd site
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data-search-restored.html
+          git diff --cached --check
+          changed="$(git diff --cached --name-only)"
+          test "$changed" = 'data-search-restored.html'
+          if git diff --cached --quiet; then
+            echo 'Screenshot version is already published.'
+            exit 0
+          fi
+          git commit -m 'Restore DATA SEARCH to supplied screenshot version'
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" gh-pages
