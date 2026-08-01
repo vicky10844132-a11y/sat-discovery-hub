@@ -1,0 +1,79 @@
+name: Test screenshot map scale and center
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/map-view-test-trigger.txt'
+
+permissions:
+  contents: read
+
+jobs:
+  render-map-view:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout published page
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 1
+          path: site
+
+      - name: Render screenshot-scale map view
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd site
+          mkdir -p verification
+          python3 -m http.server 8776 >/tmp/map-view-http.log 2>&1 &
+          server_pid=$!
+          chrome="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser)"
+          rm -rf /tmp/map-view-profile
+          "$chrome" --headless=new --no-sandbox --disable-dev-shm-usage --disable-gpu --no-first-run --no-default-browser-check --remote-debugging-port=9224 --user-data-dir=/tmp/map-view-profile about:blank >/tmp/map-view-chrome.log 2>&1 &
+          chrome_pid=$!
+          trap 'kill $chrome_pid $server_pid 2>/dev/null || true' EXIT
+
+          cat >/tmp/test-map-view.mjs <<'JS'
+          import fs from 'node:fs';
+          const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+          let tabs=[];
+          for(let i=0;i<120;i++){try{tabs=await fetch('http://127.0.0.1:9224/json').then(r=>r.json());if(tabs.length)break}catch{}await sleep(100)}
+          const tab=tabs.find(t=>t.type==='page')||tabs[0];if(!tab)throw new Error('No page target');
+          const ws=new WebSocket(tab.webSocketDebuggerUrl);await new Promise((r,j)=>{ws.onopen=r;ws.onerror=j});
+          let id=0;const pending=new Map();ws.onmessage=e=>{const m=JSON.parse(e.data);if(m.id&&pending.has(m.id)){const p=pending.get(m.id);pending.delete(m.id);m.error?p.reject(new Error(JSON.stringify(m.error))):p.resolve(m.result)}};
+          const send=(method,params={})=>{const n=++id;ws.send(JSON.stringify({id:n,method,params}));return new Promise((resolve,reject)=>pending.set(n,{resolve,reject}))};
+          await send('Runtime.enable');await send('Page.enable');
+          await send('Emulation.setDeviceMetricsOverride',{width:937,height:635,deviceScaleFactor:2,mobile:false,screenWidth:937,screenHeight:635});
+          await send('Page.navigate',{url:'http://127.0.0.1:8776/data-search-restored.html?map-view-test=1'});await sleep(4000);
+          for(let i=0;i<80;i++){const r=await send('Runtime.evaluate',{expression:`(()=>{const t=[...document.querySelectorAll('.leaflet-tile')];return t.length>=6&&t.every(x=>x.complete&&x.naturalWidth>0)})()`,returnByValue:true});if(r.result.value)break;await sleep(500)}
+          const view=await send('Runtime.evaluate',{expression:String.raw`(()=>{
+            if(typeof map==='undefined'||!map)return null;
+            map.stop();
+            map.options.zoomSnap=0.001;
+            map.options.zoomDelta=0.001;
+            map.options.zoomAnimation=false;
+            map.options.fadeAnimation=false;
+            map.setView([-0.08789059053082422,37.0460],5.1373,{animate:false});
+            if(typeof currentTile!=='undefined'&&currentTile&&currentTile.redraw)currentTile.redraw();
+            return {center:map.getCenter(),zoom:map.getZoom(),size:map.getSize()};
+          })()`,returnByValue:true});
+          await sleep(3500);
+          for(let i=0;i<80;i++){const r=await send('Runtime.evaluate',{expression:`(()=>{const t=[...document.querySelectorAll('.leaflet-tile')];return t.length>=6&&t.every(x=>x.complete&&x.naturalWidth>0)})()`,returnByValue:true});if(r.result.value)break;await sleep(500)}
+          const shot=await send('Page.captureScreenshot',{format:'png',fromSurface:true,captureBeyondViewport:false});
+          fs.writeFileSync('verification/map-view-test.png',Buffer.from(shot.data,'base64'));
+          fs.writeFileSync('verification/map-view.json',JSON.stringify(view.result.value,null,2));
+          ws.close();
+          JS
+
+          node /tmp/test-map-view.mjs
+          test -s verification/map-view-test.png
+          file verification/map-view-test.png
+
+      - name: Upload map view test
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshot-map-view-test
+          path: site/verification/*
+          retention-days: 2
