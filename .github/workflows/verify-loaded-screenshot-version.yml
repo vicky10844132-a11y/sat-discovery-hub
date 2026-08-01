@@ -153,10 +153,14 @@ jobs:
           node /tmp/capture-loaded.mjs
           test -s verification/data-search-restored.png
           python3 - <<'PY'
-          from PIL import Image
-          image=Image.open('verification/data-search-restored.png')
-          assert image.size==(1874,1270), image.size
-          print('SCREENSHOT_SIZE=%sx%s' % image.size)
+          import struct
+          path='verification/data-search-restored.png'
+          with open(path,'rb') as handle:
+              header=handle.read(24)
+          assert header[:8]==b'\x89PNG\r\n\x1a\n', 'Not a PNG file'
+          width,height=struct.unpack('>II',header[16:24])
+          assert (width,height)==(1874,1270),(width,height)
+          print(f'SCREENSHOT_SIZE={width}x{height}')
           PY
           sha256sum data-search-restored.html verification/data-search-restored.png
 
