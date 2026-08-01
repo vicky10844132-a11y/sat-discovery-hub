@@ -1,0 +1,150 @@
+name: Test live-stable final screenshot v2
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/final-v2-test-trigger.txt'
+
+permissions:
+  contents: read
+
+jobs:
+  validate-final-v2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout published page
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 1
+          path: site
+
+      - name: Checkout v2 patch
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+          path: source
+
+      - name: Build live-stable v2 page
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd site
+          v1='b204eeb0a956e981dad9abfbed432deac79dda3c74f865c81fc0cc586c46d082'
+          v2='44707fdd341562d314ee8904f17b616570b7876c7cb405a4a41a37111070ad5c'
+          before="$(sha256sum data-search-restored.html | awk '{print $1}')"
+          if test "$before" = "$v1"; then
+            base64 --decode ../source/.github/assets/final-screenshot-v1-to-v2.patch.gz.b64 \
+              | gzip --decompress > /tmp/final-v1-to-v2.patch
+            patch --silent data-search-restored.html /tmp/final-v1-to-v2.patch
+          elif test "$before" = "$v2"; then
+            echo 'Final v2 page is already present.'
+          else
+            echo "Unexpected source SHA-256: $before" >&2
+            exit 1
+          fi
+          after="$(sha256sum data-search-restored.html | awk '{print $1}')"
+          test "$after" = "$v2"
+          grep -q "document.querySelectorAll('.rail-notify')" data-search-restored.html
+          grep -q "map.invalidateSize({animate:false,pan:false})" data-search-restored.html
+          grep -q 'map.__screenshotApplyTimer' data-search-restored.html
+          echo "FINAL_V2_SHA256=$after"
+
+      - name: Validate JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd site
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          html=Path('data-search-restored.html').read_text(encoding='utf-8')
+          scripts=re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>',html,flags=re.S|re.I)
+          Path('/tmp/final-v2.js').write_text('\n;\n'.join(scripts),encoding='utf-8')
+          PY
+          node --check /tmp/final-v2.js
+
+      - name: Capture v2 after full layout stabilization
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd site
+          mkdir -p verification
+          python3 -m http.server 8779 >/tmp/final-v2-http.log 2>&1 &
+          server_pid=$!
+          chrome="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser)"
+          rm -rf /tmp/final-v2-profile
+          "$chrome" --headless=new --no-sandbox --disable-dev-shm-usage --disable-gpu --no-first-run --no-default-browser-check --remote-debugging-port=9228 --user-data-dir=/tmp/final-v2-profile about:blank >/tmp/final-v2-chrome.log 2>&1 &
+          chrome_pid=$!
+          trap 'kill $chrome_pid $server_pid 2>/dev/null || true' EXIT
+
+          cat >/tmp/capture-final-v2.mjs <<'JS'
+          import fs from 'node:fs';
+          const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+          let tabs=[];
+          for(let i=0;i<120;i++){try{tabs=await fetch('http://127.0.0.1:9228/json').then(r=>r.json());if(tabs.length)break}catch{}await sleep(100)}
+          const tab=tabs.find(t=>t.type==='page')||tabs[0];if(!tab)throw new Error('No browser target');
+          const ws=new WebSocket(tab.webSocketDebuggerUrl);await new Promise((r,j)=>{ws.onopen=r;ws.onerror=j});
+          let id=0;const pending=new Map();ws.onmessage=e=>{const m=JSON.parse(e.data);if(m.id&&pending.has(m.id)){const p=pending.get(m.id);pending.delete(m.id);m.error?p.reject(new Error(JSON.stringify(m.error))):p.resolve(m.result)}};
+          const send=(method,params={})=>{const n=++id;ws.send(JSON.stringify({id:n,method,params}));return new Promise((resolve,reject)=>pending.set(n,{resolve,reject}))};
+          await send('Runtime.enable');await send('Page.enable');
+          await send('Emulation.setDeviceMetricsOverride',{width:937,height:635,deviceScaleFactor:2,mobile:false,screenWidth:937,screenHeight:635});
+          await send('Page.navigate',{url:'http://127.0.0.1:8779/data-search-restored.html?v2-test=1'});await sleep(4500);
+          let status=null;
+          for(let i=0;i<140;i++){
+            const r=await send('Runtime.evaluate',{expression:String.raw`JSON.stringify((()=>{
+              const tiles=[...document.querySelectorAll('.leaflet-tile')];
+              const pane=(typeof map!=='undefined'&&map&&map._mapPane)?map._mapPane:null;
+              const stage=document.querySelector('.mapstage');
+              const rect=stage&&stage.getBoundingClientRect();
+              const badges=[...document.querySelectorAll('.rail-notify')];
+              return {
+                tileCount:tiles.length,
+                loaded:tiles.filter(x=>x.complete&&x.naturalWidth>0).length,
+                failed:tiles.filter(x=>x.complete&&x.naturalWidth===0).length,
+                ready:tiles.length>=12&&tiles.every(x=>x.complete&&x.naturalWidth>0),
+                transform:pane?pane.style.transform:null,
+                applied:(typeof map!=='undefined'&&map)?!!map.__screenshotTransformApplied:false,
+                stage:rect?{x:rect.x,y:rect.y,width:rect.width,height:rect.height}:null,
+                mapSize:(typeof map!=='undefined'&&map)?map.getSize():null,
+                panePosition:(typeof map!=='undefined'&&map&&map._mapPane)?map._mapPane._leaflet_pos:null,
+                badgeCounts:badges.map(x=>x.dataset.count||null),
+                toast:(document.getElementById('screenshotAoiToast')||{}).textContent||null
+              };
+            })())`,returnByValue:true});
+            status=JSON.parse(r.result.value);
+            const sizeOk=status.mapSize&&status.mapSize.x===541&&status.mapSize.y===573;
+            if(status.ready&&status.applied&&sizeOk&&status.badgeCounts.includes('2')&&status.toast==='Kenya AOI area: 627,479 km²')break;
+            await sleep(500);
+          }
+          const sizeOk=status?.mapSize?.x===541&&status?.mapSize?.y===573;
+          if(!status?.ready||!status?.applied||!sizeOk||!status?.badgeCounts?.includes('2'))throw new Error('V2 did not stabilize: '+JSON.stringify(status));
+          const shot=await send('Page.captureScreenshot',{format:'png',fromSurface:true,captureBeyondViewport:false});
+          fs.writeFileSync('verification/data-search-restored.png',Buffer.from(shot.data,'base64'));
+          fs.writeFileSync('verification/status.json',JSON.stringify(status,null,2));
+          ws.close();
+          JS
+
+          node /tmp/capture-final-v2.mjs
+          test -s verification/data-search-restored.png
+          python3 - <<'PY'
+          import struct
+          with open('verification/data-search-restored.png','rb') as handle: header=handle.read(24)
+          assert header[:8]==b'\x89PNG\r\n\x1a\n'
+          width,height=struct.unpack('>II',header[16:24])
+          assert (width,height)==(1874,1270),(width,height)
+          print(f'V2_SCREENSHOT_SIZE={width}x{height}')
+          PY
+
+      - name: Upload v2 verification
+        uses: actions/upload-artifact@v4
+        with:
+          name: final-screenshot-v2-verification
+          path: |
+            site/verification/data-search-restored.png
+            site/verification/status.json
+            site/data-search-restored.html
+          retention-days: 3
