@@ -14,59 +14,38 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - name: Checkout complete published history
+      - name: Checkout complete published page
         uses: actions/checkout@v4
         with:
           ref: gh-pages
           fetch-depth: 0
           path: site
 
-      - name: Checkout reconstruction assets
-        uses: actions/checkout@v4
-        with:
-          ref: main
-          fetch-depth: 1
-          path: source
-
-      - name: Reconstruct screenshot version
+      - name: Repair map layout in the screenshot-matched page
         shell: bash
         run: |
           set -euo pipefail
           cd site
           python3 - <<'PY'
           from pathlib import Path
-          import re
-          import subprocess
 
-          blob = '70a4d8c9819e96c10bbdad7a8a03cc87fea156f5'
-          raw = subprocess.run(
-              ['git', 'cat-file', '-p', blob],
-              check=True,
-              stdout=subprocess.PIPE,
-          ).stdout
-          html = raw.decode('utf-8')
-          remove = [
-              ('style', 'data-search-aoi-tool-replacement-style'),
-              ('style', 'v14-separated-core-modules-style'),
-              ('script', 'data-search-fixed-mode'),
-              ('script', 'data-search-aoi-tool-replacement-script'),
-              ('script', 'v14-separated-core-modules-script'),
-          ]
-          for tag, block_id in remove:
-              html = re.sub(
-                  rf'\s*<{tag} id="{re.escape(block_id)}">.*?</{tag}>\s*',
-                  '\n',
-                  html,
-                  flags=re.S,
-              )
-          Path('data-search-restored.html').write_text(html, encoding='utf-8')
+          path = Path('data-search-restored.html')
+          html = path.read_text(encoding='utf-8')
+          old = "try{if(window.map&&typeof window.map.invalidateSize==='function')setTimeout(function(){window.map.invalidateSize();if(typeof showAOI==='function')showAOI('kenya')},80)}catch(e){}"
+          new = "try{if(typeof map!=='undefined'&&map&&typeof map.invalidateSize==='function')setTimeout(function(){map.invalidateSize({animate:false,pan:false});if(typeof currentTile!=='undefined'&&currentTile&&typeof currentTile.redraw==='function')currentTile.redraw();if(typeof showAOI==='function')showAOI('kenya')},80)}catch(e){}"
+          if old not in html:
+              if new in html:
+                  print('Corrected map layout is already present.')
+              else:
+                  raise SystemExit('Expected screenshot map-layout block was not found; refusing to modify the page.')
+          else:
+              if html.count(old) != 1:
+                  raise SystemExit(f'Expected one map-layout block, found {html.count(old)}')
+              html = html.replace(old, new, 1)
+              path.write_text(html, encoding='utf-8')
           PY
 
-          base64 --decode ../source/.github/assets/candidate1-to-screenshot-final.patch.gz.b64 \
-            | gzip --decompress > /tmp/candidate1-to-screenshot-final.patch
-          patch --silent data-search-restored.html /tmp/candidate1-to-screenshot-final.patch
-
-      - name: Verify exact identity and required screenshot structure
+      - name: Verify exact identity and screenshot structure
         shell: bash
         run: |
           set -euo pipefail
@@ -127,7 +106,7 @@ jobs:
             --virtual-time-budget=12000 \
             --run-all-compositor-stages-before-draw \
             --screenshot=verification/data-search-restored.png \
-            'http://127.0.0.1:8772/data-search-restored.html?exact-screenshot=20260801-2'
+            'http://127.0.0.1:8772/data-search-restored.html?exact-screenshot=20260801-3'
           test -s verification/data-search-restored.png
           file verification/data-search-restored.png
 
@@ -157,5 +136,5 @@ jobs:
             echo 'Screenshot version is already published.'
             exit 0
           fi
-          git commit -m 'Restore DATA SEARCH to supplied screenshot version'
+          git commit -m 'Correct DATA SEARCH screenshot map layout'
           git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" gh-pages
