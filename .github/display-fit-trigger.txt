@@ -1,1 +1,1 @@
-Publish the responsive full-display adaptation for data-search-restored.html.
+Run the responsive full-display adaptation now for data-search-restored.html.
