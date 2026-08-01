@@ -1,0 +1,3 @@
+Validate the live-stable screenshot v2 page without publishing it.
+Expected SHA-256: 44707fdd341562d314ee8904f17b616570b7876c7cb405a4a41a37111070ad5c
+Trigger: 2026-08-01T15:25:00+08:00
