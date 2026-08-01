@@ -1,0 +1,2 @@
+Render the published DATA SEARCH page using the screenshot-derived fractional map scale and center.
+Trigger: 2026-08-01T14:48:00+08:00
