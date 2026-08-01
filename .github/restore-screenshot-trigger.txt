@@ -1,2 +1,2 @@
-Render all nine historical DATA SEARCH candidates and compare them with the supplied screenshot.
-Trigger: 2026-08-01T11:40:00+08:00
+Auto-discover and render all historical DATA SEARCH pages containing the supplied screenshot markers.
+Trigger: 2026-08-01T11:43:00+08:00
