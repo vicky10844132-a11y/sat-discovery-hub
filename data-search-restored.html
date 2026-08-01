@@ -1387,7 +1387,44 @@ html,body{width:100%;height:100%;margin:0!important;padding:0!important}
     if(stage&&!document.getElementById('screenshotAoiToast')){
       var toast=document.createElement('div');toast.id='screenshotAoiToast';toast.textContent='Kenya AOI area: 627,479 km²';stage.appendChild(toast);
     }
-    try{if(typeof map!=='undefined'&&map&&typeof map.invalidateSize==='function')setTimeout(function(){map.invalidateSize({animate:false,pan:false});if(typeof currentTile!=='undefined'&&currentTile&&typeof currentTile.redraw==='function')currentTile.redraw();if(typeof showAOI==='function')showAOI('kenya')},80)}catch(e){}
+    try{
+      if(typeof map!=='undefined'&&map&&map._mapPane){
+        setTimeout(function(){
+          try{
+            if(map.__screenshotUserInteracted)return;
+            var scale=1.0998103275672169;
+            var globalTx=-57.2395445;
+            var globalTy=-34.809153;
+            var mapStage=document.querySelector('.mapstage');
+            if(!mapStage)return;
+            var rect=mapStage.getBoundingClientRect();
+            var panePosition=map._mapPane._leaflet_pos||{x:0,y:0};
+            var tx=scale*panePosition.x+globalTx+(scale-1)*rect.x;
+            var ty=scale*panePosition.y+globalTy+(scale-1)*rect.y;
+            map._mapPane.style.transformOrigin='0 0';
+            map._mapPane.style.transform='matrix('+scale+',0,0,'+scale+','+tx+','+ty+')';
+            map.__screenshotTransformApplied=true;
+          }catch(ignore){}
+        },120);
+        if(stage&&!stage.dataset.screenshotMapRestoreBound){
+          var restoreMapInteraction=function(){
+            try{
+              map.__screenshotUserInteracted=true;
+              if(map.__screenshotTransformApplied&&map._mapPane){
+                var panePosition=map._mapPane._leaflet_pos||{x:0,y:0};
+                map._mapPane.style.transformOrigin='';
+                if(window.L&&L.DomUtil&&typeof L.DomUtil.setPosition==='function')L.DomUtil.setPosition(map._mapPane,panePosition);
+                else map._mapPane.style.transform='translate3d('+panePosition.x+'px,'+panePosition.y+'px,0)';
+                map.__screenshotTransformApplied=false;
+                if(typeof map.invalidateSize==='function')map.invalidateSize({animate:false,pan:false});
+              }
+            }catch(ignore){}
+          };
+          ['pointerdown','touchstart','wheel'].forEach(function(type){stage.addEventListener(type,restoreMapInteraction,{capture:true,passive:true})});
+          stage.dataset.screenshotMapRestoreBound='1';
+        }
+      }
+    }catch(e){}
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',exactScreenshotState);else exactScreenshotState();
   window.addEventListener('load',exactScreenshotState);
