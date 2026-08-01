@@ -1,0 +1,146 @@
+name: Restore exact screenshot DATA SEARCH
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/restore-screenshot-trigger.txt'
+
+permissions:
+  contents: write
+
+jobs:
+  restore-screenshot-version:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout complete published history
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 0
+          path: site
+
+      - name: Locate and reconstruct exact screenshot version
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd site
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib
+          import re
+          import subprocess
+
+          EXPECTED = '8d72926e97e9ba7a6d9c0ec88878d87472c9e1bbeea057477c483217f7d3027c'
+          PATHS = [
+              'data-search-restored.html',
+              'data-search.html',
+              'data-search-aoi-v9.html',
+              'data-search-integrated-v8.html',
+              'DATA_SEARCH_FULL_RESTORED_EN.html',
+              'DATA_SEARCH_AOI_ARCHIVE_TASKING.html',
+          ]
+          REMOVE = [
+              ('style', 'data-search-aoi-tool-replacement-style'),
+              ('style', 'v14-separated-core-modules-style'),
+              ('script', 'data-search-fixed-mode'),
+              ('script', 'data-search-aoi-tool-replacement-script'),
+              ('script', 'v14-separated-core-modules-script'),
+          ]
+
+          def run(*args):
+              return subprocess.run(args, check=True, text=True, stdout=subprocess.PIPE).stdout
+
+          commits = []
+          seen = set()
+          for path in PATHS:
+              result = subprocess.run(
+                  ['git', 'log', '--all', '--format=%H', '--', path],
+                  check=True, text=True, stdout=subprocess.PIPE,
+              ).stdout.splitlines()
+              for commit in result:
+                  key = (commit, path)
+                  if key not in seen:
+                      seen.add(key)
+                      commits.append(key)
+
+          found = None
+          checked = 0
+          for commit, path in commits:
+              proc = subprocess.run(
+                  ['git', 'show', f'{commit}:{path}'],
+                  text=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+              )
+              if proc.returncode != 0:
+                  continue
+              html = proc.stdout
+              if '<!doctype html' not in html[:500].lower():
+                  continue
+              checked += 1
+              candidate = html
+              for tag, block_id in REMOVE:
+                  candidate = re.sub(
+                      rf'\s*<{tag} id="{re.escape(block_id)}">.*?</{tag}>\s*',
+                      '\n', candidate, flags=re.S,
+                  )
+              digest = hashlib.sha256(candidate.encode('utf-8')).hexdigest()
+              if digest == EXPECTED:
+                  found = (commit, path, candidate)
+                  break
+
+          if not found:
+              raise SystemExit(f'Exact screenshot source not found after checking {checked} historical HTML versions')
+
+          commit, source_path, candidate = found
+          required = [
+              'AOI is part of Search',
+              'Regional Projects',
+              'data-tab="aoi"',
+              'data-tab="archive"',
+              'data-tab="monitoring"',
+              'id="coordinateInput"',
+              'id="languageToggle"',
+              'data-panel="account"',
+          ]
+          missing = [item for item in required if item not in candidate]
+          if missing:
+              raise SystemExit('Screenshot version is missing required markers: ' + ', '.join(missing))
+          forbidden = [block_id for _, block_id in REMOVE]
+          remaining = [item for item in forbidden if item in candidate]
+          if remaining:
+              raise SystemExit('Later replacement blocks remain: ' + ', '.join(remaining))
+          if 'dataSearchFrame' in candidate:
+              raise SystemExit('Refusing to publish an iframe wrapper')
+
+          output = Path('data-search-restored.html')
+          output.write_text(candidate, encoding='utf-8')
+          actual = hashlib.sha256(output.read_bytes()).hexdigest()
+          if actual != EXPECTED:
+              raise SystemExit(f'Final hash mismatch: {actual}')
+
+          print('SOURCE_COMMIT=' + commit)
+          print('SOURCE_PATH=' + source_path)
+          print('SCREENSHOT_SHA256=' + actual)
+          print('SCREENSHOT_BYTES=' + str(output.stat().st_size))
+          PY
+
+      - name: Publish only screenshot-matched page
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd site
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data-search-restored.html
+          git diff --cached --check
+          changed="$(git diff --cached --name-only)"
+          test "$changed" = 'data-search-restored.html'
+          if git diff --cached --quiet; then
+            echo 'Exact screenshot version is already published.'
+            exit 0
+          fi
+          git commit -m 'Restore exact screenshot DATA SEARCH version'
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" gh-pages
