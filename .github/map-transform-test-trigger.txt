@@ -1,0 +1,2 @@
+Render the fully loaded map using the screenshot-derived map-layer affine transform.
+Trigger: 2026-08-01T14:55:00+08:00
