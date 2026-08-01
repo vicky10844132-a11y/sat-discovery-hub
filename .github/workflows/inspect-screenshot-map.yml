@@ -1,0 +1,133 @@
+name: Inspect screenshot Leaflet layout
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/map-inspect-trigger.txt'
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-map:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout published page
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 1
+          path: site
+
+      - name: Run browser and inspect Leaflet internals
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd site
+          python3 -m http.server 8774 >/tmp/map-inspect-http.log 2>&1 &
+          server_pid=$!
+          chrome="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser)"
+          rm -rf /tmp/map-inspect-profile
+          "$chrome" \
+            --headless=new \
+            --no-sandbox \
+            --disable-dev-shm-usage \
+            --disable-gpu \
+            --no-first-run \
+            --no-default-browser-check \
+            --remote-debugging-port=9222 \
+            --user-data-dir=/tmp/map-inspect-profile \
+            --window-size=937,635 \
+            --force-device-scale-factor=2 \
+            'http://127.0.0.1:8774/data-search-restored.html?map-inspect=1' \
+            >/tmp/map-inspect-chrome.log 2>&1 &
+          chrome_pid=$!
+          trap 'kill $chrome_pid $server_pid 2>/dev/null || true' EXIT
+
+          for i in $(seq 1 100); do
+            if curl -fsS http://127.0.0.1:9222/json >/tmp/map-tabs.json; then break; fi
+            sleep .1
+          done
+
+          cat >/tmp/inspect-map.mjs <<'JS'
+          const sleep = ms => new Promise(r => setTimeout(r, ms));
+          let tabs = [];
+          for (let i = 0; i < 100; i++) {
+            try {
+              tabs = await fetch('http://127.0.0.1:9222/json').then(r => r.json());
+              if (tabs.some(t => t.url.includes('data-search-restored.html'))) break;
+            } catch {}
+            await sleep(100);
+          }
+          const tab = tabs.find(t => t.url.includes('data-search-restored.html'));
+          if (!tab) throw new Error('DATA SEARCH browser target not found: ' + JSON.stringify(tabs));
+          const ws = new WebSocket(tab.webSocketDebuggerUrl);
+          await new Promise((resolve, reject) => { ws.onopen = resolve; ws.onerror = reject; });
+          let id = 0;
+          const pending = new Map();
+          ws.onmessage = event => {
+            const msg = JSON.parse(event.data);
+            if (msg.id && pending.has(msg.id)) {
+              const {resolve, reject} = pending.get(msg.id);
+              pending.delete(msg.id);
+              msg.error ? reject(new Error(JSON.stringify(msg.error))) : resolve(msg.result);
+            }
+          };
+          function send(method, params = {}) {
+            const current = ++id;
+            ws.send(JSON.stringify({id: current, method, params}));
+            return new Promise((resolve, reject) => pending.set(current, {resolve, reject}));
+          }
+          await send('Runtime.enable');
+          await sleep(13000);
+          const expression = String.raw`JSON.stringify((()=>{
+            const rect = selector => {
+              const el = document.querySelector(selector);
+              if (!el) return null;
+              const r = el.getBoundingClientRect();
+              const s = getComputedStyle(el);
+              return {x:r.x,y:r.y,width:r.width,height:r.height,transform:s.transform,position:s.position,top:s.top,left:s.left,zIndex:s.zIndex};
+            };
+            const tileElements = [...document.querySelectorAll('.leaflet-tile')].map(el => {
+              const r = el.getBoundingClientRect();
+              return {x:r.x,y:r.y,width:r.width,height:r.height,style:el.getAttribute('style'),src:el.src,complete:el.complete,naturalWidth:el.naturalWidth,naturalHeight:el.naturalHeight};
+            });
+            const layerTiles = (typeof currentTile!=='undefined' && currentTile && currentTile._tiles)
+              ? Object.entries(currentTile._tiles).map(([key,value])=>({key,coords:value.coords,loaded:!!value.loaded,active:!!value.active,current:!!value.current,elStyle:value.el&&value.el.getAttribute('style')})) : [];
+            const level = (typeof currentTile!=='undefined' && currentTile && currentTile._level)
+              ? {zoom:currentTile._level.zoom,origin:currentTile._level.origin} : null;
+            return {
+              viewport:{innerWidth,innerHeight,devicePixelRatio},
+              stage:rect('.mapstage'), mapElement:rect('#map'), mapPane:rect('.leaflet-map-pane'), tilePane:rect('.leaflet-tile-pane'), tileContainer:rect('.leaflet-tile-container'), overlayPane:rect('.leaflet-overlay-pane'),
+              mapSize:(typeof map!=='undefined'&&map)?map.getSize():null,
+              mapCenter:(typeof map!=='undefined'&&map)?map.getCenter():null,
+              mapZoom:(typeof map!=='undefined'&&map)?map.getZoom():null,
+              pixelOrigin:(typeof map!=='undefined'&&map)?map.getPixelOrigin():null,
+              mapPanePos:(typeof map!=='undefined'&&map&&map._mapPane)?map._mapPane._leaflet_pos:null,
+              tileZoom:(typeof currentTile!=='undefined'&&currentTile)?currentTile._tileZoom:null,
+              level,
+              tileElements,
+              layerTiles
+            };
+          })())`;
+          const result = await send('Runtime.evaluate', {expression, returnByValue:true, awaitPromise:true});
+          if (result.exceptionDetails) throw new Error(JSON.stringify(result.exceptionDetails));
+          const value = result.result.value;
+          console.log(value);
+          await import('node:fs').then(fs => fs.writeFileSync('map-diagnostics.json', JSON.stringify(JSON.parse(value), null, 2)));
+          ws.close();
+          JS
+
+          node /tmp/inspect-map.mjs | tee /tmp/map-diagnostics.log
+          test -s map-diagnostics.json
+
+      - name: Upload diagnostics
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshot-map-diagnostics
+          path: |
+            site/map-diagnostics.json
+            /tmp/map-inspect-chrome.log
+          retention-days: 2
