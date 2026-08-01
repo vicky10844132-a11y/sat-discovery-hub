@@ -1,4 +1,4 @@
-name: Restore exact first-linked DATA SEARCH page
+name: Fit restored DATA SEARCH to display
 
 on:
   pull_request:
@@ -10,44 +10,168 @@ permissions:
   contents: write
 
 jobs:
-  restore-exact-page:
+  fit-page-to-display:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout complete published history
+      - name: Checkout published page
         uses: actions/checkout@v4
         with:
           ref: gh-pages
           fetch-depth: 0
           path: site
 
-      - name: Restore the exact source blob used by the first link
+      - name: Add bounded responsive display layer
         shell: bash
         run: |
           set -euo pipefail
           cd site
-          source_commit='c164791a6276fae743b8541b9ff0481d4acf32f9'
-          expected_blob='b19000123369353e4fc386a5f14171c5521c80c5'
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
 
-          actual_source_blob="$(git rev-parse "$source_commit:data-search.html")"
-          test "$actual_source_blob" = "$expected_blob"
+          path = Path('data-search-restored.html')
+          html = path.read_text(encoding='utf-8')
+          if '<!doctype html' not in html[:500].lower():
+              raise SystemExit('Published DATA SEARCH file is not valid HTML')
+          if 'dataSearchFrame' in html:
+              raise SystemExit('Refusing to patch an iframe wrapper')
 
-          git show "$source_commit:data-search.html" > data-search-restored.html
-          restored_blob="$(git hash-object data-search-restored.html)"
-          test "$restored_blob" = "$expected_blob"
+          start = '<!-- DISPLAY_ADAPTATION_V1_START -->'
+          end = '<!-- DISPLAY_ADAPTATION_V1_END -->'
+          html = re.sub(
+              r'\n?<!-- DISPLAY_ADAPTATION_V1_START -->.*?<!-- DISPLAY_ADAPTATION_V1_END -->\n?',
+              '\n',
+              html,
+              flags=re.S,
+          )
 
-          grep -q '<div class="coordinate-search"' data-search-restored.html
-          grep -q '<div class="top-actions"' data-search-restored.html
-          test "$(grep -c 'dataSearchFrame' data-search-restored.html || true)" -eq 0
-          test "$(grep -c 'RESTORED_TOP_REMOVED' data-search-restored.html || true)" -eq 0
-          test "$(grep -c 'ITEM1_AOI_STANDALONE' data-search-restored.html || true)" -eq 0
+          patch = r'''
+<!-- DISPLAY_ADAPTATION_V1_START -->
+<style id="display-adaptation-v1">
+:root{
+  --ds-fit-rail:clamp(86px,5.2vw,132px);
+  --ds-fit-side:clamp(336px,22vw,620px);
+  --ds-fit-top:clamp(62px,6.4vh,96px);
+  --ds-fit-pad:clamp(12px,1vw,22px);
+  --ds-rail-width:var(--ds-fit-rail);
+}
+html,body{
+  width:100%!important;
+  height:100%!important;
+  min-width:100%!important;
+  min-height:100%!important;
+  max-width:none!important;
+  max-height:none!important;
+  margin:0!important;
+  overflow:hidden!important;
+}
+body{
+  width:100vw!important;
+  height:100vh!important;
+  height:100dvh!important;
+}
+.app{
+  width:100vw!important;
+  height:100vh!important;
+  height:100dvh!important;
+  min-width:0!important;
+  min-height:100vh!important;
+  max-width:none!important;
+  max-height:none!important;
+  grid-template-columns:var(--ds-fit-rail) var(--ds-fit-side) minmax(0,1fr)!important;
+  grid-template-rows:var(--ds-fit-top) minmax(0,1fr)!important;
+}
+.app.v11-order-full,.app.account-center-workspace{
+  grid-template-columns:var(--ds-fit-rail) minmax(0,1fr) 0!important;
+}
+.topbar{
+  width:100%!important;
+  min-width:0!important;
+  min-height:var(--ds-fit-top)!important;
+}
+.brand{
+  width:calc(var(--ds-fit-rail) + var(--ds-fit-side))!important;
+  min-width:calc(var(--ds-fit-rail) + var(--ds-fit-side))!important;
+  padding-left:clamp(17px,1.25vw,30px)!important;
+  padding-right:clamp(17px,1.25vw,30px)!important;
+}
+.rail{
+  width:100%!important;
+  min-width:0!important;
+  height:100%!important;
+}
+.sidepanel{
+  width:100%!important;
+  min-width:0!important;
+  height:100%!important;
+}
+.mapstage,#map,.map-fallback{
+  width:100%!important;
+  height:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+}
+.panel-head{
+  min-height:var(--ds-fit-top)!important;
+  height:var(--ds-fit-top)!important;
+  padding-left:clamp(16px,1.2vw,28px)!important;
+  padding-right:clamp(16px,1.2vw,28px)!important;
+}
+.panel-body,.data-center-content,.order-center-content{
+  padding:var(--ds-fit-pad)!important;
+}
+.rail-btn{
+  width:min(calc(var(--ds-fit-rail) - 16px),82px)!important;
+}
+@media (min-width:1600px){
+  .brand-name{font-size:17px!important}
+  .brand-sub{font-size:10px!important}
+  .panel-title{font-size:19px!important}
+  .panel-sub{font-size:11px!important}
+  .rail-btn{height:64px!important;min-height:64px!important;gap:4px!important}
+  .rail-btn .tip{font-size:8px!important;line-height:1.15!important}
+  .logo{width:39px!important;height:39px!important}
+  .coordinate-search{height:40px!important;width:min(520px,34vw)!important}
+  .top-actions{padding-right:clamp(16px,1.2vw,28px)!important}
+}
+@media (min-width:2200px){
+  .brand-name{font-size:19px!important}
+  .brand-sub{font-size:11px!important}
+  .panel-title{font-size:22px!important}
+  .panel-sub{font-size:12px!important}
+  .rail-btn{height:72px!important;min-height:72px!important}
+  .rail-btn .tip{font-size:9px!important}
+  .logo{width:43px!important;height:43px!important}
+  .coordinate-search{height:44px!important;width:min(620px,34vw)!important}
+}
+@media (max-width:1280px){
+  :root{
+    --ds-fit-rail:86px;
+    --ds-fit-side:336px;
+    --ds-fit-top:62px;
+    --ds-fit-pad:12px;
+  }
+}
+</style>
+<!-- DISPLAY_ADAPTATION_V1_END -->
+'''
 
-          echo "SOURCE_COMMIT=$source_commit"
-          echo "SOURCE_BLOB=$actual_source_blob"
-          echo "RESTORED_BLOB=$restored_blob"
-          echo "RESTORED_BYTES=$(wc -c < data-search-restored.html)"
-          sha256sum data-search-restored.html
+          if '</head>' not in html:
+              raise SystemExit('Closing head tag was not found')
+          html = html.replace('</head>', patch + '\n</head>', 1)
+          path.write_text(html, encoding='utf-8')
 
-      - name: Publish only data-search-restored.html
+          check = path.read_text(encoding='utf-8')
+          assert check.count(start) == 1
+          assert check.count(end) == 1
+          assert 'grid-template-columns:var(--ds-fit-rail) var(--ds-fit-side) minmax(0,1fr)!important' in check
+          assert '<div class="coordinate-search"' in check
+          assert '<div class="top-actions"' in check
+          assert 'dataSearchFrame' not in check
+          print('PATCHED_BYTES=' + str(len(check.encode('utf-8'))))
+          PY
+
+      - name: Publish only the responsive page
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
@@ -58,9 +182,11 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add data-search-restored.html
           git diff --cached --check
+          changed="$(git diff --cached --name-only)"
+          test "$changed" = 'data-search-restored.html'
           if git diff --cached --quiet; then
-            echo 'Exact first-linked source is already published.'
+            echo 'Responsive display layer is already published.'
             exit 0
           fi
-          git commit -m 'Restore exact first-linked DATA SEARCH page'
+          git commit -m 'Fit restored DATA SEARCH to display'
           git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" gh-pages
