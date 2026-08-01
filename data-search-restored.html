@@ -1387,7 +1387,7 @@ html,body{width:100%;height:100%;margin:0!important;padding:0!important}
     if(stage&&!document.getElementById('screenshotAoiToast')){
       var toast=document.createElement('div');toast.id='screenshotAoiToast';toast.textContent='Kenya AOI area: 627,479 km²';stage.appendChild(toast);
     }
-    try{if(window.map&&typeof window.map.invalidateSize==='function')setTimeout(function(){window.map.invalidateSize();if(typeof showAOI==='function')showAOI('kenya')},80)}catch(e){}
+    try{if(typeof map!=='undefined'&&map&&typeof map.invalidateSize==='function')setTimeout(function(){map.invalidateSize({animate:false,pan:false});if(typeof currentTile!=='undefined'&&currentTile&&typeof currentTile.redraw==='function')currentTile.redraw();if(typeof showAOI==='function')showAOI('kenya')},80)}catch(e){}
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',exactScreenshotState);else exactScreenshotState();
   window.addEventListener('load',exactScreenshotState);
