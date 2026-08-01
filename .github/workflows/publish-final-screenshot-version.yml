@@ -84,7 +84,7 @@ jobs:
           grep -q 'id="coordinateInput"' data-search-restored.html
           grep -q 'Kenya AOI area: 627,479 km²' data-search-restored.html
           grep -q 'showAOI.*kenya' data-search-restored.html
-          grep -q 'data-count="2"' data-search-restored.html
+          grep -q "badge.dataset.count='2'" data-search-restored.html
 
           echo "FINAL_SHA256=$actual"
           echo "FINAL_BYTES=$(wc -c < data-search-restored.html)"
