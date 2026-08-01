@@ -4,16 +4,6 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>DATA SEARCH</title>
-<script id="offline-storage-fallback">
-(function(){
-  try{var k='__data_search_storage_test__';localStorage.setItem(k,'1');localStorage.removeItem(k);}
-  catch(e){
-    var memory={};
-    var fallback={getItem:function(k){return Object.prototype.hasOwnProperty.call(memory,k)?memory[k]:null;},setItem:function(k,v){memory[k]=String(v);},removeItem:function(k){delete memory[k];},clear:function(){memory={};},key:function(i){return Object.keys(memory)[i]||null;}};
-    try{Object.defineProperty(fallback,'length',{get:function(){return Object.keys(memory).length;}});Object.defineProperty(window,'localStorage',{value:fallback,configurable:true});}catch(_){}
-  }
-})();
-</script>
 <link rel="preconnect" href="https://unpkg.com">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
 <style>
@@ -156,16 +146,16 @@ button,input,select{font:inherit}button{cursor:pointer}
   </header>
 
   <aside class="rail">
-    <button class="rail-btn active" data-panel="aoi" title="AOI Center"><svg class="ds-icon" viewBox="0 0 24 24"><path d="M4 7l5-3 5 3 6-2v12l-6 3-5-3-5 2z"></path><path d="M9 4v13M14 7v13"></path></svg><span class="tip">AOI Center</span></button>
-    <button class="rail-btn" data-panel="search" title="Search Center"><svg class="ds-icon" viewBox="0 0 24 24"><rect x="4" y="4" width="11" height="11" rx="2"></rect><circle cx="15.5" cy="15.5" r="4.5"></circle><path d="M19 19l2 2M7 8h5M7 11h3"></path></svg><span class="tip">Search Center</span></button>
-    <button class="rail-btn" data-panel="orbit" title="Orbit Prediction"><svg class="ds-icon" viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="9" ry="4.2" transform="rotate(-25 12 12)"></ellipse><circle cx="12" cy="12" r="2.3"></circle><path d="M4 19c4-7 9-11 16-14"></path></svg><span class="tip">Orbit Prediction</span></button>
-    <button class="rail-btn" data-panel="sources" title="Data Source Library"><svg class="ds-icon" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="7" ry="3"></ellipse><path d="M5 5v6c0 1.7 3.1 3 7 3s7-1.3 7-3V5M5 11v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"></path></svg><span class="tip">Data Source Library</span></button>
-    <button class="rail-btn" data-panel="clientapi" title="Customer API"><svg class="ds-icon" viewBox="0 0 24 24"><path d="M8 7H6a3 3 0 0 0-3 3v4a3 3 0 0 0 3 3h2M16 7h2a3 3 0 0 1 3 3v4a3 3 0 0 1-3 3h-2M8 12h8"></path><path d="M10 9l-3 3 3 3M14 9l3 3-3 3"></path></svg><span class="tip">Customer API</span></button>
-    <button class="rail-btn" data-panel="subscriptions" title="Subscription Center"><svg class="ds-icon" viewBox="0 0 24 24"><path d="M7 4h10v16l-5-3-5 3z"></path><path d="M9.5 9h5M12 6.5v5"></path></svg><span class="tip">Subscription Center</span></button>
-    <button class="rail-btn" data-panel="data" title="Data"><svg class="ds-icon" viewBox="0 0 24 24"><path d="M4 7l8-4 8 4-8 4z"></path><path d="M4 7v10l8 4 8-4V7M12 11v10"></path></svg><span class="tip">Data</span></button>
-    <button class="rail-btn" data-panel="orders" title="Order"><svg class="ds-icon" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"></rect><path d="M9 4.5V3h6v1.5M8 9h8M8 13h8M8 17h5"></path></svg><span class="tip">Order</span></button>
-    <button class="rail-btn" data-panel="account" title="Account Center"><svg class="ds-icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M4.5 21a7.5 7.5 0 0 1 15 0"></path></svg><span class="tip">Account Center</span></button>
-    <div class="rail-bottom"><button class="rail-btn rail-notify" id="globalOrderNotify" data-count="3" onclick="openApiOrderInbox()" title="New orders and alerts" aria-label="New orders and alerts"><svg class="ds-icon" viewBox="0 0 24 24"><path d="M6.5 9.5a5.5 5.5 0 0 1 11 0v3.4l1.5 2.6H5l1.5-2.6z"></path><path d="M9.5 18a2.5 2.5 0 0 0 5 0"></path></svg><span class="tip">Orders & Alerts</span></button><button class="rail-btn"><svg class="ds-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="4"></circle><path d="M5.6 5.6l3.6 3.6M14.8 14.8l3.6 3.6M18.4 5.6l-3.6 3.6M9.2 14.8l-3.6 3.6"></path></svg><span class="tip">Support</span></button></div>
+    <button class="rail-btn active" data-ds-module="aoi" title="AOI Tool"><svg class="ds-icon" viewBox="0 0 24 24"><path d="M4 7l5-3 5 3 6-2v12l-6 3-5-3-5 2z"></path><path d="M9 4v13M14 7v13"></path></svg><span class="rail-core-label">AOI</span><span class="tip">AOI Tool</span></button>
+    <button class="rail-btn" data-ds-module="archive" title="Archive Search"><svg class="ds-icon" viewBox="0 0 24 24"><rect x="4" y="4" width="11" height="11" rx="2"></rect><circle cx="15.5" cy="15.5" r="4.5"></circle><path d="M19 19l2 2M7 8h5M7 11h3"></path></svg><span class="rail-core-label">ARCHIVE</span><span class="tip">Archive Search</span></button>
+    <button class="rail-btn" data-ds-module="tasking" title="Tasking"><svg class="ds-icon" viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="9" ry="4.2" transform="rotate(-25 12 12)"></ellipse><circle cx="12" cy="12" r="2.3"></circle><path d="M4 19c4-7 9-11 16-14"></path></svg><span class="rail-core-label">TASKING</span><span class="tip">Tasking</span></button>
+    <button class="rail-btn" data-ds-module="data" data-panel="data" title="Data Center"><svg class="ds-icon" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="7" ry="3"></ellipse><path d="M5 5v6c0 1.7 3.1 3 7 3s7-1.3 7-3V5M5 11v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"></path></svg><span class="tip">Data Center</span></button>
+    <button class="rail-btn" data-ds-module="orders" data-panel="orders" title="Order Center"><svg class="ds-icon" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"></rect><path d="M9 4.5V3h6v1.5M8 9h8M8 13h8M8 17h5"></path></svg><span class="tip">Order Center</span></button>
+    <button class="rail-btn" data-ds-module="account" data-panel="account" title="Account"><svg class="ds-icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M4.5 21a7.5 7.5 0 0 1 15 0"></path></svg><span class="tip">Account</span></button>
+    <div class="rail-bottom">
+      <button class="rail-btn rail-notify" data-ds-module="alerts" id="globalOrderNotify" data-count="3" onclick="openApiOrderInbox()" title="Orders & Alerts"><svg class="ds-icon" viewBox="0 0 24 24"><path d="M6.5 9.5a5.5 5.5 0 0 1 11 0v3.4l1.5 2.6H5l1.5-2.6z"></path><path d="M9.5 18a2.5 2.5 0 0 0 5 0"></path></svg><span class="tip">Orders & Alerts</span></button>
+      <button class="rail-btn" data-ds-module="support" onclick="openPlatformSettings('help')" title="Help & Company Contact"><svg class="ds-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M9.7 9a2.5 2.5 0 1 1 3.2 2.4c-.9.35-1.4.9-1.4 1.8v.3M12 17.2h.01"></path></svg><span class="tip">Help & Company Contact</span></button>
+    </div>
   </aside>
 
   <aside class="sidepanel">
@@ -808,8 +798,8 @@ mergeRegistrySeed();loadClientApiData();document.addEventListener('DOMContentLoa
   if(rail){rail.innerHTML=`
     <button class="rail-btn active" data-panel="search" title="Search"><svg class="ds-icon" viewBox="0 0 24 24"><path d="M4 5h12v12H4z"></path><path d="M7 8h6M7 11h4"></path><circle cx="16.5" cy="16.5" r="4.5"></circle><path d="M20 20l2 2"></path></svg><span class="tip">Search</span></button>
     <button class="rail-btn" data-panel="orbit" title="Tasking Prediction"><svg class="ds-icon" viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="9" ry="4.2" transform="rotate(-25 12 12)"></ellipse><circle cx="12" cy="12" r="2.3"></circle><path d="M4 19c4-7 9-11 16-14"></path></svg><span class="tip">Tasking Prediction</span></button>
-    <button class="rail-btn" data-panel="data" title="Data"><svg class="ds-icon" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="7" ry="3"></ellipse><path d="M5 5v6c0 1.7 3.1 3 7 3s7-1.3 7-3V5M5 11v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"></path></svg><span class="tip">Data</span></button>
-    <button class="rail-btn" data-panel="orders" title="Order"><svg class="ds-icon" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"></rect><path d="M9 4.5V3h6v1.5M8 9h8M8 13h8M8 17h5"></path></svg><span class="tip">Order</span></button>
+    <button class="rail-btn" data-panel="data" title="Data Center"><svg class="ds-icon" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="7" ry="3"></ellipse><path d="M5 5v6c0 1.7 3.1 3 7 3s7-1.3 7-3V5M5 11v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"></path></svg><span class="tip">Data Center</span></button>
+    <button class="rail-btn" data-panel="orders" title="Order Center"><svg class="ds-icon" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"></rect><path d="M9 4.5V3h6v1.5M8 9h8M8 13h8M8 17h5"></path></svg><span class="tip">Order Center</span></button>
     <button class="rail-btn" data-panel="account" title="Account"><svg class="ds-icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M4.5 21a7.5 7.5 0 0 1 15 0"></path></svg><span class="tip">Account</span></button>
     <div class="rail-bottom"><button class="rail-btn"><svg class="ds-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"></path></svg><span class="tip">Language</span></button><button class="rail-btn"><svg class="ds-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M9.8 9a2.4 2.4 0 1 1 4.5 1.2c-.8 1.2-2.3 1.4-2.3 3M12 17h.01"></path></svg><span class="tip">Support</span></button></div>`;}
 
@@ -1120,8 +1110,8 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       <div class="v11-field"><label>Email address <span>Account name</span></label><input id="v11LoginEmail" type="email" autocomplete="username" placeholder="name@company.com"></div>
       <div class="v11-field"><label>Password</label><input id="v11LoginPassword" type="password" autocomplete="current-password" placeholder="Enter password" onkeydown="if(event.key==='Enter')v11Login()"></div>
       <button class="v11-main-btn" style="width:100%" onclick="v11Login()">Sign in</button>
-      <div class="v11-demo-grid"><button onclick="v11FillDemo('admin')"><strong>Highest Administrator</strong>public-admin@datasearch.example</button><button onclick="v11FillDemo('customer')"><strong>Contract Customer</strong>Assigned modules</button><button onclick="v11FillDemo('public')"><strong>Public Account</strong>Search only</button></div>
-      <div class="v11-note" style="margin:12px 0 0"><strong>Public experience mode</strong>All platform modules are enabled in this published demonstration. Authentication is simulated locally. Production deployment requires server-side authentication, password hashing, MFA, session expiry, audit logging and encrypted credential storage.</div>
+      <div class="v11-demo-grid"><button onclick="v11FillDemo('admin')"><strong>Highest Administrator</strong>michael.xu@omeospace.com</button><button onclick="v11FillDemo('customer')"><strong>Contract Customer</strong>Assigned modules</button><button onclick="v11FillDemo('public')"><strong>Public Account</strong>Search only</button></div>
+      <div class="v11-note" style="margin:12px 0 0"><strong>Prototype security note</strong>This offline prototype simulates authentication locally. Production deployment requires server-side authentication, password hashing, MFA, session expiry, audit logging and encrypted credential storage.</div>
     </div>
     <div class="v11-modal-foot"><div class="v11-foot-links"><button class="v11-link-btn" onclick="v11OpenRegister()">Register</button><button class="v11-link-btn" onclick="v11OpenRecovery()">Forgot password</button></div><button class="v11-secondary-btn" onclick="v11Close('v11LoginModal')">Cancel</button></div>
   </div>
@@ -1219,14 +1209,14 @@ let v11RequestedPermission='';
 
 function v11SeedUsers(){
   return [
-    {email:'public-admin@datasearch.example',phone:'',company:'Platform Owner',password:'PUBLIC-DEMO-ONLY',audience:'internal',accountType:'employee',customType:'',customRole:'',role:'superadmin',contract:'active',permissions:[...V11_ALL_PERMISSIONS]},
+    {email:'michael.xu@omeospace.com',phone:'',company:'Platform Owner',password:'123456',audience:'internal',accountType:'employee',customType:'',customRole:'',role:'superadmin',contract:'active',permissions:[...V11_ALL_PERMISSIONS]},
     {email:'operations@example.com',phone:'',company:'Example Company',password:'Operations123!',audience:'internal',accountType:'employee',customType:'',customRole:'',role:'operations',contract:'active',permissions:[...V11_ROLE_PRESETS.operations]},
     {email:'finance@example.com',phone:'',company:'Example Company',password:'Finance123!',audience:'internal',accountType:'employee',customType:'',customRole:'',role:'finance',contract:'active',permissions:[...V11_ROLE_PRESETS.finance]},
     {email:'customer@example.com',phone:'',company:'Contract Customer Ltd.',password:'Customer123!',audience:'external',accountType:'customer',customType:'',customRole:'',role:'customer',contract:'active',permissions:['search','tasking','orders','reports']},
     {email:'public@example.com',phone:'',company:'Public User',password:'Public123!',audience:'external',accountType:'customer',customType:'',customRole:'',role:'public',contract:'pending',permissions:['search']}
   ];
 }
-function v11LoadUsers(){try{const raw=JSON.parse(localStorage.getItem(V11_USERS_KEY)||'null');v11Users=Array.isArray(raw)&&raw.length?raw:v11SeedUsers();}catch(e){v11Users=v11SeedUsers();}v11Users.forEach(u=>{u.email=(u.email||'').toLowerCase();u.accountType=u.accountType||(u.audience==='internal'?'employee':(u.role==='supplier'?'supplier':u.role==='agent'?'agent':'customer'));u.customType=u.customType||'';u.customRole=u.customRole||'';u.permissions=Array.isArray(u.permissions)?u.permissions:['search'];if(!u.permissions.includes('search'))u.permissions.unshift('search');});let owner=v11Users.find(u=>u.email==='public-admin@datasearch.example');if(!owner){owner=v11SeedUsers()[0];v11Users.unshift(owner);}Object.assign(owner,{password:'PUBLIC-DEMO-ONLY',audience:'internal',accountType:'employee',role:'superadmin',contract:'active',permissions:[...V11_ALL_PERMISSIONS]});v11Users.filter(u=>u!==owner&&u.role==='superadmin').forEach(u=>{u.role='administrator';u.permissions=u.permissions.filter(p=>p!=='admin');});v11SaveUsers();}
+function v11LoadUsers(){try{const raw=JSON.parse(localStorage.getItem(V11_USERS_KEY)||'null');v11Users=Array.isArray(raw)&&raw.length?raw:v11SeedUsers();}catch(e){v11Users=v11SeedUsers();}v11Users.forEach(u=>{u.email=(u.email||'').toLowerCase();u.accountType=u.accountType||(u.audience==='internal'?'employee':(u.role==='supplier'?'supplier':u.role==='agent'?'agent':'customer'));u.customType=u.customType||'';u.customRole=u.customRole||'';u.permissions=Array.isArray(u.permissions)?u.permissions:['search'];if(!u.permissions.includes('search'))u.permissions.unshift('search');});let owner=v11Users.find(u=>u.email==='michael.xu@omeospace.com');if(!owner){owner=v11SeedUsers()[0];v11Users.unshift(owner);}Object.assign(owner,{password:'123456',audience:'internal',accountType:'employee',role:'superadmin',contract:'active',permissions:[...V11_ALL_PERMISSIONS]});v11Users.filter(u=>u!==owner&&u.role==='superadmin').forEach(u=>{u.role='administrator';u.permissions=u.permissions.filter(p=>p!=='admin');});v11SaveUsers();}
 function v11SaveUsers(){localStorage.setItem(V11_USERS_KEY,JSON.stringify(v11Users));}
 function v11LoadSession(){const email=(localStorage.getItem(V11_SESSION_KEY)||'').toLowerCase();v11CurrentUser=v11Users.find(u=>u.email===email)||v11Users.find(u=>u.role==='superadmin')||v11Users[0]||null;if(v11CurrentUser)localStorage.setItem(V11_SESSION_KEY,v11CurrentUser.email);}
 function v11IsSuper(){return !!v11CurrentUser&&(v11CurrentUser.role==='superadmin'||v11CurrentUser.permissions.includes('admin'));}
@@ -1237,7 +1227,7 @@ window.v11Close=function(id){document.getElementById(id)?.classList.remove('show
 window.v11OpenLogin=function(){['v11RegisterModal','v11RecoveryModal','v11ResetModal'].forEach(v11Close);v11Open('v11LoginModal');setTimeout(()=>document.getElementById('v11LoginEmail')?.focus(),60);};
 window.v11OpenRegister=function(){['v11LoginModal','v11RecoveryModal','v11ResetModal'].forEach(v11Close);v11Open('v11RegisterModal');};
 window.v11OpenRecovery=function(){['v11LoginModal','v11RegisterModal','v11ResetModal'].forEach(v11Close);v11RecoveryGo(1);v11Open('v11RecoveryModal');};
-window.v11FillDemo=function(type){const d=type==='admin'?['public-admin@datasearch.example','PUBLIC-DEMO-ONLY']:type==='customer'?['customer@example.com','Customer123!']:['public@example.com','Public123!'];document.getElementById('v11LoginEmail').value=d[0];document.getElementById('v11LoginPassword').value=d[1];};
+window.v11FillDemo=function(type){const d=type==='admin'?['michael.xu@omeospace.com','123456']:type==='customer'?['customer@example.com','Customer123!']:['public@example.com','Public123!'];document.getElementById('v11LoginEmail').value=d[0];document.getElementById('v11LoginPassword').value=d[1];};
 window.v11Login=function(){const email=(document.getElementById('v11LoginEmail').value||'').trim().toLowerCase(),password=document.getElementById('v11LoginPassword').value||'';const u=v11Users.find(x=>x.email===email&&x.password===password);if(!u){notify('Sign-in failed','Check the email address and password.');return;}v11CurrentUser=u;localStorage.setItem(V11_SESSION_KEY,u.email);v11Close('v11LoginModal');v11RenderAuth();notify('Signed in',u.email+' is now active.');if(v11HasPermission('orders')&&u.role==='superadmin'){}else selectPanel('search');};
 window.v11Logout=function(){localStorage.removeItem(V11_SESSION_KEY);v11CurrentUser=null;document.querySelector('.app')?.classList.remove('v11-order-full','v11-order-api');v11RenderAuth();selectPanel('search');notify('Signed out','The platform has returned to public Search access.');};
 window.v11RegistrationTypeChanged=function(){const t=document.getElementById('v11RegisterAccountType')?.value;const w=document.getElementById('v11RegisterCustomTypeWrap');if(w)w.style.display=t==='custom'?'block':'none';};
@@ -1275,17 +1265,17 @@ function v11SwitchSettingsTab(tab){if(tab!=='help'&&!v11IsSuper()){v11ShowAccess
 window.switchSettingsTab=v11SwitchSettingsTab;
 
 function v11AccessStats(){return{total:v11Users.length,external:v11Users.filter(u=>u.audience==='external').length,active:v11Users.filter(u=>u.audience==='external'&&u.contract==='active').length,pending:v11Users.filter(u=>u.audience==='external'&&u.contract!=='active').length};}
-window.v11RenderAccessControl=function(){const pane=document.getElementById('v11AccessControlPane');if(!pane)return;if(!v11IsSuper()){pane.innerHTML='<div class="v11-note"><strong>Highest permission required</strong>Only the highest administrator can classify accounts, allocate functions and assign export rights.</div>';return;}const s=v11AccessStats();pane.innerHTML=`<div class="v9-admin-note"><strong>HIGHEST ADMINISTRATOR · public-admin@datasearch.example</strong> Every new email account receives basic Search access only. Relationship classification, employee duties, commercial functions and all export rights are assigned here.</div><div class="v11-permission-legend"><div><strong>Relationship</strong><span>Customer, company employee, agent, supplier, data-production partner or a manually entered relationship.</span></div><div><strong>Functional role</strong><span>Role presets are starting points. Every individual permission can still be changed.</span></div><div><strong>Export governance</strong><span>Module exports and the platform master workbook are separate rights and can only be granted here.</span></div></div><div class="v11-access-summary"><div class="v11-access-kpi"><span>Total accounts</span><strong>${s.total}</strong></div><div class="v11-access-kpi"><span>Company employees</span><strong>${v11Users.filter(u=>u.accountType==='employee').length}</strong></div><div class="v11-access-kpi"><span>External accounts</span><strong>${s.external}</strong></div><div class="v11-access-kpi"><span>Active / verified</span><strong>${v11Users.filter(u=>u.contract==='active').length}</strong></div></div><div class="v12-preset-note"><strong>Suggested employee presets</strong><span>Sales: Search, tasking, orders and reports. Operations: tasking, data and order handling. Finance: orders, settlements, invoices and reports. Data Source and API roles remain separate. Export rights are never added automatically.</span></div><div class="v11-access-toolbar"><div class="v11-field"><label>Add account email</label><input id="v11AddUserEmail" type="email" placeholder="name@company.com"></div><div class="v11-field"><label>Relationship</label><select id="v11AddUserAccountType" onchange="v11AddTypeChanged()">${Object.entries(V11_ACCOUNT_TYPES).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}</select></div><div class="v11-field v12-add-custom" id="v11AddCustomWrap" style="display:none"><label>Custom relationship</label><input id="v11AddUserCustomType" placeholder="Enter custom relationship"></div><button class="v11-main-btn" onclick="v11AddManagedUser()">Add account</button></div><div class="v12-user-list">${v11Users.map(v11UserCard).join('')}</div><div class="v11-note" style="margin-top:12px"><strong>Enforcement rule</strong>External accounts require Active contract status for non-Search functions. Company employees also start with Search only until their role and functions are assigned. Account names remain the registered email address.</div>`;};
+window.v11RenderAccessControl=function(){const pane=document.getElementById('v11AccessControlPane');if(!pane)return;if(!v11IsSuper()){pane.innerHTML='<div class="v11-note"><strong>Highest permission required</strong>Only the highest administrator can classify accounts, allocate functions and assign export rights.</div>';return;}const s=v11AccessStats();pane.innerHTML=`<div class="v9-admin-note"><strong>HIGHEST ADMINISTRATOR · michael.xu@omeospace.com</strong> Every new email account receives basic Search access only. Relationship classification, employee duties, commercial functions and all export rights are assigned here.</div><div class="v11-permission-legend"><div><strong>Relationship</strong><span>Customer, company employee, agent, supplier, data-production partner or a manually entered relationship.</span></div><div><strong>Functional role</strong><span>Role presets are starting points. Every individual permission can still be changed.</span></div><div><strong>Export governance</strong><span>Module exports and the platform master workbook are separate rights and can only be granted here.</span></div></div><div class="v11-access-summary"><div class="v11-access-kpi"><span>Total accounts</span><strong>${s.total}</strong></div><div class="v11-access-kpi"><span>Company employees</span><strong>${v11Users.filter(u=>u.accountType==='employee').length}</strong></div><div class="v11-access-kpi"><span>External accounts</span><strong>${s.external}</strong></div><div class="v11-access-kpi"><span>Active / verified</span><strong>${v11Users.filter(u=>u.contract==='active').length}</strong></div></div><div class="v12-preset-note"><strong>Suggested employee presets</strong><span>Sales: Search, tasking, orders and reports. Operations: tasking, data and order handling. Finance: orders, settlements, invoices and reports. Data Source and API roles remain separate. Export rights are never added automatically.</span></div><div class="v11-access-toolbar"><div class="v11-field"><label>Add account email</label><input id="v11AddUserEmail" type="email" placeholder="name@company.com"></div><div class="v11-field"><label>Relationship</label><select id="v11AddUserAccountType" onchange="v11AddTypeChanged()">${Object.entries(V11_ACCOUNT_TYPES).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}</select></div><div class="v11-field v12-add-custom" id="v11AddCustomWrap" style="display:none"><label>Custom relationship</label><input id="v11AddUserCustomType" placeholder="Enter custom relationship"></div><button class="v11-main-btn" onclick="v11AddManagedUser()">Add account</button></div><div class="v12-user-list">${v11Users.map(v11UserCard).join('')}</div><div class="v11-note" style="margin-top:12px"><strong>Enforcement rule</strong>External accounts require Active contract status for non-Search functions. Company employees also start with Search only until their role and functions are assigned. Account names remain the registered email address.</div>`;};
 function v11TypeOptions(selected){return Object.entries(V11_ACCOUNT_TYPES).map(([k,v])=>`<option value="${k}" ${selected===k?'selected':''}>${v}</option>`).join('')}
 function v11RoleOptions(selected){return Object.entries(V11_ROLE_LABELS).filter(([k])=>k!=='superadmin'||selected==='superadmin').map(([k,v])=>`<option value="${k}" ${selected===k?'selected':''}>${v}</option>`).join('')}
 function v11PermissionChecks(u,items,kind,fixed){return items.map(p=>`<label class="v12-right-item"><input type="checkbox" data-${kind}="${p}" ${u.permissions.includes(p)?'checked':''} ${(p==='search'||fixed)?'disabled':''}><span>${v11Esc(V11_PERMISSION_LABELS[p])}</span></label>`).join('')}
-function v11UserCard(u){const fixed=u.email==='public-admin@datasearch.example'||u.role==='superadmin';return `<article class="v12-user-card" data-v11-user="${v11Esc(u.email)}"><div class="v12-user-head"><div><strong>${v11Esc(u.email)}</strong><span>${v11Esc(u.company||'No company')} · ${v11Esc(u.phone||'No mobile')}</span></div>${fixed?'<b>HIGHEST ADMINISTRATOR</b>':`<span class="v11-contract ${v11Esc(u.contract)}">${v11Esc(u.contract)}</span>`}</div><div class="v12-user-fields"><label>Relationship<select data-field="accountType" ${fixed?'disabled':''} onchange="v11CardTypeChanged(this)">${v11TypeOptions(u.accountType)}</select></label><label class="v12-custom-type" style="display:${u.accountType==='custom'?'block':'none'}">Custom relationship<input data-field="customType" value="${v11Esc(u.customType||'')}" ${fixed?'disabled':''}></label><label>Functional role<select data-field="role" ${fixed?'disabled':''} onchange="v11CardRoleChanged(this)">${v11RoleOptions(u.role)}</select></label><label class="v12-custom-role" style="display:${u.role==='custom'?'block':'none'}">Custom role<input data-field="customRole" value="${v11Esc(u.customRole||'')}" ${fixed?'disabled':''}></label><label>Contract / verification<select data-field="contract" ${fixed?'disabled':''}><option value="pending" ${u.contract==='pending'?'selected':''}>Pending</option><option value="active" ${u.contract==='active'?'selected':''}>Active</option><option value="suspended" ${u.contract==='suspended'?'selected':''}>Suspended</option><option value="expired" ${u.contract==='expired'?'selected':''}>Expired</option></select></label></div><div class="v12-rights-title"><strong>Functional permissions</strong>${fixed?'':'<button onclick="v11ApplyRolePreset(\''+v11Esc(u.email)+'\')">Apply role preset</button>'}</div><div class="v12-right-grid">${v11PermissionChecks(u,V11_FUNCTION_PERMISSIONS,'permission',fixed)}</div><div class="v12-rights-title"><strong>Export permissions</strong><span>Explicit assignment only</span></div><div class="v12-right-grid export">${v11PermissionChecks(u,V11_EXPORT_PERMISSIONS,'export',fixed)}</div><div class="v12-user-actions">${fixed?'<span>This account is locked as the highest administrator.</span>':'<button class="v11-secondary-btn" onclick="v11SaveUserRow(\''+v11Esc(u.email)+'\')">Save account & rights</button>'}</div></article>`}
+function v11UserCard(u){const fixed=u.email==='michael.xu@omeospace.com'||u.role==='superadmin';return `<article class="v12-user-card" data-v11-user="${v11Esc(u.email)}"><div class="v12-user-head"><div><strong>${v11Esc(u.email)}</strong><span>${v11Esc(u.company||'No company')} · ${v11Esc(u.phone||'No mobile')}</span></div>${fixed?'<b>HIGHEST ADMINISTRATOR</b>':`<span class="v11-contract ${v11Esc(u.contract)}">${v11Esc(u.contract)}</span>`}</div><div class="v12-user-fields"><label>Relationship<select data-field="accountType" ${fixed?'disabled':''} onchange="v11CardTypeChanged(this)">${v11TypeOptions(u.accountType)}</select></label><label class="v12-custom-type" style="display:${u.accountType==='custom'?'block':'none'}">Custom relationship<input data-field="customType" value="${v11Esc(u.customType||'')}" ${fixed?'disabled':''}></label><label>Functional role<select data-field="role" ${fixed?'disabled':''} onchange="v11CardRoleChanged(this)">${v11RoleOptions(u.role)}</select></label><label class="v12-custom-role" style="display:${u.role==='custom'?'block':'none'}">Custom role<input data-field="customRole" value="${v11Esc(u.customRole||'')}" ${fixed?'disabled':''}></label><label>Contract / verification<select data-field="contract" ${fixed?'disabled':''}><option value="pending" ${u.contract==='pending'?'selected':''}>Pending</option><option value="active" ${u.contract==='active'?'selected':''}>Active</option><option value="suspended" ${u.contract==='suspended'?'selected':''}>Suspended</option><option value="expired" ${u.contract==='expired'?'selected':''}>Expired</option></select></label></div><div class="v12-rights-title"><strong>Functional permissions</strong>${fixed?'':'<button onclick="v11ApplyRolePreset(\''+v11Esc(u.email)+'\')">Apply role preset</button>'}</div><div class="v12-right-grid">${v11PermissionChecks(u,V11_FUNCTION_PERMISSIONS,'permission',fixed)}</div><div class="v12-rights-title"><strong>Export permissions</strong><span>Explicit assignment only</span></div><div class="v12-right-grid export">${v11PermissionChecks(u,V11_EXPORT_PERMISSIONS,'export',fixed)}</div><div class="v12-user-actions">${fixed?'<span>This account is locked as the highest administrator.</span>':'<button class="v11-secondary-btn" onclick="v11SaveUserRow(\''+v11Esc(u.email)+'\')">Save account & rights</button>'}</div></article>`}
 window.v11AddTypeChanged=function(){const t=document.getElementById('v11AddUserAccountType')?.value;const w=document.getElementById('v11AddCustomWrap');if(w)w.style.display=t==='custom'?'block':'none';};
 window.v11CardTypeChanged=function(sel){const card=sel.closest('.v12-user-card');const wrap=card?.querySelector('.v12-custom-type');if(wrap)wrap.style.display=sel.value==='custom'?'block':'none';};
 window.v11CardRoleChanged=function(sel){const card=sel.closest('.v12-user-card');const wrap=card?.querySelector('.v12-custom-role');if(wrap)wrap.style.display=sel.value==='custom'?'block':'none';};
 window.v11ApplyRolePreset=function(email){const card=document.querySelector(`.v12-user-card[data-v11-user="${CSS.escape(email)}"]`);if(!card)return;const role=card.querySelector('[data-field="role"]')?.value||'custom';const preset=V11_ROLE_PRESETS[role]||['search'];card.querySelectorAll('[data-permission]').forEach(cb=>{cb.checked=preset.includes(cb.dataset.permission)});notify('Role preset applied','Review the functions and export rights, then save the account.');};
 window.v11AddManagedUser=function(){const email=(document.getElementById('v11AddUserEmail').value||'').trim().toLowerCase(),accountType=document.getElementById('v11AddUserAccountType')?.value||'customer',customType=(document.getElementById('v11AddUserCustomType')?.value||'').trim();if(!/^\S+@\S+\.\S+$/.test(email)||v11Users.some(u=>u.email===email)){notify('Cannot add account','Use a unique valid email address.');return;}if(accountType==='custom'&&!customType){notify('Custom relationship required','Enter the custom relationship.');return;}const internal=accountType==='employee';v11Users.push({email,phone:'',company:'',password:'Temporary123!',audience:internal?'internal':'external',accountType,customType,customRole:accountType==='custom'?customType:'',role:internal?'employee_pending':(accountType==='partner_production'?'partner_production':accountType==='custom'?'custom':accountType),contract:'pending',permissions:['search']});v11SaveUsers();v11RenderAccessControl();notify('Account added',email+' was created with Search-only access and a temporary prototype password.');};
-window.v11SaveUserRow=function(email){const card=document.querySelector(`.v12-user-card[data-v11-user="${CSS.escape(email)}"]`),u=v11Users.find(x=>x.email===email);if(!card||!u)return;u.accountType=card.querySelector('[data-field="accountType"]')?.value||u.accountType;u.customType=card.querySelector('[data-field="customType"]')?.value.trim()||'';u.audience=u.accountType==='employee'?'internal':'external';u.role=card.querySelector('[data-field="role"]')?.value||u.role;u.customRole=card.querySelector('[data-field="customRole"]')?.value.trim()||'';u.contract=card.querySelector('[data-field="contract"]')?.value||u.contract;const funcs=Array.from(card.querySelectorAll('[data-permission]:checked')).map(x=>x.dataset.permission),exports=Array.from(card.querySelectorAll('[data-export]:checked')).map(x=>x.dataset.export);u.permissions=[...new Set(['search',...funcs.filter(p=>p!=='search'),...exports])];if(u.email==='public-admin@datasearch.example'){u.role='superadmin';u.permissions=[...V11_ALL_PERMISSIONS];}v11SaveUsers();if(v11CurrentUser?.email===u.email)v11CurrentUser=u;v11RenderAuth();v11RenderAccessControl();notify('Account saved',email+' functions and export rights were updated.');};
+window.v11SaveUserRow=function(email){const card=document.querySelector(`.v12-user-card[data-v11-user="${CSS.escape(email)}"]`),u=v11Users.find(x=>x.email===email);if(!card||!u)return;u.accountType=card.querySelector('[data-field="accountType"]')?.value||u.accountType;u.customType=card.querySelector('[data-field="customType"]')?.value.trim()||'';u.audience=u.accountType==='employee'?'internal':'external';u.role=card.querySelector('[data-field="role"]')?.value||u.role;u.customRole=card.querySelector('[data-field="customRole"]')?.value.trim()||'';u.contract=card.querySelector('[data-field="contract"]')?.value||u.contract;const funcs=Array.from(card.querySelectorAll('[data-permission]:checked')).map(x=>x.dataset.permission),exports=Array.from(card.querySelectorAll('[data-export]:checked')).map(x=>x.dataset.export);u.permissions=[...new Set(['search',...funcs.filter(p=>p!=='search'),...exports])];if(u.email==='michael.xu@omeospace.com'){u.role='superadmin';u.permissions=[...V11_ALL_PERMISSIONS];}v11SaveUsers();if(v11CurrentUser?.email===u.email)v11CurrentUser=u;v11RenderAuth();v11RenderAccessControl();notify('Account saved',email+' functions and export rights were updated.');};
 
 function v11PatchDocuments(){const oldNew=window.createNewOrderForm;if(typeof oldNew==='function')window.createNewOrderForm=function(){if(!v11HasPermission('orders')){v11ShowAccess('orders');return;}oldNew();if(v11CurrentUser){const o=typeof currentOrder==='function'?currentOrder():null;if(o&&!o.recipientEmail)o.recipientEmail=v11CurrentUser.email;if(o&&o.customer==='New Customer')o.customer=v11CurrentUser.company||v11CurrentUser.email;}};const oldEmail=window.openDocumentEmail;if(typeof oldEmail==='function')window.openDocumentEmail=function(type){if(!v11HasPermission(type==='settlement'?'settlements':'orders')){v11ShowAccess(type==='settlement'?'settlements':'orders');return;}oldEmail(type);const to=document.getElementById('v9EmailTo');if(to&&!to.value&&v11CurrentUser)to.value=v11CurrentUser.email;};}
 
@@ -1298,13 +1288,13 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 <script>
 (function(){
 'use strict';
-const V12_USERS_KEY='dataSearchPublicUsersV1',V12_SESSION_KEY='dataSearchPublicSessionV1',V12_INVOICE_KEY='DS_V12_INVOICES',V12_INVOICE_COUNTER='DS_V12_INVOICE_COUNTER';
+const V12_USERS_KEY='dataSearchV12Users',V12_SESSION_KEY='dataSearchV12Session',V12_INVOICE_KEY='DS_V12_INVOICES',V12_INVOICE_COUNTER='DS_V12_INVOICE_COUNTER';
 const MODULE_EXPORT_RIGHT={search:'export_search',tasking:'export_tasking',data:'export_data',orders:'export_orders',api:'export_api',finance:'export_finance',users:'export_users',order_center_all:'export_order_center_all'};
 const LS={sources:'DATA_SEARCH_SOURCE_REGISTRY_V6',connections:'DATA_SEARCH_CLIENT_API_V6',apiOrders:'DATA_SEARCH_API_ORDERS_V6',orders:'DS_V9_ORDERS',settlements:'DS_V9_SETTLEMENTS',mailboxes:'DS_V9_MAILBOXES',emailLog:'DS_V9_EMAIL_LOG',settings:'DS_V9_PLATFORM_SETTINGS'};
 function parse(k,f=[]){try{const v=JSON.parse(localStorage.getItem(k)||'null');return v??f}catch(e){return f}}
 function users(){return parse(V12_USERS_KEY,[])}
 function current(){const e=(localStorage.getItem(V12_SESSION_KEY)||'').toLowerCase();return users().find(u=>u.email===e)||null}
-function isSuper(){const u=current();return !!u&&(u.email==='public-admin@datasearch.example'||u.role==='superadmin'||(u.permissions||[]).includes('admin'))}
+function isSuper(){const u=current();return !!u&&(u.email==='michael.xu@omeospace.com'||u.role==='superadmin'||(u.permissions||[]).includes('admin'))}
 function can(p){return true}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function flat(o,p='',r={}){if(o==null){r[p||'value']='';return r}if(Array.isArray(o)){r[p||'value']=o.map(x=>typeof x==='object'?JSON.stringify(redact(x)):x).join('; ');return r}if(typeof o==='object'){Object.entries(o).forEach(([k,v])=>{const key=p?p+'.'+k:k;if(v&&typeof v==='object'&&!Array.isArray(v))flat(v,key,r);else r[key]=Array.isArray(v)?v.map(x=>typeof x==='object'?JSON.stringify(redact(x)):x).join('; '):v});return r}r[p||'value']=o;return r}
@@ -1323,7 +1313,10 @@ function invoices(){return parse(V12_INVOICE_KEY,[])}
 function saveInvoices(v){localStorage.setItem(V12_INVOICE_KEY,JSON.stringify(v))}
 window.v12RenderInvoicesView=function(){const c=document.getElementById('orderCenterContent');if(!c)return;const sets=parse(LS.settlements,[]),inv=invoices();c.innerHTML=`<div class="v12-invoice-toolbar"><div><h3>Invoices</h3><p>Finance users can generate invoices from settlement statements. Invoice and export permissions remain separately controlled.</p></div><div><select id="v12SettlementForInvoice"><option value="">Select a settlement statement</option>${sets.map(s=>`<option value="${esc(s.id)}">${esc(s.statementNo)} · ${esc(s.customer)} · ${esc(s.currency)} ${Number(s.total||0).toFixed(2)}</option>`).join('')}</select> <button class="v9-btn primary" onclick="v12GenerateInvoice()">Generate Invoice</button></div></div><div>${inv.length?inv.map(i=>`<div class="v12-invoice-row"><div><strong>${esc(i.invoiceNo)}</strong><span>Settlement ${esc(i.statementNo)}</span></div><div><strong>${esc(i.customer)}</strong><span>${esc(i.email||'No email')}</span></div><div><strong>${esc(i.currency)} ${Number(i.total||0).toFixed(2)}</strong><span>Due ${esc(i.dueDate)}</span></div><div><strong>${esc(i.status)}</strong><span>${esc(i.date)}</span></div><div><button class="primary" onclick="v12DownloadInvoice('${esc(i.id)}')">Download</button> <button onclick="v12SendInvoice('${esc(i.id)}')">Send Email</button></div></div>`).join(''):'<div class="v9-admin-note">No invoice has been generated.</div>'}</div>`;v12RefreshExportButtons()};
 window.v12GenerateInvoice=function(){if(!can('invoices')){window.notify?.('Invoice permission required','Finance or invoice access must be assigned.');return}const id=document.getElementById('v12SettlementForInvoice')?.value;if(!id){window.notify?.('Select settlement','Choose the settlement statement used to generate the invoice.');return}const s=parse(LS.settlements,[]).find(x=>x.id===id);if(!s)return;const inv=invoices();const item={id:'inv-'+Date.now(),invoiceNo:nextInvoiceNo(),statementId:s.id,statementNo:s.statementNo,customer:s.customer,email:s.customerEmail||'',date:new Date().toISOString().slice(0,10),dueDate:s.dueDate,currency:s.currency,subtotal:s.subtotal,taxRate:s.taxRate,tax:s.tax,total:s.total,status:'Draft'};inv.unshift(item);saveInvoices(inv);v12RenderInvoicesView();window.notify?.('Invoice generated',item.invoiceNo+' was created from '+s.statementNo)};
-function invoiceHtml(i){return `<!doctype html><html><head><meta charset="utf-8"><style>body{font-family:Arial;padding:40px;color:#20384f}h1{color:#1f5ec4}.box{border:1px solid #d6e0e9;padding:16px;margin:16px 0}table{width:100%;border-collapse:collapse}td{padding:8px;border-bottom:1px solid #e1e7ed}</style></head><body><h1>INVOICE</h1><div class="box"><b>${esc(i.invoiceNo)}</b><br>Date ${esc(i.date)} · Due ${esc(i.dueDate)}</div><p>Bill to: <b>${esc(i.customer)}</b><br>${esc(i.email)}</p><table><tr><td>Settlement Statement</td><td>${esc(i.statementNo)}</td></tr><tr><td>Subtotal</td><td>${esc(i.currency)} ${Number(i.subtotal||0).toFixed(2)}</td></tr><tr><td>Tax</td><td>${esc(i.currency)} ${Number(i.tax||0).toFixed(2)}</td></tr><tr><td><b>Total</b></td><td><b>${esc(i.currency)} ${Number(i.total||0).toFixed(2)}</b></td></tr></table></body></html>`}
+function invoiceHtml(i){return `<!doctype html><html><head><meta charset="utf-8"><style>body{font-family:Arial;padding:40px;color:#20384f}h1{color:#1f5ec4}.box{border:1px solid #d6e0e9;padding:16px;margin:16px 0}table{width:100%;border-collapse:collapse}td{padding:8px;border-bottom:1px solid #e1e7ed}</style><style id="local-fixed-mode-style">
+.local-fixed-chip{display:inline-flex;align-items:center;gap:5px;border:1px solid #b9d5c8;background:#effaf5;color:#187b58;border-radius:999px;padding:5px 8px;font-size:8px;font-weight:800;white-space:nowrap}
+.library-warning{display:none;position:absolute;z-index:1600;left:50%;top:50%;transform:translate(-50%,-50%);max-width:430px;background:#fff;border:1px solid #e1b35d;border-radius:12px;padding:18px;box-shadow:0 20px 60px rgba(20,30,60,.22);font-size:11px;line-height:1.6;color:#4d3a17}.library-warning.show{display:block}.library-warning button{margin-top:10px;border:0;border-radius:7px;background:#244caa;color:#fff;padding:9px 12px;font-weight:750}
+</style></head><body><h1>INVOICE</h1><div class="box"><b>${esc(i.invoiceNo)}</b><br>Date ${esc(i.date)} · Due ${esc(i.dueDate)}</div><p>Bill to: <b>${esc(i.customer)}</b><br>${esc(i.email)}</p><table><tr><td>Settlement Statement</td><td>${esc(i.statementNo)}</td></tr><tr><td>Subtotal</td><td>${esc(i.currency)} ${Number(i.subtotal||0).toFixed(2)}</td></tr><tr><td>Tax</td><td>${esc(i.currency)} ${Number(i.tax||0).toFixed(2)}</td></tr><tr><td><b>Total</b></td><td><b>${esc(i.currency)} ${Number(i.total||0).toFixed(2)}</b></td></tr></table></body></html>`}
 window.v12DownloadInvoice=function(id){const i=invoices().find(x=>x.id===id);if(!i)return;const b=new Blob([invoiceHtml(i)],{type:'text/html'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=i.invoiceNo+'.html';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
 window.v12SendInvoice=function(id){const inv=invoices(),i=inv.find(x=>x.id===id);if(!i)return;const to=prompt('Email address',i.email||'');if(!to)return;const eml=`To: ${to}\r\nSubject: Invoice ${i.invoiceNo}\r\nMIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n${invoiceHtml(i)}`,b=new Blob([eml],{type:'message/rfc822'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=i.invoiceNo+'.eml';a.click();i.email=to;i.status='Prepared for Email';saveInvoices(inv);v12RenderInvoicesView();window.notify?.('Email file generated',i.invoiceNo+' is prepared for '+to)};
 function wrap(name,after){const old=window[name];if(typeof old!=='function'||old.__v12)return;const fn=function(...a){const r=old.apply(this,a);setTimeout(after,0);return r};fn.__v12=true;window[name]=fn}
@@ -1332,382 +1325,11 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 })();
 </script>
 
+<div class="library-warning" id="dataLibraryWarning"><strong>CONNECT NETWORK FOR ONLINE MAP</strong><br>The platform interface and local records are available. Online basemaps and external services require an internet connection. TLE connects separately from the Tasking Prediction module.<br><button onclick="location.reload()">RETRY ONLINE MAP</button></div>
+<div id="dsAoiToolHost" aria-label="AOI TOOL workspace">
+  <div id="dsAoiToolHeader" aria-hidden="true"></div>
+  <iframe id="dsAoiToolFrame" title="AOI TOOL"></iframe>
+  <button class="ds-aoi-floating-action" type="button" onclick="dsUseAoiForSearch()">USE AOI FOR ARCHIVE SEARCH</button>
+</div>
 </body>
 </html>
-<script id="split-aoi-archive-support-fix-v1">
-(function(){
-  function setRailActive(button){
-    document.querySelectorAll('.rail .rail-btn').forEach(function(item){item.classList.remove('active');});
-    if(button)button.classList.add('active');
-  }
-  function configureSearchPanel(module){
-    var panel=document.getElementById('panel-search');
-    if(!panel)return;
-    var tabs=panel.querySelector('.tabs');
-    if(!tabs)return;
-    var aoiTab=tabs.querySelector('[data-tab="aoi"]');
-    var archiveTab=tabs.querySelector('[data-tab="archive"]');
-    var monitoringTab=tabs.querySelector('[data-tab="monitoring"]');
-    if(module==='aoi'){
-      tabs.style.display='none';
-    }else{
-      tabs.style.display='flex';
-      if(aoiTab)aoiTab.style.display='none';
-      if(archiveTab){archiveTab.style.display='';archiveTab.textContent='Archive Search';}
-      if(monitoringTab)monitoringTab.style.display='';
-    }
-  }
-  function openSplitModule(module,button){
-    try{if(typeof window.selectPanel==='function')window.selectPanel('search');}catch(e){}
-    try{if(typeof window.setSearchTab==='function')window.setSearchTab(module);}catch(e){}
-    configureSearchPanel(module);
-    setRailActive(button);
-    if(window.map&&typeof window.map.invalidateSize==='function')setTimeout(function(){window.map.invalidateSize();},80);
-  }
-  function installFix(){
-    var rail=document.querySelector('.rail');
-    if(!rail)return;
-    var oldStandaloneAoi=document.getElementById('panel-aoi');
-    if(oldStandaloneAoi)oldStandaloneAoi.remove();
-    if(!rail.querySelector('[data-ds-module="aoi"]')){
-      var oldSearch=rail.querySelector(':scope > .rail-btn[data-panel="search"]')||rail.querySelector('.rail-btn[data-panel="search"]');
-      if(oldSearch){
-        var aoiButton=document.createElement('button');
-        aoiButton.className='rail-btn';
-        aoiButton.type='button';
-        aoiButton.setAttribute('data-ds-module','aoi');
-        aoiButton.title='AOI';
-        aoiButton.setAttribute('aria-label','AOI');
-        aoiButton.innerHTML='<svg class="ds-icon" viewBox="0 0 24 24"><path d="M4 7l5-3 5 3 6-2v12l-6 3-5-3-5 2z"></path><path d="M9 4v13M14 7v13"></path></svg><span class="tip">AOI</span>';
-        var archiveButton=oldSearch.cloneNode(true);
-        archiveButton.className='rail-btn';
-        archiveButton.type='button';
-        archiveButton.removeAttribute('data-panel');
-        archiveButton.setAttribute('data-ds-module','archive');
-        archiveButton.title='Archive Search';
-        archiveButton.setAttribute('aria-label','Archive Search');
-        var archiveTip=archiveButton.querySelector('.tip');
-        if(archiveTip)archiveTip.textContent='Archive Search';
-        rail.insertBefore(aoiButton,oldSearch);
-        rail.insertBefore(archiveButton,oldSearch);
-        oldSearch.remove();
-        aoiButton.addEventListener('click',function(event){event.preventDefault();event.stopPropagation();openSplitModule('aoi',aoiButton);});
-        archiveButton.addEventListener('click',function(event){event.preventDefault();event.stopPropagation();openSplitModule('archive',archiveButton);});
-        openSplitModule('aoi',aoiButton);
-      }
-    }
-    var supportButton=Array.prototype.find.call(rail.querySelectorAll('.rail-bottom .rail-btn'),function(button){
-      var tip=button.querySelector('.tip');
-      return tip&&tip.textContent.trim()==='Support';
-    });
-    if(supportButton){
-      supportButton.type='button';
-      supportButton.title='Support';
-      supportButton.setAttribute('aria-label','Support');
-      supportButton.onclick=function(event){
-        event.preventDefault();
-        event.stopPropagation();
-        if(typeof window.openPlatformSettings==='function')window.openPlatformSettings('help');
-        else if(typeof window.notify==='function')window.notify('Support','Support center is loading.');
-      };
-    }
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installFix,{once:true});
-  else installFix();
-})();
-</script>
-<style id="account-center-workspace-style">
-.app.account-center-workspace{grid-template-columns:62px minmax(0,1fr) 0!important}
-.app.account-center-workspace .sidepanel{grid-column:2/4!important;border-right:0!important;box-shadow:none!important;min-width:0!important}
-.app.account-center-workspace .mapstage{display:none!important}
-.app.account-center-workspace .coordinate-search{visibility:hidden!important}
-.app.account-center-workspace #panel-account{width:100%!important;max-width:none!important;background:#f4f7fb!important}
-.app.account-center-workspace #panel-account .panel-head{padding:0 24px!important;background:#fff!important}
-.app.account-center-workspace #panel-account .panel-body.account-workspace-body{display:grid!important;grid-template-columns:repeat(12,minmax(0,1fr))!important;gap:14px!important;align-content:start!important;padding:18px 24px 30px!important;background:#f4f7fb!important;overflow:auto!important}
-.app.account-center-workspace #panel-account .usage-box{grid-column:span 4!important;margin:0!important;min-height:150px!important;padding:18px!important;border-radius:12px!important;box-shadow:0 7px 20px rgba(25,52,105,.12)!important}
-.app.account-center-workspace #panel-account .account-grid{grid-column:span 8!important;display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:12px!important}
-.app.account-center-workspace #panel-account .account-kpi{min-height:88px!important;padding:14px!important;border-radius:10px!important;background:#fff!important;box-shadow:0 4px 14px rgba(25,52,85,.05)!important}
-.app.account-center-workspace #panel-account .account-kpi span{font-size:8px!important;text-transform:uppercase!important;letter-spacing:.45px!important}
-.app.account-center-workspace #panel-account .account-kpi strong{font-size:15px!important;line-height:1.25!important;overflow-wrap:anywhere!important}
-.app.account-center-workspace #panel-account .account-workspace-section{grid-column:span 6!important;min-width:0!important;min-height:145px!important;border:1px solid #dce4ed!important;border-radius:11px!important;background:#fff!important;padding:14px 16px!important;box-shadow:0 4px 15px rgba(21,49,80,.04)!important}
-.app.account-center-workspace #panel-account .account-workspace-section .tree-title{margin:0 0 11px!important;color:#52657a!important;font-size:8px!important;font-weight:800!important;letter-spacing:.65px!important}
-.app.account-center-workspace #panel-account .account-workspace-section>div:last-child{line-height:1.9!important}
-.app.account-center-workspace #panel-account .v11-email-rule{grid-column:span 6!important;margin:0!important;min-height:92px!important;padding:14px 16px!important;border-radius:10px!important}
-.app.account-center-workspace #panel-account #v12ExportCenterMount{grid-column:span 6!important;min-width:0!important}
-.app.account-center-workspace #panel-account #v12ExportCenterMount .v12-export-center{height:100%!important;margin:0!important;background:#fff!important}
-.app.account-center-workspace #panel-account .v9-admin-settings-card{grid-column:1/-1!important;margin:0!important;padding:15px 16px!important;border-radius:11px!important;background:#fff!important}
-.app.account-center-workspace #panel-account>.panel-body>.v11-note{grid-column:1/-1!important;margin:0!important;max-width:none!important;padding:18px!important;background:#fff!important}
-.app.account-center-workspace #panel-account>.panel-body>.primary-wide{grid-column:1/5!important;width:100%!important;max-width:320px!important}
-@media(max-width:1200px){
-  .app.account-center-workspace #panel-account .usage-box{grid-column:1/-1!important}
-  .app.account-center-workspace #panel-account .account-grid{grid-column:1/-1!important}
-}
-@media(max-width:900px){
-  .app.account-center-workspace #panel-account .panel-body.account-workspace-body{grid-template-columns:1fr!important;padding:14px!important}
-  .app.account-center-workspace #panel-account .usage-box,.app.account-center-workspace #panel-account .account-grid,.app.account-center-workspace #panel-account .account-workspace-section,.app.account-center-workspace #panel-account .v11-email-rule,.app.account-center-workspace #panel-account #v12ExportCenterMount,.app.account-center-workspace #panel-account .v9-admin-settings-card{grid-column:1!important}
-  .app.account-center-workspace #panel-account .account-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
-}
-</style>
-<script id="account-center-workspace-fix-v2">
-(function(){
-  function decorateAccount(){
-    var panel=document.getElementById('panel-account');
-    var body=panel&&panel.querySelector('.panel-body');
-    if(!body)return;
-    body.classList.add('account-workspace-body');
-    body.querySelectorAll(':scope > .usage-box').forEach(function(el){el.classList.add('account-workspace-summary');});
-    body.querySelectorAll(':scope > .account-grid').forEach(function(el){el.classList.add('account-workspace-kpis');});
-    Array.prototype.slice.call(body.querySelectorAll(':scope > .tree-title')).forEach(function(title){
-      var content=title.nextElementSibling;
-      if(!content||content.classList.contains('tree-title'))return;
-      var section=document.createElement('section');
-      section.className='account-workspace-section';
-      if(/assigned functions/i.test(title.textContent||''))section.classList.add('account-functions-section');
-      if(/assigned export rights/i.test(title.textContent||''))section.classList.add('account-export-rights-section');
-      title.parentNode.insertBefore(section,title);
-      section.appendChild(title);
-      section.appendChild(content);
-    });
-  }
-  function syncAccountWorkspace(){
-    var app=document.querySelector('.app');
-    var panel=document.getElementById('panel-account');
-    if(!app||!panel)return;
-    var active=panel.classList.contains('active');
-    app.classList.toggle('account-center-workspace',active);
-    if(active)decorateAccount();
-    if(!active&&window.map&&typeof window.map.invalidateSize==='function')setTimeout(function(){window.map.invalidateSize();},80);
-  }
-  function installAccountWorkspace(){
-    var panel=document.getElementById('panel-account');
-    if(!panel)return;
-    var observer=new MutationObserver(function(){syncAccountWorkspace();});
-    observer.observe(panel,{attributes:true,attributeFilter:['class'],childList:true,subtree:true});
-    document.querySelector('.rail')?.addEventListener('click',function(){setTimeout(syncAccountWorkspace,0);});
-    syncAccountWorkspace();
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installAccountWorkspace,{once:true});
-  else installAccountWorkspace();
-})();
-</script>
-<!-- CLEAN_NAVIGATION_FIX_START -->
-<style id="clean-navigation-fix-style">
-:root{--ds-rail-width:86px}
-.app{grid-template-columns:var(--ds-rail-width) 336px minmax(0,1fr)!important}
-.app.v11-order-full,.app.account-center-workspace{grid-template-columns:var(--ds-rail-width) minmax(0,1fr) 0!important}
-.brand{width:calc(var(--ds-rail-width) + 336px)!important}
-.coordinate-search{display:none!important}
-.top-actions>:not(.v11-auth-actions){display:none!important}
-.top-actions .v11-auth-actions{display:flex!important;align-items:center!important;gap:7px!important}
-.top-actions .v11-auth-actions>:not(#v11LoginBtn):not(#v11LogoutBtn){display:none!important}
-.top-actions #v11LoginBtn,.top-actions #v11LogoutBtn{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-width:68px!important}
-.rail{align-items:stretch!important;padding:8px 6px!important;overflow-x:hidden!important;overflow-y:auto!important}
-.rail::-webkit-scrollbar{width:0}
-.rail-btn{width:72px!important;height:58px!important;min-height:58px!important;margin:2px auto!important;padding:5px 3px!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:5px!important;line-height:1!important}
-.rail-btn .ds-icon{width:19px!important;height:19px!important;flex:0 0 19px!important}
-.rail-btn .tip{position:static!important;left:auto!important;display:block!important;width:100%!important;min-height:15px!important;padding:0!important;background:transparent!important;color:inherit!important;border-radius:0!important;box-shadow:none!important;opacity:1!important;transform:none!important;white-space:normal!important;text-align:center!important;font-size:7px!important;font-weight:700!important;line-height:1.12!important;pointer-events:none!important}
-.rail-btn:hover .tip{opacity:1!important;transform:none!important}
-.rail-btn.active:before{left:-6px!important;height:34px!important}
-.rail-bottom{width:100%!important;margin-top:auto!important;display:flex!important;flex-direction:column!important;align-items:center!important}
-.rail .rail-btn[data-panel="orders"] .tip:after,.rail .rail-btn[data-panel="data"] .tip:after{content:none!important;display:none!important}
-@media(max-height:700px){.rail-btn{height:52px!important;min-height:52px!important;gap:3px!important}.rail-btn .tip{font-size:6.5px!important}}
-</style>
-<script id="clean-navigation-fix-script">
-(function(){
-  function setLabel(button,label){
-    if(!button)return;
-    button.title=label;
-    button.setAttribute('aria-label',label);
-    var tip=button.querySelector('.tip');
-    if(!tip){
-      tip=document.createElement('span');
-      tip.className='tip';
-      button.appendChild(tip);
-    }
-    tip.textContent=label;
-  }
-
-  function setActive(button){
-    document.querySelectorAll('.rail .rail-btn').forEach(function(item){item.classList.remove('active');});
-    if(button)button.classList.add('active');
-  }
-
-  function activatePanel(name,button){
-    document.querySelectorAll('.panel-view').forEach(function(panel){panel.classList.remove('active');});
-    var target=document.getElementById('panel-'+name);
-    if(target)target.classList.add('active');
-
-    var app=document.querySelector('.app');
-    if(app){
-      app.classList.toggle('account-center-workspace',name==='account');
-      app.classList.toggle('v11-order-full',name==='orders');
-      app.classList.remove('v11-order-api');
-    }
-
-    var catalog=document.getElementById('catalogStage');
-    var clientApi=document.getElementById('customerApiStage');
-    if(catalog)catalog.classList.remove('show');
-    if(clientApi)clientApi.classList.remove('show');
-
-    if(name==='orbit'&&typeof window.initOrbitPanel==='function')window.initOrbitPanel();
-    if(name==='orders'&&typeof window.openOrderTab==='function')window.openOrderTab('orders');
-    if(name==='data'&&typeof window.openDataTab==='function')window.openDataTab('sources');
-
-    setActive(button);
-    if(name!=='account'&&name!=='orders'&&window.map&&typeof window.map.invalidateSize==='function'){
-      setTimeout(function(){window.map.invalidateSize();},80);
-    }
-  }
-
-  function activateSearch(tab,button){
-    activatePanel('search',button);
-    try{if(typeof window.setSearchTab==='function')window.setSearchTab(tab);}catch(error){}
-    var tabs=document.querySelector('#panel-search .tabs');
-    if(!tabs)return;
-    var aoiTab=tabs.querySelector('[data-tab="aoi"]');
-    var archiveTab=tabs.querySelector('[data-tab="archive"]');
-    if(tab==='aoi'){
-      tabs.style.display='none';
-    }else{
-      tabs.style.display='flex';
-      if(aoiTab)aoiTab.style.display='none';
-      if(archiveTab){archiveTab.style.display='';archiveTab.textContent='Archive Search';}
-    }
-  }
-
-  function openSettingsDirect(){
-    try{
-      if(typeof window.openPlatformSettings==='function')window.openPlatformSettings('help');
-    }catch(error){}
-    setTimeout(function(){
-      var modal=document.getElementById('platformSettingsModal');
-      if(modal)modal.classList.add('show');
-      document.querySelectorAll('#platformSettingsTabs [data-v9-settings]').forEach(function(tab){
-        tab.classList.toggle('active',tab.dataset.v9Settings==='identity');
-      });
-      document.querySelectorAll('#platformSettingsModal [data-v9-pane]').forEach(function(pane){
-        pane.classList.toggle('active',pane.dataset.v9Pane==='identity');
-      });
-      var save=document.getElementById('v9SaveSettingsBtn');
-      if(save)save.style.display='inline-block';
-    },0);
-  }
-
-  function switchLanguage(){
-    var original=document.getElementById('languageToggle');
-    if(original){original.click();return;}
-    document.documentElement.lang=document.documentElement.lang==='zh-CN'?'en':'zh-CN';
-  }
-
-  function ensureSplitButtons(rail){
-    var aoi=rail.querySelector('[data-ds-module="aoi"]');
-    var archive=rail.querySelector('[data-ds-module="archive"]');
-    var search=rail.querySelector('.rail-btn[data-panel="search"]');
-    if((!aoi||!archive)&&search){
-      aoi=search.cloneNode(true);
-      archive=search.cloneNode(true);
-      aoi.removeAttribute('data-panel');
-      archive.removeAttribute('data-panel');
-      aoi.dataset.dsModule='aoi';
-      archive.dataset.dsModule='archive';
-      rail.insertBefore(aoi,search);
-      rail.insertBefore(archive,search);
-      search.remove();
-    }
-    return {aoi:aoi,archive:archive};
-  }
-
-  function normalize(){
-    var topWindow=document.querySelector('.coordinate-search');
-    if(topWindow)topWindow.remove();
-
-    var rail=document.querySelector('.rail');
-    if(!rail)return;
-    var split=ensureSplitButtons(rail);
-    var tasking=rail.querySelector('.rail-btn[data-panel="orbit"]');
-    var order=rail.querySelector('.rail-btn[data-panel="orders"]');
-    var account=rail.querySelector('.rail-btn[data-panel="account"]');
-    var data=rail.querySelector('.rail-btn[data-panel="data"]');
-
-    setLabel(split.aoi,'AOI');
-    setLabel(split.archive,'Archive Search');
-    setLabel(tasking,'Tasking');
-    setLabel(order,'Order');
-    setLabel(account,'Account');
-    setLabel(data,'Data');
-
-    var taskTitle=document.querySelector('#panel-orbit .panel-title');
-    if(taskTitle)taskTitle.textContent='Tasking';
-
-    var bottom=rail.querySelector('.rail-bottom');
-    if(!bottom){
-      bottom=document.createElement('div');
-      bottom.className='rail-bottom';
-      rail.appendChild(bottom);
-    }
-    var bottomButtons=Array.from(bottom.querySelectorAll('.rail-btn'));
-    var language=bottomButtons.find(function(button){
-      var text=((button.querySelector('.tip')||{}).textContent||button.title||'').trim();
-      return /language/i.test(text);
-    });
-    var settings=bottomButtons.find(function(button){
-      var text=((button.querySelector('.tip')||{}).textContent||button.title||'').trim();
-      return /support|settings|help/i.test(text);
-    });
-    var alerts=bottom.querySelector('#globalOrderNotify');
-
-    if(language){language.dataset.navAction='language';setLabel(language,'Language');}
-    if(settings){settings.dataset.navAction='settings';setLabel(settings,'Settings');}
-    if(alerts)alerts.dataset.navAction='alerts';
-    if(data){
-      setLabel(data,'Data');
-      if(settings&&data.nextElementSibling!==settings)bottom.insertBefore(data,settings);
-      else if(!settings&&!bottom.contains(data))bottom.appendChild(data);
-    }
-  }
-
-  function handleNavigation(event){
-    var button=event.target.closest('.rail .rail-btn');
-    if(!button)return;
-
-    var isHandled=
-      button.matches('[data-ds-module="aoi"]')||
-      button.matches('[data-ds-module="archive"]')||
-      button.dataset.panel==='orbit'||
-      button.dataset.panel==='orders'||
-      button.dataset.panel==='account'||
-      button.dataset.panel==='data'||
-      button.dataset.navAction==='alerts'||
-      button.dataset.navAction==='settings'||
-      button.dataset.navAction==='language';
-    if(!isHandled)return;
-
-    event.preventDefault();
-    event.stopImmediatePropagation();
-
-    if(button.matches('[data-ds-module="aoi"]'))return activateSearch('aoi',button);
-    if(button.matches('[data-ds-module="archive"]'))return activateSearch('archive',button);
-    if(button.dataset.panel==='orbit')return activatePanel('orbit',button);
-    if(button.dataset.panel==='orders')return activatePanel('orders',button);
-    if(button.dataset.panel==='account')return activatePanel('account',button);
-    if(button.dataset.panel==='data')return activatePanel('data',button);
-    if(button.dataset.navAction==='alerts'){
-      if(typeof window.openApiOrderInbox==='function')window.openApiOrderInbox();
-      return;
-    }
-    if(button.dataset.navAction==='settings')return openSettingsDirect();
-    if(button.dataset.navAction==='language')return switchLanguage();
-  }
-
-  if(!window.__dataSearchStableNavigationBound){
-    window.__dataSearchStableNavigationBound=true;
-    document.addEventListener('click',handleNavigation,true);
-  }
-
-  function start(){[0,80,300,900,1800].forEach(function(delay){setTimeout(normalize,delay);});}
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});
-  else start();
-  window.addEventListener('load',function(){setTimeout(normalize,50);},{once:true});
-})();
-</script>
-<!-- CLEAN_NAVIGATION_FIX_END -->
