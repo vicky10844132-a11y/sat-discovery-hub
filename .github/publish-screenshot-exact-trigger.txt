@@ -1,0 +1,3 @@
+Publish only data-search-restored.html after exact SHA-256 and browser-render validation.
+Expected SHA-256: 8d72926e97e9ba7a6d9c0ec88878d87472c9e1bbeea057477c483217f7d3027c
+Trigger: 2026-08-01T12:00:00+08:00

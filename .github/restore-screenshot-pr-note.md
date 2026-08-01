@@ -1,0 +1,1 @@
+This branch triggers the exact screenshot restoration workflow. The published page must match SHA-256 `8d72926e97e9ba7a6d9c0ec88878d87472c9e1bbeea057477c483217f7d3027c` before it is committed to `gh-pages`.
