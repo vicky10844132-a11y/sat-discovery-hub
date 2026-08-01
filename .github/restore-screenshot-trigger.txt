@@ -1,2 +1,2 @@
-Restore the exact screenshot-matched DATA SEARCH page. Expected SHA-256: 8d72926e97e9ba7a6d9c0ec88878d87472c9e1bbeea057477c483217f7d3027c
-Scan mode: all historical HTML blobs.
+Render all nine historical DATA SEARCH candidates and compare them with the supplied screenshot.
+Trigger: 2026-08-01T11:40:00+08:00
