@@ -11,12 +11,12 @@ body{width:100vw;height:100vh;height:100dvh}
 </style>
 </head>
 <body>
-<iframe id="dataSearchFrame" src="./data-search-original.html?display-fit=1" title="DATA SEARCH"></iframe>
+<iframe id="dataSearchFrame" src="./data-search-original.html?display-fit=2" title="DATA SEARCH"></iframe>
 <script>
 (function(){
   'use strict';
   var frame=document.getElementById('dataSearchFrame');
-  var css=`
+  var injectedCss=`
 :root{
   --ds-fit-rail:clamp(86px,5.2vw,132px);
   --ds-fit-side:clamp(336px,22vw,620px);
@@ -24,77 +24,88 @@ body{width:100vw;height:100vh;height:100dvh}
   --ds-fit-pad:clamp(12px,1vw,22px);
   --ds-rail-width:var(--ds-fit-rail);
 }
-html,body{
-  width:100%!important;height:100%!important;min-width:100%!important;min-height:100%!important;
-  max-width:none!important;max-height:none!important;margin:0!important;overflow:hidden!important;
-}
+html,body{width:100%!important;height:100%!important;min-width:100%!important;min-height:100%!important;max-width:none!important;max-height:none!important;margin:0!important;overflow:hidden!important}
 body{width:100vw!important;height:100vh!important;height:100dvh!important}
-.app{
-  width:100vw!important;height:100vh!important;height:100dvh!important;min-width:0!important;
-  min-height:100vh!important;max-width:none!important;max-height:none!important;
-  grid-template-columns:var(--ds-fit-rail) var(--ds-fit-side) minmax(0,1fr)!important;
-  grid-template-rows:var(--ds-fit-top) minmax(0,1fr)!important;
-}
+.app{width:100vw!important;height:100vh!important;height:100dvh!important;min-width:0!important;min-height:100vh!important;max-width:none!important;max-height:none!important;grid-template-columns:var(--ds-fit-rail) var(--ds-fit-side) minmax(0,1fr)!important;grid-template-rows:var(--ds-fit-top) minmax(0,1fr)!important}
 .app.v11-order-full,.app.account-center-workspace{grid-template-columns:var(--ds-fit-rail) minmax(0,1fr) 0!important}
 .topbar{width:100%!important;min-width:0!important;min-height:var(--ds-fit-top)!important}
-.brand{
-  width:calc(var(--ds-fit-rail) + var(--ds-fit-side))!important;
-  min-width:calc(var(--ds-fit-rail) + var(--ds-fit-side))!important;
-  padding-left:clamp(17px,1.25vw,30px)!important;padding-right:clamp(17px,1.25vw,30px)!important;
-}
-.rail{width:100%!important;min-width:0!important;height:100%!important}
-.sidepanel{width:100%!important;min-width:0!important;height:100%!important}
+.brand{width:calc(var(--ds-fit-rail) + var(--ds-fit-side))!important;min-width:calc(var(--ds-fit-rail) + var(--ds-fit-side))!important;padding-left:clamp(17px,1.25vw,30px)!important;padding-right:clamp(17px,1.25vw,30px)!important}
+.rail,.sidepanel{width:100%!important;min-width:0!important;height:100%!important}
 .mapstage,#map,.map-fallback{width:100%!important;height:100%!important;min-width:0!important;min-height:0!important}
-.panel-head{
-  min-height:var(--ds-fit-top)!important;height:var(--ds-fit-top)!important;
-  padding-left:clamp(16px,1.2vw,28px)!important;padding-right:clamp(16px,1.2vw,28px)!important;
-}
+.panel-head{min-height:var(--ds-fit-top)!important;height:var(--ds-fit-top)!important;padding-left:clamp(16px,1.2vw,28px)!important;padding-right:clamp(16px,1.2vw,28px)!important}
 .panel-body,.data-center-content,.order-center-content{padding:var(--ds-fit-pad)!important}
 .rail-btn{width:min(calc(var(--ds-fit-rail) - 16px),82px)!important}
-@media (min-width:1600px){
-  .brand-name{font-size:17px!important}.brand-sub{font-size:10px!important}
-  .panel-title{font-size:19px!important}.panel-sub{font-size:11px!important}
-  .rail-btn{height:64px!important;min-height:64px!important;gap:4px!important}
-  .rail-btn .tip{font-size:8px!important;line-height:1.15!important}
-  .logo{width:39px!important;height:39px!important}
-  .coordinate-search{height:40px!important;width:min(520px,34vw)!important}
-  .top-actions{padding-right:clamp(16px,1.2vw,28px)!important}
-}
-@media (min-width:2200px){
-  .brand-name{font-size:19px!important}.brand-sub{font-size:11px!important}
-  .panel-title{font-size:22px!important}.panel-sub{font-size:12px!important}
-  .rail-btn{height:72px!important;min-height:72px!important}
-  .rail-btn .tip{font-size:9px!important}
-  .logo{width:43px!important;height:43px!important}
-  .coordinate-search{height:44px!important;width:min(620px,34vw)!important}
-}
-@media (max-width:1280px){
-  :root{--ds-fit-rail:86px;--ds-fit-side:336px;--ds-fit-top:62px;--ds-fit-pad:12px}
-}
+.rail .rail-btn[data-panel="account"]{display:grid!important;visibility:visible!important;pointer-events:auto!important;opacity:1!important}
+@media (min-width:1600px){.brand-name{font-size:17px!important}.brand-sub{font-size:10px!important}.panel-title{font-size:19px!important}.panel-sub{font-size:11px!important}.rail-btn{height:64px!important;min-height:64px!important;gap:4px!important}.rail-btn .tip{font-size:8px!important;line-height:1.15!important}.logo{width:39px!important;height:39px!important}.coordinate-search{height:40px!important;width:min(520px,34vw)!important}.top-actions{padding-right:clamp(16px,1.2vw,28px)!important}}
+@media (min-width:2200px){.brand-name{font-size:19px!important}.brand-sub{font-size:11px!important}.panel-title{font-size:22px!important}.panel-sub{font-size:12px!important}.rail-btn{height:72px!important;min-height:72px!important}.rail-btn .tip{font-size:9px!important}.logo{width:43px!important;height:43px!important}.coordinate-search{height:44px!important;width:min(620px,34vw)!important}}
+@media (max-width:1280px){:root{--ds-fit-rail:86px;--ds-fit-side:336px;--ds-fit-top:62px;--ds-fit-pad:12px}}
 `;
-  function adapt(){
-    try{
-      var doc=frame.contentDocument;
-      var win=frame.contentWindow;
-      if(!doc||!doc.head)return;
-      var style=doc.getElementById('display-adaptation-v1');
-      if(!style){
-        style=doc.createElement('style');
-        style.id='display-adaptation-v1';
-        style.textContent=css;
-        doc.head.appendChild(style);
-      }else if(style.textContent!==css){
-        style.textContent=css;
-      }
-      if(win&&win.map&&typeof win.map.invalidateSize==='function'){
-        win.setTimeout(function(){win.map.invalidateSize();},80);
-      }
-    }catch(error){
-      console.error('DATA SEARCH display adaptation failed',error);
+
+  function openAccount(win,doc){
+    var target=doc.getElementById('panel-account');
+    if(!target)return false;
+
+    doc.querySelectorAll('.panel-view').forEach(function(panel){panel.classList.remove('active');});
+    target.classList.add('active');
+
+    doc.querySelectorAll('.rail .rail-btn[data-panel]').forEach(function(button){
+      button.classList.toggle('active',button.dataset.panel==='account');
+    });
+
+    var app=doc.querySelector('.app');
+    if(app){
+      app.classList.add('account-center-workspace');
+      app.classList.remove('v11-order-full','v11-order-api','account-panel-active','account-mode');
     }
+
+    var catalog=doc.getElementById('catalogStage');
+    var api=doc.getElementById('customerApiStage');
+    if(catalog)catalog.classList.remove('show');
+    if(api)api.classList.remove('show');
+
+    try{if(typeof win.v11RenderAccount==='function')win.v11RenderAccount();}catch(_){ }
+    try{if(typeof win.decorateAccount==='function')win.decorateAccount();}catch(_){ }
+    return true;
   }
-  frame.addEventListener('load',function(){adapt();setTimeout(adapt,0);setTimeout(adapt,180);setTimeout(adapt,600);});
-  window.addEventListener('resize',adapt);
+
+  function install(){
+    var win=frame.contentWindow;
+    var doc=frame.contentDocument;
+    if(!win||!doc||!doc.documentElement)return;
+
+    var oldStyle=doc.getElementById('outer-display-fit-style');
+    if(oldStyle)oldStyle.remove();
+    var style=doc.createElement('style');
+    style.id='outer-display-fit-style';
+    style.textContent=injectedCss;
+    doc.head.appendChild(style);
+
+    doc.querySelectorAll('.rail .rail-btn[data-panel="account"]').forEach(function(button){
+      button.classList.remove('v11-locked-rail');
+      button.removeAttribute('disabled');
+      button.setAttribute('aria-disabled','false');
+    });
+
+    if(win.__outerAccountFixInstalled)return;
+    win.__outerAccountFixInstalled=true;
+
+    win.addEventListener('click',function(event){
+      var target=event.target;
+      if(!target||typeof target.closest!=='function')return;
+      var button=target.closest('.rail .rail-btn[data-panel="account"],.account-menu-button');
+      if(!button)return;
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      openAccount(win,doc);
+    },true);
+
+    win.addEventListener('resize',function(){
+      try{if(win.map&&typeof win.map.invalidateSize==='function')win.map.invalidateSize();}catch(_){ }
+    });
+  }
+
+  frame.addEventListener('load',install);
 })();
 </script>
 </body>
