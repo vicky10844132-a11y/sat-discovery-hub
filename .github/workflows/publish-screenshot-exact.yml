@@ -1,0 +1,121 @@
+name: Publish exact screenshot DATA SEARCH page
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/publish-screenshot-exact-trigger.txt'
+
+permissions:
+  contents: write
+
+jobs:
+  publish-exact-screenshot-page:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout complete published history
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 0
+          path: site
+
+      - name: Checkout verified reconstruction asset
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+          path: source
+
+      - name: Reconstruct exact screenshot page
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd site
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, subprocess
+
+          blob='70a4d8c9819e96c10bbdad7a8a03cc87fea156f5'
+          raw=subprocess.run(['git','cat-file','-p',blob],check=True,stdout=subprocess.PIPE).stdout
+          html=raw.decode('utf-8')
+          remove=[
+            ('style','data-search-aoi-tool-replacement-style'),
+            ('style','v14-separated-core-modules-style'),
+            ('script','data-search-fixed-mode'),
+            ('script','data-search-aoi-tool-replacement-script'),
+            ('script','v14-separated-core-modules-script'),
+          ]
+          for tag,block_id in remove:
+              html=re.sub(rf'\s*<{tag} id="{re.escape(block_id)}">.*?</{tag}>\s*','\n',html,flags=re.S)
+          Path('data-search-restored.html').write_text(html,encoding='utf-8')
+          PY
+
+          base64 --decode ../source/.github/assets/data-search-screenshot-exact.patch.gz.b64 | gzip --decompress > /tmp/data-search-screenshot-exact.patch
+          patch --silent data-search-restored.html /tmp/data-search-screenshot-exact.patch
+
+      - name: Verify exact page identity and structure
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd site
+          expected='8d72926e97e9ba7a6d9c0ec88878d87472c9e1bbeea057477c483217f7d3027c'
+          actual="$(sha256sum data-search-restored.html | awk '{print $1}')"
+          test "$actual" = "$expected"
+
+          grep -q 'AOI is part of Search' data-search-restored.html
+          grep -q 'Regional Projects' data-search-restored.html
+          grep -q 'data-tab="aoi"' data-search-restored.html
+          grep -q 'data-tab="archive"' data-search-restored.html
+          grep -q 'data-tab="monitoring"' data-search-restored.html
+          grep -q 'id="coordinateInput"' data-search-restored.html
+          grep -q 'id="languageToggle"' data-search-restored.html
+          grep -q 'data-panel="account"' data-search-restored.html
+          grep -q 'id="panel-account"' data-search-restored.html
+          grep -q 'function selectPanel' data-search-restored.html
+
+          test "$(grep -c 'CLEAN_NAVIGATION_FIX' data-search-restored.html || true)" -eq 0
+          test "$(grep -c -- '--ds-rail-width:86px' data-search-restored.html || true)" -eq 0
+          test "$(grep -c 'top-actions>:not(.v11-auth-actions)' data-search-restored.html || true)" -eq 0
+          test "$(grep -c 'NAVIGATION_LAYOUT_V3' data-search-restored.html || true)" -eq 0
+          test "$(grep -c 'FINAL_NAVIGATION_FIX' data-search-restored.html || true)" -eq 0
+          test "$(grep -c 'RESTORED_TOP_REMOVED' data-search-restored.html || true)" -eq 0
+          test "$(grep -c 'dataSearchFrame' data-search-restored.html || true)" -eq 0
+
+          echo "SCREENSHOT_SHA256=$actual"
+          echo "SCREENSHOT_BYTES=$(wc -c < data-search-restored.html)"
+
+      - name: Render final verification screenshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd site
+          mkdir -p /tmp/final-screenshot-check
+          python3 -m http.server 8770 >/tmp/final-page-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill $server_pid || true' EXIT
+          sleep 2
+          chrome="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser)"
+          "$chrome" --headless=new --no-sandbox --disable-dev-shm-usage --disable-gpu --hide-scrollbars --window-size=1536,1024 --virtual-time-budget=3500 --screenshot=/tmp/final-screenshot-check/data-search-restored.png http://127.0.0.1:8770/data-search-restored.html?final-check=1
+          test -s /tmp/final-screenshot-check/data-search-restored.png
+
+      - name: Publish only data-search-restored.html
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd site
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data-search-restored.html
+          git diff --cached --check
+          changed="$(git diff --cached --name-only)"
+          test "$changed" = 'data-search-restored.html'
+          if git diff --cached --quiet; then
+            echo 'Exact screenshot page is already published.'
+            exit 0
+          fi
+          git commit -m 'Publish exact screenshot DATA SEARCH page'
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" gh-pages
