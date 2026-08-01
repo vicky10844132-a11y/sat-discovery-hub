@@ -1,0 +1,2 @@
+Capture the published DATA SEARCH page only after every visible Leaflet tile has loaded.
+Trigger: 2026-08-01T14:37:00+08:00
