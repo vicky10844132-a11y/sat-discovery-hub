@@ -1,1 +1,2 @@
 Restore the exact screenshot-matched DATA SEARCH page. Expected SHA-256: 8d72926e97e9ba7a6d9c0ec88878d87472c9e1bbeea057477c483217f7d3027c
+Scan mode: all historical HTML blobs.
