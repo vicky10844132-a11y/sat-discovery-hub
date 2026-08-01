@@ -1,0 +1,111 @@
+name: Render DATA SEARCH screenshot candidates
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/restore-screenshot-trigger.txt'
+
+permissions:
+  contents: read
+
+jobs:
+  render-candidates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout complete gh-pages history
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 0
+          path: site
+
+      - name: Build candidate pages
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd site
+          mkdir -p candidate-render/pages candidate-render/screenshots
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib, json, re, subprocess
+
+          BLOBS = [
+            '70a4d8c9819e96c10bbdad7a8a03cc87fea156f5',
+            'a8befc318cf614e741642ba50e866d557d838a42',
+            '9a7f6afe44334606f19b8d5fa1e05c2d035489a2',
+            'f32cbc50a9b8945f7a17c882c1ff4345646ead64',
+            'a601b4072ee148febc46d79a64f63733d33fba55',
+            'b19000123369353e4fc386a5f14171c5521c80c5',
+            'bc2f4c015c9722675302c5bd3bd5c92b1ae0c862',
+            '2b5c75ffe0250359d2d426935ebb380beef104cb',
+            'a9c81f68984fedbeb82e36351854cb10681690cf',
+          ]
+          REMOVE = [
+            ('style', 'data-search-aoi-tool-replacement-style'),
+            ('style', 'v14-separated-core-modules-style'),
+            ('script', 'data-search-fixed-mode'),
+            ('script', 'data-search-aoi-tool-replacement-script'),
+            ('script', 'v14-separated-core-modules-script'),
+          ]
+          pages = Path('candidate-render/pages')
+          manifest = []
+          for i, blob in enumerate(BLOBS, 1):
+            raw = subprocess.run(['git','cat-file','-p',blob],check=True,stdout=subprocess.PIPE).stdout
+            html = raw.decode('utf-8')
+            for tag, block_id in REMOVE:
+              html = re.sub(rf'\s*<{tag} id="{re.escape(block_id)}">.*?</{tag}>\s*','\n',html,flags=re.S)
+            # Add a non-invasive candidate label outside the app, visible only in browser title.
+            html = html.replace('<title>DATA SEARCH</title>', f'<title>CANDIDATE {i} · DATA SEARCH</title>', 1)
+            out = pages / f'candidate-{i}.html'
+            out.write_text(html, encoding='utf-8')
+            manifest.append({
+              'candidate': i,
+              'blob': blob,
+              'sha256': hashlib.sha256(html.encode()).hexdigest(),
+              'bytes': len(html.encode()),
+              'clean_navigation': 'CLEAN_NAVIGATION_FIX' in html,
+              'rail_86': '--ds-rail-width:86px' in html,
+              'account_workspace': 'account-center-workspace-style' in html,
+              'top_hide': 'top-actions>:not(.v11-auth-actions)' in html,
+              'aoi_text': 'AOI is part of Search' in html,
+              'regional_projects': 'Regional Projects' in html,
+            })
+          Path('candidate-render/manifest.json').write_text(json.dumps(manifest,indent=2),encoding='utf-8')
+          print(json.dumps(manifest, indent=2))
+          PY
+
+      - name: Render candidates in Chrome
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd site/candidate-render
+          python3 -m http.server 8765 >/tmp/candidate-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill $server_pid || true' EXIT
+          sleep 2
+          chrome="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser)"
+          test -n "$chrome"
+          for i in $(seq 1 9); do
+            "$chrome" \
+              --headless=new \
+              --no-sandbox \
+              --disable-dev-shm-usage \
+              --hide-scrollbars \
+              --window-size=1536,1024 \
+              --virtual-time-budget=5000 \
+              --screenshot="screenshots/candidate-${i}.png" \
+              "http://127.0.0.1:8765/pages/candidate-${i}.html?render=1"
+            test -s "screenshots/candidate-${i}.png"
+          done
+          ls -lh screenshots
+
+      - name: Upload rendered candidates
+        uses: actions/upload-artifact@v4
+        with:
+          name: data-search-candidate-screenshots
+          path: |
+            site/candidate-render/screenshots/*.png
+            site/candidate-render/manifest.json
+          retention-days: 3
