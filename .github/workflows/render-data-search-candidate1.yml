@@ -1,0 +1,77 @@
+name: Render exact DATA SEARCH candidate one
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/restore-screenshot-candidate1-trigger.txt'
+
+permissions:
+  contents: read
+
+jobs:
+  render-candidate-one:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout complete gh-pages history
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 0
+          path: site
+
+      - name: Reconstruct candidate one
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd site
+          mkdir -p candidate-one
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,re,subprocess
+          blob='70a4d8c9819e96c10bbdad7a8a03cc87fea156f5'
+          raw=subprocess.run(['git','cat-file','-p',blob],check=True,stdout=subprocess.PIPE).stdout
+          html=raw.decode('utf-8')
+          remove=[
+            ('style','data-search-aoi-tool-replacement-style'),
+            ('style','v14-separated-core-modules-style'),
+            ('script','data-search-fixed-mode'),
+            ('script','data-search-aoi-tool-replacement-script'),
+            ('script','v14-separated-core-modules-script'),
+          ]
+          for tag,block_id in remove:
+              html=re.sub(rf'\s*<{tag} id="{re.escape(block_id)}">.*?</{tag}>\s*','\n',html,flags=re.S)
+          required=['AOI is part of Search','Regional Projects','data-tab="aoi"','data-tab="archive"','data-tab="monitoring"','id="coordinateInput"','id="languageToggle"','data-panel="account"']
+          missing=[x for x in required if x not in html]
+          if missing: raise SystemExit('missing '+','.join(missing))
+          forbidden=['CLEAN_NAVIGATION_FIX','--ds-rail-width:86px','top-actions>:not(.v11-auth-actions)','NAVIGATION_LAYOUT_V3','FINAL_NAVIGATION_FIX','RESTORED_TOP_REMOVED']
+          bad=[x for x in forbidden if x in html]
+          if bad: raise SystemExit('forbidden '+','.join(bad))
+          Path('candidate-one/index.html').write_text(html,encoding='utf-8')
+          Path('candidate-one/sha256.txt').write_text(hashlib.sha256(html.encode()).hexdigest()+'\n',encoding='utf-8')
+          print('SHA256='+hashlib.sha256(html.encode()).hexdigest())
+          print('BYTES='+str(len(html.encode())))
+          PY
+
+      - name: Render candidate one
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd site/candidate-one
+          python3 -m http.server 8766 >/tmp/candidate-one-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill $server_pid || true' EXIT
+          sleep 2
+          chrome="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser)"
+          "$chrome" --headless=new --no-sandbox --disable-dev-shm-usage --disable-gpu --hide-scrollbars --window-size=1536,1024 --virtual-time-budget=3500 --screenshot=candidate-one.png http://127.0.0.1:8766/index.html?visual-check=1
+          test -s candidate-one.png
+
+      - name: Upload candidate one
+        uses: actions/upload-artifact@v4
+        with:
+          name: data-search-candidate-one
+          path: |
+            site/candidate-one/candidate-one.png
+            site/candidate-one/sha256.txt
+          retention-days: 3
