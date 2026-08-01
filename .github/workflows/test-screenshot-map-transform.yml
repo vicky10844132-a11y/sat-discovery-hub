@@ -1,0 +1,82 @@
+name: Test screenshot map layer transform
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/map-transform-test-trigger.txt'
+
+permissions:
+  contents: read
+
+jobs:
+  render-map-transform:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout published page
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 1
+          path: site
+
+      - name: Render transformed loaded map layer
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd site
+          mkdir -p verification
+          python3 -m http.server 8777 >/tmp/map-transform-http.log 2>&1 &
+          server_pid=$!
+          chrome="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser)"
+          rm -rf /tmp/map-transform-profile
+          "$chrome" --headless=new --no-sandbox --disable-dev-shm-usage --disable-gpu --no-first-run --no-default-browser-check --remote-debugging-port=9225 --user-data-dir=/tmp/map-transform-profile about:blank >/tmp/map-transform-chrome.log 2>&1 &
+          chrome_pid=$!
+          trap 'kill $chrome_pid $server_pid 2>/dev/null || true' EXIT
+
+          cat >/tmp/test-map-transform.mjs <<'JS'
+          import fs from 'node:fs';
+          const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+          let tabs=[];
+          for(let i=0;i<120;i++){try{tabs=await fetch('http://127.0.0.1:9225/json').then(r=>r.json());if(tabs.length)break}catch{}await sleep(100)}
+          const tab=tabs.find(t=>t.type==='page')||tabs[0];if(!tab)throw new Error('No page target');
+          const ws=new WebSocket(tab.webSocketDebuggerUrl);await new Promise((r,j)=>{ws.onopen=r;ws.onerror=j});
+          let id=0;const pending=new Map();ws.onmessage=e=>{const m=JSON.parse(e.data);if(m.id&&pending.has(m.id)){const p=pending.get(m.id);pending.delete(m.id);m.error?p.reject(new Error(JSON.stringify(m.error))):p.resolve(m.result)}};
+          const send=(method,params={})=>{const n=++id;ws.send(JSON.stringify({id:n,method,params}));return new Promise((resolve,reject)=>pending.set(n,{resolve,reject}))};
+          await send('Runtime.enable');await send('Page.enable');
+          await send('Emulation.setDeviceMetricsOverride',{width:937,height:635,deviceScaleFactor:2,mobile:false,screenWidth:937,screenHeight:635});
+          await send('Page.navigate',{url:'http://127.0.0.1:8777/data-search-restored.html?map-transform-test=1'});await sleep(4000);
+          let ready=false;
+          for(let i=0;i<100;i++){const r=await send('Runtime.evaluate',{expression:`(()=>{const t=[...document.querySelectorAll('.leaflet-tile')];return t.length>=12&&t.every(x=>x.complete&&x.naturalWidth>0)})()`,returnByValue:true});if(r.result.value){ready=true;break}await sleep(500)}
+          if(!ready)throw new Error('Map tiles did not finish loading');
+          const transform=await send('Runtime.evaluate',{expression:String.raw`(()=>{
+            if(typeof map==='undefined'||!map||!map._mapPane)return null;
+            const scale=1.0998103275672169;
+            const globalTx=-57.2395445;
+            const globalTy=-34.809153;
+            const stage=document.querySelector('.mapstage').getBoundingClientRect();
+            const p=map._mapPane._leaflet_pos||{x:0,y:0};
+            const tx=scale*p.x+globalTx+(scale-1)*stage.x;
+            const ty=scale*p.y+globalTy+(scale-1)*stage.y;
+            map._mapPane.style.transformOrigin='0 0';
+            map._mapPane.style.transform='matrix('+scale+',0,0,'+scale+','+tx+','+ty+')';
+            return {scale,globalTx,globalTy,stage:{x:stage.x,y:stage.y},panePosition:p,tx,ty,transform:map._mapPane.style.transform};
+          })()`,returnByValue:true});
+          await sleep(1000);
+          const shot=await send('Page.captureScreenshot',{format:'png',fromSurface:true,captureBeyondViewport:false});
+          fs.writeFileSync('verification/map-transform-test.png',Buffer.from(shot.data,'base64'));
+          fs.writeFileSync('verification/map-transform.json',JSON.stringify(transform.result.value,null,2));
+          ws.close();
+          JS
+
+          node /tmp/test-map-transform.mjs
+          test -s verification/map-transform-test.png
+          file verification/map-transform-test.png
+
+      - name: Upload map transform test
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshot-map-transform-test
+          path: site/verification/*
+          retention-days: 2
