@@ -12,7 +12,7 @@ permissions:
 jobs:
   render-candidates:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 12
     steps:
       - name: Checkout complete gh-pages history
         uses: actions/checkout@v4
@@ -38,50 +38,32 @@ jobs:
             ('script', 'data-search-aoi-tool-replacement-script'),
             ('script', 'v14-separated-core-modules-script'),
           ]
-
-          objects = subprocess.run(
-              ['git','rev-list','--objects','--all'],
-              check=True,text=True,stdout=subprocess.PIPE,
-          ).stdout.splitlines()
+          objects = subprocess.run(['git','rev-list','--objects','--all'],check=True,text=True,stdout=subprocess.PIPE).stdout.splitlines()
           pages = Path('candidate-render/pages')
-          candidates = []
-          seen = set()
+          candidates=[]; seen=set()
           for line in objects:
-              parts = line.split(' ',1)
-              sha = parts[0]
-              path = parts[1] if len(parts)>1 else ''
-              if sha in seen:
-                  continue
+              parts=line.split(' ',1); sha=parts[0]; path=parts[1] if len(parts)>1 else ''
+              if sha in seen: continue
               seen.add(sha)
-              if path and not (path.lower().endswith(('.html','.htm')) or 'data-search' in path.lower() or 'aoi' in path.lower()):
-                  continue
-              kind = subprocess.run(['git','cat-file','-t',sha],text=True,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL)
-              if kind.returncode or kind.stdout.strip()!='blob':
-                  continue
-              size = int(subprocess.run(['git','cat-file','-s',sha],check=True,text=True,stdout=subprocess.PIPE).stdout)
-              if size>2_500_000:
-                  continue
-              raw = subprocess.run(['git','cat-file','-p',sha],check=True,stdout=subprocess.PIPE).stdout
-              try:
-                  html = raw.decode('utf-8')
-              except UnicodeDecodeError:
-                  continue
-              if '<!doctype html' not in html[:1000].lower():
-                  continue
-              if 'AOI is part of Search' not in html or 'Regional Projects' not in html:
-                  continue
-              for tag, block_id in REMOVE:
-                  html = re.sub(rf'\s*<{tag} id="{re.escape(block_id)}">.*?</{tag}>\s*','\n',html,flags=re.S)
-              digest = hashlib.sha256(html.encode()).hexdigest()
+              if path and not (path.lower().endswith(('.html','.htm')) or 'data-search' in path.lower() or 'aoi' in path.lower()): continue
+              kind=subprocess.run(['git','cat-file','-t',sha],text=True,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL)
+              if kind.returncode or kind.stdout.strip()!='blob': continue
+              size=int(subprocess.run(['git','cat-file','-s',sha],check=True,text=True,stdout=subprocess.PIPE).stdout)
+              if size>2_500_000: continue
+              raw=subprocess.run(['git','cat-file','-p',sha],check=True,stdout=subprocess.PIPE).stdout
+              try: html=raw.decode('utf-8')
+              except UnicodeDecodeError: continue
+              if '<!doctype html' not in html[:1000].lower(): continue
+              if 'AOI is part of Search' not in html or 'Regional Projects' not in html: continue
+              for tag,block_id in REMOVE:
+                  html=re.sub(rf'\s*<{tag} id="{re.escape(block_id)}">.*?</{tag}>\s*','\n',html,flags=re.S)
+              digest=hashlib.sha256(html.encode()).hexdigest()
               candidates.append((size,sha,path,html,digest))
-
-          # Stable chronological-family order: smaller historical page first.
           candidates.sort(key=lambda item:(item[0],item[1]))
           manifest=[]
           for i,(source_size,blob,path,html,digest) in enumerate(candidates,1):
-              html = html.replace('<title>DATA SEARCH</title>',f'<title>CANDIDATE {i} · DATA SEARCH</title>',1)
-              out=pages/f'candidate-{i}.html'
-              out.write_text(html,encoding='utf-8')
+              html=html.replace('<title>DATA SEARCH</title>',f'<title>CANDIDATE {i} · DATA SEARCH</title>',1)
+              (pages/f'candidate-{i}.html').write_text(html,encoding='utf-8')
               manifest.append({
                 'candidate':i,'blob':blob,'source_path':path,'source_bytes':source_size,
                 'sha256_before_title':digest,'render_bytes':len(html.encode()),
@@ -93,14 +75,13 @@ jobs:
                 'final_navigation_fix':'FINAL_NAVIGATION_FIX' in html,
                 'restored_top_removed':'RESTORED_TOP_REMOVED' in html,
               })
-          if not manifest:
-              raise SystemExit('No screenshot-marker candidates found')
+          if not manifest: raise SystemExit('No screenshot-marker candidates found')
           Path('candidate-render/manifest.json').write_text(json.dumps(manifest,indent=2),encoding='utf-8')
           Path('candidate-render/count.txt').write_text(str(len(manifest)),encoding='utf-8')
           print(json.dumps(manifest,indent=2))
           PY
 
-      - name: Render candidates in Chrome
+      - name: Render candidates in Chrome with timeout
         shell: bash
         run: |
           set -euo pipefail
@@ -113,15 +94,26 @@ jobs:
           test -n "$chrome"
           count="$(cat count.txt)"
           for i in $(seq 1 "$count"); do
-            "$chrome" \
+            set +e
+            timeout --signal=TERM --kill-after=2s 14s "$chrome" \
               --headless=new \
               --no-sandbox \
               --disable-dev-shm-usage \
+              --disable-gpu \
+              --disable-background-networking \
+              --disable-component-update \
+              --disable-sync \
+              --no-first-run \
+              --no-default-browser-check \
               --hide-scrollbars \
+              --run-all-compositor-stages-before-draw \
               --window-size=1536,1024 \
-              --virtual-time-budget=7000 \
+              --virtual-time-budget=3500 \
               --screenshot="screenshots/candidate-${i}.png" \
-              "http://127.0.0.1:8765/pages/candidate-${i}.html?render=2"
+              "http://127.0.0.1:8765/pages/candidate-${i}.html?render=3"
+            status=$?
+            set -e
+            echo "candidate $i chrome status=$status"
             test -s "screenshots/candidate-${i}.png"
           done
           ls -lh screenshots
