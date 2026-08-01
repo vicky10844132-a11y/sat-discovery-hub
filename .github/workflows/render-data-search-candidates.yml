@@ -21,7 +21,7 @@ jobs:
           fetch-depth: 0
           path: site
 
-      - name: Build candidate pages
+      - name: Discover and build candidate pages
         shell: bash
         run: |
           set -euo pipefail
@@ -31,17 +31,6 @@ jobs:
           from pathlib import Path
           import hashlib, json, re, subprocess
 
-          BLOBS = [
-            '70a4d8c9819e96c10bbdad7a8a03cc87fea156f5',
-            'a8befc318cf614e741642ba50e866d557d838a42',
-            '9a7f6afe44334606f19b8d5fa1e05c2d035489a2',
-            'f32cbc50a9b8945f7a17c882c1ff4345646ead64',
-            'a601b4072ee148febc46d79a64f63733d33fba55',
-            'b19000123369353e4fc386a5f14171c5521c80c5',
-            'bc2f4c015c9722675302c5bd3bd5c92b1ae0c862',
-            '2b5c75ffe0250359d2d426935ebb380beef104cb',
-            'a9c81f68984fedbeb82e36351854cb10681690cf',
-          ]
           REMOVE = [
             ('style', 'data-search-aoi-tool-replacement-style'),
             ('style', 'v14-separated-core-modules-style'),
@@ -49,31 +38,66 @@ jobs:
             ('script', 'data-search-aoi-tool-replacement-script'),
             ('script', 'v14-separated-core-modules-script'),
           ]
+
+          objects = subprocess.run(
+              ['git','rev-list','--objects','--all'],
+              check=True,text=True,stdout=subprocess.PIPE,
+          ).stdout.splitlines()
           pages = Path('candidate-render/pages')
-          manifest = []
-          for i, blob in enumerate(BLOBS, 1):
-            raw = subprocess.run(['git','cat-file','-p',blob],check=True,stdout=subprocess.PIPE).stdout
-            html = raw.decode('utf-8')
-            for tag, block_id in REMOVE:
-              html = re.sub(rf'\s*<{tag} id="{re.escape(block_id)}">.*?</{tag}>\s*','\n',html,flags=re.S)
-            # Add a non-invasive candidate label outside the app, visible only in browser title.
-            html = html.replace('<title>DATA SEARCH</title>', f'<title>CANDIDATE {i} · DATA SEARCH</title>', 1)
-            out = pages / f'candidate-{i}.html'
-            out.write_text(html, encoding='utf-8')
-            manifest.append({
-              'candidate': i,
-              'blob': blob,
-              'sha256': hashlib.sha256(html.encode()).hexdigest(),
-              'bytes': len(html.encode()),
-              'clean_navigation': 'CLEAN_NAVIGATION_FIX' in html,
-              'rail_86': '--ds-rail-width:86px' in html,
-              'account_workspace': 'account-center-workspace-style' in html,
-              'top_hide': 'top-actions>:not(.v11-auth-actions)' in html,
-              'aoi_text': 'AOI is part of Search' in html,
-              'regional_projects': 'Regional Projects' in html,
-            })
+          candidates = []
+          seen = set()
+          for line in objects:
+              parts = line.split(' ',1)
+              sha = parts[0]
+              path = parts[1] if len(parts)>1 else ''
+              if sha in seen:
+                  continue
+              seen.add(sha)
+              if path and not (path.lower().endswith(('.html','.htm')) or 'data-search' in path.lower() or 'aoi' in path.lower()):
+                  continue
+              kind = subprocess.run(['git','cat-file','-t',sha],text=True,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL)
+              if kind.returncode or kind.stdout.strip()!='blob':
+                  continue
+              size = int(subprocess.run(['git','cat-file','-s',sha],check=True,text=True,stdout=subprocess.PIPE).stdout)
+              if size>2_500_000:
+                  continue
+              raw = subprocess.run(['git','cat-file','-p',sha],check=True,stdout=subprocess.PIPE).stdout
+              try:
+                  html = raw.decode('utf-8')
+              except UnicodeDecodeError:
+                  continue
+              if '<!doctype html' not in html[:1000].lower():
+                  continue
+              if 'AOI is part of Search' not in html or 'Regional Projects' not in html:
+                  continue
+              for tag, block_id in REMOVE:
+                  html = re.sub(rf'\s*<{tag} id="{re.escape(block_id)}">.*?</{tag}>\s*','\n',html,flags=re.S)
+              digest = hashlib.sha256(html.encode()).hexdigest()
+              candidates.append((size,sha,path,html,digest))
+
+          # Stable chronological-family order: smaller historical page first.
+          candidates.sort(key=lambda item:(item[0],item[1]))
+          manifest=[]
+          for i,(source_size,blob,path,html,digest) in enumerate(candidates,1):
+              html = html.replace('<title>DATA SEARCH</title>',f'<title>CANDIDATE {i} · DATA SEARCH</title>',1)
+              out=pages/f'candidate-{i}.html'
+              out.write_text(html,encoding='utf-8')
+              manifest.append({
+                'candidate':i,'blob':blob,'source_path':path,'source_bytes':source_size,
+                'sha256_before_title':digest,'render_bytes':len(html.encode()),
+                'clean_navigation':'CLEAN_NAVIGATION_FIX' in html,
+                'rail_86':'--ds-rail-width:86px' in html,
+                'account_workspace':'account-center-workspace-style' in html,
+                'top_hide':'top-actions>:not(.v11-auth-actions)' in html,
+                'navigation_layout_v3':'NAVIGATION_LAYOUT_V3' in html,
+                'final_navigation_fix':'FINAL_NAVIGATION_FIX' in html,
+                'restored_top_removed':'RESTORED_TOP_REMOVED' in html,
+              })
+          if not manifest:
+              raise SystemExit('No screenshot-marker candidates found')
           Path('candidate-render/manifest.json').write_text(json.dumps(manifest,indent=2),encoding='utf-8')
-          print(json.dumps(manifest, indent=2))
+          Path('candidate-render/count.txt').write_text(str(len(manifest)),encoding='utf-8')
+          print(json.dumps(manifest,indent=2))
           PY
 
       - name: Render candidates in Chrome
@@ -87,16 +111,17 @@ jobs:
           sleep 2
           chrome="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser)"
           test -n "$chrome"
-          for i in $(seq 1 9); do
+          count="$(cat count.txt)"
+          for i in $(seq 1 "$count"); do
             "$chrome" \
               --headless=new \
               --no-sandbox \
               --disable-dev-shm-usage \
               --hide-scrollbars \
               --window-size=1536,1024 \
-              --virtual-time-budget=5000 \
+              --virtual-time-budget=7000 \
               --screenshot="screenshots/candidate-${i}.png" \
-              "http://127.0.0.1:8765/pages/candidate-${i}.html?render=1"
+              "http://127.0.0.1:8765/pages/candidate-${i}.html?render=2"
             test -s "screenshots/candidate-${i}.png"
           done
           ls -lh screenshots
