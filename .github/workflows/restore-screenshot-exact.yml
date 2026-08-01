@@ -12,9 +12,9 @@ permissions:
 jobs:
   restore-screenshot-version:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
-      - name: Checkout complete published history
+      - name: Checkout all repository history
         uses: actions/checkout@v4
         with:
           ref: gh-pages
@@ -33,14 +33,6 @@ jobs:
           import subprocess
 
           EXPECTED = '8d72926e97e9ba7a6d9c0ec88878d87472c9e1bbeea057477c483217f7d3027c'
-          PATHS = [
-              'data-search-restored.html',
-              'data-search.html',
-              'data-search-aoi-v9.html',
-              'data-search-integrated-v8.html',
-              'DATA_SEARCH_FULL_RESTORED_EN.html',
-              'DATA_SEARCH_AOI_ARCHIVE_TASKING.html',
-          ]
           REMOVE = [
               ('style', 'data-search-aoi-tool-replacement-style'),
               ('style', 'v14-separated-core-modules-style'),
@@ -49,33 +41,48 @@ jobs:
               ('script', 'v14-separated-core-modules-script'),
           ]
 
-          def run(*args):
-              return subprocess.run(args, check=True, text=True, stdout=subprocess.PIPE).stdout
+          objects = subprocess.run(
+              ['git', 'rev-list', '--objects', '--all'],
+              check=True, text=True, stdout=subprocess.PIPE,
+          ).stdout.splitlines()
 
-          commits = []
+          blobs = []
           seen = set()
-          for path in PATHS:
-              result = subprocess.run(
-                  ['git', 'log', '--all', '--format=%H', '--', path],
-                  check=True, text=True, stdout=subprocess.PIPE,
-              ).stdout.splitlines()
-              for commit in result:
-                  key = (commit, path)
-                  if key not in seen:
-                      seen.add(key)
-                      commits.append(key)
+          for line in objects:
+              parts = line.split(' ', 1)
+              sha = parts[0]
+              path = parts[1] if len(parts) > 1 else ''
+              if sha in seen:
+                  continue
+              seen.add(sha)
+              if path and not (path.lower().endswith(('.html', '.htm')) or 'data-search' in path.lower() or 'aoi' in path.lower()):
+                  continue
+              kind = subprocess.run(
+                  ['git', 'cat-file', '-t', sha], text=True,
+                  stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+              )
+              if kind.returncode == 0 and kind.stdout.strip() == 'blob':
+                  blobs.append((sha, path))
 
           found = None
           checked = 0
-          for commit, path in commits:
-              proc = subprocess.run(
-                  ['git', 'show', f'{commit}:{path}'],
-                  text=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
-              )
-              if proc.returncode != 0:
+          marker_candidates = []
+          for sha, path in blobs:
+              size_text = subprocess.run(
+                  ['git', 'cat-file', '-s', sha], check=True, text=True,
+                  stdout=subprocess.PIPE,
+              ).stdout.strip()
+              if int(size_text) > 2_500_000:
                   continue
-              html = proc.stdout
-              if '<!doctype html' not in html[:500].lower():
+              raw = subprocess.run(
+                  ['git', 'cat-file', '-p', sha], check=True,
+                  stdout=subprocess.PIPE,
+              ).stdout
+              try:
+                  html = raw.decode('utf-8')
+              except UnicodeDecodeError:
+                  continue
+              if '<!doctype html' not in html[:1000].lower():
                   continue
               checked += 1
               candidate = html
@@ -85,29 +92,30 @@ jobs:
                       '\n', candidate, flags=re.S,
                   )
               digest = hashlib.sha256(candidate.encode('utf-8')).hexdigest()
+              if 'AOI is part of Search' in candidate and 'Regional Projects' in candidate:
+                  marker_candidates.append((path, sha, digest, len(candidate.encode('utf-8'))))
               if digest == EXPECTED:
-                  found = (commit, path, candidate)
+                  found = (sha, path, candidate)
                   break
 
           if not found:
-              raise SystemExit(f'Exact screenshot source not found after checking {checked} historical HTML versions')
+              for item in marker_candidates[:30]:
+                  print('MARKER_CANDIDATE path=%s blob=%s sha256=%s bytes=%s' % item)
+              raise SystemExit(
+                  f'Exact screenshot source not found after checking {checked} HTML blobs; '
+                  f'{len(marker_candidates)} contained the screenshot text markers'
+              )
 
-          commit, source_path, candidate = found
+          source_blob, source_path, candidate = found
           required = [
-              'AOI is part of Search',
-              'Regional Projects',
-              'data-tab="aoi"',
-              'data-tab="archive"',
-              'data-tab="monitoring"',
-              'id="coordinateInput"',
-              'id="languageToggle"',
-              'data-panel="account"',
+              'AOI is part of Search', 'Regional Projects',
+              'data-tab="aoi"', 'data-tab="archive"', 'data-tab="monitoring"',
+              'id="coordinateInput"', 'id="languageToggle"', 'data-panel="account"',
           ]
           missing = [item for item in required if item not in candidate]
           if missing:
-              raise SystemExit('Screenshot version is missing required markers: ' + ', '.join(missing))
-          forbidden = [block_id for _, block_id in REMOVE]
-          remaining = [item for item in forbidden if item in candidate]
+              raise SystemExit('Screenshot version is missing: ' + ', '.join(missing))
+          remaining = [block_id for _, block_id in REMOVE if block_id in candidate]
           if remaining:
               raise SystemExit('Later replacement blocks remain: ' + ', '.join(remaining))
           if 'dataSearchFrame' in candidate:
@@ -117,9 +125,9 @@ jobs:
           output.write_text(candidate, encoding='utf-8')
           actual = hashlib.sha256(output.read_bytes()).hexdigest()
           if actual != EXPECTED:
-              raise SystemExit(f'Final hash mismatch: {actual}')
+              raise SystemExit('Final hash mismatch: ' + actual)
 
-          print('SOURCE_COMMIT=' + commit)
+          print('SOURCE_BLOB=' + source_blob)
           print('SOURCE_PATH=' + source_path)
           print('SCREENSHOT_SHA256=' + actual)
           print('SCREENSHOT_BYTES=' + str(output.stat().st_size))
