@@ -1,0 +1,171 @@
+name: Verify fully loaded screenshot DATA SEARCH version
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/loaded-screenshot-trigger.txt'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-loaded-page:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout published page
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 1
+          path: site
+
+      - name: Capture only after every visible map tile loads
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd site
+          mkdir -p verification
+          python3 -m http.server 8775 >/tmp/loaded-http.log 2>&1 &
+          server_pid=$!
+          chrome="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser)"
+          rm -rf /tmp/loaded-screenshot-profile
+          "$chrome" \
+            --headless=new \
+            --no-sandbox \
+            --disable-dev-shm-usage \
+            --disable-gpu \
+            --no-first-run \
+            --no-default-browser-check \
+            --remote-debugging-port=9223 \
+            --user-data-dir=/tmp/loaded-screenshot-profile \
+            about:blank >/tmp/loaded-chrome.log 2>&1 &
+          chrome_pid=$!
+          trap 'kill $chrome_pid $server_pid 2>/dev/null || true' EXIT
+
+          cat >/tmp/capture-loaded.mjs <<'JS'
+          import fs from 'node:fs';
+          const sleep = ms => new Promise(r => setTimeout(r, ms));
+          let tabs = [];
+          for (let i = 0; i < 120; i++) {
+            try {
+              tabs = await fetch('http://127.0.0.1:9223/json').then(r => r.json());
+              if (tabs.length) break;
+            } catch {}
+            await sleep(100);
+          }
+          const tab = tabs.find(t => t.type === 'page') || tabs[0];
+          if (!tab) throw new Error('Chrome page target unavailable');
+          const ws = new WebSocket(tab.webSocketDebuggerUrl);
+          await new Promise((resolve, reject) => { ws.onopen = resolve; ws.onerror = reject; });
+          let id = 0;
+          const pending = new Map();
+          ws.onmessage = event => {
+            const message = JSON.parse(event.data);
+            if (message.id && pending.has(message.id)) {
+              const {resolve, reject} = pending.get(message.id);
+              pending.delete(message.id);
+              message.error ? reject(new Error(JSON.stringify(message.error))) : resolve(message.result);
+            }
+          };
+          function send(method, params = {}) {
+            const current = ++id;
+            ws.send(JSON.stringify({id: current, method, params}));
+            return new Promise((resolve, reject) => pending.set(current, {resolve, reject}));
+          }
+          await send('Runtime.enable');
+          await send('Page.enable');
+          await send('Emulation.setDeviceMetricsOverride', {
+            width: 937,
+            height: 635,
+            deviceScaleFactor: 2,
+            mobile: false,
+            screenWidth: 937,
+            screenHeight: 635
+          });
+          await send('Page.navigate', {url:'http://127.0.0.1:8775/data-search-restored.html?loaded-verification=20260801'});
+          await sleep(3000);
+
+          let status = null;
+          for (let i = 0; i < 80; i++) {
+            const evaluated = await send('Runtime.evaluate', {
+              expression: String.raw`JSON.stringify((()=>{
+                const tiles=[...document.querySelectorAll('.leaflet-tile')];
+                const stage=document.querySelector('.mapstage');
+                const rect=stage&&stage.getBoundingClientRect();
+                return {
+                  title:document.title,
+                  tileCount:tiles.length,
+                  loaded:tiles.filter(t=>t.complete&&t.naturalWidth>0).length,
+                  failed:tiles.filter(t=>t.complete&&t.naturalWidth===0).length,
+                  stage:rect?{x:rect.x,y:rect.y,width:rect.width,height:rect.height}:null,
+                  mapSize:(typeof map!=='undefined'&&map)?map.getSize():null,
+                  zoom:(typeof map!=='undefined'&&map)?map.getZoom():null,
+                  ready:tiles.length>=6&&tiles.every(t=>t.complete&&t.naturalWidth>0)
+                };
+              })())`,
+              returnByValue:true
+            });
+            status = JSON.parse(evaluated.result.value);
+            if (status.ready) break;
+            await sleep(500);
+          }
+          if (!status?.ready) throw new Error('Visible map tiles did not all load: '+JSON.stringify(status));
+
+          await send('Runtime.evaluate', {
+            expression: String.raw`(()=>{
+              try{
+                if(typeof map!=='undefined'&&map){
+                  map.stop();
+                  map.invalidateSize({animate:false,pan:false});
+                  if(typeof activeAOI!=='undefined'&&activeAOI&&activeAOI.getBounds)map.fitBounds(activeAOI.getBounds(),{padding:[70,70],maxZoom:5,animate:false});
+                  if(typeof currentTile!=='undefined'&&currentTile&&currentTile.redraw)currentTile.redraw();
+                }
+              }catch(e){}
+            })()`,
+            returnByValue:true
+          });
+          await sleep(2500);
+
+          for (let i = 0; i < 40; i++) {
+            const evaluated = await send('Runtime.evaluate', {
+              expression: String.raw`JSON.stringify((()=>{const t=[...document.querySelectorAll('.leaflet-tile')];return {count:t.length,loaded:t.filter(x=>x.complete&&x.naturalWidth>0).length,ready:t.length>=6&&t.every(x=>x.complete&&x.naturalWidth>0)}})())`,
+              returnByValue:true
+            });
+            const finalTiles=JSON.parse(evaluated.result.value);
+            if(finalTiles.ready){status.finalTiles=finalTiles;break;}
+            await sleep(500);
+          }
+          if(!status.finalTiles?.ready)throw new Error('Tiles were incomplete after final layout reset: '+JSON.stringify(status));
+
+          const shot = await send('Page.captureScreenshot', {
+            format:'png',
+            fromSurface:true,
+            captureBeyondViewport:false
+          });
+          fs.writeFileSync('verification/data-search-restored.png', Buffer.from(shot.data,'base64'));
+          fs.writeFileSync('verification/status.json', JSON.stringify(status,null,2));
+          console.log(JSON.stringify(status));
+          ws.close();
+          JS
+
+          node /tmp/capture-loaded.mjs
+          test -s verification/data-search-restored.png
+          python3 - <<'PY'
+          from PIL import Image
+          image=Image.open('verification/data-search-restored.png')
+          assert image.size==(1874,1270), image.size
+          print('SCREENSHOT_SIZE=%sx%s' % image.size)
+          PY
+          sha256sum data-search-restored.html verification/data-search-restored.png
+
+      - name: Upload fully loaded verification
+        uses: actions/upload-artifact@v4
+        with:
+          name: fully-loaded-data-search-screenshot
+          path: |
+            site/verification/data-search-restored.png
+            site/verification/status.json
+            site/data-search-restored.html
+          retention-days: 3
