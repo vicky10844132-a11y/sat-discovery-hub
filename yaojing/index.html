@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>曜境 · 完整版</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<section id="lobby" class="screen active">
+  <div class="bg-mountain"></div><div class="mist"></div>
+  <div class="topbar">
+    <div class="brand"><div class="brandMark">曜</div><div><b>曜境</b><small>ORIGIN ARENA</small></div></div>
+    <div class="topActions"><span>单机模式</span><span>无账号 · 无绑定</span><button onclick="openCreator()">角色设定</button></div>
+  </div>
+  <div class="lobbyGrid">
+    <div class="heroStage">
+      <div class="ring r1"></div><div class="ring r2"></div>
+      <div class="heroFigure">
+        <div class="cape"></div><div class="head"></div><div class="body"></div><div class="arm left"></div><div class="arm right"></div><div class="blade"></div><div class="orb"></div>
+      </div>
+      <div class="heroText">
+        <div class="eyebrow">原创英雄 · 星巡者</div>
+        <h1 id="lobbyName">凌曜</h1>
+        <p id="lobbyDesc">来自星轨观测站的少年守望者，以星能驱动双刃，在短距离内高速位移。</p>
+        <div class="tags"><span>突进</span><span>爆发</span><span>操作</span></div>
+      </div>
+    </div>
+    <div class="modePanel">
+      <div class="modeHead"><div class="modeIcon">⚔</div><div><small>经典模式</small><b>峡谷演练</b></div></div>
+      <div class="mapPreview"><div class="river"></div><div class="lane l1"></div><div class="lane l2"></div><div class="lane l3"></div><i class="b"></i><i class="r"></i></div>
+      <div class="modeMeta"><span>单人 + AI</span><span>约 6–10 分钟</span></div>
+      <button class="goldBtn" onclick="startBattle()">开始对战</button>
+      <button class="subBtn" onclick="openCreator()">编辑我的角色</button>
+    </div>
+  </div>
+  <div class="bottomNav"><button class="active">大厅</button><button onclick="openCreator()">英雄</button><button onclick="openCreator()">创作</button><button onclick="toast('成长系统将在后续知识模块中接入')">成长</button></div>
+</section>
+
+<section id="creator" class="screen">
+  <div class="topbar">
+    <div class="brand"><div class="brandMark">曜</div><div><b>角色创作</b><small>ONE HERO ONLY</small></div></div>
+    <button class="lineBtn" onclick="backLobby()">返回大厅</button>
+  </div>
+  <div class="creatorGrid">
+    <div class="creatorPreview">
+      <div class="miniHero"><div class="head"></div><div class="body"></div><div class="blade"></div></div>
+      <h2 id="previewName">凌曜</h2><p id="previewSub">冷静 / 未来感</p>
+    </div>
+    <div class="editor">
+      <div class="sectionLabel">基础设定</div>
+      <label>角色名<input id="nameInput" maxlength="8"></label>
+      <label>角色气质<select id="styleInput"><option>冷静 / 未来感</option><option>热血 / 少年感</option><option>神秘 / 东方幻想</option><option>智慧 / 科技感</option></select></label>
+      <label>核心设定<textarea id="descInput"></textarea></label>
+      <div class="sectionLabel">战斗风格</div>
+      <div class="stat"><span>攻击</span><input id="atkInput" type="range" min="24" max="65"><b id="atkVal"></b></div>
+      <div class="stat"><span>速度</span><input id="spdInput" type="range" min="190" max="350"><b id="spdVal"></b></div>
+      <div class="stat"><span>生命</span><input id="hpInput" type="range" min="90" max="180"><b id="hpVal"></b></div>
+      <div class="sectionLabel">技能</div>
+      <div class="skillCards">
+        <div><i>Q</i> <b>星跃</b><small>朝目标方向高速突进</small></div>
+        <div><i>E</i> <b>裂光</b><small>对周围敌人造成范围伤害</small></div>
+        <div><i>R</i> <b>曜界</b><small>短时间强化速度与攻击</small></div>
+      </div>
+      <button class="goldBtn" onclick="saveHero()">保存角色</button>
+    </div>
+  </div>
+</section>
+
+<section id="battle" class="screen">
+  <canvas id="game" width="1280" height="720"></canvas>
+  <div class="battleTop"><span class="blue">我方 <b id="blueScore">0</b></span><span id="timer">00:00</span><span class="red"><b id="redScore">0</b> 敌方</span></div>
+  <button class="exitBtn" onclick="leaveBattle()">退出</button>
+  <div class="minimap"><canvas id="mini" width="170" height="170"></canvas></div>
+  <div class="heroHud">
+    <div class="avatar">曜</div>
+    <div class="hudBars"><div class="hudName"><span id="hudName">凌曜</span> <small>Lv.<span id="level">1</span></small></div><div class="bar"><i class="hpFill" id="hpFill"></i></div><div class="bar"><i class="xpFill" id="xpFill"></i></div></div>
+  </div>
+  <div class="desktopSkills">
+    <button onclick="skillQ()"><span>Q</span><small>星跃</small></button>
+    <button onclick="skillE()"><span>E</span><small>裂光</small></button>
+    <button class="ult" onclick="skillR()"><span>R</span><small>曜界</small></button>
+    <button class="atk" onclick="attackNearest()"><span>⚔</span><small>攻击</small></button>
+  </div>
+  <div id="mobileControls">
+    <div class="joystick" id="joystick"><div class="stick" id="stick"></div></div>
+    <div class="touchSkills">
+      <button id="mQ"><span>Q</span><small>星跃</small></button>
+      <button id="mE"><span>E</span><small>裂光</small></button>
+      <button id="mR"><span>R</span><small>曜界</small></button>
+      <button id="mAtk"><span>⚔</span><small>攻击</small></button>
+    </div>
+  </div>
+  <div id="battleMsg"></div>
+  <div class="result" id="result">
+    <div class="resultCard"><h2 id="resultTitle">胜利</h2><p id="resultText"></p><button class="goldBtn" onclick="startBattle()">再来一局</button><button class="subBtn" onclick="leaveBattle()">返回大厅</button></div>
+  </div>
+</section>
+
+<div id="toast"></div>
+
+<script src="game.js"></script>
+</body>
+</html>
