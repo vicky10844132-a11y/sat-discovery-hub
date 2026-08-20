@@ -14,6 +14,7 @@ class MissionObjective:
     priority: int = 3
     max_cloud_pct: float | None = None
     max_resolution_m: float | None = None
+    data_strategy: Literal["auto", "archive", "tasking"] = "auto"
 
 
 @dataclass(frozen=True)
@@ -47,6 +48,16 @@ class GroundAsset:
     status: str
     ownership: str
     utilization_pct: float
+
+
+@dataclass(frozen=True)
+class GroundReservation:
+    id: str
+    satellite_id: str
+    ground_station_id: str
+    start: datetime
+    end: datetime
+    priority: int
 
 
 @dataclass(frozen=True)
@@ -124,7 +135,50 @@ def rank_ground_assets(assets: Iterable[GroundAsset], required_band: str = "X") 
         for asset in assets
         if asset.status in {"nominal", "available"} and required_band in asset.bands
     ]
-    return sorted(feasible, key=lambda item: (item.utilization_pct, ownership_rank.get(item.ownership, 9)))
+    return sorted(feasible, key=lambda item: (ownership_rank.get(item.ownership, 9), item.utilization_pct))
+
+
+def _utc(value: datetime) -> datetime:
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc)
+
+
+def _overlaps(start_a: datetime, end_a: datetime, start_b: datetime, end_b: datetime) -> bool:
+    return start_a < end_b and start_b < end_a
+
+
+def select_contact(
+    *,
+    assets: Iterable[GroundAsset],
+    reservations: Iterable[GroundReservation],
+    desired_start: datetime,
+    duration_min: int,
+    mission_priority: int,
+    required_band: str = "X",
+) -> dict | None:
+    start = _utc(desired_start)
+    end = start + timedelta(minutes=duration_min)
+    reservation_rows = list(reservations)
+    for asset in rank_ground_assets(assets, required_band=required_band):
+        conflicts = [
+            row
+            for row in reservation_rows
+            if row.ground_station_id == asset.id
+            and _overlaps(start, end, _utc(row.start), _utc(row.end))
+        ]
+        blocking = [row for row in conflicts if row.priority <= mission_priority]
+        if blocking:
+            continue
+        preempted = [row for row in conflicts if row.priority > mission_priority]
+        return {
+            "asset": asset,
+            "start": start,
+            "end": end,
+            "resolution": "preempt-lower-priority" if preempted else "accepted",
+            "preempted": preempted,
+        }
+    return None
 
 
 def orchestrate_mission(
@@ -136,25 +190,25 @@ def orchestrate_mission(
     ground_assets: Iterable[GroundAsset],
     weather: list[WeatherWindow],
     archive_products: Iterable[CatalogProduct],
+    ground_reservations: Iterable[GroundReservation] = (),
     delivery_target_hours: float | None = None,
     now: datetime | None = None,
 ) -> dict:
-    now_utc = now or datetime.now(timezone.utc)
-    if now_utc.tzinfo is None:
-        now_utc = now_utc.replace(tzinfo=timezone.utc)
-    now_utc = now_utc.astimezone(timezone.utc)
+    now_utc = _utc(now or datetime.now(timezone.utc))
     workflow: list[dict] = [
         {"stage": "OBJECTIVE", "status": "resolved", "detail": objective.objective},
         {"stage": "AOI", "status": "resolved", "detail": asdict(aoi)},
     ]
     exceptions: list[str] = []
 
-    archive = select_archive_product(
-        archive_products,
-        sensor=objective.sensor,
-        max_resolution_m=objective.max_resolution_m,
-        max_cloud_pct=objective.max_cloud_pct,
-    )
+    archive = None
+    if objective.data_strategy != "tasking":
+        archive = select_archive_product(
+            archive_products,
+            sensor=objective.sensor,
+            max_resolution_m=objective.max_resolution_m,
+            max_cloud_pct=objective.max_cloud_pct,
+        )
     if archive is not None:
         delivery_eta = now_utc + timedelta(minutes=20)
         workflow.extend([
@@ -177,7 +231,20 @@ def orchestrate_mission(
             "exceptions": exceptions,
         }
 
-    workflow.append({"stage": "DATA_SEARCH", "status": "resolved", "detail": "No compliant archive product; escalate to tasking"})
+    if objective.data_strategy == "archive":
+        workflow.append({"stage": "DATA_SEARCH", "status": "blocked", "detail": "No compliant archive product"})
+        return {
+            "status": "no_feasible_plan",
+            "strategy": "archive-only",
+            "mode": "LIVE",
+            "workflow": workflow,
+            "exceptions": ["No compliant archive product"],
+        }
+    if objective.data_strategy == "tasking":
+        workflow.append({"stage": "DATA_SEARCH", "status": "not_required", "detail": "New acquisition explicitly requested"})
+    else:
+        workflow.append({"stage": "DATA_SEARCH", "status": "resolved", "detail": "No compliant archive product; escalate to tasking"})
+
     filtered = [candidate for candidate in candidates if objective.sensor == "any" or candidate.sensor == objective.sensor]
     if objective.max_resolution_m is not None:
         filtered = [candidate for candidate in filtered if candidate.resolution_m <= objective.max_resolution_m]
@@ -209,14 +276,39 @@ def orchestrate_mission(
     if not ranked_ground:
         workflow.append({"stage": "CONTACT", "status": "blocked", "detail": "No compatible X-band ground asset"})
         return {"status": "no_feasible_plan", "strategy": "tasking", "mode": "LIVE", "workflow": workflow, "exceptions": exceptions + ["No compatible ground contact resource"]}
-    station = ranked_ground[0]
+
+    contact_start = max(_utc(candidate.downlink_utc), now_utc + timedelta(minutes=5))
+    contact = select_contact(
+        assets=ranked_ground,
+        reservations=ground_reservations,
+        desired_start=contact_start,
+        duration_min=10,
+        mission_priority=objective.priority,
+    )
+    if contact is None:
+        workflow.append({"stage": "CONTACT", "status": "blocked", "detail": "All compatible ground assets conflict at required downlink window"})
+        workflow.append({"stage": "SCHEDULE", "status": "blocked", "detail": "No conflict-free or preemptable contact"})
+        return {
+            "status": "no_feasible_plan",
+            "strategy": "tasking",
+            "mode": "LIVE",
+            "workflow": workflow,
+            "exceptions": exceptions + ["Ground-network scheduling conflict"],
+        }
+
+    station: GroundAsset = contact["asset"]
     workflow.append({"stage": "CONTACT", "status": "resolved", "detail": asdict(station)})
+    schedule_detail = {
+        "start": contact["start"].isoformat(),
+        "end": contact["end"].isoformat(),
+        "resolution": contact["resolution"],
+        "preempted": [asdict(item) for item in contact["preempted"]],
+    }
+    if contact["preempted"]:
+        exceptions.append("Lower-priority ground contact will be preempted")
+    workflow.append({"stage": "SCHEDULE", "status": "resolved", "detail": schedule_detail})
 
-    contact_start = max(candidate.downlink_utc, now_utc + timedelta(minutes=5))
-    contact_end = contact_start + timedelta(minutes=10)
-    workflow.append({"stage": "SCHEDULE", "status": "resolved", "detail": {"start": contact_start.isoformat(), "end": contact_end.isoformat()}})
-
-    process_start = contact_end + timedelta(minutes=4)
+    process_start = contact["end"] + timedelta(minutes=4)
     qc_complete = process_start + timedelta(minutes=18)
     delivery_eta = qc_complete + timedelta(minutes=8)
     delivery_hours = round((delivery_eta - now_utc).total_seconds() / 3600, 2)
@@ -234,6 +326,7 @@ def orchestrate_mission(
             "spacecraft_state": asdict(state) if state else None,
             "ground_station": asdict(station),
             "weather": asdict(weather_choice) if weather_choice else None,
+            "contact": {"start": contact["start"].isoformat(), "end": contact["end"].isoformat(), "resolution": contact["resolution"]},
         },
         "workflow": workflow,
         "processing_delivery": {
