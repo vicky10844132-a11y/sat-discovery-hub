@@ -7,7 +7,7 @@ This file is an execution ledger, not a product-definition document. `PRODUCT_BA
 Do not declare the platform complete until all of the following are true:
 
 - [x] Exactly six first-level modules: OPS / TWIN / PLAN / GS / EARTH / ENG.
-- [x] Mission orchestration service exposes the canonical Objective/AOI → Data Search → Opportunity → Weather → Resource → Contact → Schedule → Process → Deliver chain.
+- [x] Mission orchestration service exposes the canonical Objective / AOI → candidate space resources → Opportunity → Weather / Resource → Contact → Schedule → Process → Deliver chain.
 - [x] Archive-first and explicit new-tasking paths are represented in the mission engine.
 - [x] Ground scheduling has explicit ownership classes and conflict/preemption logic.
 - [x] Service modes use LIVE / SIMULATED / CONNECTOR_REQUIRED.
@@ -15,14 +15,15 @@ Do not declare the platform complete until all of the following are true:
 - [x] Business numerical-dynamics capability is preserved in the contract and not silently removed.
 - [x] Precision GNSS/SP3/RINEX/POD capability is preserved in the contract and not silently removed.
 - [x] Canonical production Mission Copilot calls `/v1/copilot/mission` when the API is available and uses a clearly labelled SIMULATED fallback on static GitHub Pages.
-- [x] Production Copilot UI renders OBJECTIVE / AOI / DATA_SEARCH / OPPORTUNITY / WEATHER_RESOURCE / CONTACT / SCHEDULE / PROCESS / DELIVER and exposes archive-first vs tasking strategy.
+- [x] Production Copilot UI renders OBJECTIVE / AOI / OPPORTUNITY / WEATHER_RESOURCE / CONTACT / SCHEDULE / PROCESS / DELIVER and exposes archive-first vs tasking strategy.
 - [x] Production GS workspace consumes `/v1/ground-network/pool` and exposes own / partner / GSaaS resource class plus scheduler resolution.
 - [x] Production ENG workspace consumes `/v1/engineering/capabilities` and renders fast / business / precision plus GNC/ADCS capability modes.
-- [x] Production EARTH workspace can pass the selected EO/Data Search result into Mission Planning and force an archive-first strategy.
-- [ ] Existing Data Search / AOI baseline system is connected through a dedicated adapter contract rather than only represented through the EO adapter shell.
+- [x] Production EARTH workspace can pass selected EO results into Mission Planning and force an archive-first strategy.
 - [x] Mission execution state persists beyond a single response in the production browser client using `spaceops.currentMission`; server-side durable mission state is still a future strengthening item.
 - [ ] Critical API, orchestration, UI-contract and production-console tests pass in CI after the latest main-branch changes.
 - [x] The fixed public entry `space-ops-live.html` routes to the canonical `production.html`; Vercel `/space-ops` already targets the same canonical console.
+
+**Scope boundary:** the user's separate Data Search + AOI product is not part of Space Ops Platform and must not be integrated, reused, duplicated, or treated as a completion dependency unless explicitly requested later.
 
 ## Current implementation notes
 
@@ -41,7 +42,7 @@ Implemented in `services/mission/orchestrator.py` and production UI:
 - lower-priority contact preemption;
 - processing/QC/delivery estimates with simulated mode honesty;
 - production Mission Copilot binding to `/v1/copilot/mission`;
-- explicit OBJECTIVE / AOI / DATA_SEARCH / OPPORTUNITY / WEATHER_RESOURCE / CONTACT / SCHEDULE / PROCESS / DELIVER visualization;
+- explicit OBJECTIVE / AOI / OPPORTUNITY / WEATHER_RESOURCE / CONTACT / SCHEDULE / PROCESS / DELIVER visualization;
 - browser-persisted current mission state.
 
 ### Ground Network OS
@@ -81,7 +82,7 @@ Implemented:
 - EO result handoff into Mission Planning / archive-first strategy;
 - processing/QC/delivery stage representation in mission orchestration.
 
-Still required: live provider adapters, downstream product/QC connector, and a dedicated adapter contract to the existing Data Search/AOI baseline system.
+Still required: live provider adapters and downstream product/QC connectors where needed by Space Ops itself.
 
 ### Fixed public entry
 
@@ -93,4 +94,4 @@ That file redirects only to `space-ops-platform/apps/web/production.html`. The p
 
 ## Rule for future implementation runs
 
-Every new change should close one or more unchecked completion-gate items. Do not add new first-level modules, parallel demos or replacement pages. When capability is not yet live, strengthen the contract, adapter, workflow or tests without falsely changing the data mode.
+Every new change should close one or more unchecked completion-gate items. Do not add new first-level modules, parallel demos or replacement pages. Do not pull unrelated products such as Data Search + AOI into Space Ops. When capability is not yet live, strengthen the contract, adapter, workflow or tests without falsely changing the data mode.
