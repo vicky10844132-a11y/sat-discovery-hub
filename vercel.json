@@ -3,7 +3,7 @@
   "cleanUrls": true,
   "trailingSlash": false,
   "rewrites": [
-    {"source": "/space-ops", "destination": "/space-ops-live.html"},
+    {"source": "/space-ops", "destination": "/space-ops-platform/apps/web/production.html"},
     {"source": "/gs-linkops-ai", "destination": "/gs-linkops-ai.html"},
     {"source": "/gs-linkops-ai-v0.2-preview", "destination": "/gs-linkops-ai-v0.2-preview.html"}
   ],
@@ -13,6 +13,12 @@
       "headers": [
         {"key": "Service-Worker-Allowed", "value": "/"},
         {"key": "Cache-Control", "value": "no-cache"}
+      ]
+    },
+    {
+      "source": "/space-ops-platform/apps/web/production.html",
+      "headers": [
+        {"key": "Cache-Control", "value": "no-cache, no-store, must-revalidate"}
       ]
     }
   ]
