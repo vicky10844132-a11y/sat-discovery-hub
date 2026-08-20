@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Space Ops Platform</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">SPACE OPS</div>
+      <nav>
+        <button class="active">Global Operations</button>
+        <button>Satellites</button>
+        <button>Mission Planning</button>
+        <button>Ground Stations</button>
+        <button>Data & Intelligence</button>
+        <button>Engineering Lab</button>
+        <button>Operations Center</button>
+      </nav>
+      <div class="system-state"><span class="dot"></span> SYSTEM NOMINAL</div>
+    </aside>
+
+    <main>
+      <header>
+        <div>
+          <div class="eyebrow">AUTONOMOUS MISSION OPERATIONS</div>
+          <h1>Global Operations</h1>
+        </div>
+        <div class="clock" id="clock"></div>
+      </header>
+
+      <section class="metrics" id="metrics"></section>
+
+      <section class="workspace">
+        <div class="globe-panel panel">
+          <div class="panel-title"><span>Digital Space Twin</span><span class="muted">LIVE</span></div>
+          <div id="globe" class="globe">
+            <div class="orbit orbit-a"></div>
+            <div class="orbit orbit-b"></div>
+            <div class="earth-grid"></div>
+            <div class="sat sat-a" title="SAT-018"></div>
+            <div class="sat sat-b" title="SAT-042"></div>
+            <div class="ground gs-sg" title="Singapore Ground Station"></div>
+            <div class="ground gs-se" title="Sweden Ground Station"></div>
+          </div>
+          <div class="layer-strip">
+            <button class="on">Satellites</button><button class="on">Ground Stations</button><button>AOI</button><button>AIS</button><button>Weather</button>
+          </div>
+        </div>
+
+        <div class="right-column">
+          <section class="panel">
+            <div class="panel-title">Upcoming Contacts</div>
+            <div id="contacts" class="list"></div>
+          </section>
+          <section class="panel">
+            <div class="panel-title">Mission Copilot</div>
+            <div class="copilot-log" id="copilotLog">Describe a mission objective in natural language.</div>
+            <div class="copilot-box">
+              <input id="copilotInput" value="Monitor Singapore port in the next 24 hours with <1m imagery and cloud under 20%." />
+              <button id="runCopilot">Plan</button>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="bottom-grid">
+        <section class="panel">
+          <div class="panel-title">Mission Timeline</div>
+          <div id="timeline" class="timeline"></div>
+        </section>
+        <section class="panel">
+          <div class="panel-title">Active Missions</div>
+          <div id="missions" class="list"></div>
+        </section>
+      </section>
+    </main>
+  </div>
+  <script src="./app.js"></script>
+</body>
+</html>
