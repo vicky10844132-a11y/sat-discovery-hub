@@ -4,7 +4,10 @@ from typing import Literal
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
 
-app = FastAPI(title="Space Ops Platform API", version="0.1.0")
+from services.mission.planner import demo_plan
+from services.orbit.engine import propagate_tle, sample_iss_tle
+
+app = FastAPI(title="Space Ops Platform API", version="0.2.0")
 
 
 class AOI(BaseModel):
@@ -23,11 +26,19 @@ class MissionRequest(BaseModel):
     priority: int = Field(default=3, ge=1, le=5)
 
 
+class OrbitRequest(BaseModel):
+    tle_line_1: str
+    tle_line_2: str
+    minutes: int = Field(default=90, ge=1, le=1440)
+    step_seconds: int = Field(default=60, ge=5, le=600)
+
+
 @app.get("/health")
 def health() -> dict:
     return {
         "status": "ok",
         "service": "space-ops-api",
+        "version": "0.2.0",
         "time": datetime.now(timezone.utc).isoformat(),
     }
 
@@ -43,19 +54,48 @@ def operations_summary() -> dict:
     }
 
 
+@app.get("/v1/assets/ground-stations")
+def ground_stations() -> list[dict]:
+    return [
+        {"id": "GS-SIN-01", "name": "Singapore", "lat": 1.3521, "lon": 103.8198, "bands": ["S", "X"], "status": "nominal"},
+        {"id": "GS-SE-01", "name": "Sweden", "lat": 67.8558, "lon": 20.2253, "bands": ["S", "X", "Ka"], "status": "nominal"},
+    ]
+
+
+@app.get("/v1/orbit/demo")
+def orbit_demo() -> dict:
+    line1, line2 = sample_iss_tle()
+    points = propagate_tle(line1, line2, datetime.now(timezone.utc), minutes=18, step_seconds=120)
+    return {"satellite": "ISS-DEMO", "points": [point.__dict__ for point in points]}
+
+
+@app.post("/v1/orbit/propagate")
+def orbit_propagate(request: OrbitRequest) -> dict:
+    points = propagate_tle(
+        request.tle_line_1,
+        request.tle_line_2,
+        datetime.now(timezone.utc),
+        minutes=request.minutes,
+        step_seconds=request.step_seconds,
+    )
+    return {"count": len(points), "points": [point.__dict__ for point in points]}
+
+
 @app.post("/v1/missions/plan")
 def plan_mission(request: MissionRequest) -> dict:
-    # V0 deterministic contract. The planning engine will replace these mock
-    # candidates once orbit, weather, payload and ground-network services are wired.
+    candidates = demo_plan()
+    if request.sensor != "any":
+        candidates = [candidate for candidate in candidates if candidate.sensor == request.sensor]
+    if request.max_cloud_pct is not None:
+        candidates = [candidate for candidate in candidates if candidate.cloud_pct is None or candidate.cloud_pct <= request.max_cloud_pct]
+    if request.max_resolution_m is not None:
+        candidates = [candidate for candidate in candidates if candidate.resolution_m <= request.max_resolution_m]
+
+    recommended = candidates[0] if candidates else None
     return {
         "mission": request.model_dump(),
-        "status": "planned",
-        "candidate_count": 3,
-        "recommended": {
-            "satellite_id": "SAT-007",
-            "acquisition_utc": "2026-08-20T02:34:00Z",
-            "ground_station_id": "GS-SIN-01",
-            "downlink_utc": "2026-08-20T02:47:00Z",
-            "estimated_product_ready_utc": "2026-08-20T03:18:00Z",
-        },
+        "status": "planned" if recommended else "no_feasible_plan",
+        "candidate_count": len(candidates),
+        "recommended": recommended.__dict__ if recommended else None,
+        "candidates": [candidate.__dict__ for candidate in candidates],
     }
