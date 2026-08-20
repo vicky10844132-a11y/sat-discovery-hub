@@ -6,10 +6,19 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
+from services.mission.orchestrator import (
+    AOIContext,
+    CatalogProduct,
+    GroundAsset,
+    MissionObjective,
+    SpacecraftState,
+    WeatherWindow,
+    orchestrate_mission,
+)
 from services.mission.planner import demo_plan
 from services.orbit.engine import propagate_tle, sample_iss_tle
 
-app = FastAPI(title="Space Ops Platform API", version="0.4.0")
+app = FastAPI(title="Space Ops Platform API", version="0.5.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -39,6 +48,7 @@ class CopilotRequest(MissionRequest):
     objective: str = Field(min_length=3)
     horizon_hours: int = Field(default=24, ge=1, le=168)
     delivery_target_hours: float | None = Field(default=None, gt=0, le=168)
+    data_strategy: Literal["auto", "archive", "tasking"] = "auto"
 
 
 class OrbitRequest(BaseModel):
@@ -118,6 +128,11 @@ SATELLITE_POOL = [
     {"id": "SAT-031", "sensor": "optical", "resolution_m": 0.8, "status": "nominal", "storage_free_pct": 55, "battery_pct": 76},
 ]
 
+GROUND_RESERVATIONS = [
+    {"id": "CNT-001", "satellite_id": "SAT-031", "ground_station_id": "GS-SIN-01", "start_minute": 18, "duration_min": 12, "priority": 2},
+    {"id": "CNT-002", "satellite_id": "SAT-042", "ground_station_id": "GS-SE-01", "start_minute": 44, "duration_min": 10, "priority": 1},
+]
+
 
 def utcnow() -> datetime:
     return datetime.now(timezone.utc)
@@ -161,6 +176,14 @@ def build_passes(satellite_id: str, ground_station_id: str, min_elevation_deg: f
     return passes
 
 
+def catalog_products() -> list[dict]:
+    return [
+        {"id": "EO-OPT-2401", "sensor": "optical", "resolution_m": 0.5, "cloud_pct": 8, "age_hours": 6, "mode": "archive"},
+        {"id": "EO-SAR-9011", "sensor": "sar", "resolution_m": 1.0, "cloud_pct": None, "age_hours": 3, "mode": "archive"},
+        {"id": "EO-OPT-2394", "sensor": "optical", "resolution_m": 0.8, "cloud_pct": 17, "age_hours": 18, "mode": "archive"},
+    ]
+
+
 def select_mission_candidates(request: MissionRequest):
     candidates = demo_plan()
     if request.sensor != "any":
@@ -172,15 +195,13 @@ def select_mission_candidates(request: MissionRequest):
     return candidates
 
 
+def overlaps(start_a: datetime, end_a: datetime, start_b: datetime, end_b: datetime) -> bool:
+    return start_a < end_b and start_b < end_a
+
+
 @app.get("/health")
 def health() -> dict:
-    return {
-        "status": "ok",
-        "service": "space-ops-api",
-        "version": "0.4.0",
-        "time": utcnow().isoformat(),
-        "modules": SERVICE_STATUS,
-    }
+    return {"status": "ok", "service": "space-ops-api", "version": "0.5.0", "time": utcnow().isoformat(), "modules": SERVICE_STATUS}
 
 
 @app.get("/v1/system/modules")
@@ -190,14 +211,7 @@ def system_modules() -> dict:
 
 @app.get("/v1/operations/summary")
 def operations_summary() -> dict:
-    return {
-        "tracked_satellites": 128,
-        "ground_stations": len(GROUND_POOL),
-        "active_missions": 14,
-        "live_downlinks": 3,
-        "upcoming_passes": 21,
-        "alerts": 2,
-    }
+    return {"tracked_satellites": 128, "ground_stations": len(GROUND_POOL), "active_missions": 14, "live_downlinks": 3, "upcoming_passes": 21, "alerts": 2}
 
 
 @app.get("/v1/assets/ground-stations")
@@ -208,6 +222,16 @@ def ground_stations() -> list[dict]:
 @app.get("/v1/assets/satellites")
 def satellites() -> list[dict]:
     return SATELLITE_POOL
+
+
+@app.get("/v1/ground-network/pool")
+def ground_network_pool() -> dict:
+    return {
+        "mode": "LIVE",
+        "assets": GROUND_POOL,
+        "resource_classes": ["own", "partner", "gsaas", "virtual"],
+        "reservation_model": "conflict-aware",
+    }
 
 
 @app.get("/v1/engineering/capabilities")
@@ -243,20 +267,47 @@ def predict_passes(request: PassRequest) -> dict:
 
 @app.post("/v1/ground-network/schedule")
 def schedule_contact(request: GroundScheduleRequest) -> dict:
-    end_time = request.start_time + timedelta(minutes=request.duration_min)
-    conflict = request.start_time.minute % 17 == 0
+    start_time = request.start_time
+    if start_time.tzinfo is None:
+        start_time = start_time.replace(tzinfo=timezone.utc)
+    start_time = start_time.astimezone(timezone.utc)
+    end_time = start_time + timedelta(minutes=request.duration_min)
+    station = next((item for item in GROUND_POOL if item["id"] == request.ground_station_id), None)
+    if station is None:
+        return {"status": "blocked", "mode": "LIVE", "conflict": True, "resolution": "unknown-ground-asset"}
+
+    day_anchor = start_time.replace(hour=0, minute=0, second=0, microsecond=0)
+    conflicts = []
+    for reservation in GROUND_RESERVATIONS:
+        if reservation["ground_station_id"] != request.ground_station_id:
+            continue
+        reserved_start = day_anchor + timedelta(minutes=reservation["start_minute"])
+        reserved_end = reserved_start + timedelta(minutes=reservation["duration_min"])
+        if overlaps(start_time, end_time, reserved_start, reserved_end):
+            conflicts.append({**reservation, "start_time": reserved_start.isoformat(), "end_time": reserved_end.isoformat()})
+
+    blocking = [item for item in conflicts if item["priority"] <= request.priority]
+    resolution = "accepted"
+    status = "scheduled"
+    if blocking:
+        status = "conflict"
+        resolution = "try-next-window"
+    elif conflicts:
+        resolution = "preempt-lower-priority"
+
     return {
-        "status": "conflict" if conflict else "scheduled",
+        "status": status,
         "mode": "LIVE",
         "contact": {
             "satellite_id": request.satellite_id,
             "ground_station_id": request.ground_station_id,
-            "start_time": request.start_time.isoformat(),
+            "start_time": start_time.isoformat(),
             "end_time": end_time.isoformat(),
             "priority": request.priority,
         },
-        "conflict": conflict,
-        "resolution": "try-next-window" if conflict else "accepted",
+        "conflict": bool(conflicts),
+        "conflicts": conflicts,
+        "resolution": resolution,
     }
 
 
@@ -277,17 +328,13 @@ def maritime_search(request: MaritimeRequest) -> dict:
 
 @app.post("/v1/eo/search")
 def eo_search(request: EOSearchRequest) -> dict:
-    products = [
-        {"id": "EO-OPT-2401", "sensor": "optical", "resolution_m": 0.5, "cloud_pct": 8, "age_hours": 6, "mode": "archive"},
-        {"id": "EO-SAR-9011", "sensor": "sar", "resolution_m": 1.0, "cloud_pct": None, "age_hours": 3, "mode": "archive"},
-        {"id": "EO-OPT-2394", "sensor": "optical", "resolution_m": 0.8, "cloud_pct": 17, "age_hours": 18, "mode": "archive"},
-    ]
+    products = catalog_products()
     if request.sensor != "any":
-        products = [p for p in products if p["sensor"] == request.sensor]
+        products = [item for item in products if item["sensor"] == request.sensor]
     if request.max_resolution_m is not None:
-        products = [p for p in products if p["resolution_m"] <= request.max_resolution_m]
+        products = [item for item in products if item["resolution_m"] <= request.max_resolution_m]
     if request.max_cloud_pct is not None:
-        products = [p for p in products if p["cloud_pct"] is None or p["cloud_pct"] <= request.max_cloud_pct]
+        products = [item for item in products if item["cloud_pct"] is None or item["cloud_pct"] <= request.max_cloud_pct]
     return {"provider": "SIMULATED", "count": len(products), "products": products}
 
 
@@ -295,12 +342,7 @@ def eo_search(request: EOSearchRequest) -> dict:
 def link_budget(request: LinkBudgetRequest) -> dict:
     fspl = 92.45 + 20 * log10(request.frequency_ghz) + 20 * log10(request.range_km)
     received = request.tx_power_dbw + request.tx_gain_dbi + request.rx_gain_dbi - fspl - request.other_losses_db
-    return {
-        "mode": "LIVE",
-        "free_space_path_loss_db": round(fspl, 2),
-        "received_power_dbw": round(received, 2),
-        "margin_class": "strong" if received > -110 else "marginal" if received > -125 else "weak",
-    }
+    return {"mode": "LIVE", "free_space_path_loss_db": round(fspl, 2), "received_power_dbw": round(received, 2), "margin_class": "strong" if received > -110 else "marginal" if received > -125 else "weak"}
 
 
 @app.post("/v1/missions/plan")
@@ -319,81 +361,32 @@ def plan_mission(request: MissionRequest) -> dict:
 
 @app.post("/v1/copilot/mission")
 def copilot_mission(request: CopilotRequest) -> dict:
-    candidates = select_mission_candidates(request)
-    if not candidates:
-        return {
-            "status": "no_feasible_plan",
-            "objective": request.objective,
-            "workflow": [
-                {"stage": "OBJECTIVE", "status": "resolved"},
-                {"stage": "OPPORTUNITY", "status": "blocked", "reason": "No satellite candidate satisfies constraints"},
-            ],
-            "exceptions": ["No feasible satellite candidate"],
-        }
-
-    recommended = candidates[0]
-    satellite_id = recommended.satellite_id
-    sat_state = next((item for item in SATELLITE_POOL if item["id"] == satellite_id), SATELLITE_POOL[0])
-    weather = build_weather(WeatherRequest(lat=request.aoi.lat, lon=request.aoi.lon, hours=request.horizon_hours))
-    feasible_weather = [item for item in weather if request.max_cloud_pct is None or item["cloud_pct"] <= request.max_cloud_pct]
-    chosen_weather = feasible_weather[0] if feasible_weather else weather[0]
-
-    ranked_stations = sorted(
-        [station for station in GROUND_POOL if station["status"] in {"nominal", "available"} and "X" in station["bands"]],
-        key=lambda station: station["utilization_pct"],
+    weather_rows = build_weather(WeatherRequest(lat=request.aoi.lat, lon=request.aoi.lon, hours=request.horizon_hours))
+    archive_rows = [] if request.data_strategy == "tasking" else catalog_products()
+    result = orchestrate_mission(
+        objective=MissionObjective(
+            objective=request.objective,
+            sensor=request.sensor,
+            priority=request.priority,
+            max_cloud_pct=request.max_cloud_pct,
+            max_resolution_m=request.max_resolution_m,
+        ),
+        aoi=AOIContext(request.aoi.name, request.aoi.lat, request.aoi.lon, request.aoi.radius_km),
+        candidates=demo_plan(),
+        spacecraft=[SpacecraftState(item["id"], item["battery_pct"], item["storage_free_pct"]) for item in SATELLITE_POOL],
+        ground_assets=[GroundAsset(item["id"], item["name"], tuple(item["bands"]), item["status"], item["ownership"], item["utilization_pct"]) for item in GROUND_POOL],
+        weather=[WeatherWindow(datetime.fromisoformat(item["time"]), item["cloud_pct"], item["optical_feasible"]) for item in weather_rows],
+        archive_products=[CatalogProduct(item["id"], item["sensor"], item["resolution_m"], item["cloud_pct"], item["age_hours"]) for item in archive_rows],
+        delivery_target_hours=request.delivery_target_hours,
+        now=utcnow(),
     )
-    station = ranked_stations[0]
-    passes = build_passes(satellite_id, station["id"])
-    best_pass = max(passes, key=lambda item: item["max_elevation_deg"])
-    contact_start = datetime.fromisoformat(best_pass["aos"])
-    contact_end = datetime.fromisoformat(best_pass["los"])
-    processing_start = contact_end + timedelta(minutes=4)
-    qc_complete = processing_start + timedelta(minutes=18)
-    delivery_time = qc_complete + timedelta(minutes=8)
-    delivery_hours = round((delivery_time - utcnow()).total_seconds() / 3600, 2)
-
-    resource_ok = sat_state["battery_pct"] >= 30 and sat_state["storage_free_pct"] >= 20
-    exceptions = []
-    if not feasible_weather and recommended.sensor == "optical":
-        exceptions.append("No weather window satisfies the requested optical cloud threshold; earliest available weather is retained for review")
-    if not resource_ok:
-        exceptions.append("Spacecraft resource reserve below mission threshold")
-    if request.delivery_target_hours is not None and delivery_hours > request.delivery_target_hours:
-        exceptions.append("Estimated delivery exceeds requested delivery target")
-
-    workflow = [
-        {"stage": "OBJECTIVE", "status": "resolved", "detail": request.objective},
-        {"stage": "OPPORTUNITY", "status": "resolved", "detail": f"{satellite_id} / {recommended.sensor} / {recommended.resolution_m} m"},
-        {"stage": "WEATHER", "status": "resolved" if feasible_weather else "exception", "detail": f"{chosen_weather['cloud_pct']}% cloud / provider SIMULATED"},
-        {"stage": "RESOURCE", "status": "resolved" if resource_ok else "exception", "detail": f"battery {sat_state['battery_pct']}% / storage free {sat_state['storage_free_pct']}%"},
-        {"stage": "CONTACT", "status": "resolved", "detail": f"{station['id']} / max elevation {best_pass['max_elevation_deg']} deg"},
-        {"stage": "SCHEDULE", "status": "resolved", "detail": f"{contact_start.isoformat()} → {contact_end.isoformat()}"},
-        {"stage": "PROCESS", "status": "resolved", "detail": f"processing {processing_start.isoformat()} / QC {qc_complete.isoformat()} / mode SIMULATED"},
-        {"stage": "DELIVER", "status": "resolved", "detail": f"ETA {delivery_time.isoformat()} / {delivery_hours} h / mode SIMULATED"},
-    ]
-
-    return {
-        "status": "executable_with_exceptions" if exceptions else "executable",
-        "mode": "LIVE",
+    result.update({
         "objective": request.objective,
         "mission": request.model_dump(exclude={"objective"}),
-        "selected": {
-            "satellite": recommended.__dict__,
-            "spacecraft_state": sat_state,
-            "weather": chosen_weather,
-            "ground_station": station,
-            "contact": best_pass,
-        },
-        "workflow": workflow,
-        "processing_delivery": {
-            "mode": "SIMULATED",
-            "processing_start": processing_start.isoformat(),
-            "qc_complete": qc_complete.isoformat(),
-            "delivery_eta": delivery_time.isoformat(),
-            "delivery_hours": delivery_hours,
-        },
-        "exceptions": exceptions,
-    }
+        "engine_mode": "LIVE",
+        "data_modes": {"eo": "SIMULATED", "weather": "SIMULATED", "pass_geometry": "SIMULATED", "processing_delivery": "SIMULATED"},
+    })
+    return result
 
 
 @app.get("/v1/alerts")
