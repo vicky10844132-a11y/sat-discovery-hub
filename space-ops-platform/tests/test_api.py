@@ -30,7 +30,7 @@ def test_health_and_summary() -> None:
     assert health.status_code == 200
     body = health.json()
     assert body["status"] == "ok"
-    assert body["version"] == "0.4.0"
+    assert body["version"] == "0.5.0"
     assert body["modules"]["copilot"] == "LIVE"
     assert body["modules"]["weather"] == "SIMULATED"
     assert body["modules"]["gnss_pod"] == "CONNECTOR_REQUIRED"
@@ -65,22 +65,45 @@ def test_pass_prediction_and_ground_schedule() -> None:
     assert predicted.status_code == 200
     predicted_body = predicted.json()
     assert predicted_body["mode"] == "SIMULATED"
-    passes = predicted_body["passes"]
-    assert len(passes) == 4
+    assert len(predicted_body["passes"]) == 4
 
-    first = passes[0]
-    scheduled = client.post(
+    conflict = client.post(
         "/v1/ground-network/schedule",
         json={
-            "satellite_id": first["satellite_id"],
-            "ground_station_id": first["ground_station_id"],
-            "start_time": first["aos"],
+            "satellite_id": "SAT-007",
+            "ground_station_id": "GS-SIN-01",
+            "start_time": "2026-08-20T00:18:00+00:00",
             "duration_min": 10,
             "priority": 3,
         },
     )
-    assert scheduled.status_code == 200
-    assert scheduled.json()["status"] in {"scheduled", "conflict"}
+    assert conflict.status_code == 200
+    assert conflict.json()["status"] == "conflict"
+    assert conflict.json()["resolution"] == "try-next-window"
+    assert conflict.json()["conflicts"][0]["id"] == "CNT-001"
+
+    preempt = client.post(
+        "/v1/ground-network/schedule",
+        json={
+            "satellite_id": "SAT-018",
+            "ground_station_id": "GS-SIN-01",
+            "start_time": "2026-08-20T00:18:00+00:00",
+            "duration_min": 10,
+            "priority": 1,
+        },
+    )
+    assert preempt.status_code == 200
+    assert preempt.json()["status"] == "scheduled"
+    assert preempt.json()["resolution"] == "preempt-lower-priority"
+
+
+def test_ground_network_pool_preserves_resource_classes() -> None:
+    response = client.get("/v1/ground-network/pool")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["reservation_model"] == "conflict-aware"
+    assert set(body["resource_classes"]) == {"own", "partner", "gsaas", "virtual"}
+    assert {item["ownership"] for item in body["assets"]} >= {"own", "partner", "gsaas"}
 
 
 def test_link_budget() -> None:
@@ -103,22 +126,43 @@ def test_link_budget() -> None:
     assert body["margin_class"] in {"strong", "marginal", "weak"}
 
 
-def test_copilot_returns_end_to_end_executable_workflow() -> None:
+def test_copilot_auto_uses_archive_first_canonical_loop() -> None:
     payload = mission_payload() | {
         "objective": "Monitor Singapore port in the next 24 hours and return the fastest delivery path.",
         "horizon_hours": 24,
         "delivery_target_hours": 12,
+        "data_strategy": "auto",
+    }
+    response = client.post("/v1/copilot/mission", json=payload)
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "executable"
+    assert body["strategy"] == "archive-first"
+    assert body["engine_mode"] == "LIVE"
+    assert body["selected"]["archive_product"]["id"]
+    stages = [step["stage"] for step in body["workflow"]]
+    assert stages == ["OBJECTIVE", "AOI", "DATA_SEARCH", "OPPORTUNITY", "WEATHER", "RESOURCE", "CONTACT", "SCHEDULE", "PROCESS", "DELIVER"]
+    assert body["data_modes"]["eo"] == "SIMULATED"
+    assert body["processing_delivery"]["mode"] == "SIMULATED"
+
+
+def test_copilot_tasking_runs_full_space_to_earth_chain() -> None:
+    payload = mission_payload() | {
+        "objective": "Acquire a new image of Singapore port and deliver the product.",
+        "horizon_hours": 24,
+        "delivery_target_hours": 12,
+        "data_strategy": "tasking",
     }
     response = client.post("/v1/copilot/mission", json=payload)
     assert response.status_code == 200
     body = response.json()
     assert body["status"] in {"executable", "executable_with_exceptions"}
-    assert body["mode"] == "LIVE"
+    assert body["strategy"] == "tasking"
     assert body["selected"]["satellite"]["satellite_id"]
     assert body["selected"]["ground_station"]["id"]
-    assert body["processing_delivery"]["mode"] == "SIMULATED"
+    assert body["processing_delivery"]["delivery_eta"]
     stages = [step["stage"] for step in body["workflow"]]
-    assert stages == ["OBJECTIVE", "OPPORTUNITY", "WEATHER", "RESOURCE", "CONTACT", "SCHEDULE", "PROCESS", "DELIVER"]
+    assert stages == ["OBJECTIVE", "AOI", "DATA_SEARCH", "OPPORTUNITY", "WEATHER", "RESOURCE", "CONTACT", "SCHEDULE", "PROCESS", "DELIVER"]
 
 
 def test_engineering_capability_contract_preserves_three_precision_tiers() -> None:
