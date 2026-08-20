@@ -9,6 +9,7 @@ on:
       - 'space-ops-live.html'
       - 'requirements.txt'
       - 'vercel.json'
+      - '.github/workflows/space-ops-ci.yml'
   pull_request:
     paths:
       - 'space-ops-platform/**'
@@ -16,6 +17,7 @@ on:
       - 'space-ops-live.html'
       - 'requirements.txt'
       - 'vercel.json'
+      - '.github/workflows/space-ops-ci.yml'
 
 jobs:
   smoke-test:
@@ -30,5 +32,7 @@ jobs:
         run: python -m pip install -r requirements.txt
       - name: Run Space Ops API tests
         run: python -m pytest -q space-ops-platform/tests/test_api.py
+      - name: Run Space Ops UI contract tests
+        run: python -m pytest -q space-ops-platform/tests/test_ui_contract.py
       - name: Compile Python modules
         run: python -m compileall -q api space-ops-platform
