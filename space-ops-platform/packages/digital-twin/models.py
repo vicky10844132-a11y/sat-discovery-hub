@@ -17,6 +17,14 @@ class GeoPoint(BaseModel):
     altitude_m: float = 0.0
 
 
+class Payload(BaseModel):
+    id: str
+    sensor: Literal["optical", "sar", "rf", "other"]
+    resolution_m: float | None = Field(default=None, gt=0)
+    swath_km: float | None = Field(default=None, gt=0)
+    max_off_nadir_deg: float | None = Field(default=None, ge=0, le=90)
+
+
 class Satellite(BaseModel):
     id: str
     name: str
@@ -26,15 +34,22 @@ class Satellite(BaseModel):
     status: AssetStatus = AssetStatus.nominal
     tle_line_1: str | None = None
     tle_line_2: str | None = None
+    payloads: list[Payload] = Field(default_factory=list)
+
+
+class Antenna(BaseModel):
+    id: str
+    diameter_m: float | None = Field(default=None, gt=0)
+    bands: list[str] = Field(default_factory=list)
+    tx_enabled: bool = False
+    rx_enabled: bool = True
 
 
 class GroundStation(BaseModel):
     id: str
     name: str
     location: GeoPoint
-    bands: list[str] = []
-    tx_enabled: bool = False
-    rx_enabled: bool = True
+    antennas: list[Antenna] = Field(default_factory=list)
     status: AssetStatus = AssetStatus.nominal
 
 
@@ -51,6 +66,8 @@ class ContactWindow(BaseModel):
     aos_utc: datetime
     los_utc: datetime
     max_elevation_deg: float = Field(ge=0, le=90)
+    antenna_id: str | None = None
+    band: str | None = None
 
 
 class AcquisitionOpportunity(BaseModel):
@@ -60,9 +77,9 @@ class AcquisitionOpportunity(BaseModel):
     end_utc: datetime
     sensor: str
     off_nadir_deg: float | None = None
-    cloud_probability_pct: float | None = None
+    cloud_probability_pct: float | None = Field(default=None, ge=0, le=100)
     feasible: bool = True
-    reasons: list[str] = []
+    reasons: list[str] = Field(default_factory=list)
 
 
 class MissionPlan(BaseModel):
