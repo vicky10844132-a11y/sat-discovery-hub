@@ -13,6 +13,7 @@ from services.mission.orchestrator import (
     CANONICAL_STAGES,
     CatalogProduct,
     GroundAsset,
+    GroundReservation,
     MissionObjective,
     SpacecraftState,
     WeatherWindow,
@@ -63,10 +64,37 @@ def test_archive_first_path_skips_new_tasking_when_compliant_data_exists() -> No
     assert result["processing_delivery"]["mode"] == "SIMULATED"
 
 
+def test_archive_only_blocks_instead_of_silently_tasking() -> None:
+    now = datetime(2026, 8, 20, 12, tzinfo=timezone.utc)
+    inputs = common_inputs(now)
+    inputs["objective"] = MissionObjective(
+        objective="Use archive data only",
+        sensor="optical",
+        priority=2,
+        max_cloud_pct=5,
+        max_resolution_m=0.4,
+        data_strategy="archive",
+    )
+    result = orchestrate_mission(**inputs, archive_products=[])
+    assert result["status"] == "no_feasible_plan"
+    assert result["strategy"] == "archive-only"
+    assert result["workflow"][-1]["stage"] == "DATA_SEARCH"
+    assert result["workflow"][-1]["status"] == "blocked"
+
+
 def test_tasking_path_runs_full_space_to_earth_chain() -> None:
     now = datetime(2026, 8, 20, 12, tzinfo=timezone.utc)
+    inputs = common_inputs(now)
+    inputs["objective"] = MissionObjective(
+        objective="Acquire a new Singapore port image",
+        sensor="any",
+        priority=1,
+        max_cloud_pct=20,
+        max_resolution_m=1.0,
+        data_strategy="tasking",
+    )
     result = orchestrate_mission(
-        **common_inputs(now),
+        **inputs,
         archive_products=[],
         delivery_target_hours=12,
     )
@@ -75,16 +103,84 @@ def test_tasking_path_runs_full_space_to_earth_chain() -> None:
     stages = [item["stage"] for item in result["workflow"]]
     assert tuple(stages) == CANONICAL_STAGES
     assert result["selected"]["satellite"]["satellite_id"]
-    assert result["selected"]["ground_station"]["id"]
+    assert result["selected"]["ground_station"]["id"] == "GS-SIN-01"
+    assert result["selected"]["contact"]["resolution"] == "accepted"
     assert result["processing_delivery"]["delivery_eta"]
 
 
 def test_ground_pool_is_conflict_resource_not_static_decoration() -> None:
     now = datetime(2026, 8, 20, 12, tzinfo=timezone.utc)
     inputs = common_inputs(now)
+    inputs["objective"] = MissionObjective(
+        objective="Acquire a new image",
+        sensor="any",
+        priority=3,
+        max_cloud_pct=20,
+        max_resolution_m=1.0,
+        data_strategy="tasking",
+    )
     inputs["ground_assets"] = [GroundAsset("GS-BLOCKED", "Blocked", ("S",), "nominal", "own", 10)]
     result = orchestrate_mission(**inputs, archive_products=[])
     assert result["status"] == "no_feasible_plan"
     assert "No compatible ground contact resource" in result["exceptions"]
     assert result["workflow"][-1]["stage"] == "CONTACT"
     assert result["workflow"][-1]["status"] == "blocked"
+
+
+def test_conflict_resolution_falls_back_to_next_ground_asset() -> None:
+    now = datetime(2026, 8, 20, 12, tzinfo=timezone.utc)
+    inputs = common_inputs(now)
+    inputs["objective"] = MissionObjective(
+        objective="Acquire a new image",
+        sensor="any",
+        priority=3,
+        max_cloud_pct=20,
+        max_resolution_m=1.0,
+        data_strategy="tasking",
+    )
+    best_candidate = demo_plan(now)[0]
+    start = best_candidate.downlink_utc
+    reservations = [
+        GroundReservation(
+            "CNT-BLOCK-OWN",
+            "SAT-031",
+            "GS-SIN-01",
+            start,
+            start + timedelta(minutes=15),
+            1,
+        )
+    ]
+    result = orchestrate_mission(**inputs, archive_products=[], ground_reservations=reservations)
+    assert result["status"] in {"executable", "executable_with_exceptions"}
+    assert result["selected"]["ground_station"]["id"] == "GS-SE-01"
+    schedule = next(item for item in result["workflow"] if item["stage"] == "SCHEDULE")
+    assert schedule["status"] == "resolved"
+
+
+def test_high_priority_mission_can_preempt_lower_priority_contact() -> None:
+    now = datetime(2026, 8, 20, 12, tzinfo=timezone.utc)
+    inputs = common_inputs(now)
+    inputs["objective"] = MissionObjective(
+        objective="Priority acquisition",
+        sensor="any",
+        priority=1,
+        max_cloud_pct=20,
+        max_resolution_m=1.0,
+        data_strategy="tasking",
+    )
+    best_candidate = demo_plan(now)[0]
+    start = best_candidate.downlink_utc
+    reservations = [
+        GroundReservation(
+            "CNT-LOW",
+            "SAT-031",
+            "GS-SIN-01",
+            start,
+            start + timedelta(minutes=15),
+            4,
+        )
+    ]
+    result = orchestrate_mission(**inputs, archive_products=[], ground_reservations=reservations)
+    assert result["selected"]["ground_station"]["id"] == "GS-SIN-01"
+    assert result["selected"]["contact"]["resolution"] == "preempt-lower-priority"
+    assert "Lower-priority ground contact will be preempted" in result["exceptions"]
