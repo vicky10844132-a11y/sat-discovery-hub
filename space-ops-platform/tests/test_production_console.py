@@ -2,9 +2,10 @@ from pathlib import Path
 import json
 import re
 
-ROOT = Path(__file__).resolve().parents[2]
-PRODUCTION = ROOT / "apps" / "web" / "production.html"
-VERCEL = ROOT.parent / "vercel.json"
+PLATFORM_ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = PLATFORM_ROOT.parent
+PRODUCTION = PLATFORM_ROOT / "apps" / "web" / "production.html"
+VERCEL = REPO_ROOT / "vercel.json"
 
 
 def source() -> str:
