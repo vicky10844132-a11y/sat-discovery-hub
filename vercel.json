@@ -2,17 +2,18 @@
   "version": 2,
   "cleanUrls": true,
   "trailingSlash": false,
-  "routes": [
-    {"src": "/gs-linkops-ai", "dest": "/gs-linkops-ai.html"},
-    {"src": "/gs-linkops-ai.html", "dest": "/gs-linkops-ai.html"},
-    {"src": "/gs-linkops-manifest.webmanifest", "dest": "/gs-linkops-manifest.webmanifest"},
-    {"src": "/gs-linkops-icon.svg", "dest": "/gs-linkops-icon.svg"},
-    {"src": "/gs-linkops-sw.js", "dest": "/gs-linkops-sw.js", "headers": {"Service-Worker-Allowed": "/", "Cache-Control": "no-cache"}},
-    {"src": "/gs-linkops-assets/app00.gz.b64", "dest": "/gs-linkops-assets/app00.gz.b64"},
-    {"src": "/gs-linkops-assets/app01.gz.b64", "dest": "/gs-linkops-assets/app01.gz.b64"},
-    {"src": "/gs-linkops-assets/app02.gz.b64", "dest": "/gs-linkops-assets/app02.gz.b64"},
-    {"src": "/gs-linkops-ai-v0.2-preview", "dest": "/gs-linkops-ai-v0.2-preview.html"},
-    {"src": "/gs-linkops-ai-v0.2-preview.html", "dest": "/gs-linkops-ai-v0.2-preview.html"},
-    {"src": "/(.*)", "dest": "/index.html"}
+  "rewrites": [
+    {"source": "/space-ops", "destination": "/space-ops-live.html"},
+    {"source": "/gs-linkops-ai", "destination": "/gs-linkops-ai.html"},
+    {"source": "/gs-linkops-ai-v0.2-preview", "destination": "/gs-linkops-ai-v0.2-preview.html"}
+  ],
+  "headers": [
+    {
+      "source": "/gs-linkops-sw.js",
+      "headers": [
+        {"key": "Service-Worker-Allowed", "value": "/"},
+        {"key": "Cache-Control", "value": "no-cache"}
+      ]
+    }
   ]
 }
