@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Space Ops Platform</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="command-rail">
+      <div class="brand-mark">SO</div>
+      <div class="rail-stack" id="navRail">
+        <button class="rail-item active" data-view="operations" title="Global Operations">01</button>
+        <button class="rail-item" data-view="satellites" title="Satellites">02</button>
+        <button class="rail-item" data-view="planning" title="Mission Planning">03</button>
+        <button class="rail-item" data-view="ground" title="Ground Network">04</button>
+        <button class="rail-item" data-view="intelligence" title="Data & Intelligence">05</button>
+        <button class="rail-item" data-view="engineering" title="Engineering Lab">06</button>
+      </div>
+      <div class="rail-state"><span></span>LIVE</div>
+    </aside>
+
+    <main class="stage">
+      <header class="topbar">
+        <div>
+          <div class="kicker">SPACE INTELLIGENCE / AUTONOMOUS MISSION OPERATIONS</div>
+          <div class="title-row"><h1 id="viewTitle">Global Operations</h1><span class="edition">V0.2</span></div>
+        </div>
+        <div class="top-actions">
+          <div class="clock" id="clock"></div>
+          <button class="rose-button" id="newMission">NEW MISSION</button>
+        </div>
+      </header>
+
+      <section class="signal-strip" id="metrics"></section>
+
+      <section class="hero-grid">
+        <article class="world-panel">
+          <div class="panel-head">
+            <div><span class="section-index">A</span><strong>Digital Space Twin</strong></div>
+            <div class="micro-status"><span class="pulse"></span> SYNCHRONIZED</div>
+          </div>
+          <div class="world-canvas" id="globe">
+            <div class="scan-line"></div>
+            <div class="earth"></div>
+            <div class="orbit orbit-one"></div>
+            <div class="orbit orbit-two"></div>
+            <div class="orbit orbit-three"></div>
+            <button class="asset satellite sat-one" data-asset="SAT-018"></button>
+            <button class="asset satellite sat-two" data-asset="SAT-042"></button>
+            <button class="asset satellite sat-three" data-asset="SAT-007"></button>
+            <button class="asset ground gs-singapore" data-asset="GS-SIN-01"></button>
+            <button class="asset ground gs-sweden" data-asset="GS-SE-01"></button>
+            <div class="aoi aoi-sg"><span>AOI / SG PORT</span></div>
+            <div class="world-caption">ORBIT / GROUND / AOI / WEATHER / MARITIME</div>
+          </div>
+          <div class="layer-dock" id="layerDock">
+            <button class="active">SAT</button><button class="active">GS</button><button class="active">AOI</button><button>AIS</button><button>WX</button><button>LINK</button>
+          </div>
+        </article>
+
+        <aside class="mission-column">
+          <section class="focus-card">
+            <div class="focus-label">CURRENT FOCUS</div>
+            <div class="focus-title" id="focusTitle">Singapore Port Watch</div>
+            <div class="focus-meta">Optical + SAR · Priority 1 · 24h window</div>
+            <div class="focus-score"><span>MISSION CONFIDENCE</span><strong>92%</strong></div>
+            <div class="score-track"><i></i></div>
+          </section>
+
+          <section class="stack-panel contacts-panel">
+            <div class="panel-head compact"><div><span class="section-index">B</span><strong>Upcoming Contacts</strong></div></div>
+            <div id="contacts" class="contact-list"></div>
+          </section>
+
+          <section class="copilot-panel">
+            <div class="copilot-orbit"></div>
+            <div class="copilot-label">MISSION COPILOT</div>
+            <div id="copilotLog" class="copilot-log">State an operational objective. I will resolve AOI, sensors, constraints, acquisition windows and ground contacts.</div>
+            <div class="copilot-input-row">
+              <textarea id="copilotInput">Monitor Singapore port in the next 24 hours with imagery under 1m and cloud under 20%.</textarea>
+              <button id="runCopilot">PLAN</button>
+            </div>
+          </section>
+        </aside>
+      </section>
+
+      <section class="lower-grid">
+        <article class="timeline-panel">
+          <div class="panel-head"><div><span class="section-index">C</span><strong>Mission Flow</strong></div><span class="muted">NEXT 90 MIN</span></div>
+          <div id="timeline" class="timeline"></div>
+        </article>
+
+        <article class="missions-panel">
+          <div class="panel-head"><div><span class="section-index">D</span><strong>Active Missions</strong></div><span class="muted">14 RUNNING</span></div>
+          <div id="missions" class="mission-list"></div>
+        </article>
+      </section>
+
+      <div class="drawer" id="assetDrawer" aria-hidden="true">
+        <button id="closeDrawer">×</button>
+        <div class="drawer-kicker">ASSET INSPECTOR</div>
+        <h2 id="drawerTitle">SAT-018</h2>
+        <div id="drawerBody"></div>
+      </div>
+    </main>
+  </div>
+  <script src="./app.js"></script>
+</body>
+</html>
