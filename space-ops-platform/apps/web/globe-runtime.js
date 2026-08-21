@@ -17,7 +17,7 @@
     ...(window.__SPACEOPS_SHARED_GLOBE_STATE__ || {})
   };
 
-  const moduleRuntimeUrl = new URL('globe-module.js?rev=20260822m', location.href).href;
+  const moduleRuntimeUrl = new URL('globe-module.js?rev=20260822n', location.href).href;
 
   function detectModule(d) {
     try {
@@ -40,43 +40,8 @@
     button.appendChild(span);
   }
 
-  function installCompatibilityStyle(d, key) {
-    if (!d?.head || d.getElementById('spaceops-globe-compat-style')) return;
-    d.documentElement.dataset.spaceopsGlobeModule = key;
-    const style = d.createElement('style');
-    style.id = 'spaceops-globe-compat-style';
-    style.textContent = `
-      html[data-spaceops-globe-module="plan"] .scene.spaceopsGlobeActive .windowArc{
-        display:block!important;z-index:6!important;pointer-events:none!important
-      }
-      html[data-spaceops-globe-module="ground"] .scene.spaceopsGlobeActive .cone{
-        display:none!important;z-index:6!important;pointer-events:none!important
-      }
-      html[data-spaceops-globe-module="ground"] .scene.spaceopsGlobeActive:has(.sceneTools [data-layer="footprint"].on) .cone{
-        display:block!important
-      }
-      html[data-spaceops-globe-module="earth"] .scene.spaceopsGlobeActive .cloud{
-        display:none!important;z-index:6!important;pointer-events:none!important
-      }
-      html[data-spaceops-globe-module="earth"] .scene.spaceopsGlobeActive:has(.sceneTools [data-layer="wx"].on) .cloud{
-        display:block!important
-      }
-      html[data-spaceops-globe-module="eng"] .scene.spaceopsGlobeActive .vector,
-      html[data-spaceops-globe-module="eng"] .scene.spaceopsGlobeActive .bodyFrame,
-      html[data-spaceops-globe-module="eng"] .scene.spaceopsGlobeActive .cov{
-        display:none!important;z-index:6!important;pointer-events:none!important
-      }
-      html[data-spaceops-globe-module="eng"] .scene.spaceopsGlobeActive:has(.sceneTools [data-layer="vectors"].on) .vector,
-      html[data-spaceops-globe-module="eng"] .scene.spaceopsGlobeActive:has(.sceneTools [data-layer="body"].on) .bodyFrame,
-      html[data-spaceops-globe-module="eng"] .scene.spaceopsGlobeActive:has(.sceneTools [data-layer="cov"].on) .cov{
-        display:block!important
-      }
-    `;
-    d.head.appendChild(style);
-  }
-
   function normalizeModuleControls(d, key) {
-    installCompatibilityStyle(d, key);
+    d.documentElement.dataset.spaceopsGlobeModule = key;
 
     if (key === 'ground') {
       const chips = [...d.querySelectorAll('.sceneTools .chip')];
@@ -104,10 +69,6 @@
     const live = d?.getElementById('liveState');
     if (!live || live.dataset.spaceopsGlobeNormalized === '1') return;
     live.dataset.spaceopsGlobeNormalized = '1';
-
-    // The workspace prototype previously owns this onclick handler. The Globe module
-    // is now the single source of truth for LIVE/PAUSED state, so remove the old
-    // toggle to prevent one click from toggling twice.
     live.onclick = null;
 
     live.addEventListener('click', () => {
