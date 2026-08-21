@@ -1,0 +1,2 @@
+Render all historical DATA SEARCH screenshot candidates with bounded Chrome execution.
+Trigger: 2026-08-01T11:47:00+08:00

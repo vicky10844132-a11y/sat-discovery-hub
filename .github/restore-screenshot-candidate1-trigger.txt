@@ -1,0 +1,2 @@
+Export candidate one HTML source and screenshot for exact comparison with the supplied saved page.
+Trigger: 2026-08-01T11:53:00+08:00
