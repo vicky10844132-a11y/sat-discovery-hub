@@ -120,10 +120,97 @@
     d.body.appendChild(patch);
   }
 
+  function normalizeTwinPrototype(d) {
+    if (!d?.body || d.getElementById('spaceops-twin-canonical-normalizer')) return;
+
+    const metrics = [...d.querySelectorAll('.metrics .metric')];
+    const metricValues = [
+      ['4','Managed Spacecraft','3 nominal · 1 watch'],
+      ['3','Ground Assets','3 available'],
+      ['1','Active AOI','SG PORT'],
+      ['8','Canonical Objects','4 SAT · 3 GS · 1 AOI'],
+      ['1','Watch Condition','SAR-01'],
+      ['< 1 s','State Age','SIMULATED LIVE']
+    ];
+    metrics.forEach((el, i) => {
+      if (!metricValues[i]) return;
+      const [value, label, note] = metricValues[i];
+      el.innerHTML = `<b>${value}</b><span>${label}</span><em>${note}</em>`;
+    });
+
+    const groupTitles = [...d.querySelectorAll('.groupTitle')];
+    if (groupTitles[0]) groupTitles[0].textContent = 'Managed Spacecraft · 4';
+    if (groupTitles[1]) groupTitles[1].textContent = 'Ground Assets · 3';
+
+    const footerSpans = [...d.querySelectorAll('.footerLeft > span')];
+    if (footerSpans[0]) footerSpans[0].innerHTML = 'STATE &nbsp; <b class="live">● LIVE</b>';
+    if (footerSpans[1]) footerSpans[1].innerHTML = 'STATE AGE &nbsp; <b class="live">&lt; 1 s</b>';
+    if (footerSpans[2]) footerSpans[2].textContent = 'SOURCE   PROTOTYPE / SIMULATED STATE';
+
+    const sectionTitle = d.querySelector('.inspector .sectionTitle span:last-child');
+    if (sectionTitle && sectionTitle.textContent.trim() === 'DEMO') sectionTitle.textContent = 'SIMULATED';
+
+    const help = d.getElementById('helpDrawer');
+    if (help) {
+      const first = help.querySelector('p');
+      if (first) first.textContent = 'The Twin workspace is the canonical object-state view used to inspect the same spacecraft, ground assets and AOIs referenced across the Space Ops prototype.';
+    }
+
+    const patch = d.createElement('script');
+    patch.id = 'spaceops-twin-canonical-normalizer';
+    patch.textContent = `(() => {
+      try {
+        Object.assign(records['GF-7 02'], {sub:'EO / Stereo Mapping · LEO · CANONICAL GF-7 02'});
+        Object.assign(records['SUPERVIEW NEO-1'], {sub:'EO / Agile Optical · LEO · CANONICAL SUPERVIEW NEO-1'});
+        Object.assign(records['SY-01'], {sub:'Maritime Imaging · LEO · CANONICAL SY-01'});
+        Object.assign(records['SAR-01'], {sub:'SAR / Imaging · LEO · CANONICAL SAR-01'});
+      } catch (_) {}
+
+      const payloadMap = {
+        'GF-7 02': [['STEREO CAM · 0.65 m','READY'],['STEREO PAIR','READY'],['MAPPING MODE','STANDBY']],
+        'SUPERVIEW NEO-1': [['OPTICAL PAYLOAD','READY'],['AGILE TASKING','READY'],['HIGH-RES MODE','STANDBY']],
+        'SY-01': [['MARITIME IMAGER','READY'],['AIS RECEIVER','READY'],['COASTAL MODE','STANDBY']],
+        'SAR-01': [['SAR · X-BAND','READY'],['STRIPMAP','READY'],['SPOTLIGHT','STANDBY']],
+        'GS-SE-01': [['13.5 m ANTENNA','AVAILABLE'],['7.3 m ANTENNA','AVAILABLE'],['S/X CHAIN','READY']],
+        'GS-SG-02': [['X-BAND CHAIN','AVAILABLE'],['KA-BAND CHAIN','AVAILABLE'],['PARTNER LINK','READY']],
+        'GS-IN-04': [['X-BAND CHAIN','AVAILABLE'],['PARTNER LINK','READY'],['SCHEDULER','READY']]
+      };
+
+      const renderPayloads = name => {
+        try {
+          const root = document.querySelector('.payloads');
+          const rows = payloadMap[name];
+          if (!root || !rows) return;
+          root.innerHTML = rows.map(r => '<div class="payload"><span>' + r[0] + '</span><em>' + r[1] + '</em></div>').join('');
+        } catch (_) {}
+      };
+
+      const baseSelect = window.selectObject;
+      window.selectObject = name => {
+        try { baseSelect(name); } catch (_) {}
+        renderPayloads(name);
+      };
+      document.querySelectorAll('.asset').forEach(a => a.onclick = () => window.selectObject(a.dataset.name));
+      document.querySelectorAll('.sat').forEach(s => s.onclick = () => window.selectObject(s.dataset.select));
+      renderPayloads('GF-7 02');
+
+      try {
+        const sync = document.getElementById('syncBtn');
+        if (sync) sync.onclick = () => toast('Canonical object state synchronized · 8 objects · state age < 1 s');
+        const payloadToggle = document.getElementById('payloadToggle');
+        if (payloadToggle) payloadToggle.onclick = () => toast('Current object resources shown in inspector');
+        const profile = document.getElementById('profileLink');
+        if (profile) profile.onclick = () => toast('Prototype object profile uses the same canonical object ID across modules');
+      } catch (_) {}
+    })();`;
+    d.body.appendChild(patch);
+  }
+
   function normalizeModuleControls(d, key) {
     d.documentElement.dataset.spaceopsGlobeModule = key;
 
     if (key === 'ops') normalizeOpsPrototype(d);
+    if (key === 'twin') normalizeTwinPrototype(d);
 
     if (key === 'ground') {
       const chips = [...d.querySelectorAll('.sceneTools .chip')];
