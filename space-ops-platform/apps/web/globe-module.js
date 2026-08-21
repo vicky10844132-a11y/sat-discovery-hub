@@ -45,8 +45,20 @@ const ships = [
 
 const aoi = [{
   id:'AOI · SG PORT',
+  kind:'aoi',
   geometry:{type:'Polygon',coordinates:[[[103.60,1.20],[104.05,1.20],[104.05,1.48],[103.60,1.48],[103.60,1.20]]]}
 }];
+
+const weatherZones = [
+  {
+    id:'WX · CLOUD BAND A', kind:'weather',
+    geometry:{type:'Polygon',coordinates:[[[101.5,5.0],[104.0,7.8],[109.8,8.5],[113.2,6.1],[110.6,3.7],[105.2,3.2],[101.5,5.0]]]}
+  },
+  {
+    id:'WX · CLOUD BAND B', kind:'weather',
+    geometry:{type:'Polygon',coordinates:[[[97.8,-1.8],[100.4,0.6],[104.2,0.2],[106.0,-2.4],[103.0,-4.1],[99.2,-3.7],[97.8,-1.8]]]}
+  }
+];
 
 function moduleKey() {
   const m = location.pathname.toLowerCase().match(/\/(ops|twin|plan|ground|earth|eng)\.html$/);
@@ -115,9 +127,15 @@ const world = new Globe(host, {
   .pointLabel(d => `<div style="font:700 11px system-ui;color:#eef3f8;background:#080b10e8;border:1px solid #39424e;padding:5px 7px">${d.id}</div>`)
   .pointsTransitionDuration(0)
   .pathPoints('points').pathPointLat('lat').pathPointLng('lng').pathPointAlt('alt').pathColor('color')
-  .pathStroke(0.30).pathDashLength(0.56).pathDashGap(0.14).pathDashAnimateTime(5200).pathTransitionDuration(0)
-  .polygonGeoJsonGeometry('geometry').polygonAltitude(0.014)
-  .polygonCapColor(() => 'rgba(223,63,118,.16)').polygonSideColor(() => 'rgba(223,63,118,.04)').polygonStrokeColor(() => '#ff6d9f')
+  .pathStroke(d => d.kind === 'window' ? 1.15 : 0.30)
+  .pathDashLength(d => d.kind === 'window' ? 1 : 0.56)
+  .pathDashGap(d => d.kind === 'window' ? 0 : 0.14)
+  .pathDashAnimateTime(5200).pathTransitionDuration(0)
+  .polygonGeoJsonGeometry('geometry')
+  .polygonAltitude(d => d.kind === 'weather' ? 0.009 : 0.014)
+  .polygonCapColor(d => d.kind === 'weather' ? 'rgba(190,205,220,.10)' : 'rgba(223,63,118,.16)')
+  .polygonSideColor(d => d.kind === 'weather' ? 'rgba(160,180,200,.02)' : 'rgba(223,63,118,.04)')
+  .polygonStrokeColor(d => d.kind === 'weather' ? 'rgba(190,205,220,.42)' : '#ff6d9f')
   .polygonsTransitionDuration(0)
   .arcStartLat('startLat').arcStartLng('startLng').arcStartAltitude('startAlt')
   .arcEndLat('endLat').arcEndLng('endLng').arcEndAltitude('endAlt')
@@ -130,12 +148,48 @@ const world = new Globe(host, {
     const core = new THREE.Mesh(new THREE.OctahedronGeometry(1.45,0),new THREE.MeshBasicMaterial({color:d.color}));
     const glow = new THREE.Mesh(new THREE.SphereGeometry(2.9,12,12),new THREE.MeshBasicMaterial({color:d.color,transparent:true,opacity:0.13,depthWrite:false}));
     group.add(glow,core);
+
+    if (key === 'eng') {
+      const velocity = new THREE.ArrowHelper(new THREE.Vector3(1,0.08,0).normalize(),new THREE.Vector3(0,0,0),10,0x75d9df,2.8,1.7);
+      velocity.name = 'engVelocity';
+      const normal = new THREE.ArrowHelper(new THREE.Vector3(0,1,0.12).normalize(),new THREE.Vector3(0,0,0),8,0xe7c86b,2.5,1.5);
+      normal.name = 'engNormal';
+      const radial = new THREE.ArrowHelper(new THREE.Vector3(0,0,-1),new THREE.Vector3(0,0,0),7,0xff6d9f,2.2,1.4);
+      radial.name = 'engRadial';
+      group.add(velocity,normal,radial);
+
+      const bodyAxes = new THREE.AxesHelper(6.5);
+      bodyAxes.name = 'engBodyAxes';
+      group.add(bodyAxes);
+
+      const cov = new THREE.Mesh(
+        new THREE.SphereGeometry(3.2,18,12),
+        new THREE.MeshBasicMaterial({color:0x75d9df,wireframe:true,transparent:true,opacity:0.42,depthWrite:false})
+      );
+      cov.name = 'engCovariance';
+      cov.scale.set(1.8,0.9,0.65);
+      group.add(cov);
+    }
     return group;
   })
   .customThreeObjectUpdate((obj,d) => {
     const p = world.getCoords(d.lat,d.lng,d.alt);
     obj.position.set(p.x,p.y,p.z);
+    obj.lookAt(0,0,0);
     obj.scale.setScalar(d.id === shared.selectedId ? 1.45 : 1.0);
+
+    if (key === 'eng') {
+      const profile = currentProfile();
+      const vectorsOn = !!profile.vectors;
+      ['engVelocity','engNormal','engRadial'].forEach(name => {
+        const child = obj.getObjectByName(name);
+        if (child) child.visible = vectorsOn;
+      });
+      const axes = obj.getObjectByName('engBodyAxes');
+      if (axes) axes.visible = !!profile.body;
+      const cov = obj.getObjectByName('engCovariance');
+      if (cov) cov.visible = !!profile.covariance;
+    }
   });
 
 const controls = world.controls();
@@ -168,9 +222,21 @@ function orbitPoint(def, angle) {
 }
 
 const orbitPaths = sats.map(def => ({
-  id:def.id,color:def.color,
+  id:def.id,kind:'orbit',color:def.color,
   points:Array.from({length:181},(_,i)=>orbitPoint(def,(i/180)*Math.PI*2))
 }));
+
+function orbitSegment(def, center, span, count=36) {
+  return Array.from({length:count},(_,i)=>{
+    const t = count === 1 ? 0 : i/(count-1);
+    return orbitPoint(def,center-span/2+t*span);
+  });
+}
+
+const planWindows = [
+  { id:'Executable window',kind:'window',color:'#73d7a2',points:orbitSegment(sats[0],1.10,0.62) },
+  { id:'Conditional window',kind:'window',color:'#e7c86b',points:orbitSegment(sats[1],3.85,0.50) }
+];
 
 function isOn(id, fallback=false) {
   const el = document.getElementById(id);
@@ -194,6 +260,12 @@ function currentProfile() {
   profile.anomaly = key === 'twin' && isOn('anomalyMode',false);
   profile.grid = key === 'ops' ? read(['GRID'],false) : false;
   profile.night = key === 'ops' ? isOn('nightBtn',true) : true;
+  profile.windows = key === 'plan' ? read(['WINDOW'],true) : false;
+  profile.weather = (key === 'earth' || key === 'ground') ? read(['WEATHER'],key === 'earth') : false;
+  profile.footprint = key === 'ground' ? read(['FOOTPRINT'],false) : false;
+  profile.vectors = key === 'eng' ? read(['VECTOR'],true) : false;
+  profile.body = key === 'eng' ? read(['BODY FRAME'],false) : false;
+  profile.covariance = key === 'eng' ? read(['COVARIANCE'],false) : false;
   return profile;
 }
 
@@ -223,14 +295,25 @@ function refreshLayers(force=false) {
   const sig = JSON.stringify(p)+'|'+shared.selectedId;
   if (!force && sig === lastProfileSig) return p;
   lastProfileSig = sig;
+
   const points = [];
   if (p.ground) points.push(...grounds);
   if (p.ships) points.push(...ships);
   world.pointsData(points);
-  world.pathsData(p.orbits ? orbitPaths : []);
-  world.polygonsData(p.aoi ? aoi : []);
+
+  const paths = [];
+  if (p.orbits) paths.push(...orbitPaths);
+  if (p.windows) paths.push(...planWindows);
+  world.pathsData(paths);
+
+  const polygons = [];
+  if (p.aoi) polygons.push(...aoi);
+  if (p.weather) polygons.push(...weatherZones);
+  world.polygonsData(polygons);
+
   world.customLayerData(p.sats ? sats : []);
   world.showGraticules(!!p.grid);
+
   const nextTexture = p.night ? NIGHT_TEXTURE_URL : DAY_TEXTURE_URL;
   if (nextTexture !== activeTexture) {
     activeTexture = nextTexture;
@@ -246,6 +329,9 @@ function refreshLayers(force=false) {
   if (p.anomaly) {
     const sar = sats.find(s=>s.id==='SAR-01');
     if (sar) rings.push({sat:sar,color:'rgba(255,114,131,.95)',radius:5,speed:1.4,repeat:760});
+  }
+  if (p.footprint) {
+    grounds.forEach(g => rings.push({lat:g.lat,lng:g.lng,color:'rgba(115,215,162,.58)',radius:9,speed:0.55,repeat:1900}));
   }
   world.ringsData(rings);
   return p;
@@ -327,7 +413,7 @@ function tick(now) {
   });
   const p=refreshLayers();
   if(p.sats) world.customLayerData(world.customLayerData());
-  if(p.coverage||p.anomaly) world.ringsData(world.ringsData());
+  if(p.coverage||p.anomaly||p.footprint) world.ringsData(world.ringsData());
   updateArc(p,now);
   if(key==='twin') {
     const c=document.getElementById('spaceopsGlobeClock'); if(c)c.textContent=new Date().toISOString().slice(11,19)+'Z';
