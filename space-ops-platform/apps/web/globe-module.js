@@ -68,6 +68,38 @@ function moduleKey() {
   return 'ops';
 }
 
+function makeSatelliteLabel(text, accent) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 512;
+  canvas.height = 128;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle = 'rgba(5,9,14,.88)';
+  ctx.fillRect(12,20,488,88);
+  ctx.strokeStyle = accent;
+  ctx.lineWidth = 4;
+  ctx.strokeRect(12,20,488,88);
+  ctx.fillStyle = accent;
+  ctx.fillRect(12,20,10,88);
+  ctx.fillStyle = '#f4f7fb';
+  ctx.font = '700 34px Inter,system-ui,-apple-system,Segoe UI,sans-serif';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text,42,64);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.minFilter = THREE.LinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.needsUpdate = true;
+  const material = new THREE.SpriteMaterial({map:texture,transparent:true,depthTest:true,depthWrite:false});
+  const sprite = new THREE.Sprite(material);
+  sprite.name = 'satelliteNameLabel';
+  sprite.center.set(0,0.5);
+  sprite.position.set(3.8,3.6,0);
+  sprite.scale.set(18,4.5,1);
+  sprite.renderOrder = 5;
+  return sprite;
+}
+
 const key = moduleKey();
 shared.moduleKey = key;
 if (key === 'ops') document.getElementById('nightBtn')?.classList.add('on');
@@ -78,8 +110,8 @@ const style = document.createElement('style');
 style.id = 'spaceops-shared-globe-style';
 style.textContent = `
   .spaceopsGlobeActive{isolation:isolate!important}
-  .spaceopsSharedGlobeHost{position:absolute!important;inset:0!important;z-index:2!important;overflow:hidden!important;background:radial-gradient(circle at 50% 52%,rgba(27,42,59,.20),transparent 39%)!important}
-  .spaceopsSharedGlobeHost canvas{display:block!important;outline:none!important}
+  .spaceopsSharedGlobeHost{position:absolute!important;inset:0!important;z-index:2!important;overflow:hidden!important;background:radial-gradient(circle at 50% 52%,rgba(17,31,46,.18),transparent 39%)!important}
+  .spaceopsSharedGlobeHost canvas{display:block!important;outline:none!important;filter:saturate(.82) contrast(1.06)!important}
   .spaceopsGlobeActive .earth,.spaceopsGlobeActive .gridline,
   .spaceopsGlobeActive .orbit,.spaceopsGlobeActive .sat,
   .spaceopsGlobeActive .gs,.spaceopsGlobeActive .station,
@@ -119,8 +151,8 @@ const world = new Globe(host, {
   .globeImageUrl(NIGHT_TEXTURE_URL)
   .bumpImageUrl(BUMP_TEXTURE_URL)
   .showAtmosphere(true)
-  .atmosphereColor('#4f8fd8')
-  .atmosphereAltitude(0.15)
+  .atmosphereColor('#3f78b4')
+  .atmosphereAltitude(0.13)
   .showGraticules(false)
   .pointLat('lat').pointLng('lng').pointAltitude('alt').pointColor('color')
   .pointRadius(d => d.id === shared.selectedId ? 0.30 : d.kind === 'ship' ? 0.15 : 0.21)
@@ -147,7 +179,8 @@ const world = new Globe(host, {
     const group = new THREE.Group();
     const core = new THREE.Mesh(new THREE.OctahedronGeometry(1.45,0),new THREE.MeshBasicMaterial({color:d.color}));
     const glow = new THREE.Mesh(new THREE.SphereGeometry(2.9,12,12),new THREE.MeshBasicMaterial({color:d.color,transparent:true,opacity:0.13,depthWrite:false}));
-    group.add(glow,core);
+    const label = makeSatelliteLabel(d.id,d.color);
+    group.add(glow,core,label);
 
     if (key === 'eng') {
       const velocity = new THREE.ArrowHelper(new THREE.Vector3(1,0.08,0).normalize(),new THREE.Vector3(0,0,0),10,0x75d9df,2.8,1.7);
@@ -175,8 +208,14 @@ const world = new Globe(host, {
   .customThreeObjectUpdate((obj,d) => {
     const p = world.getCoords(d.lat,d.lng,d.alt);
     obj.position.set(p.x,p.y,p.z);
-    obj.lookAt(0,0,0);
-    obj.scale.setScalar(d.id === shared.selectedId ? 1.45 : 1.0);
+    if (key === 'eng') obj.lookAt(0,0,0);
+    obj.scale.setScalar(d.id === shared.selectedId ? 1.30 : 1.0);
+
+    const label = obj.getObjectByName('satelliteNameLabel');
+    if (label) {
+      label.visible = true;
+      label.material.opacity = d.id === shared.selectedId ? 1 : 0.88;
+    }
 
     if (key === 'eng') {
       const profile = currentProfile();
@@ -204,12 +243,17 @@ controls.maxDistance = 460;
 world.pointOfView(shared.pov || {lat:18,lng:103,altitude:2.08},0);
 
 try {
-  world.renderer().setPixelRatio(Math.min(devicePixelRatio || 1,1.65));
+  const renderer = world.renderer();
+  renderer.setPixelRatio(Math.min(devicePixelRatio || 1,1.65));
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 0.88;
   const material = world.globeMaterial();
-  material.color?.set?.('#e5ebf3');
-  material.emissive?.set?.('#141c29');
-  material.emissiveIntensity = 0.38;
-  material.shininess = 4;
+  material.color?.set?.('#ffffff');
+  material.emissive?.set?.('#020408');
+  material.emissiveIntensity = 0.06;
+  material.shininess = 2;
+  material.needsUpdate = true;
 } catch (_) {}
 
 function orbitPoint(def, angle) {
