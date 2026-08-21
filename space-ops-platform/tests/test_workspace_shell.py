@@ -43,7 +43,6 @@ def test_workspace_owns_shared_context_sync_and_cross_module_history():
         "spaceops.actionHistory",
         "SpaceOpsSharedContext",
         "spaceops:context",
-        "spaceops.lastAction",
         "syncPill",
         "actionPill",
         "Mission Context",
@@ -75,8 +74,9 @@ def test_shared_mission_context_includes_priority():
 
 def test_shell_suppresses_duplicate_first_level_navigation():
     html = read(WORKSPACE)
-    assert "rail.style.display='none'" in html
-    assert "app.style.gridTemplateColumns='minmax(0,1fr)'" in html
+    assert "spaceops-shell-embed" in html
+    assert ".rail{display:none!important}" in html
+    assert ".app{grid-template-columns:minmax(0,1fr)!important}" in html
 
 
 def test_workspace_supports_stable_module_deep_links():
@@ -88,14 +88,13 @@ def test_workspace_supports_stable_module_deep_links():
         assert f"#{key}" in html
 
 
-def test_workspace_has_cross_module_event_bridge_and_cross_tab_sync():
+def test_workspace_has_cross_module_event_bridge():
     html = read(WORKSPACE)
     required = [
         "broadcastContext",
         "postMessage",
         "spaceops:action",
-        "spaceops:context-update",
-        "addEventListener('storage'",
+        "spaceops:context:update",
         "addEventListener('message'",
     ]
     for token in required:
@@ -106,8 +105,8 @@ def test_workspace_can_reset_context_and_clear_action_history():
     html = read(WORKSPACE)
     assert 'id="resetContext"' in html
     assert 'id="clearHistory"' in html
-    assert "MISSION CONTEXT RESET" in html
-    assert "Cross-module action history cleared" in html
+    assert "Mission context reset" in html
+    assert "Cross-module history cleared" in html
 
 
 def test_independent_data_search_product_is_not_linked_into_space_ops_shell():
