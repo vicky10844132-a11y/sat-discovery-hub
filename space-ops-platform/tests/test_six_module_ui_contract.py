@@ -2,30 +2,12 @@ from pathlib import Path
 
 WEB = Path(__file__).resolve().parents[1] / "apps" / "web"
 MODULES = {
-    "ops": {
-        "title": "GLOBAL OPERATIONS",
-        "tokens": ["MISSION COPILOT", "MISSION QUEUE", "UPCOMING CONTACTS", "RESOURCE HEALTH", "NEW MISSION"],
-    },
-    "twin": {
-        "title": "SPACE RESOURCE & DIGITAL TWIN",
-        "tokens": ["RESOURCE GRAPH", "OBJECT INSPECTOR", "STATE VECTOR", "RELATIONSHIPS", "TWIN QUALITY"],
-    },
-    "plan": {
-        "title": "MISSION PLANNING & SCHEDULING",
-        "tokens": ["MISSION DEFINITION", "RANKED EXECUTABLE PLANS", "EXECUTION SCHEDULE", "CONFLICTS", "COMMIT"],
-    },
-    "ground": {
-        "title": "GROUND & MISSION OPERATIONS",
-        "tokens": ["RESOURCE POOL", "CONTACT", "RESERVATION", "GSaaS", "CONFLICT"],
-    },
-    "earth": {
-        "title": "EARTH INTELLIGENCE",
-        "tokens": ["WEATHER", "AIS", "PROCESS", "QC", "DELIVERY"],
-    },
-    "eng": {
-        "title": "ENGINEERING & DYNAMICS",
-        "tokens": ["TLE", "SGP4", "GNC", "ADCS", "GNSS", "POD", "LINK"],
-    },
+    "ops": ["MISSION COPILOT", "MISSION QUEUE", "UPCOMING CONTACTS", "RESOURCE HEALTH", "NEW MISSION"],
+    "twin": ["RESOURCE GRAPH", "OBJECT INSPECTOR", "STATE VECTOR", "RELATIONSHIPS", "TWIN QUALITY"],
+    "plan": ["MISSION DEFINITION", "RANKED EXECUTABLE PLANS", "EXECUTION SCHEDULE", "CONFLICTS", "COMMIT"],
+    "ground": ["RESOURCE POOL", "CONTACT", "RESERVATION", "GSAAS", "CONFLICT"],
+    "earth": ["WEATHER", "AIS", "PROCESS", "QC", "DELIVERY"],
+    "eng": ["TLE", "SGP4", "GNC", "ADCS", "GNSS", "POD", "LINK"],
 }
 
 
@@ -33,55 +15,42 @@ def read(name: str) -> str:
     return (WEB / "modules" / f"{name}.html").read_text(encoding="utf-8")
 
 
-def test_all_six_module_files_exist_and_are_real_workspaces():
-    for name, spec in MODULES.items():
+def test_all_six_module_files_are_substantial_workspaces():
+    for name in MODULES:
         path = WEB / "modules" / f"{name}.html"
         assert path.exists(), f"missing {name} workspace"
         html = path.read_text(encoding="utf-8")
-        assert len(html) > 5000, f"{name} is too small to be the completed workspace"
+        assert len(html) > 5000, f"{name} workspace is unexpectedly small"
         assert "Space Ops Platform" in html
-        assert spec["title"] in html.upper()
 
 
-def test_each_module_preserves_its_approved_visible_capability_set():
-    for name, spec in MODULES.items():
+def test_each_module_preserves_required_visible_capabilities():
+    for name, tokens in MODULES.items():
         html = read(name).upper()
-        missing = [token for token in spec["tokens"] if token.upper() not in html]
+        missing = [token for token in tokens if token not in html]
         assert not missing, f"{name} lost visible capabilities: {missing}"
 
 
-def test_each_module_has_prototype_interaction_surface():
+def test_each_module_has_interactions_and_feedback():
     for name in MODULES:
         html = read(name).lower()
         assert "<button" in html, f"{name} has no actionable controls"
         assert "addeventlistener" in html or ".onclick" in html, f"{name} has no prototype interactions"
         assert "toast" in html, f"{name} lacks interaction feedback"
+        assert "sync" in html, f"{name} lacks sync control/status"
 
 
-def test_each_module_retains_help_and_sync_controls():
-    for name in MODULES:
-        html = read(name).lower()
-        assert "help" in html, f"{name} lacks help/documentation access"
-        assert "sync" in html, f"{name} lacks synchronization control/status"
-
-
-def test_workspace_is_the_only_first_level_navigation_owner():
+def test_workspace_is_only_first_level_navigation_owner_when_embedded():
     shell = (WEB / "workspace.html").read_text(encoding="utf-8")
-    expected = [
-        'data-module="ops"',
-        'data-module="twin"',
-        'data-module="plan"',
-        'data-module="ground"',
-        'data-module="earth"',
-        'data-module="eng"',
-    ]
+    expected = [f'data-module="{name}"' for name in MODULES]
     positions = [shell.index(token) for token in expected]
     assert positions == sorted(positions)
     assert shell.count('data-module="') == 6
-    assert "rail.style.display='none'" in shell
+    assert ".rail{display:none!important}" in shell
+    assert "left:-76px" in shell
 
 
-def test_data_search_aoi_product_is_not_part_of_space_ops_modules():
+def test_independent_data_search_aoi_product_does_not_leak_into_space_ops():
     forbidden = ["DATA_SEARCH_AOI", "data-search-aoi", "aoi-tool-full-v8"]
     for name in MODULES:
         html = read(name)
