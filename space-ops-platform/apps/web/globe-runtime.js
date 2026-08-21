@@ -206,11 +206,171 @@
     d.body.appendChild(patch);
   }
 
+  function normalizePlanPrototype(d) {
+    if (!d?.body || d.getElementById('spaceops-plan-canonical-normalizer')) return;
+
+    const metrics = [...d.querySelectorAll('.metrics .metric')];
+    const metricValues = [
+      ['1','Open Objective','HIGH PRIORITY'],
+      ['5','Candidate Windows','06:00—14:00 UTC'],
+      ['4','Eligible Spacecraft','CANONICAL FLEET'],
+      ['3','Feasible Contacts','CANONICAL GROUND'],
+      ['3','Open Conflicts','REVIEW REQUIRED'],
+      ['4','Ranked Plans','3 EXECUTABLE · 1 CONDITIONAL']
+    ];
+    metrics.forEach((el, i) => {
+      if (!metricValues[i]) return;
+      const [value,label,note] = metricValues[i];
+      const id = ['mObjectives','mWindows',null,null,'mConflicts','mPlans'][i];
+      el.innerHTML = `<b${id ? ` id="${id}"` : ''}>${value}</b><span>${label}</span><em>${note}</em>`;
+    });
+
+    const firstToggle = d.querySelector('.switchline .toggle');
+    if (firstToggle) firstToggle.classList.remove('on');
+
+    const legacySats = [...d.querySelectorAll('.scene .sat')];
+    ['GF-7 02','SAR-01','SUPERVIEW NEO-1'].forEach((id,i) => {
+      if (legacySats[i]) legacySats[i].dataset.id = id;
+    });
+
+    const blocks = [...d.querySelectorAll('.timegrid .block')];
+    const windows = [
+      ['GF-7 02 · 06:42','GF-7 02 / 06:42'],
+      ['GF-7 02 · 09:51','GF-7 02 / 09:51'],
+      ['SAR-01 · 07:34','SAR-01 / 07:34'],
+      ['SAR-01 · 11:46','SAR-01 / 11:46'],
+      ['SUPERVIEW NEO-1 · 08:47','SUPERVIEW NEO-1 / 08:47'],
+      ['GS-SE-01 · CONFLICT','GS-SE-01 protected contact conflict']
+    ];
+    blocks.forEach((b,i) => {
+      if (!windows[i]) return;
+      b.textContent = windows[i][0];
+      b.dataset.window = windows[i][1];
+    });
+
+    const planCards = [...d.querySelectorAll('.planCard')];
+    const planTitles = [
+      'PLAN A · GF-7 02 / GS-SG-02',
+      'PLAN B · SUPERVIEW NEO-1 / GS-IN-04',
+      'PLAN C · SAR-01 / GS-SE-01',
+      'PLAN D · GF-7 02 / GS-SE-01'
+    ];
+    const planDescriptions = [
+      'Best balance of acquisition timing, cloud risk, spacecraft reserve and confirmed downlink availability.',
+      'Lower forecast cloud risk with a later acquisition and partner-network downlink.',
+      'Weather-independent SAR fallback with lower optical-product fit.',
+      'Good acquisition geometry but overlaps a protected GS-SE-01 contact reservation.'
+    ];
+    planCards.forEach((card,i) => {
+      const h3 = card.querySelector('h3');
+      const p = card.querySelector('p');
+      if (h3 && planTitles[i]) h3.textContent = planTitles[i];
+      if (p && planDescriptions[i]) p.textContent = planDescriptions[i];
+    });
+
+    const tags = planCards.map(c => [...c.querySelectorAll('.tag')]);
+    if (tags[0]?.[2]) tags[0][2].textContent = 'GS-SG-02';
+    if (tags[1]?.[2]) tags[1][2].textContent = 'PARTNER · GS-IN-04';
+    if (tags[2]?.[2]) tags[2][2].textContent = 'GS-SE-01';
+
+    const exceptions = [...d.querySelectorAll('#exceptions .exception')];
+    if (exceptions[0]) {
+      const b = exceptions[0].querySelector('b'); const s = exceptions[0].querySelector('small');
+      if (b) b.textContent = 'Protected GS-SE-01 contact';
+      if (s) s.textContent = 'Plan D overlaps an existing high-priority GS-SE-01 reservation by 4m 18s.';
+    }
+    if (exceptions[2]) {
+      const b = exceptions[2].querySelector('b'); const s = exceptions[2].querySelector('small');
+      if (b) b.textContent = 'SUPERVIEW NEO-1 storage margin';
+      if (s) s.textContent = 'Projected recorder utilization reaches 82% before partner downlink via GS-IN-04.';
+    }
+
+    const patch = d.createElement('script');
+    patch.id = 'spaceops-plan-canonical-normalizer';
+    patch.textContent = `(() => {
+      try {
+        schedules.A = [['06:28','Payload prep','GF-7 02','09m','READY'],['06:42','Acquisition','GF-7 02 / SG-PORT-04','03m','PLANNED'],['07:18','Ground contact','GS-SG-02 / X-BAND','08m','RESERVED'],['07:29','Processing + QC','EO-PIPE-01','28m','QUEUED'],['08:05','Delivery','DELIVERY-EDGE','—','TARGET']];
+        schedules.B = [['08:31','Payload prep','SUPERVIEW NEO-1','08m','READY'],['08:47','Acquisition','SUPERVIEW NEO-1 / SG-PORT-04','04m','PLANNED'],['09:24','Ground contact','GS-IN-04 / PARTNER','09m','HELD'],['09:37','Processing + QC','EO-PIPE-01','24m','QUEUED'],['10:02','Delivery','DELIVERY-EDGE','—','TARGET']];
+        schedules.C = [['07:22','SAR prep','SAR-01','07m','READY'],['07:34','Acquisition','SAR-01 / SG-PORT-04','05m','PLANNED'],['08:12','Ground contact','GS-SE-01 / X-BAND','10m','RESERVED'],['08:26','Processing + QC','SAR-PIPE-02','38m','QUEUED'],['09:10','Delivery','DELIVERY-EDGE','—','TARGET']];
+        schedules.D = [['09:38','Payload prep','GF-7 02','08m','READY'],['09:51','Acquisition','GF-7 02 / SG-PORT-04','03m','PLANNED'],['10:22','Ground contact','GS-SE-01','08m','CONFLICT'],['10:34','Processing + QC','EO-PIPE-01','27m','QUEUED'],['11:08','Delivery','DELIVERY-EDGE','—','TARGET']];
+        renderSchedule('A');
+      } catch (_) {}
+
+      const toggleByLabel = text => {
+        const row = [...document.querySelectorAll('.switchline')].find(x => x.textContent.toLowerCase().includes(text.toLowerCase()));
+        return row?.querySelector('.toggle');
+      };
+      const syncCounts = () => {
+        const open = document.querySelectorAll('#exceptions .exception').length;
+        const c = document.getElementById('mConflicts');
+        if (c) c.textContent = open;
+        const small = document.querySelector('#exceptions')?.closest('.panel')?.querySelector('.head small');
+        if (small) small.textContent = open + ' OPEN';
+      };
+
+      try {
+        validateBtn.onclick = () => {
+          const startAt = new Date(start.value).getTime();
+          const endAt = new Date(end.value).getTime();
+          if (!objective.value.trim()) { toast('Validation failed · objective is required'); return; }
+          if (!aoi.value.trim()) { toast('Validation failed · AOI is required'); return; }
+          if (!Number.isFinite(startAt) || !Number.isFinite(endAt) || endAt <= startAt) { toast('Validation failed · mission window is invalid'); return; }
+          toast('Objective valid · 4 spacecraft · 5 candidate windows · 3 feasible contacts');
+        };
+
+        generateBtn.onclick = () => {
+          const opticalOnly = !!toggleByLabel('Optical only')?.classList.contains('on');
+          const partnerAllowed = !!toggleByLabel('partner ground')?.classList.contains('on');
+          const maxCloud = Number(cloud.value || 20);
+          let executable = 3;
+          document.querySelector('[data-plan="C"]')?.classList.toggle('hidden', opticalOnly);
+          document.querySelector('[data-plan="B"]')?.classList.toggle('hidden', !partnerAllowed);
+          if (opticalOnly) executable -= 1;
+          if (!partnerAllowed) executable -= 1;
+          if (maxCloud < 12) executable = Math.max(1, executable - 1);
+          const totalVisible = executable + 1;
+          mPlans.textContent = totalVisible;
+          mWindows.textContent = maxCloud < 12 ? '3' : '5';
+          planMode.textContent = 'RECALCULATED · ' + new Date().toISOString().slice(11,19);
+          toast(executable + ' executable + 1 conditional plan · constraints applied');
+        };
+
+        syncBtn.onclick = () => {
+          syncCounts();
+          toast('Planning state synchronized · 4 spacecraft · 3 ground assets');
+        };
+
+        document.querySelectorAll('[data-resolve]').forEach(b => b.onclick = () => {
+          b.closest('.exception')?.remove();
+          syncCounts();
+          toast('Exception reviewed and removed from open queue');
+        });
+
+        importBtn.onclick = () => {
+          objective.value = 'Acquire cloud-free optical imagery over Singapore port logistics zone before 12:00 UTC with fastest delivery.';
+          aoi.value = 'SG-PORT-04';
+          priority.value = 'High';
+          toast('Prototype objective imported · SG-PORT-04');
+        };
+
+        commitBtn.onclick = () => {
+          const p = document.querySelector('.planCard.active')?.dataset.plan || 'A';
+          const card = document.querySelector('.planCard.active');
+          if (card?.classList.contains('hidden')) { toast('Select a visible executable plan first'); return; }
+          toast('Plan ' + p + ' accepted into operations · SIMULATED');
+        };
+        syncCounts();
+      } catch (_) {}
+    })();`;
+    d.body.appendChild(patch);
+  }
+
   function normalizeModuleControls(d, key) {
     d.documentElement.dataset.spaceopsGlobeModule = key;
 
     if (key === 'ops') normalizeOpsPrototype(d);
     if (key === 'twin') normalizeTwinPrototype(d);
+    if (key === 'plan') normalizePlanPrototype(d);
 
     if (key === 'ground') {
       const chips = [...d.querySelectorAll('.sceneTools .chip')];
