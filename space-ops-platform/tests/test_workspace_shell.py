@@ -66,6 +66,8 @@ def test_shell_supports_sequential_navigation_and_keyboard_shortcuts():
 def test_shared_mission_context_includes_priority():
     html = read(WORKSPACE)
     assert 'id="missionPriority"' in html
+    assert 'id="priorityMini"' in html
+    assert 'id="aoiMini"' in html
     assert "context.priority" in html
     for priority in ("P1", "P2", "P3"):
         assert f">{priority}<" in html or f">{priority}</option>" in html
@@ -75,6 +77,37 @@ def test_shell_suppresses_duplicate_first_level_navigation():
     html = read(WORKSPACE)
     assert "rail.style.display='none'" in html
     assert "app.style.gridTemplateColumns='minmax(0,1fr)'" in html
+
+
+def test_workspace_supports_stable_module_deep_links():
+    html = read(WORKSPACE)
+    assert "location.hash" in html
+    assert "history.replaceState" in html
+    assert "hashchange" in html
+    for key in MODULES:
+        assert f"#{key}" in html
+
+
+def test_workspace_has_cross_module_event_bridge_and_cross_tab_sync():
+    html = read(WORKSPACE)
+    required = [
+        "broadcastContext",
+        "postMessage",
+        "spaceops:action",
+        "spaceops:context-update",
+        "addEventListener('storage'",
+        "addEventListener('message'",
+    ]
+    for token in required:
+        assert token in html
+
+
+def test_workspace_can_reset_context_and_clear_action_history():
+    html = read(WORKSPACE)
+    assert 'id="resetContext"' in html
+    assert 'id="clearHistory"' in html
+    assert "MISSION CONTEXT RESET" in html
+    assert "Cross-module action history cleared" in html
 
 
 def test_independent_data_search_product_is_not_linked_into_space_ops_shell():
