@@ -75,4 +75,5 @@ $('saveContext').onclick=()=>{context={mission:$('missionId').value.trim(),aoi:$
 window.addEventListener('hashchange',()=>{const k=location.hash.slice(1);if(modules[k]&&k!==active)setModule(k,false)});window.addEventListener('keydown',e=>{if(e.altKey&&/^[1-6]$/.test(e.key)){e.preventDefault();setModule(order[Number(e.key)-1])}});window.addEventListener('message',e=>{if(e.data?.type==='spaceops:contextUpdate'&&e.data.detail){context={...context,...e.data.detail};save()}});
 function tick(){$('clock').textContent=new Date().toLocaleString(undefined,{hour12:false})}tick();setInterval(tick,1000);renderContext();setModule(active,false);
 </script>
+<script src="globe-runtime.js?rev=20260822h"></script>
 </body></html>
