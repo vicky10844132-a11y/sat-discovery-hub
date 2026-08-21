@@ -4,113 +4,447 @@
   const frame = document.getElementById('frame');
   if (!frame) return;
 
-  const EARTH_TEXTURE = 'data:image/jpeg;base64,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';
+  const THREE_URL = 'https://esm.sh/three@0.180.0';
+  const NIGHT_TEXTURE_URL = 'https://svs.gsfc.nasa.gov/vis/a000000/a002900/a002916/earthatnight-2048.png';
+  let activeScene = null;
+  let loadToken = 0;
 
-  function isTwin() {
-    try { return /\/modules\/twin\.html$/i.test(frame.contentWindow.location.pathname); }
-    catch (_) { return /\/modules\/twin\.html/i.test(frame.getAttribute('src') || ''); }
+  function stopActive() {
+    if (!activeScene) return;
+    try { cancelAnimationFrame(activeScene.raf); } catch (_) {}
+    try { activeScene.resizeObserver?.disconnect(); } catch (_) {}
+    try { activeScene.renderer?.dispose(); } catch (_) {}
+    try { activeScene.canvas?.remove(); } catch (_) {}
+    activeScene = null;
   }
 
-  function addStyle(d) {
-    if (d.getElementById('spaceops-globe-only-style')) return;
-    const style = d.createElement('style');
-    style.id = 'spaceops-globe-only-style';
-    style.textContent = `
-      .earth[data-spaceops-globe="1"]{
-        overflow:hidden!important;
-        isolation:isolate;
-        cursor:grab;
-        user-select:none;
-        touch-action:none;
-        background:#03070b!important;
-        box-shadow:
-          0 0 0 1px rgba(111,168,255,.28),
-          0 0 22px rgba(83,145,210,.22),
-          0 0 48px rgba(58,116,176,.12)!important;
-      }
-      .earth[data-spaceops-globe="1"]:active{cursor:grabbing}
-      .earth[data-spaceops-globe="1"]::after{display:none!important}
-      .spaceopsGlobeSurface,.spaceopsGlobeShade,.spaceopsGlobeAtmos{
-        position:absolute;inset:0;border-radius:50%;pointer-events:none
-      }
-      .spaceopsGlobeSurface{
-        z-index:1;
-        background-image:url("${EARTH_TEXTURE}");
-        background-repeat:no-repeat;
-        background-size:108% 108%;
-        background-position:50% 50%;
-        filter:saturate(1.04) contrast(1.06) brightness(.96);
-        will-change:background-position,background-size;
-      }
-      .spaceopsGlobeShade{
-        z-index:2;
-        background:
-          radial-gradient(circle at 31% 24%,rgba(160,201,255,.09),transparent 21%),
-          linear-gradient(112deg,transparent 0 54%,rgba(0,0,0,.08) 70%,rgba(0,0,0,.42) 100%);
-        box-shadow:inset -18px -12px 34px rgba(0,0,0,.34);
-      }
-      .spaceopsGlobeAtmos{
-        z-index:3;
-        inset:1px;
-        border:1px solid rgba(142,184,255,.34);
-        box-shadow:
-          inset 8px 5px 16px rgba(142,184,255,.08),
-          inset -9px -6px 18px rgba(0,0,0,.28),
-          0 0 12px rgba(111,168,255,.16);
-      }
-    `;
-    d.head.appendChild(style);
+  function isTwinDocument(d) {
+    return !!(d && d.querySelector('.scene') && d.getElementById('liveState') && d.querySelector('.inspector'));
   }
 
-  function enhanceTwin(d) {
-    if (!d || !d.head || !d.body || !isTwin()) return;
-    const earth = d.querySelector('.earth');
-    if (!earth || earth.dataset.spaceopsGlobe === '1') return;
+  function labelSprite(THREE, text, color = '#eef3f7') {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 96;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.font = '700 36px system-ui, -apple-system, Segoe UI, sans-serif';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = 'rgba(4,7,11,.72)';
+    ctx.fillRect(12, 15, Math.min(480, ctx.measureText(text).width + 38), 66);
+    ctx.strokeStyle = 'rgba(255,255,255,.14)';
+    ctx.strokeRect(12.5, 15.5, Math.min(480, ctx.measureText(text).width + 38), 65);
+    ctx.fillStyle = color;
+    ctx.fillText(text, 30, 50);
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    const material = new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false });
+    const sprite = new THREE.Sprite(material);
+    sprite.scale.set(1.02, 0.19, 1);
+    sprite.center.set(0, 0.5);
+    return sprite;
+  }
 
-    addStyle(d);
-    earth.dataset.spaceopsGlobe = '1';
+  function latLonToVec3(THREE, lat, lon, radius) {
+    const phi = (90 - lat) * Math.PI / 180;
+    const theta = (lon + 180) * Math.PI / 180;
+    return new THREE.Vector3(
+      -radius * Math.sin(phi) * Math.cos(theta),
+      radius * Math.cos(phi),
+      radius * Math.sin(phi) * Math.sin(theta)
+    );
+  }
 
-    const surface = d.createElement('div');
-    surface.className = 'spaceopsGlobeSurface';
-    const shade = d.createElement('div');
-    shade.className = 'spaceopsGlobeShade';
-    const atmosphere = d.createElement('div');
-    atmosphere.className = 'spaceopsGlobeAtmos';
-    earth.append(surface, shade, atmosphere);
+  function buildOrbit(THREE, radius, inclinationDeg, nodeDeg, color) {
+    const points = [];
+    for (let i = 0; i <= 240; i++) {
+      const a = (i / 240) * Math.PI * 2;
+      points.push(new THREE.Vector3(Math.cos(a) * radius, 0, Math.sin(a) * radius));
+    }
+    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+    const material = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.62 });
+    const line = new THREE.LineLoop(geometry, material);
+    line.rotation.x = THREE.MathUtils.degToRad(inclinationDeg);
+    line.rotation.z = THREE.MathUtils.degToRad(nodeDeg);
+    return line;
+  }
 
-    let x = 50, y = 50, zoom = 108;
-    let dragging = false, sx = 0, sy = 0, ox = 50, oy = 50;
-    const paint = () => {
-      surface.style.backgroundPosition = `${x}% ${y}%`;
-      surface.style.backgroundSize = `${zoom}% ${zoom}%`;
-    };
-    paint();
-
-    earth.addEventListener('pointerdown', e => {
-      dragging = true; sx = e.clientX; sy = e.clientY; ox = x; oy = y;
-      earth.setPointerCapture?.(e.pointerId);
+  function makeAtmosphere(THREE, radius) {
+    const geometry = new THREE.SphereGeometry(radius * 1.035, 64, 64);
+    const material = new THREE.ShaderMaterial({
+      transparent: true,
+      side: THREE.BackSide,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      vertexShader: `
+        varying vec3 vNormal;
+        varying vec3 vWorldPosition;
+        void main(){
+          vNormal = normalize(normalMatrix * normal);
+          vec4 worldPosition = modelMatrix * vec4(position,1.0);
+          vWorldPosition = worldPosition.xyz;
+          gl_Position = projectionMatrix * viewMatrix * worldPosition;
+        }
+      `,
+      fragmentShader: `
+        varying vec3 vNormal;
+        varying vec3 vWorldPosition;
+        void main(){
+          vec3 viewDirection = normalize(cameraPosition - vWorldPosition);
+          float fresnel = pow(1.0 - max(dot(viewDirection, vNormal), 0.0), 2.35);
+          vec3 c = vec3(0.20, 0.50, 0.88);
+          gl_FragColor = vec4(c, fresnel * 0.48);
+        }
+      `
     });
-    earth.addEventListener('pointermove', e => {
+    return new THREE.Mesh(geometry, material);
+  }
+
+  async function enhanceTwin(d, token) {
+    if (!isTwinDocument(d)) return;
+    const sceneEl = d.querySelector('.scene');
+    if (!sceneEl || sceneEl.dataset.spaceopsWebgl === '1') return;
+
+    let THREE;
+    try {
+      THREE = await import(THREE_URL);
+    } catch (error) {
+      console.warn('Space Ops 3D globe unavailable, keeping fallback globe.', error);
+      return;
+    }
+    if (token !== loadToken || !isTwinDocument(d)) return;
+
+    stopActive();
+    sceneEl.dataset.spaceopsWebgl = '1';
+
+    const oldParts = [...sceneEl.querySelectorAll('.earth,.orbitLayer,.assetLayer,.groundLayer,.aoiLayer')];
+    oldParts.forEach(el => {
+      el.dataset.spaceopsGlobeFallbackDisplay = el.style.display || '';
+      el.style.display = 'none';
+    });
+
+    const canvas = d.createElement('canvas');
+    canvas.className = 'spaceopsWebglGlobe';
+    canvas.setAttribute('aria-label', 'Interactive 3D Earth and satellite scene');
+    Object.assign(canvas.style, {
+      position: 'absolute', inset: '0', width: '100%', height: '100%', zIndex: '2',
+      display: 'block', cursor: 'grab', touchAction: 'none', outline: 'none'
+    });
+    const grid = sceneEl.querySelector('.grid');
+    if (grid) grid.after(canvas); else sceneEl.prepend(canvas);
+
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setClearColor(0x000000, 0);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 100);
+    camera.position.set(0.10, 0.12, 5.45);
+
+    const viewGroup = new THREE.Group();
+    viewGroup.rotation.x = -0.10;
+    viewGroup.rotation.y = -0.20;
+    scene.add(viewGroup);
+
+    const earthSpinGroup = new THREE.Group();
+    const orbitGroup = new THREE.Group();
+    const satelliteGroup = new THREE.Group();
+    viewGroup.add(earthSpinGroup, orbitGroup, satelliteGroup);
+
+    const R = 1.43;
+    const earthGeometry = new THREE.SphereGeometry(R, 96, 96);
+    const earthMaterial = new THREE.MeshStandardMaterial({ color: 0x0b1625, roughness: 0.93, metalness: 0.0 });
+    const earthMesh = new THREE.Mesh(earthGeometry, earthMaterial);
+    earthSpinGroup.add(earthMesh);
+
+    const textureLoader = new THREE.TextureLoader();
+    textureLoader.setCrossOrigin('anonymous');
+    textureLoader.load(
+      NIGHT_TEXTURE_URL,
+      tex => {
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.anisotropy = Math.min(renderer.capabilities.getMaxAnisotropy(), 8);
+        earthMaterial.map = tex;
+        earthMaterial.emissive = new THREE.Color(0xd7c8a8);
+        earthMaterial.emissiveMap = tex;
+        earthMaterial.emissiveIntensity = 0.42;
+        earthMaterial.needsUpdate = true;
+      },
+      undefined,
+      () => {
+        earthMaterial.color.set(0x12233a);
+        earthMaterial.emissive.set(0x08111d);
+        earthMaterial.emissiveIntensity = 0.35;
+      }
+    );
+
+    const atmosphere = makeAtmosphere(THREE, R);
+    earthSpinGroup.add(atmosphere);
+
+    scene.add(new THREE.AmbientLight(0x5878a8, 0.44));
+    const key = new THREE.DirectionalLight(0x9ec9ff, 1.35);
+    key.position.set(-4, 3.2, 4.5);
+    scene.add(key);
+    const rim = new THREE.DirectionalLight(0x3f78c7, 0.55);
+    rim.position.set(4, -1.5, -4);
+    scene.add(rim);
+
+    const starGeo = new THREE.BufferGeometry();
+    const starPos = [];
+    for (let i = 0; i < 520; i++) {
+      const r = 8 + Math.random() * 12;
+      const u = Math.random() * Math.PI * 2;
+      const v = Math.acos(2 * Math.random() - 1);
+      starPos.push(r * Math.sin(v) * Math.cos(u), r * Math.cos(v), r * Math.sin(v) * Math.sin(u));
+    }
+    starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starPos, 3));
+    const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0x7ea8cc, size: 0.025, transparent: true, opacity: 0.42, depthWrite: false }));
+    scene.add(stars);
+
+    const orbitDefs = [
+      { radius: 2.13, inclination: 16, node: -18, color: 0xdf3f76 },
+      { radius: 2.40, inclination: 66, node: 21, color: 0x6fa8ff },
+      { radius: 2.64, inclination: 91, node: -8, color: 0x58d5c5 }
+    ];
+    orbitDefs.forEach(o => orbitGroup.add(buildOrbit(THREE, o.radius, o.inclination, o.node, o.color)));
+
+    const satDefs = [
+      { id: 'GF-7 02', orbit: 0, phase: 0.47, speed: 0.095, color: 0xff5f93 },
+      { id: 'SUPERVIEW NEO-1', orbit: 1, phase: 2.25, speed: 0.071, color: 0x6fa8ff },
+      { id: 'SY-01', orbit: 2, phase: 4.30, speed: 0.053, color: 0x58d5c5 },
+      { id: 'SAR-01', orbit: 0, phase: 3.52, speed: 0.087, color: 0xff5f93 }
+    ];
+
+    const satEntries = satDefs.map(def => {
+      const group = new THREE.Group();
+      const core = new THREE.Mesh(
+        new THREE.OctahedronGeometry(0.055, 0),
+        new THREE.MeshStandardMaterial({ color: def.color, emissive: def.color, emissiveIntensity: 1.45, roughness: 0.5 })
+      );
+      core.userData.spaceopsSatelliteId = def.id;
+      group.add(core);
+      const label = labelSprite(THREE, def.id);
+      label.position.set(0.075, 0.055, 0);
+      group.add(label);
+      satelliteGroup.add(group);
+      return { ...def, group, core, label, angle: def.phase };
+    });
+
+    const groundGroup = new THREE.Group();
+    earthSpinGroup.add(groundGroup);
+    const groundDefs = [
+      { id: 'GS-SE-01', lat: 67.86, lon: 20.23, color: 0xe7c86b },
+      { id: 'GS-SG-02', lat: 1.30, lon: 103.82, color: 0xe7c86b },
+      { id: 'GS-IN-04', lat: 20.59, lon: 78.96, color: 0xe7c86b }
+    ];
+    const groundMeshes = [];
+    groundDefs.forEach(def => {
+      const pos = latLonToVec3(THREE, def.lat, def.lon, R * 1.012);
+      const marker = new THREE.Mesh(
+        new THREE.SphereGeometry(0.032, 16, 16),
+        new THREE.MeshStandardMaterial({ color: def.color, emissive: def.color, emissiveIntensity: 1.6 })
+      );
+      marker.position.copy(pos);
+      marker.userData.spaceopsGroundId = def.id;
+      groundGroup.add(marker);
+      const label = labelSprite(THREE, def.id, '#ead77f');
+      label.position.copy(pos.clone().multiplyScalar(1.055));
+      label.scale.set(0.78, 0.145, 1);
+      groundGroup.add(label);
+      groundMeshes.push(marker);
+    });
+
+    const aoiGroup = new THREE.Group();
+    earthSpinGroup.add(aoiGroup);
+    const aoiPoints = [[1.20,103.60],[1.20,104.05],[1.48,104.05],[1.48,103.60],[1.20,103.60]]
+      .map(([lat, lon]) => latLonToVec3(THREE, lat, lon, R * 1.018));
+    aoiGroup.add(new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints(aoiPoints),
+      new THREE.LineBasicMaterial({ color: 0xff4f8a, transparent: true, opacity: 0.95 })
+    ));
+
+    const linkGroup = new THREE.Group();
+    scene.add(linkGroup);
+
+    function orbitPosition(def, angle) {
+      const o = orbitDefs[def.orbit];
+      const v = new THREE.Vector3(Math.cos(angle) * o.radius, 0, Math.sin(angle) * o.radius);
+      v.applyAxisAngle(new THREE.Vector3(1, 0, 0), THREE.MathUtils.degToRad(o.inclination));
+      v.applyAxisAngle(new THREE.Vector3(0, 0, 1), THREE.MathUtils.degToRad(o.node));
+      return v;
+    }
+
+    let selectedId = 'GF-7 02';
+    function refreshLink() {
+      linkGroup.clear();
+      const sat = satEntries.find(s => s.id === selectedId) || satEntries[0];
+      if (!sat || !groundMeshes[0]) return;
+      const start = new THREE.Vector3();
+      const target = new THREE.Vector3();
+      sat.core.getWorldPosition(start);
+      groundMeshes[0].getWorldPosition(target);
+      linkGroup.add(new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints([start, target]),
+        new THREE.LineBasicMaterial({ color: 0xff4f8a, transparent: true, opacity: 0.62 })
+      ));
+    }
+
+    function selectObject(id) {
+      selectedId = id;
+      satEntries.forEach(s => s.core.scale.setScalar(s.id === id ? 1.65 : 1));
+      groundMeshes.forEach(g => g.scale.setScalar(g.userData.spaceopsGroundId === id ? 1.65 : 1));
+      try { if (typeof frame.contentWindow.selectObject === 'function') frame.contentWindow.selectObject(id); } catch (_) {}
+      refreshLink();
+    }
+    selectObject(selectedId);
+
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+    let dragging = false;
+    let moved = false;
+    let downX = 0, downY = 0, lastX = 0, lastY = 0;
+    let targetRotX = viewGroup.rotation.x;
+    let targetRotY = viewGroup.rotation.y;
+    let velX = 0, velY = 0;
+    let targetZoom = camera.position.z;
+
+    canvas.addEventListener('pointerdown', e => {
+      dragging = true; moved = false;
+      downX = lastX = e.clientX; downY = lastY = e.clientY;
+      canvas.style.cursor = 'grabbing';
+      canvas.setPointerCapture?.(e.pointerId);
+    });
+    canvas.addEventListener('pointermove', e => {
       if (!dragging) return;
-      x = Math.max(42, Math.min(58, ox - (e.clientX - sx) * .035));
-      y = Math.max(42, Math.min(58, oy - (e.clientY - sy) * .035));
-      paint();
+      const dx = e.clientX - lastX, dy = e.clientY - lastY;
+      if (Math.abs(e.clientX - downX) + Math.abs(e.clientY - downY) > 4) moved = true;
+      velY = dx * 0.0048; velX = dy * 0.0048;
+      targetRotY += velY; targetRotX += velX;
+      targetRotX = Math.max(-0.85, Math.min(0.85, targetRotX));
+      lastX = e.clientX; lastY = e.clientY;
     });
-    const stop = e => {
-      dragging = false;
-      try { earth.releasePointerCapture?.(e.pointerId); } catch (_) {}
+    const release = e => {
+      if (!dragging) return;
+      dragging = false; canvas.style.cursor = 'grab';
+      try { canvas.releasePointerCapture?.(e.pointerId); } catch (_) {}
+      if (!moved) {
+        const rect = canvas.getBoundingClientRect();
+        pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+        raycaster.setFromCamera(pointer, camera);
+        const picks = raycaster.intersectObjects([...satEntries.map(s => s.core), ...groundMeshes], false);
+        const obj = picks[0]?.object;
+        if (obj?.userData.spaceopsSatelliteId) selectObject(obj.userData.spaceopsSatelliteId);
+        if (obj?.userData.spaceopsGroundId) selectObject(obj.userData.spaceopsGroundId);
+      }
     };
-    earth.addEventListener('pointerup', stop);
-    earth.addEventListener('pointercancel', stop);
-    earth.addEventListener('wheel', e => {
+    canvas.addEventListener('pointerup', release);
+    canvas.addEventListener('pointercancel', release);
+    canvas.addEventListener('wheel', e => {
       e.preventDefault();
-      zoom = Math.max(102, Math.min(122, zoom + (e.deltaY > 0 ? -2 : 2)));
-      paint();
-    }, {passive:false});
-    earth.addEventListener('dblclick', () => { x = 50; y = 50; zoom = 108; paint(); });
+      targetZoom = Math.max(4.05, Math.min(6.35, targetZoom + e.deltaY * 0.0022));
+    }, { passive: false });
+    canvas.addEventListener('dblclick', () => {
+      targetRotX = -0.10; targetRotY = -0.20; targetZoom = 5.45;
+    });
+
+    d.getElementById('zoomIn')?.addEventListener('click', () => { targetZoom = Math.max(4.05, targetZoom - 0.32); });
+    d.getElementById('zoomOut')?.addEventListener('click', () => { targetZoom = Math.min(6.35, targetZoom + 0.32); });
+    [d.getElementById('resetView'), d.getElementById('resetEarth')].filter(Boolean).forEach(b => b.addEventListener('click', () => {
+      targetRotX = -0.10; targetRotY = -0.20; targetZoom = 5.45;
+    }));
+
+    const layerButtons = [...d.querySelectorAll('[data-layer]')];
+    function applyLayers() {
+      const button = name => layerButtons.find(b => b.dataset.layer === name);
+      orbitGroup.visible = button('orbits')?.classList.contains('on') !== false;
+      satelliteGroup.visible = button('assets')?.classList.contains('on') !== false;
+      groundGroup.visible = button('ground')?.classList.contains('on') !== false;
+      aoiGroup.visible = button('aoi')?.classList.contains('on') !== false;
+    }
+    layerButtons.forEach(b => b.addEventListener('click', () => requestAnimationFrame(applyLayers)));
+    applyLayers();
+
+    const linkButton = d.getElementById('linkMode');
+    linkGroup.visible = !!linkButton?.classList.contains('on');
+    linkButton?.addEventListener('click', () => requestAnimationFrame(() => {
+      linkGroup.visible = linkButton.classList.contains('on');
+      if (linkGroup.visible) refreshLink();
+    }));
+
+    const anomalyButton = d.getElementById('anomalyMode');
+    anomalyButton?.addEventListener('click', () => requestAnimationFrame(() => {
+      const sar = satEntries.find(s => s.id === 'SAR-01');
+      if (sar) sar.core.material.color.set(anomalyButton.classList.contains('on') ? 0xffb24a : 0xff5f93);
+    }));
+
+    let lastTime = performance.now();
+    function resize() {
+      const w = Math.max(1, sceneEl.clientWidth), h = Math.max(1, sceneEl.clientHeight);
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    }
+    const resizeObserver = new ResizeObserver(resize);
+    resizeObserver.observe(sceneEl);
+    resize();
+
+    function animate(now) {
+      if (token !== loadToken || !canvas.isConnected || !activeScene) return;
+      const dt = Math.min(0.05, Math.max(0.001, (now - lastTime) / 1000));
+      lastTime = now;
+      const live = d.getElementById('liveState')?.classList.contains('on') !== false;
+      if (live) {
+        earthSpinGroup.rotation.y += dt * 0.035;
+        satEntries.forEach(s => {
+          s.angle += dt * s.speed;
+          s.group.position.copy(orbitPosition(s, s.angle));
+          s.label.quaternion.copy(camera.quaternion);
+        });
+      } else {
+        satEntries.forEach(s => s.label.quaternion.copy(camera.quaternion));
+      }
+      groundGroup.children.filter(x => x.isSprite).forEach(s => s.quaternion.copy(camera.quaternion));
+
+      if (!dragging) {
+        targetRotY += velY; targetRotX += velX;
+        targetRotX = Math.max(-0.85, Math.min(0.85, targetRotX));
+        velX *= 0.92; velY *= 0.92;
+      }
+      viewGroup.rotation.x += (targetRotX - viewGroup.rotation.x) * 0.10;
+      viewGroup.rotation.y += (targetRotY - viewGroup.rotation.y) * 0.10;
+      camera.position.z += (targetZoom - camera.position.z) * 0.10;
+      camera.lookAt(0, 0, 0);
+
+      if (linkGroup.visible) refreshLink();
+      renderer.render(scene, camera);
+      activeScene.raf = requestAnimationFrame(animate);
+    }
+
+    activeScene = { renderer, canvas, resizeObserver, raf: 0 };
+    activeScene.raf = requestAnimationFrame(animate);
   }
 
-  const run = () => { try { enhanceTwin(frame.contentDocument); } catch (_) {} };
-  frame.addEventListener('load', () => { run(); requestAnimationFrame(run); setTimeout(run, 120); });
+  function run() {
+    const token = ++loadToken;
+    stopActive();
+    try {
+      const d = frame.contentDocument;
+      if (!isTwinDocument(d)) return;
+      enhanceTwin(d, token);
+    } catch (_) {}
+  }
+
+  frame.addEventListener('load', () => {
+    run();
+    setTimeout(() => {
+      try {
+        const d = frame.contentDocument;
+        if (isTwinDocument(d) && d.querySelector('.scene')?.dataset.spaceopsWebgl !== '1') enhanceTwin(d, loadToken);
+      } catch (_) {}
+    }, 180);
+  });
+
   run();
 })();
