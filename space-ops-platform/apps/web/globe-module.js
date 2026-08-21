@@ -121,7 +121,7 @@ const world = new Globe(host, {
   .arcEndLat('endLat').arcEndLng('endLng').arcEndAltitude('endAlt')
   .arcColor(() => ['rgba(255,109,159,.10)','rgba(255,109,159,.92)'])
   .arcStroke(0.30).arcDashLength(0.38).arcDashGap(0.12).arcDashAnimateTime(1700).arcsTransitionDuration(0)
-  .ringLat('lat').ringLng('lng').ringColor('color').ringMaxRadius('radius').ringPropagationSpeed('speed').ringRepeatPeriod('repeat')
+  .ringLat(d=>d.sat?d.sat.lat:d.lat).ringLng(d=>d.sat?d.sat.lng:d.lng).ringColor('color').ringMaxRadius('radius').ringPropagationSpeed('speed').ringRepeatPeriod('repeat')
   .customLayerLabel(d => `<div style="font:700 11px system-ui;color:#eef3f8;background:#080b10e8;border:1px solid #39424e;padding:5px 7px">${d.id}</div>`)
   .customThreeObject(d => {
     const group = new THREE.Group();
@@ -229,12 +229,12 @@ function refreshLayers(force=false) {
 
   const rings = [];
   if (p.coverage) {
-    grounds.forEach(g => rings.push({lat:g.lat,lng:g.lng,color:()=>['rgba(115,215,162,.12)','rgba(115,215,162,.75)'],radius:12,speed:1.0,repeat:1250}));
-    sats.forEach(s => rings.push({lat:s.lat,lng:s.lng,color:()=>['rgba(111,168,255,.08)','rgba(111,168,255,.55)'],radius:7,speed:0.75,repeat:1600}));
+    grounds.forEach(g => rings.push({lat:g.lat,lng:g.lng,color:'rgba(115,215,162,.72)',radius:12,speed:1.0,repeat:1250}));
+    sats.forEach(s => rings.push({sat:s,color:'rgba(111,168,255,.55)',radius:7,speed:0.75,repeat:1600}));
   }
   if (p.anomaly) {
     const sar = sats.find(s=>s.id==='SAR-01');
-    if (sar) rings.push({lat:sar.lat,lng:sar.lng,color:()=>['rgba(255,114,131,.18)','rgba(255,114,131,.95)'],radius:5,speed:1.4,repeat:760});
+    if (sar) rings.push({sat:sar,color:'rgba(255,114,131,.95)',radius:5,speed:1.4,repeat:760});
   }
   world.ringsData(rings);
   return p;
