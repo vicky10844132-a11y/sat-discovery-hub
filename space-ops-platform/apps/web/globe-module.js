@@ -1,4 +1,4 @@
-import Globe from 'https://esm.sh/globe.gl@2.46.1?bundle';
+import Globe from 'https://esm.sh/globe.gl@2.46.1?deps=three@0.180.0';
 import * as THREE from 'https://esm.sh/three@0.180.0';
 
 const parentWindow = window.parent || window;
@@ -12,6 +12,7 @@ const shared = parentWindow.__SPACEOPS_SHARED_GLOBE_STATE__ ||= {
 };
 
 const NIGHT_TEXTURE_URL = 'https://cdn.jsdelivr.net/npm/three-globe@2.45.2/example/img/earth-night.jpg';
+const DAY_TEXTURE_URL = 'https://cdn.jsdelivr.net/npm/three-globe@2.45.2/example/img/earth-day.jpg';
 const BUMP_TEXTURE_URL = 'https://cdn.jsdelivr.net/npm/three-globe@2.45.2/example/img/earth-topology.png';
 
 const profiles = {
@@ -57,6 +58,7 @@ function moduleKey() {
 
 const key = moduleKey();
 shared.moduleKey = key;
+if (key === 'ops') document.getElementById('nightBtn')?.classList.add('on');
 const scene = key === 'ops' ? document.querySelector('.mapwrap') : document.querySelector('.scene');
 if (!scene) throw new Error(`Space Ops shared globe: scene not found for ${key}`);
 
@@ -190,6 +192,8 @@ function currentProfile() {
   profile.links = key === 'twin' ? isOn('linkMode',false) : read(['LINK'],profile.links);
   profile.coverage = key === 'twin' && isOn('coverageMode',false);
   profile.anomaly = key === 'twin' && isOn('anomalyMode',false);
+  profile.grid = key === 'ops' ? read(['GRID'],false) : false;
+  profile.night = key === 'ops' ? isOn('nightBtn',true) : true;
   return profile;
 }
 
@@ -213,6 +217,7 @@ world.onZoom(pov => {
 
 let lastProfileSig = '';
 let lastArcAt = 0;
+let activeTexture = NIGHT_TEXTURE_URL;
 function refreshLayers(force=false) {
   const p = currentProfile();
   const sig = JSON.stringify(p)+'|'+shared.selectedId;
@@ -225,6 +230,12 @@ function refreshLayers(force=false) {
   world.pathsData(p.orbits ? orbitPaths : []);
   world.polygonsData(p.aoi ? aoi : []);
   world.customLayerData(p.sats ? sats : []);
+  world.showGraticules(!!p.grid);
+  const nextTexture = p.night ? NIGHT_TEXTURE_URL : DAY_TEXTURE_URL;
+  if (nextTexture !== activeTexture) {
+    activeTexture = nextTexture;
+    world.globeImageUrl(nextTexture);
+  }
   if (!p.links) world.arcsData([]);
 
   const rings = [];
