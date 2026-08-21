@@ -17,7 +17,88 @@
     ...(window.__SPACEOPS_SHARED_GLOBE_STATE__ || {})
   };
 
-  const moduleRuntimeUrl = new URL('globe-module.js?rev=20260822k', location.href).href;
+  const moduleRuntimeUrl = new URL('globe-module.js?rev=20260822m', location.href).href;
+
+  function detectModule(d) {
+    try {
+      const m = d.location.pathname.toLowerCase().match(/\/(ops|twin|plan|ground|earth|eng)\.html$/);
+      if (m) return m[1];
+    } catch (_) {}
+    const title = String(d?.title || '').toLowerCase();
+    for (const key of ['ops','twin','plan','ground','earth','eng']) {
+      if (title.includes(`· ${key}`) || title.endsWith(key)) return key;
+    }
+    return '';
+  }
+
+  function addHiddenKeyword(d, button, text) {
+    if (!button || button.querySelector('[data-spaceops-globe-keyword]')) return;
+    const span = d.createElement('span');
+    span.dataset.spaceopsGlobeKeyword = '1';
+    span.hidden = true;
+    span.textContent = ` ${text} `;
+    button.appendChild(span);
+  }
+
+  function installCompatibilityStyle(d, key) {
+    if (!d?.head || d.getElementById('spaceops-globe-compat-style')) return;
+    d.documentElement.dataset.spaceopsGlobeModule = key;
+    const style = d.createElement('style');
+    style.id = 'spaceops-globe-compat-style';
+    style.textContent = `
+      html[data-spaceops-globe-module="plan"] .scene.spaceopsGlobeActive .windowArc{
+        display:block!important;z-index:6!important;pointer-events:none!important
+      }
+      html[data-spaceops-globe-module="ground"] .scene.spaceopsGlobeActive .cone{
+        display:none!important;z-index:6!important;pointer-events:none!important
+      }
+      html[data-spaceops-globe-module="ground"] .scene.spaceopsGlobeActive:has(.sceneTools [data-layer="footprint"].on) .cone{
+        display:block!important
+      }
+      html[data-spaceops-globe-module="earth"] .scene.spaceopsGlobeActive .cloud{
+        display:none!important;z-index:6!important;pointer-events:none!important
+      }
+      html[data-spaceops-globe-module="earth"] .scene.spaceopsGlobeActive:has(.sceneTools [data-layer="wx"].on) .cloud{
+        display:block!important
+      }
+      html[data-spaceops-globe-module="eng"] .scene.spaceopsGlobeActive .vector,
+      html[data-spaceops-globe-module="eng"] .scene.spaceopsGlobeActive .bodyFrame,
+      html[data-spaceops-globe-module="eng"] .scene.spaceopsGlobeActive .cov{
+        display:none!important;z-index:6!important;pointer-events:none!important
+      }
+      html[data-spaceops-globe-module="eng"] .scene.spaceopsGlobeActive:has(.sceneTools [data-layer="vectors"].on) .vector,
+      html[data-spaceops-globe-module="eng"] .scene.spaceopsGlobeActive:has(.sceneTools [data-layer="body"].on) .bodyFrame,
+      html[data-spaceops-globe-module="eng"] .scene.spaceopsGlobeActive:has(.sceneTools [data-layer="cov"].on) .cov{
+        display:block!important
+      }
+    `;
+    d.head.appendChild(style);
+  }
+
+  function normalizeModuleControls(d, key) {
+    installCompatibilityStyle(d, key);
+
+    if (key === 'ground') {
+      const chips = [...d.querySelectorAll('.sceneTools .chip')];
+      const byText = label => chips.find(b => b.textContent.trim().toUpperCase() === label);
+      const access = byText('ACCESS');
+      const stations = byText('STATIONS');
+      const footprint = byText('FOOTPRINT');
+      const weather = byText('WEATHER');
+      if (access) {
+        access.dataset.layer = 'access';
+        addHiddenKeyword(d, access, 'ORBIT SAT');
+      }
+      if (stations) stations.dataset.layer = 'stations';
+      if (footprint) footprint.dataset.layer = 'footprint';
+      if (weather) weather.dataset.layer = 'weather';
+    }
+
+    if (key === 'earth') {
+      const eo = d.querySelector('.sceneTools [data-layer="eo"]');
+      addHiddenKeyword(d, eo, 'AOI');
+    }
+  }
 
   function normalizeTwinLiveControl(d) {
     const live = d?.getElementById('liveState');
@@ -44,6 +125,8 @@
     try { d = frame.contentDocument; } catch (_) { return; }
     if (!d?.head || !d?.body) return;
 
+    const key = detectModule(d);
+    normalizeModuleControls(d, key);
     normalizeTwinLiveControl(d);
     if (d.getElementById('spaceops-shared-globe-module')) return;
 
