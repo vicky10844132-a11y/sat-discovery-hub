@@ -1,1 +1,17 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Space Ops Platform</title><meta http-equiv="refresh" content="0; url=./workspace.html"><script>location.replace('./workspace.html')</script></head><body></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Space Ops Platform</title>
+<script>
+(function(){
+  var target='./workspace.html'+(location.search||'')+(location.hash||'');
+  location.replace(target);
+})();
+</script>
+</head>
+<body style="margin:0;background:#080a0e;color:#f4f2f5;font:12px system-ui,sans-serif;display:grid;place-items:center;min-height:100vh">
+<noscript><a href="./workspace.html" style="color:#ff6d9f">Open Space Ops Platform</a></noscript>
+</body>
+</html>
