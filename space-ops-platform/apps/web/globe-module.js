@@ -11,8 +11,8 @@ const shared = parentWindow.__SPACEOPS_SHARED_GLOBE_STATE__ ||= {
   frozenElapsed: 0
 };
 
-const NIGHT_TEXTURE_URL = 'https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-night.jpg';
-const BUMP_TEXTURE_URL = 'https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-topology.png';
+const NIGHT_TEXTURE_URL = 'https://cdn.jsdelivr.net/npm/three-globe@2.45.2/example/img/earth-night.jpg';
+const BUMP_TEXTURE_URL = 'https://cdn.jsdelivr.net/npm/three-globe@2.45.2/example/img/earth-topology.png';
 
 const profiles = {
   ops:    { orbits:true,  sats:true,  ground:true,  aoi:true,  ships:false, links:false },
