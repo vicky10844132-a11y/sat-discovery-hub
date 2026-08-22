@@ -165,6 +165,45 @@
     }
   }
 
+  function normalizeTwinAcceptance(d) {
+    if (!d || d.documentElement.dataset.spaceopsTwinAccepted === '1') return;
+    d.documentElement.dataset.spaceopsTwinAccepted = '1';
+
+    const metrics = [...d.querySelectorAll('.metrics .metric')];
+    if (metrics[5]) {
+      const label = metrics[5].querySelector('span');
+      const source = metrics[5].querySelector('em');
+      if (label) label.textContent = 'Scenario State Age';
+      if (source) source.textContent = 'SIMULATION CLOCK';
+    }
+
+    const live = d.getElementById('liveState');
+    if (live) live.textContent = 'SIM RUNNING';
+
+    const footer = d.getElementById('footerLive');
+    if (footer) footer.textContent = '● SIM RUNNING';
+
+    const inspectorHead = d.querySelector('.inspector .head small');
+    if (inspectorHead) inspectorHead.title = 'Prototype object state; no live telemetry connector is attached';
+
+    const snapshot = d.getElementById('snapshotBtn');
+    if (snapshot) {
+      snapshot.textContent = '▣ EXPORT SNAPSHOT BUNDLE';
+      snapshot.title = 'Exports the simulated object/layer state and the rendered globe snapshot';
+    }
+
+    const sync = d.getElementById('syncBtn');
+    if (sync && sync.dataset.spaceopsTwinSyncNormalized !== '1') {
+      sync.dataset.spaceopsTwinSyncNormalized = '1';
+      sync.addEventListener('click', () => {
+        const shared = window.__SPACEOPS_SHARED_GLOBE_STATE__;
+        if (!shared) return;
+        shared.epochMs = Date.now();
+        shared.frozenElapsed = 0;
+      });
+    }
+  }
+
   function normalizeTwinLiveControl(d) {
     const live = d?.getElementById('liveState');
     if (!live || live.dataset.spaceopsGlobeNormalized === '1') return;
@@ -174,9 +213,10 @@
     live.addEventListener('click', () => {
       setTimeout(() => {
         const on = live.classList.contains('on');
+        live.textContent = on ? 'SIM RUNNING' : 'SIM PAUSED';
         const footer = d.getElementById('footerLive');
         if (footer) {
-          footer.textContent = on ? '● LIVE' : '● PAUSED';
+          footer.textContent = on ? '● SIM RUNNING' : '● SIM PAUSED';
           footer.style.color = on ? 'var(--green)' : 'var(--amber)';
         }
         d.documentElement.dataset.liveState = on ? 'on' : 'paused';
@@ -192,7 +232,10 @@
     const key = detectModule(d);
     normalizeModuleControls(d, key);
     if (key === 'ops') normalizeOpsAcceptance(d);
-    if (key === 'twin') normalizeTwinLiveControl(d);
+    if (key === 'twin') {
+      normalizeTwinAcceptance(d);
+      normalizeTwinLiveControl(d);
+    }
 
     if (d.getElementById('spaceops-shared-globe-module')) return;
     const script = d.createElement('script');
