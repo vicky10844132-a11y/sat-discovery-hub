@@ -46,7 +46,7 @@
   - Description: Use restrained surface texture, night/day treatment and atmospheric rim instead of a flat sphere look.
   - Acceptance: Earth reads as a spatial body with limb lighting, not a CSS-like circular object.
 
-- [ ] OPS-04 Make orbit geometry spatial rather than decorative.
+- [x] OPS-04 Make orbit geometry spatial rather than decorative.
   - Description: Orbits must wrap in 3D and disappear appropriately behind Earth.
   - Acceptance: Orbital paths have perspective and occlusion; no flat ellipse effect dominates the scene.
 
