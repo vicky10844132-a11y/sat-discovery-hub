@@ -1,0 +1,72 @@
+{
+  "version": "0.1",
+  "scan_date": "2026-07-12",
+  "purpose": "Incremental GS LinkOps AI research ingestion candidates",
+  "records": [
+    {
+      "batch_id": "AUTO-SCAN-298",
+      "record_type": "regulatory_gsaas_infrastructure_opportunity",
+      "name": "IN-SPACe / NRSC Shadnagar private GSaaS infrastructure model",
+      "country": "India",
+      "source_url": "https://timesofindia.indiatimes.com/city/bengaluru/in-space-invites-pvt-firms-to-set-up-ground-stations-at-isros-nrsc/articleshow/131449797.cms",
+      "source_date": "2026-06-02",
+      "summary": "IN-SPACe reportedly invited up to three Indian companies to establish and operate ground stations inside the NRSC Shadnagar campus under a GSaaS model. Publicly reported parameters include S/X/Ka-band support, approximately 9.15 acres, Ka-band interference protection, 10- or 20-year infrastructure leases, and a plug-and-play option for antennas up to 7.5 m designed for 200 km/h wind conditions.",
+      "extractable_fields": {
+        "operator_model": "private GSaaS operator on government space infrastructure",
+        "bands": ["S", "X", "Ka"],
+        "site_area_acres": 9.15,
+        "antenna_diameter_max_m": 7.5,
+        "wind_design_kmph": 200,
+        "lease_terms_years": [10, 20],
+        "deployment_models": ["refurbish leased legacy infrastructure", "plug-and-play facility"],
+        "rf_interference_control": "reported Ka-band protected/exclusion-zone environment"
+      },
+      "database_targets": ["Ground Station Site Database", "Regulatory and Authorization Library", "GSaaS Commercial Model Library", "Site Environment and RF Risk Table"],
+      "commercial_labels": ["government-enabled", "long-term lease", "private operator", "domestic and international service potential"],
+      "risk_labels": ["authorization dependent", "foreign customer eligibility to confirm", "secondary-source-only", "spectrum coordination required"],
+      "confidence": "Medium",
+      "confidence_reason": "Detailed contemporary reporting, but the underlying official EOI document was not located in this scan.",
+      "pending_confirmation": ["official EOI URL and document number", "eligibility criteria", "foreign ownership restrictions", "exact frequency ranges", "licensing obligations", "commercial tariff freedom", "data-security and export-control conditions"]
+    },
+    {
+      "batch_id": "AUTO-SCAN-299",
+      "record_type": "research_optical_ground_station_economics",
+      "name": "Optical Ground Stations for Space Communications: Systems Engineering, Availability, and Service Economics Through 2030",
+      "source_url": "https://arxiv.org/abs/2606.23711",
+      "source_date": "2026-06-16",
+      "summary": "The paper argues that optical ground-station bottlenecks are shifting from peak line rate to repeatable service availability under weather, acquisition, scheduling and operational constraints. It proposes a hybrid optical-plus-RF baseline, with optical used for throughput and RF used for continuity, contingency and assured command paths.",
+      "extractable_fields": {
+        "service_architecture": "hybrid optical + RF",
+        "availability_drivers": ["weather", "site diversity", "acquisition success", "scheduler performance", "operations readiness"],
+        "economic_drivers": ["station annualized cost", "scheduled contact time", "weather-inclusive efficiency", "network utilization", "service-level allocation"],
+        "benchmark_rates_reported": ["25 Mbps interplanetary", "260 Mbps-class lunar", "1.2 Gbps-class ISS relay", "1.8 Gbps operational GEO relay", "120 Gbps-class direct-to-ground demonstration", "200 Gbps LEO demonstration"]
+      },
+      "database_targets": ["Optical Ground Station Capability Table", "Hybrid Link Strategy Rules", "Weather and Availability Risk Model", "Service Economics Model"],
+      "commercial_labels": ["emerging service class", "high-throughput", "weather-sensitive", "network-diversity-dependent"],
+      "risk_labels": ["preprint", "benchmark heterogeneity", "demonstration-rate-not-equal-to-service-rate", "tariff not validated"],
+      "confidence": "Medium-High",
+      "confidence_reason": "Recent technical preprint with explicit systems and economics framing; values require validation against primary mission and vendor sources.",
+      "pending_confirmation": ["peer-review status", "vendor-specific service readiness", "actual SLA metrics", "site-level cloud statistics", "acquisition and pointing requirements", "commercial pricing evidence"]
+    },
+    {
+      "batch_id": "AUTO-SCAN-300",
+      "record_type": "research_multi_provider_gsaas_scheduler",
+      "name": "SkyGS multi-provider GSaaS and cloud scheduling framework",
+      "source_url": "https://arxiv.org/abs/2501.00354",
+      "source_date": "2024-12-31",
+      "summary": "SkyGS models joint scheduling across multiple GSaaS and cloud providers rather than binding missions to one provider. It combines contact selection and downstream compute placement, using long-term latency constraints and real-time optimization. Reported simulation results show potential cost savings up to 63% and average latency reduction up to 95% under the tested assumptions.",
+      "extractable_fields": {
+        "optimization_entities": ["satellite", "ground station", "GSaaS provider", "cloud region", "contact window", "compute job", "data volume"],
+        "objective_fields": ["ground-station cost", "cloud cost", "data latency", "provider diversity", "weather robustness"],
+        "algorithmic_methods": ["Lyapunov optimization", "bipartite graph matching", "Hungarian algorithm"],
+        "reported_outcomes": {"cost_saving_max_pct": 63, "average_latency_reduction_max_pct": 95}
+      },
+      "database_targets": ["Matching Intelligence", "Multi-Provider Dispatch Model", "Cloud Delivery and Processing Table", "Latency and Cost Objective Library"],
+      "commercial_labels": ["multi-provider federation", "cloud-integrated", "latency-aware", "cost-optimized"],
+      "risk_labels": ["simulation-based", "provider API assumptions", "pricing-data sensitivity", "weather-model sensitivity"],
+      "confidence": "Medium-High",
+      "confidence_reason": "Clear optimization model and reproducible research framing, but operational gains are simulation-dependent.",
+      "pending_confirmation": ["datasets and code availability", "provider pricing vintages", "station list freshness", "real API compatibility", "cloud egress cost treatment", "weather model details", "operational constraint coverage"]
+    }
+  ]
+}

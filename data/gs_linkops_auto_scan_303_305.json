@@ -1,0 +1,197 @@
+{
+  "version": "0.1",
+  "created_for": "GS LinkOps AI resource database building",
+  "created_at": "2026-07-13",
+  "scan_range": "AUTO-SCAN-303 to AUTO-SCAN-305",
+  "status": "candidate_research_records",
+  "records": [
+    {
+      "record_id": "AUTO-SCAN-303",
+      "category": "research_ground_station_network_optimization",
+      "name": "Optimal Ground Station Selection for Low-Earth Orbiting Satellites",
+      "source_url": "https://arxiv.org/abs/2410.16282",
+      "source_type": "research_paper",
+      "publication_date": "2024-10-04",
+      "summary": "Integer-programming framework for selecting GSaaS providers and station locations while constraining total downlink volume, total mission cost, recurring operating cost and maximum communication gap. The study compares Atlas Space Operations, AWS Ground Station, Azure Orbital Ground Station, KSAT, Leaf Space and Viasat Real-Time Earth against conventional one- or two-provider configurations.",
+      "useful_for": [
+        "multi-provider GSaaS selection",
+        "mission cost and capacity trade-off modelling",
+        "maximum outage/contact-gap constraints",
+        "constellation-level ground segment design",
+        "provider diversity and station portfolio optimization"
+      ],
+      "database_targets": [
+        "Matching Intelligence",
+        "Ground Station Portfolio Optimizer",
+        "Mission Cost Model",
+        "Provider Comparison Library"
+      ],
+      "extractable_fields": [
+        "provider_id",
+        "station_location",
+        "mission_data_volume_requirement",
+        "total_downlink_capacity",
+        "total_mission_cost",
+        "recurring_operational_cost",
+        "maximum_communications_gap",
+        "provider_count_constraint",
+        "station_selection_binary_variable",
+        "optimization_objective",
+        "surrogate_time_domain_method"
+      ],
+      "commercial_risk_labels": [
+        "research_model_not_operational_quote",
+        "provider_network_changes_over_time",
+        "pricing_inputs_require_current_validation"
+      ],
+      "confidence_level": "High for optimization formulation and research methodology; medium for provider-specific network assumptions because commercial networks and pricing evolve.",
+      "pending_confirmation_fields": [
+        "current station inventory per provider",
+        "current pricing and minimum commitments",
+        "current supported bands and throughput",
+        "provider-specific integration lead time",
+        "weather and maintenance availability assumptions",
+        "actual contract and regulatory constraints"
+      ],
+      "recommended_schema_extensions": [
+        "max_contact_gap_minutes",
+        "required_daily_downlink_gb",
+        "provider_diversity_minimum",
+        "station_portfolio_cost",
+        "recurring_vs_nonrecurring_cost",
+        "optimization_scenario_id"
+      ]
+    },
+    {
+      "record_id": "AUTO-SCAN-304",
+      "category": "ground_station_capability_reference",
+      "name": "ESA ESTRACK New Norcia NNO-3 / Deep Space Antenna 4 public capability reference",
+      "source_url": "https://en.wikipedia.org/wiki/New_Norcia_Station",
+      "source_type": "public_summary_with_official_references",
+      "summary": "Publicly summarized information describes NNO-3 as a 35 m deep-space antenna completed in 2025, supporting X-, K- and Ka-band uplink/downlink, approximately 1 degree-per-second tracking in azimuth and elevation, and provision for a future high-power X-band uplink. The source also distinguishes NNO-1, NNO-2 and NNO-3 roles at the same site.",
+      "useful_for": [
+        "multi-antenna site modelling",
+        "antenna role differentiation",
+        "deep-space versus launch/LEOP support classification",
+        "uplink/downlink band separation",
+        "tracking-rate and high-power amplifier fields"
+      ],
+      "database_targets": [
+        "Global Ground Station Compatibility Database",
+        "Institutional Ground Station Reference Library",
+        "Antenna Capability Table",
+        "Station Asset Hierarchy"
+      ],
+      "station": {
+        "operator": "European Space Agency / ESTRACK",
+        "site_name": "New Norcia Station",
+        "country": "Australia",
+        "antenna_id": "NNO-3 / DSA 4",
+        "reflector_diameter_m": 35,
+        "public_uplink_bands": ["X", "Ka"],
+        "public_downlink_bands": ["X", "K", "Ka"],
+        "tracking_rate_public_deg_per_sec": 1,
+        "mission_class": ["deep_space", "institutional_cross_support"]
+      },
+      "extractable_fields": [
+        "site_id",
+        "antenna_id",
+        "antenna_role",
+        "reflector_diameter_m",
+        "uplink_bands",
+        "downlink_bands",
+        "tracking_rate_az_deg_s",
+        "tracking_rate_el_deg_s",
+        "high_power_uplink_option",
+        "commissioning_status",
+        "remote_operations_center"
+      ],
+      "commercial_risk_labels": [
+        "institutional_network_not_public_gsaas",
+        "commercial_access_not_assumed",
+        "secondary_summary_requires_official_validation"
+      ],
+      "confidence_level": "Medium. The site and broad antenna characteristics are well documented publicly, but this record should be replaced or strengthened with current ESA station pages and official capability sheets before operational use.",
+      "pending_confirmation_fields": [
+        "official in-service date",
+        "exact uplink and downlink frequency ranges",
+        "current transmitter power",
+        "baseband and modulation support",
+        "SLE service profile and versions",
+        "cross-support eligibility",
+        "availability calendar",
+        "data delivery and security interfaces"
+      ],
+      "recommended_schema_extensions": [
+        "site_asset_parent_child_relationship",
+        "antenna_mission_role",
+        "institutional_access_class",
+        "commissioning_status",
+        "planned_upgrade_capability"
+      ]
+    },
+    {
+      "record_id": "AUTO-SCAN-305",
+      "category": "research_ka_band_link_risk_and_adaptation",
+      "name": "Environment-to-Link ISAC with Space-Weather Sensing for Ka-Band LEO Downlinks",
+      "source_url": "https://arxiv.org/abs/2601.00820",
+      "source_type": "research_paper",
+      "publication_date": "2025-12-23",
+      "summary": "Research on short-timescale Ka-band LEO downlink degradation during flare-driven ionospheric disturbances. It proposes link-internal sensing and predictive adaptation using dual-carrier phase observables, short-horizon outage prediction, modulation/coding down-switching and pilot-time adjustment.",
+      "useful_for": [
+        "Ka-band environmental risk modelling",
+        "predictive link adaptation",
+        "weather and space-weather-aware scheduling",
+        "adaptive coding and modulation policy",
+        "contact quality risk scoring"
+      ],
+      "database_targets": [
+        "Link Risk Engine",
+        "Contact Quality Model",
+        "Adaptive Reception Policy Library",
+        "Ka-band Operational Risk Library"
+      ],
+      "extractable_fields": [
+        "frequency_band",
+        "dual_carrier_observable",
+        "space_weather_event_type",
+        "predicted_outage_probability",
+        "prediction_horizon_seconds",
+        "mcs_fallback_policy",
+        "pilot_update_policy",
+        "hysteresis_rule",
+        "bler_risk",
+        "goodput_impact",
+        "uncertainty_method"
+      ],
+      "commercial_risk_labels": [
+        "simulation_or_replay_based",
+        "not_yet_commercially_validated",
+        "mission_specific_rf_configuration_required"
+      ],
+      "confidence_level": "Medium-high for research value and schema design; medium-low for immediate operational deployment because the reported controller relies on a specific modelling and replay framework.",
+      "pending_confirmation_fields": [
+        "applicable Ka-band frequency pair",
+        "required receiver observables",
+        "compatibility with commercial baseband systems",
+        "real-time telemetry interface",
+        "false alarm and missed detection rates",
+        "station implementation cost",
+        "validation on operational satellite passes"
+      ],
+      "recommended_schema_extensions": [
+        "space_weather_risk_score",
+        "predicted_outage_probability",
+        "adaptive_mcs_supported",
+        "link_prediction_horizon_seconds",
+        "environmental_trigger_type",
+        "contact_quality_confidence_interval"
+      ]
+    }
+  ],
+  "processing_notes": [
+    "All records are candidate research records and must not be treated as confirmed operational capacity.",
+    "Provider and station facts must be reconciled against official current capability sheets before commercial matching.",
+    "Research performance claims must be stored separately from operator service commitments."
+  ]
+}

@@ -1,0 +1,296 @@
+{
+  "dataset": "GS LinkOps AI auto-scan candidate records",
+  "batch_range": "AUTO-SCAN-339..AUTO-SCAN-341",
+  "generated_at": "2026-07-13T12:59:57+08:00",
+  "status": "candidate_import",
+  "records": [
+    {
+      "record_id": "AUTO-SCAN-339",
+      "title": "KSATlite real-time contact orchestration, monitoring APIs, and network-learning operations",
+      "entity_types": [
+        "gsaas_provider",
+        "ground_station_network",
+        "contact_orchestration_platform",
+        "monitoring_api",
+        "data_delivery_pipeline"
+      ],
+      "provider": "Kongsberg Satellite Services (KSAT)",
+      "evidence_date": "2026-04-28",
+      "structured_summary": {
+        "network_scale_claim": {
+          "stations_approx": 35,
+          "antennas_approx": 200,
+          "contacts_per_day_more_than": 5500
+        },
+        "orchestration_scope": [
+          "antenna configuration and tracking",
+          "radio link lock and decode",
+          "spacecraft commanding",
+          "real-time telemetry acquisition and streaming",
+          "payload transfer",
+          "terrestrial network routing",
+          "continuous anomaly monitoring"
+        ],
+        "operator_interface": [
+          "live contact monitoring API",
+          "control API",
+          "real-time observation",
+          "in-contact reconfiguration"
+        ],
+        "delivery_destinations": [
+          "cloud environments",
+          "processing pipelines",
+          "analytics platforms",
+          "operator systems"
+        ],
+        "operational_learning_model": "Contact anomalies, link behaviour and performance metrics are logged across the network and used to improve subsequent contacts."
+      },
+      "recommended_schema_fields": [
+        "contact_orchestration_platform",
+        "contact_configuration_state",
+        "live_monitoring_api_available",
+        "live_control_api_available",
+        "in_contact_reconfiguration_supported",
+        "telemetry_streaming_mode",
+        "payload_route_destination_type",
+        "anomaly_detection_scope",
+        "cross_contact_learning_supported",
+        "contact_metrics_retention",
+        "network_contacts_per_day",
+        "network_station_count_claim",
+        "network_antenna_count_claim"
+      ],
+      "commercial_risk_tags": [
+        "vendor_claimed_scale",
+        "network_level_metrics_not_site_specific",
+        "api_schema_not_publicly_exposed",
+        "operational_learning_method_proprietary",
+        "capacity_not_equivalent_to_customer_availability"
+      ],
+      "confidence": {
+        "level": "high",
+        "basis": "Primary operator publication with dated operational statements; detailed API schemas and per-site capability remain unpublished."
+      },
+      "pending_confirmation_fields": [
+        "public or customer-only API specification",
+        "authentication and authorization method",
+        "telemetry and payload delivery protocols",
+        "per-site station and antenna inventory",
+        "data retention period",
+        "SLA and customer-visible anomaly metrics",
+        "supported command and telemetry standards",
+        "encryption and data residency options"
+      ],
+      "sources": [
+        {
+          "type": "operator_official",
+          "title": "KSATlite 10 years: 8 minutes to make it count",
+          "url": "https://www.ksat.no/news/news-archive/2026/ksatlite-10-years-8-minutes-to-make-it-count/",
+          "published_date": "2026-04-28"
+        }
+      ]
+    },
+    {
+      "record_id": "AUTO-SCAN-340",
+      "title": "Leaf Space dual-band concurrency, RF onboarding, ACM, and operational allocation model",
+      "entity_types": [
+        "gsaas_provider",
+        "ground_station_network",
+        "rf_compatibility_test",
+        "scheduler",
+        "modem_or_sdr_capability",
+        "leop_support_service"
+      ],
+      "provider": "Leaf Space",
+      "structured_summary": {
+        "simultaneous_band_operations": [
+          "S-band and X-band on dual-band stations",
+          "S-band and Ka-band supported"
+        ],
+        "onboarding_inputs": [
+          "mission requirements",
+          "API and data-exchange integration",
+          "customer-provided IQ recording for RF compatibility testing",
+          "licensing process"
+        ],
+        "protocol_support_claims": [
+          "CCSDS",
+          "DVB-S2",
+          "custom protocol and radio compatibility through in-house SDR"
+        ],
+        "adaptive_coding_modulation": {
+          "x_band": true,
+          "ka_band": true
+        },
+        "scheduler_model": "Provider automatically orchestrates required daily capacity and permits extra contact booking from spare capacity.",
+        "station_allocation_inputs": [
+          "requested daily capacity in minutes",
+          "orbital parameters",
+          "overall network resource allocation"
+        ],
+        "leop_support_claim": "48 hours of continuous on-deck support from spacecraft deployment.",
+        "network_metrics_claim": {
+          "operational_ground_stations_more_than": 40,
+          "passes_per_month_more_than": 23000,
+          "pass_success_rate_percent_more_than": 99,
+          "bands": [
+            "UHF",
+            "S-band",
+            "X-band",
+            "Ka-band"
+          ],
+          "interface": "cloud-based RESTful API"
+        }
+      },
+      "recommended_schema_fields": [
+        "simultaneous_band_pair",
+        "dual_band_concurrent_operation_supported",
+        "rf_compatibility_test_required",
+        "rf_test_artifact_type",
+        "customer_iq_recording_required",
+        "licensing_handled_by_provider",
+        "supported_protocol_standard",
+        "custom_sdr_adaptation_available",
+        "adaptive_coding_modulation_supported",
+        "daily_capacity_guarantee_model",
+        "spare_capacity_booking_supported",
+        "station_allocation_authority",
+        "allocation_input_metric",
+        "leop_on_deck_support_hours",
+        "network_pass_success_rate_claim",
+        "monthly_pass_volume_claim"
+      ],
+      "commercial_risk_tags": [
+        "provider_controls_station_allocation",
+        "network_success_rate_not_site_specific",
+        "vendor_claim_requires_contract_definition",
+        "customer_signal_sample_required",
+        "licensing_scope_requires_country_confirmation",
+        "custom_sdr_integration_may_add_cost_and_schedule"
+      ],
+      "confidence": {
+        "level": "high",
+        "basis": "Primary provider FAQ and network documentation; exact per-station hardware and SLA calculation method are not public."
+      },
+      "pending_confirmation_fields": [
+        "per-station simultaneous-band matrix",
+        "exact Ka-band frequency ranges",
+        "ACM waveform and modem profiles",
+        "IQ sample format and test acceptance criteria",
+        "pass-success-rate definition and exclusions",
+        "REST API schema and authentication",
+        "country-by-country licensing responsibility",
+        "minimum notice for extra-contact bookings",
+        "LEOP escalation and staffing SLA"
+      ],
+      "sources": [
+        {
+          "type": "operator_official",
+          "title": "Ground Station Services FAQs",
+          "url": "https://leaf.space/faq/"
+        },
+        {
+          "type": "operator_official",
+          "title": "Ground station network and deployment plan",
+          "url": "https://leaf.space/gs-network-and-deployment-plan/"
+        }
+      ]
+    },
+    {
+      "record_id": "AUTO-SCAN-341",
+      "title": "NASA 2026 ground-segment capability baseline for RF, cloud GSaaS, virtualized baseband, kits, and optical stations",
+      "entity_types": [
+        "reference_catalogue",
+        "ground_station_equipment",
+        "gsaas_service",
+        "mission_operations_software",
+        "virtualized_baseband",
+        "optical_ground_station"
+      ],
+      "publisher": "NASA Small Spacecraft Systems Virtual Institute",
+      "evidence_date": "2026-05-11",
+      "structured_summary": {
+        "aws_ground_station_reference": {
+          "antenna_aperture_m": 5.4,
+          "s_band_uplink_mhz": "2025-2120",
+          "s_band_downlink_mhz": "2200-2300",
+          "s_band_downlink_gt_db_k": 16,
+          "x_band_downlink_mhz": "7750-8400",
+          "x_band_downlink_gt_db_k": 30.5,
+          "commercial_models": [
+            "pay-as-you-go per minute",
+            "Dedicated Mission Support",
+            "Dedicated Antenna Solution"
+          ],
+          "contact_change_cutoff_minutes": 15
+        },
+        "turnkey_station_examples": [
+          "ISISPACE compact S/UHF/VHF station with SDR",
+          "GomSpace NanoGround and HOOP mission operations",
+          "SSTL S/X-band systems with 2.4-7.3 m antennas",
+          "Remos UHF/VHF/S/L-band deployable station"
+        ],
+        "virtualized_ground_examples": [
+          "Kratos qFEP for formatting, encryption/decryption, CCSDS and network interfaces",
+          "Kratos qRadio software modem on-premises or cloud",
+          "general-purpose compute dynamic virtual network functions"
+        ],
+        "optical_reference": {
+          "ksat_nemea_operational_since": 2022,
+          "architecture_goal": "automated, multi-mission, cost-efficient optical ground station service",
+          "co_location_model": "optical station co-located with RF infrastructure",
+          "standard_reference": "Optical On-Off Keying CCSDS 141b1 draft"
+        }
+      },
+      "recommended_schema_fields": [
+        "reference_evidence_date",
+        "antenna_aperture_m",
+        "uplink_frequency_range_mhz",
+        "downlink_frequency_range_mhz",
+        "gt_db_k",
+        "commercial_access_model",
+        "contact_change_cutoff_minutes",
+        "turnkey_station_form_factor",
+        "software_defined_radio_supported",
+        "mission_operations_subscription_available",
+        "third_party_network_integration",
+        "virtual_front_end_processor",
+        "software_modem_deployment_location",
+        "encryption_device_integration",
+        "optical_rf_colocation",
+        "optical_standard_profile",
+        "optical_multi_mission_service_status"
+      ],
+      "commercial_risk_tags": [
+        "reference_catalogue_contains_mixed_dates",
+        "some_future_capabilities_may_not_be_operational",
+        "secondary_summary_requires_vendor_validation",
+        "published_frequency_range_not_full_service_profile",
+        "draft_optical_standard",
+        "product_status_may_change_after_reference_date"
+      ],
+      "confidence": {
+        "level": "high_for_reference_low_to_medium_for_current_vendor_status",
+        "basis": "NASA technical reference page updated in 2026, but several vendor descriptions cite 2023-2024 status and must be checked against current primary vendor documentation."
+      },
+      "pending_confirmation_fields": [
+        "current AWS antenna-region inventory",
+        "current AWS DMS and DAS commercial terms",
+        "current HOOP CCSDS support status",
+        "current NanoGround integrations with AWS and Leaf Space",
+        "current Nemea optical service availability",
+        "final CCSDS optical standard designation",
+        "current turnkey equipment pricing and export restrictions",
+        "per-product software and firmware versions"
+      ],
+      "sources": [
+        {
+          "type": "government_technical_reference",
+          "title": "11.0 Ground Data Systems and Mission Operations",
+          "url": "https://www.nasa.gov/smallsat-institute/sst-soa/ground-data-systems-and-mission-operations/",
+          "page_updated_date": "2026-05-11"
+        }
+      ]
+    }
+  ]
+}

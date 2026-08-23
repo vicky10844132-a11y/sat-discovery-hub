@@ -1,0 +1,162 @@
+{
+  "dataset_id": "GS-LINKOPS-AUTO-SCAN-280-297",
+  "version": "1.0.0",
+  "created_at": "2026-07-12",
+  "language": "English-first technical master data",
+  "status": "candidate_import",
+  "import_policy": {
+    "deduplicate_before_merge": true,
+    "preserve_raw_source_claims": true,
+    "require_source_url_before_operational_use": true,
+    "separate_vendor_claim_from_verified_result": true,
+    "separate_planned_from_operational": true
+  },
+  "batches": [
+    {
+      "batch_id": "AUTO-SCAN-280",
+      "topics": ["lights-out ground operations", "external payload user portal", "sub-minute reconfiguration", "SSC Space Go OpenSpace deployment", "quantumFEP", "OpsCenter"],
+      "target_entities": ["operations_mode", "mission_user_portal", "virtual_front_end_processor", "ground_orchestration", "alarm_correlation"],
+      "confidence": "high_with_fields_pending",
+      "pending": ["API schemas", "SLA", "automation authority", "deployment scope"]
+    },
+    {
+      "batch_id": "AUTO-SCAN-281",
+      "topics": ["AWS public network history", "antenna discovery", "reservation visibility", "digital twin", "dedicated antenna", "Az-El ephemeris", "KMS dependency", "mission profile versioning"],
+      "target_entities": ["network_membership_history", "physical_antenna", "capacity_visibility", "digital_twin", "tracking_override", "operational_key_dependency", "contact_execution_snapshot"],
+      "confidence": "very_high_official_docs",
+      "pending": ["site antenna counts", "capacity", "pricing", "API field verification"]
+    },
+    {
+      "batch_id": "AUTO-SCAN-282",
+      "topics": ["Holomondas optical ground station", "PeakSat and ERMIS-3", "KSAT operating scale", "Tohoku SOM", "automatic command generation", "AOS-to-LOS automation"],
+      "target_entities": ["optical_ground_station", "space_terminal_pairing", "network_operational_metric", "mission_request", "communication_session", "command_generation"],
+      "confidence": "high",
+      "pending": ["in-orbit optical results", "API schema", "commercial availability"]
+    },
+    {
+      "batch_id": "AUTO-SCAN-283",
+      "topics": ["SSC Space Go via StellarStation", "FUSION-1", "Muonio partner site", "KSATlite and SatOps", "GHGSat outsourcing", "network metric scope"],
+      "target_entities": ["distribution_channel", "partner_site", "satops_authority", "mission_operations_outsourcing", "network_metric_snapshot"],
+      "confidence": "high",
+      "pending": ["first executed contact", "partner SLA", "command authority", "metric definitions"]
+    },
+    {
+      "batch_id": "AUTO-SCAN-284",
+      "topics": ["TeraNet optical network", "TN-1", "TN-2", "TN-3 mobile OGS", "quantum timing", "NASA Near Space Network service envelope"],
+      "target_entities": ["optical_node_role", "adaptive_optics_profile", "mobile_OGS", "quantum_service", "network_service_envelope"],
+      "confidence": "high",
+      "pending": ["commercial access", "data rates", "interoperability details", "station-level NSN subsets"]
+    },
+    {
+      "batch_id": "AUTO-SCAN-285",
+      "topics": ["TERRA-M deployable OGS", "SDA-oriented interoperability", "ADQOGS", "SpeQtre BBM92 test", "quantum background rejection", "QKD post-processing"],
+      "target_entities": ["deployable_optical_station", "optical_standard_claim", "quantum_contact", "quantum_background_profile", "quantum_postprocessing_profile"],
+      "confidence": "high_for_demonstrations",
+      "pending": ["net data rate", "SDA profile version", "in-orbit QKD", "daylight operation"]
+    },
+    {
+      "batch_id": "AUTO-SCAN-286",
+      "topics": ["HydRON multi-orbit optical network", "SSC Chile OGS", "open-source station edge stack", "SDR resource contention", "SigMF", "remote SoapySDR"],
+      "target_entities": ["optical_route", "station_acceptance", "station_edge_agent", "RF_resource_lock", "raw_signal_asset", "remote_radio_device"],
+      "confidence": "mixed_high_and_experimental",
+      "pending": ["flight validation", "station protocol profile", "production hardening", "security"]
+    },
+    {
+      "batch_id": "AUTO-SCAN-287",
+      "topics": ["Remos Hasten", "Remos 3.7m S-X station", "Remos RF Sequencer", "Leaf network metrics"],
+      "target_entities": ["baseband_device", "ground_station_RF_profile", "pointing_profile", "environment_profile", "RF_sequencer", "service_quality_metric"],
+      "confidence": "high_vendor_specs",
+      "pending": ["baud versus bit-rate conflict", "dual-polarization concurrency", "manual switching", "success-rate denominator"]
+    },
+    {
+      "batch_id": "AUTO-SCAN-288",
+      "topics": ["NASA PExT", "relay versus direct routing", "Aalyria Spacetime", "VISTA CFLOS", "six-digit satellite catalog migration"],
+      "target_entities": ["terminal_network_profile", "communication_route", "communication_service_intent", "optical_link_weather_prediction", "space_object_identifier", "orbit_data_format"],
+      "confidence": "very_high_official_plus_research",
+      "pending": ["PExT network profiles", "Weilheim results", "CFLOS model metrics", "formal six-digit cutover"]
+    },
+    {
+      "batch_id": "AUTO-SCAN-289",
+      "topics": ["5G NTN edge residual control", "SCORE free-placement", "hybrid build-or-buy network design", "marginal station value", "ONN common ICD"],
+      "target_entities": ["ntn_timing_frequency_controller", "ground_network_design_mode", "site_candidate_score", "station_marginal_value", "optical_ground_controller"],
+      "confidence": "research_validated",
+      "pending": ["flight validation", "real site feasibility", "commercial constraints", "public ICD"]
+    },
+    {
+      "batch_id": "AUTO-SCAN-290",
+      "topics": ["DIFI v1.3 link negotiation", "DIFI health status", "spectrum subdivision", "Kratos quantumRadio"],
+      "target_entities": ["digital_if_link", "difi_sink_capability", "difi_status_stream", "digital_spectrum_allocation", "virtual_modem_instance"],
+      "confidence": "high_standard_and_vendor",
+      "pending": ["final DIFI implementation profiles", "version interoperability", "virtual modem performance", "security"]
+    },
+    {
+      "batch_id": "AUTO-SCAN-291",
+      "topics": ["Mitsubishi Electric acquisition of Infostellar", "StellarStation control change", "vertical integration", "licensing support", "XDLINX embedded ground segment"],
+      "target_entities": ["corporate_event", "platform_ownership_history", "vertical_integration_model", "regulatory_support_service", "embedded_ground_segment_package"],
+      "confidence": "very_high_official",
+      "pending": ["contract migration", "platform neutrality", "first XDLINX mission", "data governance"]
+    },
+    {
+      "batch_id": "AUTO-SCAN-292",
+      "topics": ["Northwood Prism", "multi-unit antenna combining", "rapid deployment", "network capacity roadmap", "Transcelestial TMOGS"],
+      "target_entities": ["modular_ground_antenna", "arrayed_ground_asset", "deployment_timeline", "capacity_metric", "optical_acquisition_sequence"],
+      "confidence": "high_vendor_announcements",
+      "pending": ["G-T and EIRP", "combining method", "mission-ready time", "payload transfer result"]
+    },
+    {
+      "batch_id": "AUTO-SCAN-293",
+      "topics": ["CAPSTONE DTN", "cross-pass resume", "BPv7 and BPSec", "Leaf automatic rescheduling", "customer-managed keys"],
+      "target_entities": ["disruption_tolerant_delivery", "delivery_contact_segment", "contact_plan_route", "contact_reschedule_event", "cryptographic_responsibility"],
+      "confidence": "very_high_for_CAPSTONE_and_standards",
+      "pending": ["CAPSTONE protocol details", "BPSec use", "Leaf rescheduling SLA", "key architecture"]
+    },
+    {
+      "batch_id": "AUTO-SCAN-294",
+      "topics": ["AWS near-real-time antenna telemetry", "pointing and tracking telemetry", "UpdateContact", "contact versioning", "multi-channel X-band", "contact forensic evidence"],
+      "target_entities": ["telemetry_sink", "pointing_telemetry", "tracking_telemetry", "contact_version", "antenna_frequency_allocation", "contact_forensic_evidence"],
+      "confidence": "very_high_official_docs",
+      "pending": ["sampling frequency", "stream latency", "retargeting interruption", "channel counts"]
+    },
+    {
+      "batch_id": "AUTO-SCAN-295",
+      "topics": ["ESA Ground Segment Reference Facility", "RF Suitcase", "NDIU", "impairment testing", "DSN arraying", "DSN Now", "MC3 federation"],
+      "target_entities": ["ground_segment_test_environment", "rf_suitcase", "network_data_interface_unit", "communication_impairment_test", "antenna_array_session", "network_realtime_state_feed", "network_governance"],
+      "confidence": "very_high_official_with_historical_MC3",
+      "pending": ["interface details", "array calibration", "DSN public feed API", "current MC3 state"]
+    },
+    {
+      "batch_id": "AUTO-SCAN-296",
+      "topics": ["optical ground station economics", "hybrid optical-RF policy", "SkyGS multi-cloud scheduling", "large-constellation station selection", "Azure Orbital resource model"],
+      "target_entities": ["ground_service_unit_economics", "hybrid_contact_policy", "communication_compute_job", "hierarchical_station_selection", "spacecraft_groundstation_authorisation", "contact_event_subscription"],
+      "confidence": "mixed_research_and_official",
+      "pending": ["commercial price data", "production validation", "Azure current service scope", "event schema"]
+    },
+    {
+      "batch_id": "AUTO-SCAN-297",
+      "topics": ["SSC Space Go 4m-class product network", "SSC total network", "Blue Ghost lunar support", "ONN node profiles", "KSAT 20m lunar network", "AWS capacity tiers"],
+      "target_entities": ["network_product_membership", "provider_network_snapshot", "mission_ground_support", "optical_station_environment", "deep_space_network_buildout", "commercial_capacity_tier"],
+      "confidence": "high_official_sources",
+      "pending": ["station-level RF performance", "ONN commercial access", "KSAT site locations", "AWS contract-specific terms"]
+    }
+  ],
+  "schema_extensions": [
+    "source_evidence",
+    "confidence_and_verification_state",
+    "pending_fields",
+    "network_product_membership",
+    "physical_antenna",
+    "baseband_device",
+    "interface_profile",
+    "contact_version",
+    "telemetry_stream",
+    "optical_weather_prediction",
+    "commercial_capacity_tier",
+    "risk_tag",
+    "corporate_ownership_history",
+    "regulatory_authorisation",
+    "delivery_session",
+    "virtual_modem_instance",
+    "test_and_validation_evidence"
+  ],
+  "recommended_next_step": "Resolve source URLs per batch, deduplicate against gs_linkops_source_records_v0_1.json, then transform candidate records into normalized source, provider, station, antenna, interface, service, contact, delivery and risk tables."
+}
