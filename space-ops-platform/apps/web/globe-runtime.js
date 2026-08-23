@@ -45,6 +45,46 @@
     return `${String(date.getUTCHours()).padStart(2,'0')}:${String(date.getUTCMinutes()).padStart(2,'0')}`;
   }
 
+  function normalizeSharedContext(d, key) {
+    if (!d || !key) return;
+    let chip = d.querySelector('[data-spaceops-shared-context]');
+    if (!chip) {
+      chip = d.createElement('span');
+      chip.dataset.spaceopsSharedContext = '1';
+      chip.title = 'Shared mission context from the Space Ops workspace shell';
+      Object.assign(chip.style, {
+        display:'inline-flex',alignItems:'center',minHeight:'28px',maxWidth:'360px',padding:'0 9px',
+        border:'1px solid #343b45',background:'#0d1116',color:'#8f98a4',fontSize:'8px',
+        letterSpacing:'.02em',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'
+      });
+      const host = d.querySelector('.topActions') || d.querySelector('.top .actions') || d.querySelector('.top');
+      if (host) host.appendChild(chip);
+    }
+    const render = detail => {
+      if (!chip) return;
+      const mission = String(detail?.mission || '').trim() || 'NONE';
+      const aoi = String(detail?.aoi || '').trim() || '—';
+      const priority = String(detail?.priority || 'P2').trim() || 'P2';
+      chip.textContent = `MISSION · ${mission} · AOI ${aoi} · ${priority}`;
+      chip.dataset.module = key;
+      d.documentElement.dataset.sharedMission = mission;
+      d.documentElement.dataset.sharedAoi = aoi;
+      d.documentElement.dataset.sharedPriority = priority;
+    };
+    if (chip && chip.dataset.spaceopsContextBound !== '1') {
+      chip.dataset.spaceopsContextBound = '1';
+      d.defaultView?.addEventListener('message', event => {
+        if (event.data?.type === 'spaceops:context' && event.data.detail) render(event.data.detail);
+      });
+    }
+    try {
+      let detail = {};
+      const raw = localStorage.getItem('spaceops.sharedContext');
+      if (raw) detail = JSON.parse(raw) || {};
+      render(detail);
+    } catch (_) { render({}); }
+  }
+
   function normalizeOpsAcceptance(d) {
     if (!d || d.documentElement.dataset.spaceopsOpsAccepted === '1') return;
     d.documentElement.dataset.spaceopsOpsAccepted = '1';
@@ -231,6 +271,7 @@
 
     const key = detectModule(d);
     normalizeModuleControls(d, key);
+    normalizeSharedContext(d, key);
     if (key === 'ops') normalizeOpsAcceptance(d);
     if (key === 'twin') {
       normalizeTwinAcceptance(d);
