@@ -209,12 +209,23 @@ const world = new Globe(host, {
     const p = world.getCoords(d.lat,d.lng,d.alt);
     obj.position.set(p.x,p.y,p.z);
     if (key === 'eng') obj.lookAt(0,0,0);
-    obj.scale.setScalar(d.id === shared.selectedId ? 1.30 : 1.0);
+
+    const selected = d.id === shared.selectedId;
+    let apparentScale = selected ? 1.30 : 1.0;
+    let depthT = 0;
+    if (key === 'ops') {
+      const camera = world.camera();
+      const distance = camera?.position?.distanceTo ? camera.position.distanceTo(obj.position) : 220;
+      depthT = THREE.MathUtils.clamp((distance - 90) / 280, 0, 1);
+      const depthScale = THREE.MathUtils.lerp(1.22, 0.72, depthT);
+      apparentScale = depthScale * (selected ? 1.38 : 1.0);
+    }
+    obj.scale.setScalar(apparentScale);
 
     const label = obj.getObjectByName('satelliteNameLabel');
     if (label) {
-      label.visible = true;
-      label.material.opacity = d.id === shared.selectedId ? 1 : 0.88;
+      label.visible = key !== 'ops' || selected || depthT < 0.92;
+      label.material.opacity = selected ? 1 : key === 'ops' ? THREE.MathUtils.lerp(0.90,0.48,depthT) : 0.88;
     }
 
     if (key === 'eng') {
