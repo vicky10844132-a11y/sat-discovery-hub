@@ -50,7 +50,7 @@
   - Description: Orbits must wrap in 3D and disappear appropriately behind Earth.
   - Acceptance: Orbital paths have perspective and occlusion; no flat ellipse effect dominates the scene.
 
-- [ ] OPS-05 Satellite placement and scale by depth.
+- [x] OPS-05 Satellite placement and scale by depth.
   - Description: Spacecraft markers/models should change apparent prominence with distance.
   - Acceptance: Selected/near spacecraft is clearly legible without all spacecraft appearing same-size and same-plane.
 
