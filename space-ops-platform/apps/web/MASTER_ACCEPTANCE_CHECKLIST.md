@@ -38,7 +38,7 @@
   - Description: Earth must enter the frame as a large partial limb/arc rather than a centered full circle.
   - Acceptance: First view does not read as “a round globe inside a dashboard”; Earth occupies only a partial arc with clear perspective.
 
-- [ ] OPS-02 Establish true foreground / midground / background depth.
+- [x] OPS-02 Establish true foreground / midground / background depth.
   - Description: Satellites, orbital paths, Earth limb and distant space must have visibly different depth and scale.
   - Acceptance: At least one orbital element reads in the foreground and others recede naturally into depth.
 
