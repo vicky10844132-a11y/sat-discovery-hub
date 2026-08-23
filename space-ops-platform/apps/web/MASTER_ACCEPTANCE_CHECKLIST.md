@@ -34,7 +34,7 @@
 
 ### A. Scene-first visual composition
 
-- [ ] OPS-01 Replace centered globe composition with orbital camera composition.
+- [x] OPS-01 Replace centered globe composition with orbital camera composition.
   - Description: Earth must enter the frame as a large partial limb/arc rather than a centered full circle.
   - Acceptance: First view does not read as “a round globe inside a dashboard”; Earth occupies only a partial arc with clear perspective.
 
