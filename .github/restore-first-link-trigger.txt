@@ -1,0 +1,1 @@
+Apply the bounded responsive display adaptation to data-search-restored.html without changing its modules or behavior.
