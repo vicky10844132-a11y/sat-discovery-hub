@@ -1,0 +1,2 @@
+Validate DATA SEARCH and AOI TOOL GitHub Pages build.
+Verify prepared gh-pages branch.
