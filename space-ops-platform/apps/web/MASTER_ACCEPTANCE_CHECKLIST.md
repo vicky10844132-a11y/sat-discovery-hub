@@ -42,7 +42,7 @@
   - Description: Satellites, orbital paths, Earth limb and distant space must have visibly different depth and scale.
   - Acceptance: At least one orbital element reads in the foreground and others recede naturally into depth.
 
-- [ ] OPS-03 Upgrade Earth material and atmosphere.
+- [x] OPS-03 Upgrade Earth material and atmosphere.
   - Description: Use restrained surface texture, night/day treatment and atmospheric rim instead of a flat sphere look.
   - Acceptance: Earth reads as a spatial body with limb lighting, not a CSS-like circular object.
 
