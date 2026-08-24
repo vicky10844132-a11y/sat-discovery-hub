@@ -143,6 +143,36 @@
       if (count) count.title = 'Active missions ordered by operational priority';
     }
 
+    const copilotPanel = sidePanels[0];
+    if (copilotPanel && !d.getElementById('spaceops-ops-copilot-console')) {
+      const style = d.createElement('style');
+      style.id = 'spaceops-ops-copilot-console';
+      style.textContent = `
+        .side>.panel:first-child{position:relative;overflow:hidden;border:1px solid rgba(110,131,154,.18)!important;border-left:2px solid rgba(223,63,118,.58)!important;background:linear-gradient(180deg,rgba(7,12,18,.78),rgba(5,9,14,.58))!important;box-shadow:0 18px 48px rgba(0,0,0,.18)!important;backdrop-filter:blur(14px)!important}
+        .side>.panel:first-child:before{content:'OPS / MISSION RESOLUTION';position:absolute;right:9px;top:9px;z-index:2;font:5.5px ui-monospace,monospace;letter-spacing:.12em;color:rgba(111,168,255,.38);pointer-events:none}
+        .side>.panel:first-child .head{height:34px!important;padding:0 9px!important;border-bottom:1px solid rgba(82,99,118,.13)!important;background:transparent!important}
+        .side>.panel:first-child .head strong{font-size:8px!important;font-weight:750!important;letter-spacing:.14em!important;color:#e1e7ee!important}
+        .side>.panel:first-child .head small{display:none!important}
+        .side>.panel:first-child .copilot{position:relative;padding:9px!important}
+        .side>.panel:first-child .copilot:before{content:'OBJECTIVE / CONSTRAINT INPUT';display:block;margin:0 0 5px;font:5.8px ui-monospace,monospace;letter-spacing:.12em;color:#667482}
+        .side>.panel:first-child textarea{height:64px!important;resize:none!important;padding:8px 9px!important;border:1px solid rgba(93,113,135,.20)!important;border-left:1px solid rgba(111,168,255,.36)!important;background:rgba(3,8,13,.54)!important;color:#dbe2e9!important;font:7.5px/1.5 ui-monospace,monospace!important;box-shadow:inset 0 0 20px rgba(0,0,0,.16)!important;outline:none!important}
+        .side>.panel:first-child textarea:focus{border-color:rgba(111,168,255,.42)!important;box-shadow:inset 0 0 20px rgba(0,0,0,.16),0 0 0 1px rgba(111,168,255,.06)!important}
+        .side>.panel:first-child .row{margin-top:7px!important;gap:6px!important}
+        .side>.panel:first-child .btn{height:27px!important;padding:0 9px!important;font-size:6.5px!important;letter-spacing:.07em!important;border-color:rgba(223,63,118,.52)!important;background:rgba(223,63,118,.72)!important}
+        .side>.panel:first-child .btn.ghost{border-color:rgba(89,108,129,.22)!important;background:rgba(9,14,20,.44)!important;color:#7d8996!important}
+        .side>.panel:first-child .out{position:relative;min-height:72px!important;margin-top:8px!important;padding:18px 9px 8px!important;border:1px solid rgba(78,95,114,.13)!important;border-left:1px solid rgba(88,213,197,.32)!important;background:rgba(2,7,11,.48)!important;color:#98a7b5!important;font:6.8px/1.55 ui-monospace,monospace!important;letter-spacing:.015em!important}
+        .side>.panel:first-child .out:before{content:'RESOLUTION / DETERMINISTIC PROTOTYPE';position:absolute;left:9px;top:6px;font-size:5.3px;letter-spacing:.11em;color:rgba(88,213,197,.52)}
+        @media(max-width:720px){.side>.panel:first-child textarea{height:58px!important}.side>.panel:first-child .out{min-height:64px!important}}
+      `;
+      d.head.appendChild(style);
+      const headStrong = copilotPanel.querySelector('.head strong');
+      if (headStrong) headStrong.textContent = 'MISSION COPILOT';
+      const objective = d.getElementById('objective');
+      if (objective) objective.setAttribute('aria-label','Mission objective command input');
+      const run = d.getElementById('runMission');
+      if (run) run.textContent = 'RESOLVE MISSION';
+    }
+
     const healthLabels = [...d.querySelectorAll('.healthRow span')];
     if (healthLabels[0]) healthLabels[0].textContent = 'Spacecraft nominal';
     if (healthLabels[2]) healthLabels[2].textContent = 'Processing slots free · simulated';
