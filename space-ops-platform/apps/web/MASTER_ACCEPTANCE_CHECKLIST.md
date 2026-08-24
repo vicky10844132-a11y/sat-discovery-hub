@@ -51,7 +51,10 @@
   - Description: Mission Copilot should feel like an operational command/resolution console layered over the orbital scene, not a generic form card.
   - Acceptance: Objective input, action controls and deterministic result remain clearly separated, visually compact and console-like; existing mission-routing behavior and interaction IDs remain unchanged.
   - Verification: OPS runtime now restyles only the first right-side panel with a restrained command-console treatment: dark translucent shell, rose mission signal edge, monospace objective input, compact `RESOLVE MISSION` action, muted clear action and a dedicated deterministic-resolution output region. `objective`, `runMission`, `clearMission` and `copilotOut` remain in place; the deterministic routing handler is still attached to `runMission`. Source was re-read after commit to confirm the styling is scoped to the first panel and the routing logic remains intact.
-- [ ] OPS-13 Selected object HUD.
+- [x] OPS-13 Selected object HUD.
+  - Description: The selected spacecraft or ground asset should have a dedicated, lightweight scene HUD instead of relying on toast text or a header mutation.
+  - Acceptance: The HUD is visible inside the orbital scene, starts from the shared selected object, updates from the same Globe selection callback, clearly shows object identity/type/state plus concise operational metadata, and does not obstruct scene interaction.
+  - Verification: OPS runtime now creates a lower-left translucent `SELECTED OBJECT / OPS` HUD with per-object accent, type/state, role and link/band metadata for all canonical spacecraft and managed ground assets. It initializes from shared `selectedId`, binds to the iframe `selectObject` hook already called by Globe point/custom-layer selection, keeps pointer events disabled, and retains the existing selected-state header update. Source re-read after commit confirmed the HUD CSS, canonical lookup, selection hook and initial shared-state render are present.
 - [ ] OPS-14 Bottom mission timeline.
 - [ ] OPS-15 Alert visual treatment.
 
