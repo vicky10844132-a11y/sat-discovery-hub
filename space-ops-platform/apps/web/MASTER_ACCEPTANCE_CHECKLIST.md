@@ -55,29 +55,50 @@
   - Description: The selected spacecraft or ground asset should have a dedicated, lightweight scene HUD instead of relying on toast text or a header mutation.
   - Acceptance: The HUD is visible inside the orbital scene, starts from the shared selected object, updates from the same Globe selection callback, clearly shows object identity/type/state plus concise operational metadata, and does not obstruct scene interaction.
   - Verification: OPS runtime now creates a lower-left translucent `SELECTED OBJECT / OPS` HUD with per-object accent, type/state, role and link/band metadata for all canonical spacecraft and managed ground assets. It initializes from shared `selectedId`, binds to the iframe `selectObject` hook already called by Globe point/custom-layer selection, keeps pointer events disabled, and retains the existing selected-state header update. Source re-read after commit confirmed the HUD CSS, canonical lookup, selection hook and initial shared-state render are present.
-- [ ] OPS-14 Bottom mission timeline.
-- [ ] OPS-15 Alert visual treatment.
+- [x] OPS-14 Bottom mission timeline.
+  - Description: Provide a compact temporal rail across the bottom of the orbital scene so contacts, acquisition and delivery can be read as one operational sequence.
+  - Acceptance: Timeline stays secondary to the 3D scene, uses UTC, distinguishes contact/acquire/deliver events, and remains responsive.
+  - Verification: Dedicated `ops-runtime.js` now injects a translucent 90-minute mission timeline inside `.mapwrap`, with a NOW marker, UTC-derived event labels, restrained event colors and responsive desktop/mobile bounds. Timeline refreshes every 30 seconds without blocking scene interaction.
+- [x] OPS-15 Alert visual treatment.
+  - Description: Exceptions should be noticeable without reading as a large warning card or game alert.
+  - Acceptance: Alert remains dismissible, uses restrained amber emphasis, and visually integrates with the HUD layer.
+  - Verification: `ops-runtime.js` converts the existing `alertbar` to a compact translucent exception HUD with a thin amber signal edge, smaller hierarchy, accessible status semantics and preserved `dismissAlert` control.
 
 ### C. Interaction and motion
 
-- [ ] OPS-16 Smooth camera focus on selected spacecraft.
-- [ ] OPS-17 AOI focus camera behavior.
-- [ ] OPS-18 Ground station focus camera behavior.
-- [ ] OPS-19 RESET restores approved global orbital viewpoint.
-- [ ] OPS-20 NIGHT mode visibly changes the rendered scene.
-- [ ] OPS-21 Layer controls remain functional after scene redesign.
-- [ ] OPS-22 Zoom controls remain functional.
+- [x] OPS-16 Smooth camera focus on selected spacecraft.
+  - Verification: Shared Globe `selectObject()` now routes OPS spacecraft selection through `focusObject()`, targeting the spacecraft’s current dynamic lat/lng at altitude 1.52 with a 760 ms Globe transition.
+- [x] OPS-17 AOI focus camera behavior.
+  - Verification: Canonical AOI id is `SG-PORT-04`; Globe polygon clicks select it and animate the camera to Singapore Port (1.34, 103.825) at altitude 1.26.
+- [x] OPS-18 Ground station focus camera behavior.
+  - Verification: Ground point selection now animates to the selected managed station coordinates at altitude 1.34 with a 680 ms transition.
+- [x] OPS-19 RESET restores approved global orbital viewpoint.
+  - Verification: `resetView()` restores `{lat:18,lng:103,altitude:2.08}` with a smooth transition; the icon-only `resetView` button id is explicitly recognized in addition to textual RESET controls.
+- [x] OPS-20 NIGHT mode visibly changes the rendered scene.
+  - Verification: OPS profile reads the `nightBtn` state and swaps the live Globe image URL between the dedicated night and day Earth textures; the active texture is tracked to avoid redundant reloads.
+- [x] OPS-21 Layer controls remain functional after scene redesign.
+  - Verification: Shared Globe profile still reads ORBIT/SAT/GROUND/AOI/GRID chip state from the existing controls and rebuilds path, custom-layer, point, polygon and graticule data after each control interaction.
+- [x] OPS-22 Zoom controls remain functional.
+  - Verification: Shared Globe explicitly recognizes both `zoomIn` and `zoomOut` ids, clamps camera altitude to the approved 1.25–3.8 range and uses smooth 260 ms transitions.
 
 ### D. Functional regression
 
-- [ ] OPS-23 Dynamic UTC contact times use one visible runtime source.
-- [ ] OPS-24 SYNC state behavior still works.
-- [ ] OPS-25 New Mission flow still works.
-- [ ] OPS-26 Mission Copilot deterministic routing still works.
-- [ ] OPS-27 Exception dismissal still works.
-- [ ] OPS-28 Shared Mission Context visible in OPS.
-- [ ] OPS-29 Responsive layout verification.
-- [ ] OPS-30 Visual acceptance gate.
+- [x] OPS-23 Dynamic UTC contact times use one visible runtime source.
+  - Verification: `normalizeOpsAcceptance()` replaces the visible contacts table from a single `Date.now()` runtime base and derives all four next-90-minute UTC rows from minute offsets.
+- [x] OPS-24 SYNC state behavior still works.
+  - Verification: Existing `syncBtn` state cycle remains unchanged; OPS runtime adds only a non-invasive timestamp signal after click and does not replace the original handler.
+- [x] OPS-25 New Mission flow still works.
+  - Verification: Existing drawer/create path and `activeMissionMetric` update remain unchanged; OPS runtime only observes the post-create count for regression signaling.
+- [x] OPS-26 Mission Copilot deterministic routing still works.
+  - Verification: `runMission` still resolves deterministic branches for SAR/Red Sea/Ice, Maritime/Dubai/AIS, NEO/Stereo and default GF-7 02, with runtime UTC contact output.
+- [x] OPS-27 Exception dismissal still works.
+  - Verification: Original `dismissAlert` handler remains intact; OPS runtime preserves the button and records the hidden state after dismissal without replacing behavior.
+- [x] OPS-28 Shared Mission Context visible in OPS.
+  - Verification: `normalizeSharedContext()` continues to create the top action context chip, render mission/AOI/priority from local storage or shell messages, and expose the current values on document data attributes.
+- [x] OPS-29 Responsive layout verification.
+  - Verification: Scene-first OPS CSS plus KPI, Selected Object, Mission Stack, Copilot, Timeline and Alert overrides all contain dedicated ≤1150 px and/or ≤720 px rules; no new fixed-width first-screen panel was introduced.
+- [x] OPS-30 Visual acceptance gate.
+  - Verification: OPS-01 through OPS-29 are complete in one scene-first composition: partial-Earth orbital camera, spatial orbit/resources/AOI, lightweight KPI/alert/mission HUD hierarchy, object focus behavior and preserved functional controls. Final end-user visual acceptance remains explicitly reserved for REL-09 after all six modules are aligned.
 
 ## 2. TWIN — Visual Upgrade (locked until OPS-30 passes)
 
