@@ -16,7 +16,7 @@ const DAY_TEXTURE_URL = 'https://cdn.jsdelivr.net/npm/three-globe@2.45.2/example
 const BUMP_TEXTURE_URL = 'https://cdn.jsdelivr.net/npm/three-globe@2.45.2/example/img/earth-topology.png';
 
 const profiles = {
-  ops:    { orbits:true,  sats:true,  ground:true,  aoi:true,  ships:false, links:false },
+  ops:    { orbits:true,  sats:true,  ground:true,  aoi:true,  ships:false, links:true  },
   twin:   { orbits:true,  sats:true,  ground:true,  aoi:true,  ships:false, links:true  },
   plan:   { orbits:true,  sats:true,  ground:false, aoi:true,  ships:false, links:false },
   ground: { orbits:true,  sats:true,  ground:true,  aoi:false, ships:false, links:true  },
@@ -171,8 +171,12 @@ const world = new Globe(host, {
   .polygonsTransitionDuration(0)
   .arcStartLat('startLat').arcStartLng('startLng').arcStartAltitude('startAlt')
   .arcEndLat('endLat').arcEndLng('endLng').arcEndAltitude('endAlt')
-  .arcColor(() => ['rgba(255,109,159,.10)','rgba(255,109,159,.92)'])
-  .arcStroke(0.30).arcDashLength(0.38).arcDashGap(0.12).arcDashAnimateTime(1700).arcsTransitionDuration(0)
+  .arcColor(d => d?.color || (key === 'ops' ? ['rgba(88,213,197,.04)','rgba(111,168,255,.58)'] : ['rgba(255,109,159,.10)','rgba(255,109,159,.92)']))
+  .arcStroke(() => key === 'ops' ? 0.14 : 0.30)
+  .arcDashLength(() => key === 'ops' ? 0.10 : 0.38)
+  .arcDashGap(() => key === 'ops' ? 0.90 : 0.12)
+  .arcDashAnimateTime(() => key === 'ops' ? 7200 : 1700)
+  .arcsTransitionDuration(0)
   .ringLat(d=>d.sat?d.sat.lat:d.lat).ringLng(d=>d.sat?d.sat.lng:d.lng).ringColor('color').ringMaxRadius('radius').ringPropagationSpeed('speed').ringRepeatPeriod('repeat')
   .customLayerLabel(d => `<div style="font:700 11px system-ui;color:#eef3f8;background:#080b10e8;border:1px solid #39424e;padding:5px 7px">${d.id}</div>`)
   .customThreeObject(d => {
@@ -396,9 +400,17 @@ function updateArc(p,now) {
   if (!p.links || !p.sats || !p.ground) return;
   if (now-lastArcAt<120) return;
   lastArcAt=now;
-  const sat=sats.find(s=>s.id===shared.selectedId)||sats[0];
+  const sat=sats.find(s=>s.id===shared.selectedId);
+  if (!sat) {
+    world.arcsData([]);
+    return;
+  }
   const gs=grounds[1];
-  world.arcsData([{startLat:gs.lat,startLng:gs.lng,startAlt:gs.alt,endLat:sat.lat,endLng:sat.lng,endAlt:sat.alt}]);
+  world.arcsData([{
+    startLat:gs.lat,startLng:gs.lng,startAlt:gs.alt,
+    endLat:sat.lat,endLng:sat.lng,endAlt:sat.alt,
+    color:key === 'ops' ? ['rgba(88,213,197,.04)','rgba(111,168,255,.58)'] : undefined
+  }]);
 }
 
 function setLive(on) {
