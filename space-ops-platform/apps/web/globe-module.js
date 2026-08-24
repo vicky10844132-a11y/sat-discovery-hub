@@ -44,7 +44,7 @@ const ships = [
 ];
 
 const aoi = [{
-  id:'AOI · SG PORT',
+  id:'SG-PORT-04',
   kind:'aoi',
   geometry:{type:'Polygon',coordinates:[[[103.60,1.20],[104.05,1.20],[104.05,1.48],[103.60,1.48],[103.60,1.20]]]}
 }];
@@ -328,16 +328,40 @@ function currentProfile() {
   return profile;
 }
 
+function focusObject(id) {
+  if (key !== 'ops') return;
+  const sat = sats.find(s => s.id === id);
+  if (sat) {
+    shared.pov = {lat:sat.lat,lng:sat.lng,altitude:1.52};
+    world.pointOfView(shared.pov,760);
+    return;
+  }
+  const ground = grounds.find(g => g.id === id);
+  if (ground) {
+    shared.pov = {lat:ground.lat,lng:ground.lng,altitude:1.34};
+    world.pointOfView(shared.pov,680);
+    return;
+  }
+  if (id === 'SG-PORT-04') {
+    shared.pov = {lat:1.34,lng:103.825,altitude:1.26};
+    world.pointOfView(shared.pov,720);
+  }
+}
+
 function selectObject(id) {
   if (!id) return;
   shared.selectedId = id;
   const selected = document.getElementById('spaceopsGlobeSelected');
   if (selected) selected.textContent = id;
+  focusObject(id);
   try { if (typeof window.selectObject === 'function') window.selectObject(id); } catch (_) {}
   refreshLayers(true);
 }
 world.onPointClick(d => selectObject(d?.id));
 world.onCustomLayerClick(d => selectObject(d?.id));
+world.onPolygonClick(d => {
+  if (d?.kind === 'aoi') selectObject(d.id || 'SG-PORT-04');
+});
 world.onZoom(pov => {
   shared.pov = {
     lat:Number.isFinite(pov.lat) ? pov.lat : shared.pov.lat,
@@ -446,7 +470,7 @@ if (key==='twin') {
 
 function resetView() {
   shared.pov={lat:18,lng:103,altitude:2.08};
-  world.pointOfView(shared.pov,420);
+  world.pointOfView(shared.pov,620);
 }
 
 document.addEventListener('click',e=>{
@@ -454,16 +478,24 @@ document.addEventListener('click',e=>{
   if(!el) return;
   setTimeout(()=>{
     const text=el.textContent.trim().toUpperCase();
-    if(text==='+'||text.includes('ZOOM IN')) {
+    if(text==='+'||text.includes('ZOOM IN')||el.id==='zoomIn') {
       const pov=world.pointOfView();
       world.pointOfView({...pov,altitude:Math.max(1.25,(pov.altitude||2.08)*0.84)},260);
-    } else if(text==='−'||text==='-'||text.includes('ZOOM OUT')) {
+    } else if(text==='−'||text==='-'||text.includes('ZOOM OUT')||el.id==='zoomOut') {
       const pov=world.pointOfView();
       world.pointOfView({...pov,altitude:Math.min(3.8,(pov.altitude||2.08)*1.18)},260);
-    } else if(text.includes('RESET')) resetView();
+    } else if(text.includes('RESET')||el.id==='resetView'||el.classList.contains('reset')) resetView();
     refreshLayers(true);
   },0);
 },true);
+
+window.__spaceopsGlobeApi = {
+  selectObject,
+  focusObject,
+  resetView,
+  refreshLayers,
+  pointOfView: (...args) => world.pointOfView(...args)
+};
 
 function resize() {
   world.width(Math.max(1,scene.clientWidth)).height(Math.max(1,scene.clientHeight));
