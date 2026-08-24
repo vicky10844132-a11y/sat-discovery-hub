@@ -102,12 +102,18 @@
 
 ## 2. TWIN — Visual Upgrade (locked until OPS-30 passes)
 
-- [ ] TWIN-01 Scene-first digital-twin composition.
-- [ ] TWIN-02 Object graph / selected-object hierarchy.
-- [ ] TWIN-03 Coverage / anomaly / links visual polish.
-- [ ] TWIN-04 Simulation-state labeling and clock polish.
-- [ ] TWIN-05 Snapshot / inspector / resource tree regression.
-- [ ] TWIN-06 Visual acceptance gate.
+- [x] TWIN-01 Scene-first digital-twin composition.
+  - Verification: `twin-runtime.js` converts the three-column dashboard into a continuous Globe-owned scene with the resource graph and inspector floating as translucent left/right overlays. KPI cards flatten into a light status ribbon while the 3D scene occupies the first viewport.
+- [x] TWIN-02 Object graph / selected-object hierarchy.
+  - Verification: Resource graph is compacted into a low-weight searchable overlay; active object receives a single rose signal edge. Inspector is independently overlaid on the right with compressed identity, state, resource and capability hierarchy while existing canonical `records` and selection handlers remain unchanged.
+- [x] TWIN-03 Coverage / anomaly / links visual polish.
+  - Verification: Existing `coverageMode`, `anomalyMode` and `linkMode` controls remain connected to the shared Globe profile; scene controls are visually reduced to compact translucent chips and now expose synchronized `aria-pressed` state. Shared Globe retains restrained ring/link rendering.
+- [x] TWIN-04 Simulation-state labeling and clock polish.
+  - Verification: Twin normalization explicitly labels `SIM RUNNING` / `SIM PAUSED`, changes the sixth KPI to `Scenario State Age` with `SIMULATION CLOCK`, keeps the live simulation clock behavior, and marks the inspector/snapshot as prototype-state outputs rather than live telemetry.
+- [x] TWIN-05 Snapshot / inspector / resource tree regression.
+  - Verification: Original resource search/tabs, canonical object selection, inspector render, payload/profile drawers, state-age sync and snapshot export remain present. Shared runtime additionally resets the shared simulation epoch on SYNC and the snapshot control is explicitly labeled as a simulated twin snapshot bundle.
+- [x] TWIN-06 Visual acceptance gate.
+  - Verification: TWIN-01 through TWIN-05 now form one scene-first digital-twin workspace with a dominant shared 3D scene, compact object graph, clear selected-object inspector, restrained analysis modes and preserved prototype controls. Final end-user visual acceptance remains reserved for REL-09.
 
 ## 3. PLAN — Visual Upgrade (locked until TWIN passes)
 
