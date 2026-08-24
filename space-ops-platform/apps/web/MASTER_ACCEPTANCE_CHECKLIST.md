@@ -39,7 +39,10 @@
   - Description: The first viewport should read as one continuous orbital operations scene, not a grid of equal-weight dashboard cards.
   - Acceptance: Scene owns the first-screen canvas; KPI, alert and mission controls sit as restrained overlays; lower operational tables remain secondary and below the scene.
   - Verification: OPS layout was converted from a two-column panel grid to a scene-first canvas. The globe/map now fills the first viewport, KPI cards are flattened into a transparent status ribbon, alert is a compact translucent overlay, Mission Copilot / Queue float over the scene at the right, and Upcoming Contacts / Resource Health / Activity Feed remain below the primary scene. Desktop and narrow responsive rules were retained, and source was re-read after commit to confirm the scene-first overrides and existing interaction IDs remain present.
-- [ ] OPS-10 Rebuild KPI hierarchy.
+- [x] OPS-10 Rebuild KPI hierarchy.
+  - Description: KPI values should no longer compete at equal visual weight. Mission tempo should dominate, upcoming contacts and exceptions should remain operationally prominent, and static fleet/ground counts should recede.
+  - Acceptance: `Active Missions` is the clear primary KPI; `Contacts · Next 90m` and `Open Exceptions` form the secondary layer; `Managed Spacecraft`, `Active Downlinks`, and `Ground Assets Ready` remain readable but visually quieter. Dynamic metric IDs and values remain unchanged.
+  - Verification: OPS runtime now injects a dedicated KPI hierarchy style only for OPS. The second metric is promoted to 28 px/white, contacts and exceptions use an intermediate scale, exceptions use restrained amber emphasis, and fleet/downlink/ground metrics are reduced in size and opacity. Responsive overrides preserve hierarchy at ≤1150 px and stack the primary metric across two columns on mobile. Source was re-read after commit and the existing `activeMissionMetric` runtime update path remains intact.
 - [ ] OPS-11 Mission Stack becomes a lightweight overlay.
 - [ ] OPS-12 Mission Copilot becomes a command-console HUD.
 - [ ] OPS-13 Selected object HUD.
