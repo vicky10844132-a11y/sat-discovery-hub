@@ -85,6 +85,58 @@
     } catch (_) { render({}); }
   }
 
+  function normalizeOpsSelectedHud(d) {
+    const scene = d.querySelector('.mapwrap');
+    if (!scene) return;
+    let hud = d.getElementById('spaceopsOpsSelectedHud');
+    if (!hud) {
+      const style = d.createElement('style');
+      style.id = 'spaceops-ops-selected-hud-style';
+      style.textContent = `
+        #spaceopsOpsSelectedHud{position:absolute;z-index:34;left:18px;bottom:48px;width:230px;padding:10px 11px 9px;border-left:2px solid rgba(111,168,255,.58);border-top:1px solid rgba(94,112,133,.16);border-bottom:1px solid rgba(94,112,133,.12);background:linear-gradient(90deg,rgba(5,10,16,.76),rgba(5,10,16,.34));backdrop-filter:blur(10px);pointer-events:none}
+        #spaceopsOpsSelectedHud .selEyebrow{font:5.5px ui-monospace,monospace;letter-spacing:.15em;color:#61707f}
+        #spaceopsOpsSelectedHud .selName{margin-top:5px;font-size:13px;font-weight:750;letter-spacing:.015em;color:#edf2f7}
+        #spaceopsOpsSelectedHud .selMeta{display:flex;gap:8px;align-items:center;margin-top:4px;font:6.5px ui-monospace,monospace;color:#82909e}
+        #spaceopsOpsSelectedHud .selDot{width:5px;height:5px;border-radius:50%;background:#73d7a2;box-shadow:0 0 8px rgba(115,215,162,.26)}
+        #spaceopsOpsSelectedHud .selGrid{display:grid;grid-template-columns:1fr 1fr;gap:7px 12px;margin-top:9px;padding-top:8px;border-top:1px solid rgba(86,103,122,.12)}
+        #spaceopsOpsSelectedHud .selCell span{display:block;font:5.2px ui-monospace,monospace;letter-spacing:.10em;color:#596674}
+        #spaceopsOpsSelectedHud .selCell b{display:block;margin-top:2px;font:7px ui-monospace,monospace;font-weight:650;color:#aeb9c5}
+        @media(max-width:720px){#spaceopsOpsSelectedHud{left:12px;bottom:52px;width:205px;padding:8px 9px}.side{z-index:40}}
+      `;
+      d.head.appendChild(style);
+      hud = d.createElement('div');
+      hud.id = 'spaceopsOpsSelectedHud';
+      hud.setAttribute('aria-live','polite');
+      scene.appendChild(hud);
+    }
+
+    const lookup = {
+      'GF-7 02': {type:'SPACECRAFT',state:'NOMINAL',role:'OPTICAL / 0.65 M',link:'GS-SG-02',accent:'#ff6d9f'},
+      'SUPERVIEW NEO-1': {type:'SPACECRAFT',state:'NOMINAL',role:'OPTICAL',link:'GS-SE-01',accent:'#6fa8ff'},
+      'SY-01': {type:'SPACECRAFT',state:'NOMINAL',role:'MARITIME',link:'GS-IN-04',accent:'#58d5c5'},
+      'SAR-01': {type:'SPACECRAFT',state:'WATCH',role:'SAR / X-BAND',link:'GS-SE-01',accent:'#ff8bb2'},
+      'GS-SG-02': {type:'GROUND ASSET',state:'READY',role:'SINGAPORE',link:'X-BAND',accent:'#73d7a2'},
+      'GS-SE-01': {type:'GROUND ASSET',state:'HIGH UTIL',role:'SWEDEN',link:'X-BAND',accent:'#e7c86b'},
+      'GS-IN-04': {type:'GROUND ASSET',state:'READY',role:'INDIA',link:'S-BAND',accent:'#6fa8ff'}
+    };
+    const render = id => {
+      const item = lookup[id] || {type:'MISSION OBJECT',state:'SELECTED',role:'SIMULATED',link:'—',accent:'#6fa8ff'};
+      hud.style.borderLeftColor = item.accent;
+      hud.innerHTML = `<div class="selEyebrow">SELECTED OBJECT / OPS</div><div class="selName">${id}</div><div class="selMeta"><i class="selDot"></i><span>${item.type} · ${item.state}</span></div><div class="selGrid"><div class="selCell"><span>ROLE</span><b>${item.role}</b></div><div class="selCell"><span>LINK / BAND</span><b>${item.link}</b></div></div>`;
+      const head = d.querySelector('.workspace .panel .head small');
+      if (head) head.textContent = `SELECTED · ${id} · SIMULATED STATE`;
+    };
+    const w = d.defaultView;
+    const previous = typeof w.selectObject === 'function' ? w.selectObject : null;
+    w.selectObject = id => {
+      if (previous && previous !== w.selectObject) {
+        try { previous(id); } catch (_) {}
+      }
+      render(id);
+    };
+    render(window.__SPACEOPS_SHARED_GLOBE_STATE__?.selectedId || 'GF-7 02');
+  }
+
   function normalizeOpsAcceptance(d) {
     if (!d || d.documentElement.dataset.spaceopsOpsAccepted === '1') return;
     d.documentElement.dataset.spaceopsOpsAccepted = '1';
@@ -172,6 +224,8 @@
       const run = d.getElementById('runMission');
       if (run) run.textContent = 'RESOLVE MISSION';
     }
+
+    normalizeOpsSelectedHud(d);
 
     const healthLabels = [...d.querySelectorAll('.healthRow span')];
     if (healthLabels[0]) healthLabels[0].textContent = 'Spacecraft nominal';
