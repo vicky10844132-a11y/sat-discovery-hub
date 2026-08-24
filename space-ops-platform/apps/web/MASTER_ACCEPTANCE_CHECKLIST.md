@@ -47,7 +47,10 @@
   - Description: Active missions should read as a compact operational stack, not a second dashboard card competing with the orbital scene.
   - Acceptance: The stack remains readable and clickable, keeps priority/state cues, but uses lower visual weight, compact spacing, restrained separators and transparent HUD treatment.
   - Verification: OPS runtime now restyles only the second right-side panel as `MISSION STACK`, removes the heavy card/shadow treatment, compresses the header and mission rows, reduces priority bars to thin signal lines, tones down metadata and state labels, adds restrained hover/first-priority emphasis, and preserves the existing `missionQueue`, mission click handlers and `queueCount` update path. Source re-read after commit confirmed the style is scoped to the mission stack and does not alter Mission Copilot logic.
-- [ ] OPS-12 Mission Copilot becomes a command-console HUD.
+- [x] OPS-12 Mission Copilot becomes a command-console HUD.
+  - Description: Mission Copilot should feel like an operational command/resolution console layered over the orbital scene, not a generic form card.
+  - Acceptance: Objective input, action controls and deterministic result remain clearly separated, visually compact and console-like; existing mission-routing behavior and interaction IDs remain unchanged.
+  - Verification: OPS runtime now restyles only the first right-side panel with a restrained command-console treatment: dark translucent shell, rose mission signal edge, monospace objective input, compact `RESOLVE MISSION` action, muted clear action and a dedicated deterministic-resolution output region. `objective`, `runMission`, `clearMission` and `copilotOut` remain in place; the deterministic routing handler is still attached to `runMission`. Source was re-read after commit to confirm the styling is scoped to the first panel and the routing logic remains intact.
 - [ ] OPS-13 Selected object HUD.
 - [ ] OPS-14 Bottom mission timeline.
 - [ ] OPS-15 Alert visual treatment.
