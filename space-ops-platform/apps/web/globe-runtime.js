@@ -115,6 +115,34 @@
       d.head.appendChild(style);
     }
 
+    const sidePanels = [...d.querySelectorAll('.side > .panel')];
+    const missionStack = sidePanels[1];
+    if (missionStack && !d.getElementById('spaceops-ops-mission-stack')) {
+      const style = d.createElement('style');
+      style.id = 'spaceops-ops-mission-stack';
+      style.textContent = `
+        .side>.panel:nth-child(2){border-color:rgba(103,121,142,.16)!important;background:linear-gradient(180deg,rgba(8,13,19,.58),rgba(7,11,16,.36))!important;box-shadow:none!important;backdrop-filter:blur(10px)!important}
+        .side>.panel:nth-child(2) .head{height:31px!important;padding:0 9px!important;border-bottom:1px solid rgba(87,104,123,.12)!important;background:transparent!important}
+        .side>.panel:nth-child(2) .head strong{font-size:8px!important;font-weight:700!important;letter-spacing:.13em!important;color:#b7c1cc!important}
+        .side>.panel:nth-child(2) .head small{font-size:6.5px!important;letter-spacing:.08em!important;color:#65717e!important}
+        .side>.panel:nth-child(2) .queue{max-height:196px!important;padding:2px 0 4px!important;overflow:auto!important;scrollbar-width:thin;scrollbar-color:rgba(111,168,255,.18) transparent}
+        .side>.panel:nth-child(2) .mission{position:relative;grid-template-columns:3px minmax(0,1fr) auto!important;gap:8px!important;min-height:42px!important;padding:7px 8px!important;border-bottom:1px solid rgba(78,94,112,.10)!important;background:transparent!important;transition:background .16s ease,transform .16s ease,opacity .16s ease!important}
+        .side>.panel:nth-child(2) .mission:hover{background:linear-gradient(90deg,rgba(111,168,255,.07),transparent 76%)!important;transform:translateX(-2px)}
+        .side>.panel:nth-child(2) .mission:first-child{background:linear-gradient(90deg,rgba(223,63,118,.075),transparent 82%)!important}
+        .side>.panel:nth-child(2) .prio{width:2px!important;height:24px!important;border-radius:2px!important;align-self:center!important;box-shadow:none!important}
+        .side>.panel:nth-child(2) .mission b{font-size:8px!important;font-weight:650!important;letter-spacing:.01em!important;color:#d5dbe2!important}
+        .side>.panel:nth-child(2) .mission small{margin-top:2px!important;font-size:6.5px!important;line-height:1.35!important;color:#66727f!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+        .side>.panel:nth-child(2) .stateTag{align-self:center!important;font-size:6px!important;letter-spacing:.09em!important;color:#79bfa0!important;opacity:.82!important}
+        .side>.panel:nth-child(2) .mission:first-child .stateTag{color:#e9c977!important;opacity:1!important}
+        @media(max-width:720px){.side>.panel:nth-child(2) .queue{max-height:172px!important}.side>.panel:nth-child(2) .mission{min-height:40px!important}}
+      `;
+      d.head.appendChild(style);
+      const headStrong = missionStack.querySelector('.head strong');
+      if (headStrong) headStrong.textContent = 'MISSION STACK';
+      const count = missionStack.querySelector('#queueCount');
+      if (count) count.title = 'Active missions ordered by operational priority';
+    }
+
     const healthLabels = [...d.querySelectorAll('.healthRow span')];
     if (healthLabels[0]) healthLabels[0].textContent = 'Spacecraft nominal';
     if (healthLabels[2]) healthLabels[2].textContent = 'Processing slots free · simulated';
