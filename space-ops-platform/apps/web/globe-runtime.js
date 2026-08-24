@@ -20,6 +20,7 @@
 
   const moduleRuntimeUrl = new URL('globe-module.js?rev=20260822o', location.href).href;
   const opsRuntimeUrl = new URL('ops-runtime.js?rev=20260824a', location.href).href;
+  const twinRuntimeUrl = new URL('twin-runtime.js?rev=20260824a', location.href).href;
 
   function detectModule(d) {
     try {
@@ -419,6 +420,12 @@
     if (key === 'twin') {
       normalizeTwinAcceptance(d);
       normalizeTwinLiveControl(d);
+      if (!d.getElementById('spaceops-twin-runtime')) {
+        const twinScript = d.createElement('script');
+        twinScript.id = 'spaceops-twin-runtime';
+        twinScript.src = twinRuntimeUrl;
+        d.head.appendChild(twinScript);
+      }
     }
 
     if (d.getElementById('spaceops-shared-globe-module')) return;
