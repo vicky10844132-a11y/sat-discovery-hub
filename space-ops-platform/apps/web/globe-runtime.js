@@ -93,6 +93,28 @@
     if (metrics[2]) metrics[2].innerHTML = '<b>0</b><span>Active Downlinks</span><em>no contact currently active · simulated</em>';
     if (metrics[3]) metrics[3].innerHTML = '<b>4</b><span>Contacts · Next 90m</span><em>3 managed · 1 partner · simulated</em>';
 
+    if (!d.getElementById('spaceops-ops-kpi-hierarchy')) {
+      const style = d.createElement('style');
+      style.id = 'spaceops-ops-kpi-hierarchy';
+      style.textContent = `
+        .metrics{align-items:flex-end!important;gap:18px!important}
+        .metrics .metric{opacity:.62;transition:opacity .18s ease,transform .18s ease!important}
+        .metrics .metric b{font-size:13px!important;font-weight:650!important;color:#c8d0da!important}
+        .metrics .metric span{font-size:6.5px!important;letter-spacing:.10em!important;color:#6f7a87!important}
+        .metrics .metric:nth-child(2){opacity:1!important;transform:translateY(-2px)}
+        .metrics .metric:nth-child(2) b{font-size:28px!important;line-height:.9!important;color:#fff!important;text-shadow:0 0 18px rgba(111,168,255,.14)}
+        .metrics .metric:nth-child(2) span{font-size:7px!important;color:#9aa5b2!important}
+        .metrics .metric:nth-child(4){opacity:.9!important}
+        .metrics .metric:nth-child(4) b{font-size:19px!important;color:#dce5ef!important}
+        .metrics .metric:nth-child(6){opacity:.95!important;border-left-color:rgba(231,200,107,.26)!important}
+        .metrics .metric:nth-child(6) b{font-size:19px!important;color:var(--amber)!important}
+        .metrics .metric:nth-child(1),.metrics .metric:nth-child(3),.metrics .metric:nth-child(5){transform:translateY(2px)}
+        @media(max-width:1150px){.metrics .metric:nth-child(2) b{font-size:22px!important}.metrics .metric:nth-child(4) b,.metrics .metric:nth-child(6) b{font-size:17px!important}}
+        @media(max-width:720px){.metrics .metric{opacity:.78}.metrics .metric:nth-child(2){grid-column:span 2;transform:none}.metrics .metric:nth-child(2) b{font-size:24px!important}}
+      `;
+      d.head.appendChild(style);
+    }
+
     const healthLabels = [...d.querySelectorAll('.healthRow span')];
     if (healthLabels[0]) healthLabels[0].textContent = 'Spacecraft nominal';
     if (healthLabels[2]) healthLabels[2].textContent = 'Processing slots free · simulated';
