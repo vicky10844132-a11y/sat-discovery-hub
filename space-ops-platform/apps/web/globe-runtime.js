@@ -21,6 +21,7 @@
   const moduleRuntimeUrl = new URL('globe-module.js?rev=20260822o', location.href).href;
   const opsRuntimeUrl = new URL('ops-runtime.js?rev=20260824a', location.href).href;
   const twinRuntimeUrl = new URL('twin-runtime.js?rev=20260824a', location.href).href;
+  const planRuntimeUrl = new URL('plan-runtime.js?rev=20260824a', location.href).href;
 
   function detectModule(d) {
     try {
@@ -426,6 +427,12 @@
         twinScript.src = twinRuntimeUrl;
         d.head.appendChild(twinScript);
       }
+    }
+    if (key === 'plan' && !d.getElementById('spaceops-plan-runtime')) {
+      const planScript = d.createElement('script');
+      planScript.id = 'spaceops-plan-runtime';
+      planScript.src = planRuntimeUrl;
+      d.head.appendChild(planScript);
     }
 
     if (d.getElementById('spaceops-shared-globe-module')) return;
