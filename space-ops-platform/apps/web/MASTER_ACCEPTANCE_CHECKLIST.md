@@ -43,7 +43,10 @@
   - Description: KPI values should no longer compete at equal visual weight. Mission tempo should dominate, upcoming contacts and exceptions should remain operationally prominent, and static fleet/ground counts should recede.
   - Acceptance: `Active Missions` is the clear primary KPI; `Contacts · Next 90m` and `Open Exceptions` form the secondary layer; `Managed Spacecraft`, `Active Downlinks`, and `Ground Assets Ready` remain readable but visually quieter. Dynamic metric IDs and values remain unchanged.
   - Verification: OPS runtime now injects a dedicated KPI hierarchy style only for OPS. The second metric is promoted to 28 px/white, contacts and exceptions use an intermediate scale, exceptions use restrained amber emphasis, and fleet/downlink/ground metrics are reduced in size and opacity. Responsive overrides preserve hierarchy at ≤1150 px and stack the primary metric across two columns on mobile. Source was re-read after commit and the existing `activeMissionMetric` runtime update path remains intact.
-- [ ] OPS-11 Mission Stack becomes a lightweight overlay.
+- [x] OPS-11 Mission Stack becomes a lightweight overlay.
+  - Description: Active missions should read as a compact operational stack, not a second dashboard card competing with the orbital scene.
+  - Acceptance: The stack remains readable and clickable, keeps priority/state cues, but uses lower visual weight, compact spacing, restrained separators and transparent HUD treatment.
+  - Verification: OPS runtime now restyles only the second right-side panel as `MISSION STACK`, removes the heavy card/shadow treatment, compresses the header and mission rows, reduces priority bars to thin signal lines, tones down metadata and state labels, adds restrained hover/first-priority emphasis, and preserves the existing `missionQueue`, mission click handlers and `queueCount` update path. Source re-read after commit confirmed the style is scoped to the mission stack and does not alter Mission Copilot logic.
 - [ ] OPS-12 Mission Copilot becomes a command-console HUD.
 - [ ] OPS-13 Selected object HUD.
 - [ ] OPS-14 Bottom mission timeline.
