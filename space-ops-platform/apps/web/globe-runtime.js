@@ -19,6 +19,7 @@
   };
 
   const moduleRuntimeUrl = new URL('globe-module.js?rev=20260822o', location.href).href;
+  const opsRuntimeUrl = new URL('ops-runtime.js?rev=20260824a', location.href).href;
 
   function detectModule(d) {
     try {
@@ -406,7 +407,15 @@
     const key = detectModule(d);
     normalizeModuleControls(d, key);
     normalizeSharedContext(d, key);
-    if (key === 'ops') normalizeOpsAcceptance(d);
+    if (key === 'ops') {
+      normalizeOpsAcceptance(d);
+      if (!d.getElementById('spaceops-ops-runtime')) {
+        const opsScript = d.createElement('script');
+        opsScript.id = 'spaceops-ops-runtime';
+        opsScript.src = opsRuntimeUrl;
+        d.head.appendChild(opsScript);
+      }
+    }
     if (key === 'twin') {
       normalizeTwinAcceptance(d);
       normalizeTwinLiveControl(d);
