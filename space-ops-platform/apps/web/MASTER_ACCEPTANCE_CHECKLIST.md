@@ -28,9 +28,10 @@
   - Acceptance: AOI follows Earth geometry/perspective and stays clearly tied to Singapore.
   - Verification: Shared globe renders the Singapore port AOI as Globe.gl polygon geometry at 103.60–104.05°E / 1.20–1.48°N with low surface altitude, cap/stroke treatment, and globe occlusion/perspective.
 
-- [ ] OPS-08 Active links use restrained animated pulses.
+- [x] OPS-08 Active links use restrained animated pulses.
   - Description: Show satellite-to-ground or mission link only when relevant; use low-frequency motion.
   - Acceptance: Link is visible, spatially connected and professional; no neon/game-like animation.
+  - Verification: OPS shared-globe profile now enables one active spacecraft→`GS-SG-02` link only for a selected spacecraft. The 3D arc uses a thin 0.14 stroke, a short 0.10 moving dash separated by 0.90 gap, a slow 7.2 s animation cycle, and low-opacity cyan/blue endpoints. Selecting a non-spacecraft clears the link instead of showing an unrelated connection. Source re-read after commit confirmed OPS link enablement, restrained arc parameters and selected-spacecraft gating.
 
 ### B. HUD and information hierarchy
 
