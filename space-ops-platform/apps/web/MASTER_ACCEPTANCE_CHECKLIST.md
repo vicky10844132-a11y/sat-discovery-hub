@@ -54,7 +54,7 @@
   - Description: Spacecraft markers/models should change apparent prominence with distance.
   - Acceptance: Selected/near spacecraft is clearly legible without all spacecraft appearing same-size and same-plane.
 
-- [ ] OPS-06 Ground stations become anchored surface nodes.
+- [x] OPS-06 Ground stations become anchored surface nodes.
   - Description: Ground assets visually attach to Earth rather than float as generic dots.
   - Acceptance: `GS-SG-02`, `GS-SE-01`, `GS-IN-04` appear spatially attached to the surface.
 
