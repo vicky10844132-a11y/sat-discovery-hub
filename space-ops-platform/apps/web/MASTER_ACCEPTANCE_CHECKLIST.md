@@ -35,7 +35,10 @@
 
 ### B. HUD and information hierarchy
 
-- [ ] OPS-09 Remove the “dashboard card wall” first impression.
+- [x] OPS-09 Remove the “dashboard card wall” first impression.
+  - Description: The first viewport should read as one continuous orbital operations scene, not a grid of equal-weight dashboard cards.
+  - Acceptance: Scene owns the first-screen canvas; KPI, alert and mission controls sit as restrained overlays; lower operational tables remain secondary and below the scene.
+  - Verification: OPS layout was converted from a two-column panel grid to a scene-first canvas. The globe/map now fills the first viewport, KPI cards are flattened into a transparent status ribbon, alert is a compact translucent overlay, Mission Copilot / Queue float over the scene at the right, and Upcoming Contacts / Resource Health / Activity Feed remain below the primary scene. Desktop and narrow responsive rules were retained, and source was re-read after commit to confirm the scene-first overrides and existing interaction IDs remain present.
 - [ ] OPS-10 Rebuild KPI hierarchy.
 - [ ] OPS-11 Mission Stack becomes a lightweight overlay.
 - [ ] OPS-12 Mission Copilot becomes a command-console HUD.
