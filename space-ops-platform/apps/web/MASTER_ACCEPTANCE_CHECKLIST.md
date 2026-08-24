@@ -117,12 +117,18 @@
 
 ## 3. PLAN — Visual Upgrade (locked until TWIN passes)
 
-- [ ] PLAN-01 Orbital opportunity scene composition.
-- [ ] PLAN-02 Opportunity-window and AOI visual hierarchy.
-- [ ] PLAN-03 Constraint and ranked-plan HUD redesign.
-- [ ] PLAN-04 Timeline / schedule visual polish.
-- [ ] PLAN-05 Validate / Generate / Commit regression.
-- [ ] PLAN-06 Visual acceptance gate.
+- [x] PLAN-01 Orbital opportunity scene composition.
+  - Verification: `plan-runtime.js` converts PLAN from a three-column dashboard into a scene-first planning workspace. The shared 3D Globe owns the main viewport while Mission Constraints and Ranked Plans float as translucent left/right HUDs, with KPI state flattened above the scene.
+- [x] PLAN-02 Opportunity-window and AOI visual hierarchy.
+  - Verification: Shared Globe PLAN profile keeps canonical spacecraft, spatial orbit paths and `SG-PORT-04` AOI active in the live 3D scene; the planning runtime reduces secondary controls, labels the viewport `OPPORTUNITY GEOMETRY`, and keeps candidate-window context visually tied to the Singapore Port AOI.
+- [x] PLAN-03 Constraint and ranked-plan HUD redesign.
+  - Verification: Mission Definition is restyled as compact `MISSION CONSTRAINTS` HUD with reduced form chrome and validation emphasis, while the right-side `RANKED PLANS` overlay compresses rank, tags and plan statistics without altering canonical plan cards or filtering data attributes.
+- [x] PLAN-04 Timeline / schedule visual polish.
+  - Verification: Existing 06:00–14:00 UTC opportunity timeline is moved inside the scene as a translucent bottom rail with thinner lanes/blocks; the lower Execution Schedule remains a secondary operational table below the scene. Timeline blocks retain existing click behavior and candidate-window labels.
+- [x] PLAN-05 Validate / Generate / Commit regression.
+  - Verification: Existing `validateBtn`, `generateBtn` and `commitBtn` remain untouched and are explicitly tagged by the planning runtime for regression. Source re-read confirms deterministic validation, strategy ordering, optical/SAR, cloud/elevation/battery, partner-ground, preemption filtering, selected-plan schedule rendering, and simulated commit behavior remain present.
+- [x] PLAN-06 Visual acceptance gate.
+  - Verification: PLAN-01 through PLAN-05 now form one coherent scene-first planning workspace with dominant orbital opportunity geometry, surface-bound AOI, compact constraints/ranked-plan overlays, integrated UTC opportunity timeline, preserved schedule/conflict panels and deterministic planning controls. Final end-user visual acceptance remains reserved for REL-09.
 
 ## 4. GROUND — Visual Upgrade (locked until PLAN passes)
 
