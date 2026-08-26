@@ -75,8 +75,9 @@ def main():
 
         b=d.find_element(By.CSS_SELECTOR,'.planCard[data-plan="B"]'); click(d,b); assert 'PLAN B' in d.find_element(By.ID,'scheduleLabel').text and d.find_element(By.ID,'scheduleBody').text.strip(); ok('PLAN-F15')
 
-        for key in ['weather','resources','contacts','opportunities']:
-            e=d.find_element(By.CSS_SELECTOR,f'[data-view="{key}"]'); click(d,e); assert on(e); assert key.upper() in d.find_element(By.ID,'viewNote').text.upper()
+        expected={'weather':'SIMULATED WEATHER','resources':'SIMULATED RESOURCE STATE','contacts':'SIMULATED CONTACT STATE','opportunities':'candidate acquisition windows'}
+        for key,needle in expected.items():
+            e=d.find_element(By.CSS_SELECTOR,f'[data-view="{key}"]'); click(d,e); assert on(e); assert needle.lower() in d.find_element(By.ID,'viewNote').text.lower()
         ok('PLAN-F16')
 
         before=int(d.find_element(By.ID,'mConflicts').text); click(d,d.find_element(By.CSS_SELECTOR,'[data-resolve]')); assert int(d.find_element(By.ID,'mConflicts').text)==before-1; ok('PLAN-F17')
@@ -86,11 +87,10 @@ def main():
 
         click(d,d.find_element(By.ID,'syncBtn')); s1=d.find_element(By.ID,'start').get_attribute('value'); assert s1 and d.find_element(By.ID,'planMode').text=='VALIDATION REQUIRED'; ok('PLAN-F20')
 
-        # Approved visual correction: old floating bars are hidden; three curved SVG windows are bound to orbital geometry layer.
         legacy=d.find_elements(By.CSS_SELECTOR,'.windowSeg'); assert legacy and all(not x.is_displayed() for x in legacy)
         svg=d.find_element(By.ID,'spaceopsPlanOpportunityWindows'); assert svg.get_attribute('data-orbit-attached')=='1'
-        paths=d.find_elements(By.CSS_SELECTOR,'#spaceopsPlanOpportunityWindows path[data-opportunity-window]'); assert len(paths)==3
-        assert all('C' in (p.get_attribute('d') or '') for p in paths); ok('PLAN-F21')
+        paths=d.find_elements(By.CSS_SELECTOR,'#spaceopsPlanOpportunityWindows path[data-opportunity-window]'); assert len(paths)==3 and all('C' in (p.get_attribute('d') or '') for p in paths)
+        windows_btn=d.find_element(By.CSS_SELECTOR,'[data-layer="window"]'); assert svg.is_displayed(); click(d,windows_btn); assert not svg.is_displayed(); click(d,windows_btn); assert svg.is_displayed(); ok('PLAN-F21')
 
         prof=lambda: d.execute_script('return window.__spaceopsGlobeApi.refreshLayers(true)')
         orbit=next(x for x in d.find_elements(By.CSS_SELECTOR,'[data-layer]') if x.text.strip().upper()=='ORBITS'); p0=bool(prof().get('orbits')); click(d,orbit); assert bool(prof().get('orbits'))!=p0; click(d,orbit)
