@@ -16,6 +16,7 @@
     .workspace{position:relative;display:block!important;min-height:calc(100vh - 84px);margin-top:4px}
     .workspace>.panel:nth-child(2){position:relative;border:0!important;background:transparent!important}
     .workspace>.panel:nth-child(2)>.head{position:absolute;z-index:33;left:18px;bottom:154px;height:auto!important;padding:0!important;border:0!important;background:transparent!important;pointer-events:none}
+    .workspace>.panel:nth-child(2)>.head>div,.workspace>.panel:nth-child(2)>.head .chip{pointer-events:auto!important}
     .workspace>.panel:nth-child(2)>.head strong{font-size:8px!important;letter-spacing:.12em;color:#d7dde4}.workspace>.panel:nth-child(2)>.head small{display:block;margin-top:3px;font-size:6.5px!important;color:#617080}
     .scene{height:calc(100vh - 88px)!important;min-height:650px!important;border:1px solid rgba(91,107,126,.16)!important;background:#06090e!important;box-shadow:inset 0 0 90px rgba(0,0,0,.24)!important}
     .sceneTools{top:92px!important;left:18px!important;z-index:2147483646!important;pointer-events:none!important;transform:translateZ(1px)!important}.sceneTools .chip{position:relative!important;z-index:2147483647!important;pointer-events:auto!important}.legend{left:18px!important;bottom:118px!important;border:0!important;background:rgba(7,11,16,.42)!important;backdrop-filter:blur(8px)}
