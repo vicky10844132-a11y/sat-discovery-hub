@@ -7,6 +7,7 @@ on:
       - 'space-ops-platform/apps/web/**'
       - 'space-ops-platform/tests/ops_browser_qa.py'
       - 'space-ops-platform/tests/twin_browser_qa.py'
+      - 'space-ops-platform/tests/plan_browser_qa.py'
       - '.github/workflows/space-ops-functional-qa.yml'
   workflow_dispatch:
 
@@ -26,7 +27,9 @@ jobs:
           python -m http.server 8765 --bind 127.0.0.1 > /tmp/spaceops-http.log 2>&1 &
           sleep 2
           curl --fail http://127.0.0.1:8765/space-ops-platform/apps/web/workspace.html >/dev/null
-      - name: Run TWIN browser QA
+      - name: Run PLAN browser QA
+        run: python space-ops-platform/tests/plan_browser_qa.py
+      - name: Run TWIN browser QA regression
         run: python space-ops-platform/tests/twin_browser_qa.py
       - name: Run OPS browser QA regression
         run: python space-ops-platform/tests/ops_browser_qa.py
