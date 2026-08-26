@@ -18,7 +18,7 @@
     .workspace>.panel:nth-child(2)>.head{position:absolute;z-index:33;left:18px;bottom:154px;height:auto!important;padding:0!important;border:0!important;background:transparent!important;pointer-events:none}
     .workspace>.panel:nth-child(2)>.head strong{font-size:8px!important;letter-spacing:.12em;color:#d7dde4}.workspace>.panel:nth-child(2)>.head small{display:block;margin-top:3px;font-size:6.5px!important;color:#617080}
     .scene{height:calc(100vh - 88px)!important;min-height:650px!important;border:1px solid rgba(91,107,126,.16)!important;background:#06090e!important;box-shadow:inset 0 0 90px rgba(0,0,0,.24)!important}
-    .sceneTools{top:92px!important;left:18px!important;z-index:38!important}.legend{left:18px!important;bottom:118px!important;border:0!important;background:rgba(7,11,16,.42)!important;backdrop-filter:blur(8px)}
+    .sceneTools{top:92px!important;left:18px!important;z-index:45!important}.legend{left:18px!important;bottom:118px!important;border:0!important;background:rgba(7,11,16,.42)!important;backdrop-filter:blur(8px)}
     .viewNote{right:18px!important;bottom:118px!important;width:230px!important;border-left:1px solid rgba(111,168,255,.34)!important;border-top:0!important;border-right:0!important;border-bottom:0!important;background:linear-gradient(90deg,rgba(6,11,17,.68),rgba(6,11,17,.24))!important;backdrop-filter:blur(10px)!important}
     .timeline{position:absolute;z-index:32;left:18px;right:18px;bottom:16px;padding:8px 10px!important;border:1px solid rgba(86,101,119,.16)!important;background:rgba(6,10,15,.58)!important;backdrop-filter:blur(12px)!important}
     .timelineTop{margin-bottom:5px!important}.timegrid{height:74px!important;background:repeating-linear-gradient(90deg,rgba(93,108,126,.18) 0 1px,transparent 1px 12.5%)!important}.lane{height:18px!important}.l2{top:18px!important}.l3{top:36px!important}.l4{top:54px!important}.block{height:11px!important;top:3px!important;font-size:6px!important;padding:1px 4px!important}
@@ -78,30 +78,14 @@
   const plansPanel = d.querySelector('.plansPanel');
   if (plansPanel) {
     const h = plansPanel.querySelector('.head strong');
-    if (h) h.textContent = 'RANKED PLANS';
-  }
-  const formPanel = d.querySelector('.workspace > .panel:first-child');
-  if (formPanel) {
-    const h = formPanel.querySelector('.head strong');
-    if (h) h.textContent = 'MISSION CONSTRAINTS';
+    if (h) h.textContent = 'Ranked Plans';
   }
 
-  d.querySelectorAll('.sceneTools .chip').forEach(btn => {
-    btn.setAttribute('aria-pressed', btn.classList.contains('on') ? 'true' : 'false');
-    btn.addEventListener('click', () => setTimeout(() => btn.setAttribute('aria-pressed', btn.classList.contains('on') ? 'true' : 'false'), 0));
-  });
-
-  const validate = d.getElementById('validateBtn') || [...d.querySelectorAll('button')].find(b => /VALIDATE/i.test(b.textContent));
-  const generate = d.getElementById('generateBtn') || [...d.querySelectorAll('button')].find(b => /GENERATE/i.test(b.textContent));
-  const commit = d.getElementById('commitBtn') || [...d.querySelectorAll('button')].find(b => /COMMIT/i.test(b.textContent));
-  [validate, generate, commit].filter(Boolean).forEach(btn => btn.dataset.spaceopsPlanRegression = 'preserved');
-
-  const planCards = [...d.querySelectorAll('.planCard')];
-  planCards.forEach((card, i) => {
-    card.setAttribute('role','button');
-    card.setAttribute('aria-label',`Ranked plan ${i + 1}`);
-  });
-
-  const timeline = d.querySelector('.timeline');
-  if (timeline) timeline.setAttribute('aria-label','Mission opportunity schedule timeline');
+  function tagCriticalControls() {
+    ['validateBtn','generateBtn','commitBtn','syncBtn'].forEach(id => {
+      const el = d.getElementById(id);
+      if (el) el.dataset.visualRegressionControl = '1';
+    });
+  }
+  tagCriticalControls();
 })();
