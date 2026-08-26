@@ -35,22 +35,23 @@
   - Verification note: OPS browser QA ran in headless Chromium/Selenium against the integrated `workspace.html#ops`; GitHub Actions run 32965355306 completed successfully. Scene layer profiles, night texture state, actual globe POV zoom/reset, selection HUD/camera focus, dynamic UTC content, shared-context propagation, and hit-testing/pointer coverage were asserted in-browser. F01–F08 and F21–F22 were already exercised through their live control paths.
 
 ## 02 TWIN
-- [ ] TWIN-F01 SIM RUNNING / PAUSED toggle.
-- [ ] TWIN-F02 SYNC simulation epoch/state age reset.
-- [ ] TWIN-F03 Resource search.
-- [ ] TWIN-F04 Resource filter tabs ALL / SPACECRAFT / GROUND.
-- [ ] TWIN-F05 Resource object selection updates Inspector and camera.
-- [ ] TWIN-F06 COVERAGE toggle visibly changes scene.
-- [ ] TWIN-F07 ANOMALY toggle visibly changes SAR-01 state/scene.
-- [ ] TWIN-F08 LINKS toggle visibly changes links.
-- [ ] TWIN-F09 Other scene layer controls remain functional.
-- [ ] TWIN-F10 Capability DETAILS drawer open/close.
-- [ ] TWIN-F11 Full object profile open/close.
-- [ ] TWIN-F12 EXPORT SNAPSHOT BUNDLE produces a downloadable/export result.
-- [ ] TWIN-F13 Zoom / RESET controls.
-- [ ] TWIN-F14 Shared Mission Context visible.
-- [ ] TWIN-F15 Responsive / pointer-event sanity.
-- [ ] TWIN-F16 TWIN page gate.
+- [x] TWIN-F01 SIM RUNNING / PAUSED toggle.
+- [x] TWIN-F02 SYNC simulation epoch/state age reset.
+- [x] TWIN-F03 Resource search.
+- [x] TWIN-F04 Resource filter tabs ALL / SPACECRAFT / GROUND.
+- [x] TWIN-F05 Resource object selection updates Inspector and camera.
+- [x] TWIN-F06 COVERAGE toggle visibly changes scene.
+- [x] TWIN-F07 ANOMALY toggle visibly changes SAR-01 state/scene.
+- [x] TWIN-F08 LINKS toggle visibly changes links.
+- [x] TWIN-F09 Other scene layer controls remain functional.
+- [x] TWIN-F10 Capability DETAILS drawer open/close.
+- [x] TWIN-F11 Full object profile open/close.
+- [x] TWIN-F12 EXPORT SNAPSHOT BUNDLE produces a downloadable/export result.
+- [x] TWIN-F13 Zoom / RESET controls.
+- [x] TWIN-F14 Shared Mission Context visible.
+- [x] TWIN-F15 Responsive / pointer-event sanity.
+- [x] TWIN-F16 TWIN page gate.
+  - Verification note: integrated headless Chromium/Selenium run 32977721581 completed successfully with TWIN-F01…F15 passing 15/15. The browser exercised live/pause state, shared simulation state, sync age/epoch reset, search/filtering, object inspector plus globe focus signal, visible coverage/anomaly/link mode state, shared globe layer changes, both drawers, JSON snapshot download, real globe POV zoom/reset, shared mission context, and critical hit-target pointer sanity. The same workflow then reran OPS browser regression successfully.
 
 ## 03 PLAN
 - [ ] PLAN-F01 IMPORT OBJECTIVE JSON valid input.
