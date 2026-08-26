@@ -7,6 +7,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
+# PLAN functional QA: real browser path for PLAN-F01..F24.
 BASE='http://127.0.0.1:8765/space-ops-platform/apps/web/workspace.html#plan'
 
 def wait_js(d,s,t=30): return WebDriverWait(d,t).until(lambda x:x.execute_script(s))
