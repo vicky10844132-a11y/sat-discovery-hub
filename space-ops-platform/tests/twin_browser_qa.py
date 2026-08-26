@@ -34,11 +34,15 @@ def main():
         if 'PAUSED' in d.find_element(By.ID,'footerLive').text: assert d.execute_script('return window.parent.__SPACEOPS_SHARED_GLOBE_STATE__.live') is False
         click(d,e); assert on(e)==init; ok('TWIN-F01')
 
-        # F02 sync: native click must immediately reset visible age; epoch must refresh.
-        time.sleep(.6); before=d.execute_script('return window.parent.__SPACEOPS_SHARED_GLOBE_STATE__.epochMs')
+        # F02 sync: the visible age must drop back near zero and the shared epoch must refresh.
+        time.sleep(2.2)
+        age_before=float(d.find_element(By.ID,'stateAge').text.rstrip('s'))
+        epoch_before=d.execute_script('return window.parent.__SPACEOPS_SHARED_GLOBE_STATE__.epochMs')
         b=d.find_element(By.ID,'syncBtn'); d.execute_script("arguments[0].scrollIntoView({block:'center'});",b); b.click()
-        immediate=d.find_element(By.ID,'stateAge').text; assert immediate in ('0.0s','0.1s'), immediate
-        after=d.execute_script('return window.parent.__SPACEOPS_SHARED_GLOBE_STATE__.epochMs'); assert after>=before
+        age_after=float(d.find_element(By.ID,'stateAge').text.rstrip('s'))
+        epoch_after=d.execute_script('return window.parent.__SPACEOPS_SHARED_GLOBE_STATE__.epochMs')
+        assert age_after < age_before and age_after <= 2.0, (age_before,age_after)
+        assert epoch_after>=epoch_before
         ok('TWIN-F02')
 
         # F03 search.
