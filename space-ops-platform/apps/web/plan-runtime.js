@@ -66,6 +66,12 @@
         svg.appendChild(path);
       });
       scene.appendChild(svg);
+      const windowLayer = [...d.querySelectorAll('[data-layer]')].find(b => String(b.dataset.layer).toLowerCase() === 'window');
+      if (windowLayer) {
+        const syncWindowVisibility = () => svg.classList.toggle('hidden', !windowLayer.classList.contains('on'));
+        windowLayer.addEventListener('click', () => setTimeout(syncWindowVisibility, 0));
+        syncWindowVisibility();
+      }
     }
   }
 
