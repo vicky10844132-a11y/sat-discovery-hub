@@ -1,0 +1,1 @@
+Trigger PLAN browser QA after pointer-layer fix. Safe to remove after acceptance.
