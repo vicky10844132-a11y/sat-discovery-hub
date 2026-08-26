@@ -6,14 +6,14 @@
 > A source-code handler alone is NOT a pass.
 
 ## 01 OPS
-- [ ] OPS-F01 SYNC — click shows syncing state then returns to SYNC with visible completion feedback.
-- [ ] OPS-F02 NEW MISSION — opens mission drawer.
-- [ ] OPS-F03 New Mission CANCEL / close — closes drawer without side effects.
-- [ ] OPS-F04 CREATE & PLAN validation — empty required fields are blocked with visible feedback.
-- [ ] OPS-F05 CREATE & PLAN success — inserts mission into Mission Stack and updates Active Missions count.
-- [ ] OPS-F06 Mission Copilot RESOLVE MISSION — objective resolves to visible deterministic plan.
-- [ ] OPS-F07 Mission Copilot CLEAR — clears objective/output state correctly.
-- [ ] OPS-F08 Mission Stack row selection — updates mission context/output visibly.
+- [x] OPS-F01 SYNC — click shows syncing state then returns to SYNC with visible completion feedback.
+- [x] OPS-F02 NEW MISSION — opens mission drawer.
+- [x] OPS-F03 New Mission CANCEL / close — closes drawer without side effects.
+- [x] OPS-F04 CREATE & PLAN validation — empty required fields are blocked with visible feedback.
+- [x] OPS-F05 CREATE & PLAN success — inserts mission into Mission Stack and updates Active Missions count.
+- [x] OPS-F06 Mission Copilot RESOLVE MISSION — objective resolves to visible deterministic plan.
+- [x] OPS-F07 Mission Copilot CLEAR — clears objective/output state correctly.
+- [x] OPS-F08 Mission Stack row selection — updates mission context/output visibly.
 - [ ] OPS-F09 ORBITS layer toggle — visibly hides/shows orbit geometry.
 - [ ] OPS-F10 SATELLITES layer toggle — visibly hides/shows spacecraft.
 - [ ] OPS-F11 GROUND layer toggle — visibly hides/shows managed ground assets.
@@ -26,12 +26,13 @@
 - [ ] OPS-F18 Spacecraft selection — camera focuses and Selected Object HUD updates.
 - [ ] OPS-F19 Ground station selection — camera focuses and Selected Object HUD updates.
 - [ ] OPS-F20 AOI selection — camera focuses Singapore AOI and HUD/state updates where applicable.
-- [ ] OPS-F21 Exception dismiss — alert disappears and does not block scene controls.
-- [ ] OPS-F22 HELP — opens and closes help drawer.
+- [x] OPS-F21 Exception dismiss — alert disappears and does not block scene controls.
+- [x] OPS-F22 HELP — opens and closes help drawer.
 - [ ] OPS-F23 Dynamic Contacts — visible UTC rows are runtime-derived and readable.
 - [ ] OPS-F24 Shared Mission Context — shell context change is visible in OPS.
 - [ ] OPS-F25 OPS responsive / pointer-event sanity — overlays do not block intended controls.
 - [ ] OPS-F26 OPS page gate — all OPS-F01…F25 pass before TWIN.
+  - Verification note: F01–F08 and F21–F22 were executed through the current control paths with state/output assertions. Scene-dependent controls remain open until integrated 3D interaction verification; they are not passed from handler presence alone.
 
 ## 02 TWIN
 - [ ] TWIN-F01 SIM RUNNING / PAUSED toggle.
