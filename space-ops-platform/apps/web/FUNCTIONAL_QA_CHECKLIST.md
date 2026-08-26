@@ -14,25 +14,25 @@
 - [x] OPS-F06 Mission Copilot RESOLVE MISSION — objective resolves to visible deterministic plan.
 - [x] OPS-F07 Mission Copilot CLEAR — clears objective/output state correctly.
 - [x] OPS-F08 Mission Stack row selection — updates mission context/output visibly.
-- [ ] OPS-F09 ORBITS layer toggle — visibly hides/shows orbit geometry.
-- [ ] OPS-F10 SATELLITES layer toggle — visibly hides/shows spacecraft.
-- [ ] OPS-F11 GROUND layer toggle — visibly hides/shows managed ground assets.
-- [ ] OPS-F12 AOI layer toggle — visibly hides/shows SG-PORT-04.
-- [ ] OPS-F13 GRID layer toggle — visibly toggles grid/graticule.
-- [ ] OPS-F14 NIGHT — visibly changes Earth rendering and toggles back.
-- [ ] OPS-F15 Zoom + — camera moves closer within approved limit.
-- [ ] OPS-F16 Zoom − — camera moves farther within approved limit.
-- [ ] OPS-F17 RESET — restores approved global orbital viewpoint.
-- [ ] OPS-F18 Spacecraft selection — camera focuses and Selected Object HUD updates.
-- [ ] OPS-F19 Ground station selection — camera focuses and Selected Object HUD updates.
-- [ ] OPS-F20 AOI selection — camera focuses Singapore AOI and HUD/state updates where applicable.
+- [x] OPS-F09 ORBITS layer toggle — visibly hides/shows orbit geometry.
+- [x] OPS-F10 SATELLITES layer toggle — visibly hides/shows spacecraft.
+- [x] OPS-F11 GROUND layer toggle — visibly hides/shows managed ground assets.
+- [x] OPS-F12 AOI layer toggle — visibly hides/shows SG-PORT-04.
+- [x] OPS-F13 GRID layer toggle — visibly toggles grid/graticule.
+- [x] OPS-F14 NIGHT — visibly changes Earth rendering and toggles back.
+- [x] OPS-F15 Zoom + — camera moves closer within approved limit.
+- [x] OPS-F16 Zoom − — camera moves farther within approved limit.
+- [x] OPS-F17 RESET — restores approved global orbital viewpoint.
+- [x] OPS-F18 Spacecraft selection — camera focuses and Selected Object HUD updates.
+- [x] OPS-F19 Ground station selection — camera focuses and Selected Object HUD updates.
+- [x] OPS-F20 AOI selection — camera focuses Singapore AOI and HUD/state updates where applicable.
 - [x] OPS-F21 Exception dismiss — alert disappears and does not block scene controls.
 - [x] OPS-F22 HELP — opens and closes help drawer.
-- [ ] OPS-F23 Dynamic Contacts — visible UTC rows are runtime-derived and readable.
-- [ ] OPS-F24 Shared Mission Context — shell context change is visible in OPS.
-- [ ] OPS-F25 OPS responsive / pointer-event sanity — overlays do not block intended controls.
-- [ ] OPS-F26 OPS page gate — all OPS-F01…F25 pass before TWIN.
-  - Verification note: F01–F08 and F21–F22 were executed through the current control paths with state/output assertions. Scene-dependent controls remain open until integrated 3D interaction verification; they are not passed from handler presence alone.
+- [x] OPS-F23 Dynamic Contacts — visible UTC rows are runtime-derived and readable.
+- [x] OPS-F24 Shared Mission Context — shell context change is visible in OPS.
+- [x] OPS-F25 OPS responsive / pointer-event sanity — overlays do not block intended controls.
+- [x] OPS-F26 OPS page gate — all OPS-F01…F25 pass before TWIN.
+  - Verification note: OPS browser QA ran in headless Chromium/Selenium against the integrated `workspace.html#ops`; GitHub Actions run 32965355306 completed successfully. Scene layer profiles, night texture state, actual globe POV zoom/reset, selection HUD/camera focus, dynamic UTC content, shared-context propagation, and hit-testing/pointer coverage were asserted in-browser. F01–F08 and F21–F22 were already exercised through their live control paths.
 
 ## 02 TWIN
 - [ ] TWIN-F01 SIM RUNNING / PAUSED toggle.
