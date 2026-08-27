@@ -32,7 +32,7 @@
 - [x] OPS-F24 Shared Mission Context — shell context change is visible in OPS.
 - [x] OPS-F25 OPS responsive / pointer-event sanity — overlays do not block intended controls.
 - [x] OPS-F26 OPS page gate — all OPS-F01…F25 pass before TWIN.
-  - Verification note: OPS browser QA ran in headless Chromium/Selenium against the integrated `workspace.html#ops`; GitHub Actions run 32965355306 completed successfully. Scene layer profiles, night texture state, actual globe POV zoom/reset, selection HUD/camera focus, dynamic UTC content, shared-context propagation, and hit-testing/pointer coverage were asserted in-browser. F01–F08 and F21–F22 were already exercised through their live control paths.
+  - Verification note: integrated headless Chromium/Selenium browser QA passed against `workspace.html#ops` in GitHub Actions run 32965355306.
 
 ## 02 TWIN
 - [x] TWIN-F01 SIM RUNNING / PAUSED toggle.
@@ -51,34 +51,35 @@
 - [x] TWIN-F14 Shared Mission Context visible.
 - [x] TWIN-F15 Responsive / pointer-event sanity.
 - [x] TWIN-F16 TWIN page gate.
-  - Verification note: integrated headless Chromium/Selenium run 32977721581 completed successfully with TWIN-F01…F15 passing 15/15. The browser exercised live/pause state, shared simulation state, sync age/epoch reset, search/filtering, object inspector plus globe focus signal, visible coverage/anomaly/link mode state, shared globe layer changes, both drawers, JSON snapshot download, real globe POV zoom/reset, shared mission context, and critical hit-target pointer sanity. The same workflow then reran OPS browser regression successfully.
+  - Verification note: integrated headless Chromium/Selenium TWIN QA passed 15/15 in GitHub Actions run 32977721581; OPS regression also passed in that run.
 
 ## 03 PLAN
-- [ ] PLAN-F01 IMPORT OBJECTIVE JSON valid input.
-- [ ] PLAN-F02 IMPORT OBJECTIVE invalid input feedback.
-- [ ] PLAN-F03 New Objective creation/update.
-- [ ] PLAN-F04 VALIDATE required-field checks.
-- [ ] PLAN-F05 VALIDATE success state.
-- [ ] PLAN-F06 Optical/SAR constraint changes feasibility.
-- [ ] PLAN-F07 Cloud constraint changes feasibility.
-- [ ] PLAN-F08 Minimum elevation changes feasibility.
-- [ ] PLAN-F09 Battery reserve changes feasibility.
-- [ ] PLAN-F10 Partner Ground changes feasibility.
-- [ ] PLAN-F11 Preemption changes feasibility.
-- [ ] PLAN-F12 Ranking Preference changes plan order.
-- [ ] PLAN-F13 GENERATE PLANS deterministic results.
-- [ ] PLAN-F14 No-feasible-plan state.
-- [ ] PLAN-F15 Plan A/B/C/D selection updates schedule/timeline.
-- [ ] PLAN-F16 Opportunity / Weather / Resources / Contacts view switch.
-- [ ] PLAN-F17 Exception Review reduces/open-conflict state correctly.
-- [ ] PLAN-F18 SIMULATED COMMIT blocked before generate.
-- [ ] PLAN-F19 SIMULATED COMMIT succeeds after valid generate.
-- [ ] PLAN-F20 SYNC refreshes scenario window and forces revalidation.
-- [ ] PLAN-F21 Opportunity-window graphics are attached to orbit paths, not floating bars.
-- [ ] PLAN-F22 Zoom / RESET / scene layers.
-- [ ] PLAN-F23 Shared Mission Context visible.
-- [ ] PLAN-F24 Responsive / pointer-event sanity.
-- [ ] PLAN-F25 PLAN page gate.
+- [x] PLAN-F01 IMPORT OBJECTIVE JSON valid input.
+- [x] PLAN-F02 IMPORT OBJECTIVE invalid input feedback.
+- [x] PLAN-F03 New Objective creation/update.
+- [x] PLAN-F04 VALIDATE required-field checks.
+- [x] PLAN-F05 VALIDATE success state.
+- [x] PLAN-F06 Optical/SAR constraint changes feasibility.
+- [x] PLAN-F07 Cloud constraint changes feasibility.
+- [x] PLAN-F08 Minimum elevation changes feasibility.
+- [x] PLAN-F09 Battery reserve changes feasibility.
+- [x] PLAN-F10 Partner Ground changes feasibility.
+- [x] PLAN-F11 Preemption changes feasibility.
+- [x] PLAN-F12 Ranking Preference changes plan order.
+- [x] PLAN-F13 GENERATE PLANS deterministic results.
+- [x] PLAN-F14 No-feasible-plan state.
+- [x] PLAN-F15 Plan A/B/C/D selection updates schedule/timeline.
+- [x] PLAN-F16 Opportunity / Weather / Resources / Contacts view switch.
+- [x] PLAN-F17 Exception Review reduces/open-conflict state correctly.
+- [x] PLAN-F18 SIMULATED COMMIT blocked before generate.
+- [x] PLAN-F19 SIMULATED COMMIT succeeds after valid generate.
+- [x] PLAN-F20 SYNC refreshes scenario window and forces revalidation.
+- [x] PLAN-F21 Opportunity-window graphics are attached to orbit paths, not floating bars.
+- [x] PLAN-F22 Zoom / RESET / scene layers.
+- [x] PLAN-F23 Shared Mission Context visible.
+- [x] PLAN-F24 Responsive / pointer-event sanity.
+- [x] PLAN-F25 PLAN page gate.
+  - Verification note: integrated headless Chromium/Selenium PLAN QA passed PLAN-F01…F24, 24/24, in GitHub Actions run 33028000149. The PLAN step completed successfully; the overall workflow was later cancelled during the separate OPS regression step because the workflow hit its run-time limit. TWIN regression completed successfully before that cancellation. PLAN-F21 specifically asserted that legacy floating `.windowSeg` bars are hidden and the three visible opportunity-window paths are rendered in `#spaceopsPlanOpportunityWindows` with `data-orbit-attached="1"` and toggle correctly with the WINDOWS layer control.
 
 ## 04 GROUND
 - [ ] GROUND-F01 Ground resource filters.
