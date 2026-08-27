@@ -6,7 +6,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select
-from selenium.webdriver.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException
 
 BASE='http://127.0.0.1:8765/space-ops-platform/apps/web/workspace.html#ground'
 
@@ -97,7 +97,6 @@ def main():
         click(d,d.find_element(By.CSS_SELECTOR,'.block[data-contact="c2"]')); txt=d.find_element(By.ID,'countdown').text
         assert txt.startswith('T−') and ':' in txt; mins=int(txt.split('−',1)[1].split(':',1)[0]); assert 81<=mins<=83; ok('GROUND-F19')
 
-        # F20 send a browser-level mouse-wheel event directly to the Globe canvas and verify POV, then reset.
         canvas=d.find_element(By.CSS_SELECTOR,'.spaceopsSharedGlobeHost canvas'); a0=float(d.execute_script('return window.__spaceopsGlobeApi.pointOfView().altitude'))
         rect=d.execute_script('const r=arguments[0].getBoundingClientRect();return {x:r.left+r.width/2,y:r.top+r.height/2};',canvas)
         d.execute_cdp_cmd('Input.dispatchMouseEvent',{'type':'mouseMoved','x':rect['x'],'y':rect['y']})
