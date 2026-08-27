@@ -15,8 +15,7 @@ def click(d,e,p=.15):
     d.execute_script("arguments[0].scrollIntoView({block:'center',inline:'center'});",e); time.sleep(.05); e.click(); time.sleep(p)
 def set_select(d,eid,value): Select(d.find_element(By.ID,eid)).select_by_visible_text(value); time.sleep(.15)
 def last_toast(d):
-    xs=d.find_elements(By.CSS_SELECTOR,'.toast')
-    return xs[-1].text if xs else (d.execute_script("return window.__engQaLastToast||''") or '')
+    return d.execute_script("return window.__engQaLastToast||''") or ''
 def top_job(d): return d.find_elements(By.CSS_SELECTOR,'#jobsBody tr')[0]
 def state(row): return row.find_element(By.CSS_SELECTOR,'.state').text.strip()
 def wait_complete(d,row): WebDriverWait(d,3).until(lambda _ : state(row)=='COMPLETE')

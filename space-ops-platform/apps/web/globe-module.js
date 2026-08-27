@@ -329,7 +329,7 @@ function currentProfile() {
 }
 
 function focusObject(id) {
-  if (key !== 'ops') return;
+  if (key !== 'ops' && key !== 'eng') return;
   const sat = sats.find(s => s.id === id);
   if (sat) {
     shared.pov = {lat:sat.lat,lng:sat.lng,altitude:1.52};
