@@ -105,7 +105,9 @@ def main():
         ctx=d.find_element(By.CSS_SELECTOR,'[data-spaceops-shared-context]').text; assert 'QA-PLAN-001' in ctx and 'Singapore PLAN QA' in ctx; ok('PLAN-F23')
 
         for eid in ['validateBtn','generateBtn','commitBtn','syncBtn','newMissionBtn']:
-            e=d.find_element(By.ID,eid); assert e.is_displayed() and e.is_enabled(); r=d.execute_script("const r=arguments[0].getBoundingClientRect();const x=r.left+r.width/2,y=r.top+r.height/2;const h=document.elementFromPoint(x,y);return h===arguments[0]||arguments[0].contains(h);",e); assert r,eid
+            e=d.find_element(By.ID,eid); assert e.is_displayed() and e.is_enabled()
+            d.execute_script("arguments[0].scrollIntoView({block:'center',inline:'center'});",e); time.sleep(.08)
+            r=d.execute_script("const r=arguments[0].getBoundingClientRect();const x=r.left+r.width/2,y=r.top+r.height/2;const h=document.elementFromPoint(x,y);return x>=0&&y>=0&&x<innerWidth&&y<innerHeight&&(h===arguments[0]||arguments[0].contains(h));",e); assert r,eid
         ok('PLAN-F24')
         print('PLAN QA PASS',len(passed),'controls:',','.join(passed))
     finally: d.quit()
