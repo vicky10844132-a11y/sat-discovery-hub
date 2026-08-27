@@ -103,9 +103,12 @@ def main():
         before=int(d.find_element(By.ID,'conflictMetric').text); b=d.find_element(By.CSS_SELECTOR,'[data-exception="maintenance"] .resolve'); click(d,b)
         assert int(d.find_element(By.ID,'conflictMetric').text)==before-1 and 'resolved' in d.find_element(By.CSS_SELECTOR,'[data-exception="maintenance"]').get_attribute('class'); ok('GROUND-F17')
 
-        # F18 sync regenerates scenario epoch/window and visible feedback
-        old_epoch=d.find_element(By.ID,'scenarioEpochText').text; time.sleep(1.05); click(d,d.find_element(By.ID,'syncBtn')); time.sleep(.8)
-        new_epoch=d.find_element(By.ID,'scenarioEpochText').text; assert new_epoch!=old_epoch and 'Scenario synchronized' in last_toast(d); ok('GROUND-F18')
+        # F18 sync regenerates scenario epoch/window; verify durable visible state, not ephemeral toast
+        old_epoch=d.find_element(By.ID,'scenarioEpochText').text; old_window=d.find_element(By.CSS_SELECTOR,'.contact[data-contact="c2"] p').text; time.sleep(1.05); click(d,d.find_element(By.ID,'syncBtn'))
+        WebDriverWait(d,8).until(lambda x:x.find_element(By.ID,'scenarioEpochText').text!=old_epoch)
+        new_epoch=d.find_element(By.ID,'scenarioEpochText').text; new_window=d.find_element(By.CSS_SELECTOR,'.contact[data-contact="c2"] p').text
+        WebDriverWait(d,8).until(lambda x:x.find_element(By.ID,'syncBtn').is_enabled())
+        assert new_epoch!=old_epoch and new_window!=old_window; ok('GROUND-F18')
 
         # F19 countdown follows selected contact's scenario offset (c2 ~83 minutes)
         click(d,d.find_element(By.CSS_SELECTOR,'.block[data-contact="c2"]')); txt=d.find_element(By.ID,'countdown').text
