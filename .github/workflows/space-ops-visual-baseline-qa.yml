@@ -1,0 +1,45 @@
+name: Space Ops V1 Visual Baseline QA
+
+on:
+  push:
+    branches: [space-ops-dev]
+    paths:
+      - 'space-ops-platform/apps/web/**'
+      - 'space-ops-platform/tests/visual_baseline_qa.py'
+      - '.github/workflows/space-ops-visual-baseline-qa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  visual-baseline-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install selenium pillow
+      - name: Prepare frozen V1 worktree
+        run: |
+          git fetch origin space-ops-v1:refs/remotes/origin/space-ops-v1
+          git worktree add /tmp/spaceops-v1 refs/remotes/origin/space-ops-v1
+      - name: Start dev and V1 servers
+        run: |
+          python -m http.server 8765 --bind 127.0.0.1 > /tmp/spaceops-dev-http.log 2>&1 &
+          (cd /tmp/spaceops-v1 && python -m http.server 8766 --bind 127.0.0.1 > /tmp/spaceops-v1-http.log 2>&1) &
+          python - <<'PY'
+          import time, urllib.request
+          for url in ['http://127.0.0.1:8765/space-ops-platform/apps/web/workspace.html#ops','http://127.0.0.1:8766/space-ops-platform/apps/web/workspace.html#ops']:
+              for _ in range(40):
+                  try:
+                      urllib.request.urlopen(url, timeout=1); break
+                  except Exception: time.sleep(.2)
+              else: raise SystemExit('server failed '+url)
+          PY
+      - name: Compare non-PLAN visual chrome against frozen V1
+        run: python -u space-ops-platform/tests/visual_baseline_qa.py
