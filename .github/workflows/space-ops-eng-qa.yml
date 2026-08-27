@@ -16,7 +16,7 @@ permissions:
 jobs:
   eng-browser-qa:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 5
     steps:
       - name: Checkout space-ops-dev
         uses: actions/checkout@v4
@@ -55,4 +55,6 @@ jobs:
           PY
 
       - name: Run ENG F01-F20 integrated browser QA
-        run: python space-ops-platform/tests/eng_browser_qa_runner.py
+        run: |
+          set -o pipefail
+          timeout --signal=TERM 150s python -u space-ops-platform/tests/eng_browser_qa_runner.py
