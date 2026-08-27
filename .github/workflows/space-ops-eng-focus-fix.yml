@@ -26,3 +26,4 @@ jobs:
           curl --fail http://127.0.0.1:8765/space-ops-platform/apps/web/workspace.html >/dev/null
       - name: Run ENG browser QA after focused repair
         run: python space-ops-platform/tests/eng_browser_qa.py
+      # verify parent-shared globe state after focus
