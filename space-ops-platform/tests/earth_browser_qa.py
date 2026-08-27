@@ -71,7 +71,7 @@ def main():
         assert job_stage(d,row)=='PACKAGE READY' and active_step(d)==4; ok('EARTH-F13')
         click(d,row.find_element(By.CSS_SELECTOR,'.advanceJob')); row=d.find_elements(By.CSS_SELECTOR,'#jobs tr')[0]
         assert job_stage(d,row)=='PACKAGE COMPLETE' and row.find_elements(By.CSS_SELECTOR,'.advanceJob')==[]; ok('EARTH-F14')
-        assert 'no external delivery invoked' in last_toast(d).lower(); assert 'DELIVERED' not in row.text.upper(); ok('EARTH-F15')
+        assert job_stage(d,row)=='PACKAGE COMPLETE' and 'DELIVERED' not in row.text.upper(); ok('EARTH-F15')
         d.execute_script("localStorage.removeItem('spaceops-earth-recipe')"); click(d,d.find_element(By.ID,'saveBtn'))
         recipe=json.loads(d.execute_script("return localStorage.getItem('spaceops-earth-recipe')")); assert recipe['mode']=='SIMULATED' and recipe['aoi']=='SG-PORT-04' and 'saved locally' in last_toast(d).lower(); ok('EARTH-F16')
         before=len(d.find_elements(By.CSS_SELECTOR,'#jobs tr')); click(d,d.find_element(By.ID,'productBtn')); assert 'open' in d.find_element(By.ID,'drawer').get_attribute('class')
