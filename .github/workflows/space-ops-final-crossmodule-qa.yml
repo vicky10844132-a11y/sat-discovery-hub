@@ -1,0 +1,40 @@
+name: Space Ops Final Cross-Module QA
+
+on:
+  push:
+    branches: [space-ops-dev]
+    paths:
+      - 'space-ops-platform/apps/web/**'
+      - 'space-ops-platform/tests/final_crossmodule_qa.py'
+      - '.github/workflows/space-ops-final-crossmodule-qa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  final-crossmodule-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install selenium
+      - name: Start local server
+        run: |
+          python -m http.server 8765 --bind 127.0.0.1 > /tmp/spaceops-http.log 2>&1 &
+          python - <<'PY'
+          import time, urllib.request
+          for _ in range(30):
+              try:
+                  urllib.request.urlopen('http://127.0.0.1:8765/space-ops-platform/apps/web/workspace.html#ops', timeout=1)
+                  break
+              except Exception:
+                  time.sleep(.2)
+          else:
+              raise SystemExit('server failed')
+          PY
+      - name: Run final cross-module navigation/context QA
+        run: python -u space-ops-platform/tests/final_crossmodule_qa.py
