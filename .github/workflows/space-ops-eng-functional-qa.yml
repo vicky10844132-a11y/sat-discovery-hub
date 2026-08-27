@@ -27,4 +27,4 @@ jobs:
           curl --fail http://127.0.0.1:8765/space-ops-platform/apps/web/workspace.html >/dev/null
       - name: Run ENG browser QA
         run: python space-ops-platform/tests/eng_browser_qa.py
-      # Functional trigger marker: 2026-08-27
+      # Functional trigger marker: 2026-08-27 ENG focus fix verification
