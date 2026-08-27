@@ -108,29 +108,30 @@
   - Verification note: integrated headless Chromium/Selenium GROUND QA passed GROUND-F01…F22, 22/22, in GitHub Actions run 33038448441. The browser test exercised filters, sorting, resource/contact/timeline selection, all four scene layer controls, managed reservation and external quote state transitions including repeat prevention, exception resolution, scenario regeneration, runtime countdown, Globe zoom/reset, shared mission context, and pointer-event hit testing.
 
 ## 05 EARTH
-- [ ] EARTH-F01 Source type tabs.
-- [ ] EARTH-F02 Source mode filters.
-- [ ] EARTH-F03 Source selection updates Source Inspector.
-- [ ] EARTH-F04 EO/AOI layer toggle.
-- [ ] EARTH-F05 Weather layer toggle.
-- [ ] EARTH-F06 AIS layer toggle.
-- [ ] EARTH-F07 Canonical AOI switch updates scene geometry.
-- [ ] EARTH-F08 Invalid/unsupported AOI is blocked or clearly handled.
-- [ ] EARTH-F09 COMPARE opens/changes comparison view.
-- [ ] EARTH-F10 PREPARE EO+AIS state.
-- [ ] EARTH-F11 RUN PROTOTYPE PRODUCT creates job.
-- [ ] EARTH-F12 Pipeline PROCESSING → QC REVIEW.
-- [ ] EARTH-F13 QC REVIEW → PACKAGE READY.
-- [ ] EARTH-F14 PACKAGE READY → PACKAGE COMPLETE.
-- [ ] EARTH-F15 No external delivery is falsely implied.
-- [ ] EARTH-F16 SAVE RECIPE persists/local feedback.
-- [ ] EARTH-F17 NEW PRODUCT flow.
-- [ ] EARTH-F18 Dark Target connector remains BLOCKED.
-- [ ] EARTH-F19 Exception ACK updates state.
-- [ ] EARTH-F20 SYNC SCENARIO state recompute.
-- [ ] EARTH-F21 Shared Mission Context / AOI consumption.
-- [ ] EARTH-F22 Responsive / pointer-event sanity.
-- [ ] EARTH-F23 EARTH page gate.
+- [x] EARTH-F01 Source type tabs.
+- [x] EARTH-F02 Source mode filters.
+- [x] EARTH-F03 Source selection updates Source Inspector.
+- [x] EARTH-F04 EO/AOI layer toggle.
+- [x] EARTH-F05 Weather layer toggle.
+- [x] EARTH-F06 AIS layer toggle.
+- [x] EARTH-F07 Canonical AOI switch updates scene geometry.
+- [x] EARTH-F08 Invalid/unsupported AOI is blocked or clearly handled.
+- [x] EARTH-F09 COMPARE opens/changes comparison view.
+- [x] EARTH-F10 PREPARE EO+AIS state.
+- [x] EARTH-F11 RUN PROTOTYPE PRODUCT creates job.
+- [x] EARTH-F12 Pipeline PROCESSING → QC REVIEW.
+- [x] EARTH-F13 QC REVIEW → PACKAGE READY.
+- [x] EARTH-F14 PACKAGE READY → PACKAGE COMPLETE.
+- [x] EARTH-F15 No external delivery is falsely implied.
+- [x] EARTH-F16 SAVE RECIPE persists/local feedback.
+- [x] EARTH-F17 NEW PRODUCT flow.
+- [x] EARTH-F18 Dark Target connector remains BLOCKED.
+- [x] EARTH-F19 Exception ACK updates state.
+- [x] EARTH-F20 SYNC SCENARIO state recompute.
+- [x] EARTH-F21 Shared Mission Context / AOI consumption.
+- [x] EARTH-F22 Responsive / pointer-event sanity.
+- [x] EARTH-F23 EARTH page gate.
+  - Verification note: integrated headless Chromium/Selenium EARTH QA passed EARTH-F01…F22, 22/22, in GitHub Actions run 33052518521. The browser test exercised source tabs/modes/selection, EO-weather-AIS layer controls, canonical and invalid AOI handling, compare, EO+AIS preparation, prototype job creation and full PROCESSING → QC REVIEW → PACKAGE READY → PACKAGE COMPLETE lifecycle, explicit non-delivery state, recipe persistence, new-product validation/creation, blocked Dark Target connector behavior, exception acknowledgement, scenario sync/recompute, shared Mission Context/AOI consumption, and pointer-event hit testing.
 
 ## 06 ENG
 - [ ] ENG-F01 Spacecraft selection.
