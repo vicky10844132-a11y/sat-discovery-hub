@@ -33,6 +33,7 @@ def main():
         d.get(BASE); WebDriverWait(d,25).until(EC.frame_to_be_available_and_switch_to_it((By.ID,'frame')))
         wait_js(d,"return document.readyState==='complete'"); wait_js(d,"return !!document.querySelector('#catalog .item')",30)
         wait_js(d,"return document.documentElement.dataset.spaceopsSpecialistRuntime==='1'",30)
+        wait_js(d,"return !!window.__spaceopsGlobeApi",30)
         assert set(visible_items(d))=={'eo-gf7','eo-neo','eo-sar'}
         click(d,d.find_element(By.CSS_SELECTOR,'.tab[data-tab="weather"]')); assert visible_items(d)==['wx-context']
         click(d,d.find_element(By.CSS_SELECTOR,'.tab[data-tab="ais"]')); assert set(visible_items(d))=={'ais-context','ais-dark'}
@@ -44,10 +45,14 @@ def main():
         assert 'SAR-01' in d.find_element(By.ID,'selectedTitle').text and 'SAR' in d.find_element(By.ID,'selectedStats').text
         click(d,d.find_element(By.ID,'inspectBtn')); assert 'open' in d.find_element(By.ID,'drawer').get_attribute('class') and 'SAR-01' in d.find_element(By.ID,'drawerBody').text
         click(d,d.find_element(By.ID,'closeDrawer')); ok('EARTH-F03')
-        for fid,layer,sel in [('EARTH-F04','eo','#fallbackAoi'),('EARTH-F05','wx','.cloud.c1'),('EARTH-F06','ais','.ship.s1')]:
-            b=d.find_element(By.CSS_SELECTOR,f'[data-layer="{layer}"]'); target=d.find_element(By.CSS_SELECTOR,sel)
-            assert 'on' in b.get_attribute('class').split(); click(d,b); assert 'on' not in b.get_attribute('class').split(); assert target.value_of_css_property('display')=='none'
-            click(d,b); assert 'on' in b.get_attribute('class').split(); assert target.value_of_css_property('display')!='none'; ok(fid)
+        for fid,layer,profile_key in [('EARTH-F04','eo','aoi'),('EARTH-F05','wx','weather'),('EARTH-F06','ais','ships')]:
+            b=d.find_element(By.CSS_SELECTOR,f'[data-layer="{layer}"]')
+            assert 'on' in b.get_attribute('class').split()
+            p=d.execute_script("return window.__spaceopsGlobeApi.refreshLayers(true)"); assert bool(p[profile_key])
+            click(d,b); assert 'on' not in b.get_attribute('class').split()
+            p=d.execute_script("return window.__spaceopsGlobeApi.refreshLayers(true)"); assert not bool(p[profile_key])
+            click(d,b); assert 'on' in b.get_attribute('class').split()
+            p=d.execute_script("return window.__spaceopsGlobeApi.refreshLayers(true)"); assert bool(p[profile_key]); ok(fid)
         q=d.find_element(By.ID,'query'); left0=d.find_element(By.ID,'fallbackAoi').value_of_css_property('left')
         set_select(d,'query','SG-TUAS-02'); d.execute_script("arguments[0].dispatchEvent(new Event('change',{bubbles:true}))",q); time.sleep(.15)
         assert 'SG-TUAS-02' in d.find_element(By.ID,'viewStatus').text and d.find_element(By.ID,'fallbackAoi').value_of_css_property('left')!=left0; ok('EARTH-F07')
