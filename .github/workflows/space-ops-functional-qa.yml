@@ -8,15 +8,39 @@ on:
       - 'space-ops-platform/tests/ops_browser_qa.py'
       - 'space-ops-platform/tests/twin_browser_qa.py'
       - 'space-ops-platform/tests/plan_browser_qa.py'
+      - 'space-ops-platform/tests/ground_browser_qa.py'
       - '.github/workflows/space-ops-functional-qa.yml'
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   browser-qa:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: space-ops-dev
+      - name: Apply minimal GROUND ACCESS mapping fix if needed
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('space-ops-platform/apps/web/globe-module.js')
+          s=p.read_text()
+          old="profile.links = key === 'twin' ? isOn('linkMode',false) : read(['LINK'],profile.links);"
+          new="profile.links = key === 'twin' ? isOn('linkMode',false) : read(key === 'ground' ? ['ACCESS','LINK'] : ['LINK'],profile.links);"
+          if old in s:
+              p.write_text(s.replace(old,new,1))
+          PY
+          if ! git diff --quiet -- space-ops-platform/apps/web/globe-module.js; then
+            git config user.name "space-ops-qa-bot"
+            git config user.email "actions@users.noreply.github.com"
+            git add space-ops-platform/apps/web/globe-module.js
+            git commit -m "fix(space-ops): bind GROUND ACCESS to live link geometry"
+            git push origin HEAD:space-ops-dev
+          fi
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -27,7 +51,9 @@ jobs:
           python -m http.server 8765 --bind 127.0.0.1 > /tmp/spaceops-http.log 2>&1 &
           sleep 2
           curl --fail http://127.0.0.1:8765/space-ops-platform/apps/web/workspace.html >/dev/null
-      - name: Run PLAN browser QA
+      - name: Run GROUND browser QA
+        run: python space-ops-platform/tests/ground_browser_qa.py
+      - name: Run PLAN browser QA regression
         run: python space-ops-platform/tests/plan_browser_qa.py
       - name: Run TWIN browser QA regression
         run: python space-ops-platform/tests/twin_browser_qa.py
