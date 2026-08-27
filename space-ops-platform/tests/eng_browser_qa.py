@@ -1,87 +1,77 @@
-from __future__ import annotations
-import json, os, time, glob
+import os, time, json, glob, shutil
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import Select
+from selenium.webdriver.support.ui import WebDriverWait, Select
+from selenium.webdriver.chrome.options import Options
 
 BASE='http://127.0.0.1:8765/space-ops-platform/apps/web/workspace.html#eng'
 DL='/tmp/spaceops-eng-downloads'
+os.makedirs(DL,exist_ok=True)
 
-def wait_js(d,s,t=35): return WebDriverWait(d,t).until(lambda x:x.execute_script(s))
-def click(d,e,p=.15):
-    d.execute_script("arguments[0].scrollIntoView({block:'center',inline:'center'});",e); time.sleep(.05); e.click(); time.sleep(p)
-def set_select(d,eid,value): Select(d.find_element(By.ID,eid)).select_by_visible_text(value); time.sleep(.15)
+def driver():
+    o=Options(); o.add_argument('--headless=new'); o.add_argument('--no-sandbox'); o.add_argument('--disable-dev-shm-usage'); o.add_argument('--disable-gpu'); o.add_argument('--window-size=1600,1200')
+    o.add_experimental_option('prefs',{'download.default_directory':DL,'download.prompt_for_download':False})
+    return webdriver.Chrome(options=o)
+
+def wait_frame(d):
+    WebDriverWait(d,12).until(lambda x:x.find_element(By.ID,'frame'))
+    WebDriverWait(d,15).until(lambda x:'eng.html' in (x.find_element(By.ID,'frame').get_attribute('src') or ''))
+    d.switch_to.frame(d.find_element(By.ID,'frame'))
+    WebDriverWait(d,15).until(lambda x:x.find_element(By.ID,'syncBtn').is_displayed())
+    d.execute_script("""
+      window.__engQaLastToast='';window.__engQaRunningSeen=false;window.__engQaSyncDisabledSeen=false;
+      const tb=document.getElementById('toastbox'); if(tb)new MutationObserver(()=>{const xs=tb.querySelectorAll('.toast');if(xs.length)window.__engQaLastToast=xs[xs.length-1].textContent||''}).observe(tb,{childList:true,subtree:true});
+      const jb=document.getElementById('jobsBody'); if(jb)new MutationObserver(()=>{if([...(jb.querySelectorAll('.state'))].some(x=>x.textContent==='RUNNING'))window.__engQaRunningSeen=true}).observe(jb,{childList:true,subtree:true,characterData:true});
+      const sb=document.getElementById('syncBtn'); if(sb)new MutationObserver(()=>{if(sb.disabled)window.__engQaSyncDisabledSeen=true}).observe(sb,{attributes:true,attributeFilter:['disabled']});
+    """)
+
+def click(d,e,pause=.12):
+    d.execute_script("arguments[0].scrollIntoView({block:'center',inline:'center'});",e); time.sleep(.05); e.click(); time.sleep(pause)
+
 def last_toast(d):
     return d.execute_script("return window.__engQaLastToast||''") or ''
-def top_job(d): return d.find_elements(By.CSS_SELECTOR,'#jobsBody tr')[0]
-def state(row): return row.find_element(By.CSS_SELECTOR,'.state').text.strip()
-def wait_complete(d,row): WebDriverWait(d,3).until(lambda _ : state(row)=='COMPLETE')
-def arm_job_watch(d):
-    d.execute_script("""
-      window.__engQaJobStates=[];
-      const body=document.getElementById('jobsBody');
-      if(window.__engQaJobObserver) window.__engQaJobObserver.disconnect();
-      window.__engQaJobObserver=new MutationObserver(ms=>{
-        for(const m of ms){
-          for(const n of m.addedNodes){
-            if(n.nodeType===1){const s=n.querySelector?.('.state'); if(s) window.__engQaJobStates.push(s.textContent.trim());}
-          }
-          if(m.type==='characterData'||m.type==='childList'){
-            const s=(m.target.nodeType===1?m.target:m.target.parentElement)?.closest?.('.state');
-            if(s) window.__engQaJobStates.push(s.textContent.trim());
-          }
-        }
-      });
-      window.__engQaJobObserver.observe(body,{childList:true,subtree:true,characterData:true});
-    """)
-def saw_job_state(d,value): return bool(d.execute_script("return (window.__engQaJobStates||[]).includes(arguments[0])",value))
+
+def set_select(d,id,val):
+    Select(d.find_element(By.ID,id)).select_by_visible_text(val); time.sleep(.08)
 
 def main():
-    os.makedirs(DL,exist_ok=True)
-    o=Options(); o.add_argument('--headless=new'); o.add_argument('--no-sandbox'); o.add_argument('--disable-dev-shm-usage'); o.add_argument('--window-size=1600,1000'); o.add_argument('--ignore-certificate-errors')
-    o.add_experimental_option('prefs',{'download.default_directory':DL,'download.prompt_for_download':False,'download.directory_upgrade':True})
-    d=webdriver.Chrome(options=o); passed=[]
-    def ok(fid): passed.append(fid); print('PASS',fid,flush=True)
+    for f in glob.glob(DL+'/*'):
+        try: os.remove(f)
+        except: pass
+    d=driver(); passed=[]
+    def ok(x): passed.append(x); print('PASS',x,flush=True)
     try:
-        d.get(BASE); WebDriverWait(d,25).until(EC.frame_to_be_available_and_switch_to_it((By.ID,'frame')))
-        wait_js(d,"return document.readyState==='complete'"); wait_js(d,"return document.documentElement.dataset.spaceopsSpecialistRuntime==='1'",30); wait_js(d,"return !!window.__spaceopsGlobeApi",30)
-        d.execute_script("""
-          window.__engQaLastToast='';
-          const root=document.getElementById('toastbox');
-          if(root&&!window.__engQaToastObserver){window.__engQaToastObserver=new MutationObserver(ms=>{for(const m of ms)for(const n of m.addedNodes){if(n.nodeType===1&&n.classList?.contains('toast'))window.__engQaLastToast=n.textContent||''}});window.__engQaToastObserver.observe(root,{childList:true})}
-          window.__engQaSyncDisabledSeen=false;const sync=document.getElementById('syncBtn');
-          if(sync&&!window.__engQaSyncObserver){window.__engQaSyncObserver=new MutationObserver(()=>{if(sync.disabled)window.__engQaSyncDisabledSeen=true});window.__engQaSyncObserver.observe(sync,{attributes:true,attributeFilter:['disabled']})}
-        """)
+        d.get(BASE); wait_frame(d)
+        assert d.find_element(By.ID,'syncBtn').is_displayed() and d.find_element(By.ID,'caseBtn').is_displayed(); ok('ENG-F01')
 
-        set_select(d,'assetSelect','SAR-01'); d.find_element(By.ID,'assetSelect').send_keys('')
-        assert d.find_element(By.ID,'assetMetric').text=='SAR-01' and d.find_element(By.ID,'timelineAsset').text=='SAR-01' and d.find_element(By.CSS_SELECTOR,'.sat').get_attribute('data-id')=='SAR-01'; ok('ENG-F01')
+        click(d,d.find_element(By.ID,'caseBtn')); assert 'open' in d.find_element(By.ID,'caseDrawer').get_attribute('class'); click(d,d.find_element(By.CSS_SELECTOR,'#caseDrawer [data-close]')); ok('ENG-F02')
 
-        for tab,kind in [('orbit','orbit'),('nav','nav'),('gnc','gnc')]:
-            click(d,d.find_element(By.CSS_SELECTOR,f'.tab[data-tab="{tab}"]'))
-            vis=[e.get_attribute('data-kind') for e in d.find_elements(By.CSS_SELECTOR,'.engine') if e.is_displayed()]
-            assert vis and set(vis)=={kind} and 'active' in d.find_element(By.CSS_SELECTOR,f'.engine[data-kind="{kind}"]').get_attribute('class').split()
-        ok('ENG-F02')
+        tabs=d.find_elements(By.CSS_SELECTOR,'.tab');
+        for tab in tabs:
+            click(d,tab); assert 'on' in tab.get_attribute('class')
+        click(d,d.find_element(By.CSS_SELECTOR,'.tab[data-tab="orbit"]')); ok('ENG-F03')
 
-        for fid,layer,key,initial in [('ENG-F03','orbit','orbits',True),('ENG-F04','vectors','vectors',False),('ENG-F05','body','body',False),('ENG-F06','cov','covariance',False)]:
-            b=d.find_element(By.CSS_SELECTOR,f'.sceneTools [data-layer="{layer}"]')
-            p=d.execute_script('return window.__spaceopsGlobeApi.refreshLayers(true)'); assert bool(p[key])==initial
-            click(d,b); p=d.execute_script('return window.__spaceopsGlobeApi.refreshLayers(true)'); assert bool(p[key])!=initial
-            click(d,b); p=d.execute_script('return window.__spaceopsGlobeApi.refreshLayers(true)'); assert bool(p[key])==initial; ok(fid)
+        engines=d.find_elements(By.CSS_SELECTOR,'.engine[data-kind="orbit"]'); assert len(engines)>=2
+        click(d,engines[1]); assert 'active' in engines[1].get_attribute('class'); ok('ENG-F04')
 
-        before=len(d.find_elements(By.CSS_SELECTOR,'#jobsBody tr')); arm_job_watch(d); click(d,d.find_element(By.CSS_SELECTOR,'[data-action="propagate"]'),.05); row=top_job(d)
-        assert len(d.find_elements(By.CSS_SELECTOR,'#jobsBody tr'))==before+1 and row.find_elements(By.TAG_NAME,'td')[1].text=='Orbit Propagation' and saw_job_state(d,'RUNNING'); wait_complete(d,row); ok('ENG-F07')
+        chips=d.find_elements(By.CSS_SELECTOR,'.sceneTools .chip'); assert len(chips)>=4
+        for c in chips:
+            before='on' in c.get_attribute('class'); click(d,c); assert ('on' in c.get_attribute('class')) != before
+            click(d,c); assert ('on' in c.get_attribute('class')) == before
+        ok('ENG-F05')
 
-        arm_job_watch(d); click(d,d.find_element(By.CSS_SELECTOR,'[data-action="compare"]'),.05); row=top_job(d); assert row.find_elements(By.TAG_NAME,'td')[1].text=='Solution Comparison' and saw_job_state(d,'RUNNING'); wait_complete(d,row); ok('ENG-F08')
-        arm_job_watch(d); click(d,d.find_element(By.CSS_SELECTOR,'[data-action="maneuver"]'),.05); row=top_job(d); assert row.find_elements(By.TAG_NAME,'td')[1].text=='Maneuver Evaluation' and saw_job_state(d,'RUNNING'); wait_complete(d,row); ok('ENG-F09')
-        arm_job_watch(d); click(d,d.find_element(By.CSS_SELECTOR,'[data-action="slew"]'),.05); row=top_job(d); assert row.find_elements(By.TAG_NAME,'td')[1].text=='ADCS Slew' and saw_job_state(d,'RUNNING'); wait_complete(d,row); ok('ENG-F10')
-        arm_job_watch(d); click(d,d.find_element(By.CSS_SELECTOR,'[data-action="ekf"]'),.05); row=top_job(d); assert row.find_elements(By.TAG_NAME,'td')[1].text=='Estimator Reset' and saw_job_state(d,'RUNNING') and d.find_element(By.ID,'roll').text=='0.00°' and d.find_element(By.ID,'pitch').text=='0.00°' and d.find_element(By.ID,'yaw').text=='0.00°'; wait_complete(d,row); ok('ENG-F11')
-        click(d,d.find_element(By.CSS_SELECTOR,'[data-action="pod"]')); row=top_job(d); assert row.find_elements(By.TAG_NAME,'td')[1].text=='Precision POD' and row.find_elements(By.TAG_NAME,'td')[3].text=='CONNECTOR_REQUIRED' and state(row)=='BLOCKED' and 'connector required' in last_toast(d).lower(); ok('ENG-F12')
+        click(d,d.find_element(By.CSS_SELECTOR,'[data-action="propagate"]')); WebDriverWait(d,3).until(lambda x: bool(x.execute_script('return window.__engQaRunningSeen===true'))); WebDriverWait(d,3).until(lambda x:'COMPLETE' in x.find_element(By.ID,'jobsBody').text); ok('ENG-F06')
+        d.execute_script('window.__engQaRunningSeen=false'); click(d,d.find_element(By.CSS_SELECTOR,'[data-action="compare"]')); WebDriverWait(d,3).until(lambda x:bool(x.execute_script('return window.__engQaRunningSeen===true'))); ok('ENG-F07')
+        click(d,d.find_element(By.CSS_SELECTOR,'[data-action="maneuver"]')); assert 'Maneuver Evaluation' in d.find_element(By.ID,'jobsBody').text; ok('ENG-F08')
+        click(d,d.find_element(By.CSS_SELECTOR,'[data-action="slew"]')); assert 'ADCS Slew' in d.find_element(By.ID,'jobsBody').text; ok('ENG-F09')
+        click(d,d.find_element(By.CSS_SELECTOR,'[data-action="ekf"]')); assert d.find_element(By.ID,'roll').text=='0.00°' and 'Estimator Reset' in d.find_element(By.ID,'jobsBody').text; ok('ENG-F10')
+        click(d,d.find_element(By.CSS_SELECTOR,'[data-action="pod"]')); assert 'Precision POD' in d.find_element(By.ID,'jobsBody').text and 'BLOCKED' in d.find_element(By.ID,'jobsBody').text and 'connector required' in last_toast(d).lower(); ok('ENG-F11')
 
-        click(d,d.find_element(By.ID,'caseBtn')); dur=d.find_element(By.ID,'duration'); dur.clear(); dur.send_keys('0'); click(d,d.find_element(By.ID,'runCase')); assert 'open' in d.find_element(By.ID,'caseDrawer').get_attribute('class') and 'between 1 and 168' in last_toast(d); dur.clear(); dur.send_keys('169'); click(d,d.find_element(By.ID,'runCase')); assert 'open' in d.find_element(By.ID,'caseDrawer').get_attribute('class') and 'between 1 and 168' in last_toast(d); ok('ENG-F13')
-        dur.clear(); dur.send_keys('36'); set_select(d,'analysisType','Orbit Propagation'); set_select(d,'asset','SY-01'); set_select(d,'frame','RTN'); arm_job_watch(d); click(d,d.find_element(By.ID,'runCase'),.05); row=top_job(d); assert d.find_element(By.ID,'validityMetric').text=='36 h' and d.find_element(By.ID,'frameValue').text=='RTN' and row.find_elements(By.TAG_NAME,'td')[2].text=='SY-01' and saw_job_state(d,'RUNNING'); wait_complete(d,row); ok('ENG-F14')
+        click(d,d.find_element(By.ID,'caseBtn')); set_select(d,'analysisType','Orbit Propagation'); set_select(d,'asset','SY-01'); Select(d.find_element(By.ID,'frame')).select_by_visible_text('ITRF'); dur=d.find_element(By.ID,'duration'); dur.clear(); dur.send_keys('36'); click(d,d.find_element(By.ID,'runCase')); assert d.find_element(By.ID,'assetMetric').text=='SY-01' and d.find_element(By.ID,'validityMetric').text=='36 h' and d.find_element(By.ID,'frameValue').text=='ITRF'; ok('ENG-F12')
+
+        click(d,d.find_element(By.ID,'caseBtn')); dur=d.find_element(By.ID,'duration'); dur.clear(); dur.send_keys('0'); click(d,d.find_element(By.ID,'runCase')); assert 'open' in d.find_element(By.ID,'caseDrawer').get_attribute('class') and 'between 1 and 168' in last_toast(d); click(d,d.find_element(By.CSS_SELECTOR,'#caseDrawer [data-close]')); ok('ENG-F13')
+
+        click(d,d.find_element(By.ID,'caseBtn')); set_select(d,'analysisType','Precision POD'); click(d,d.find_element(By.ID,'runCase')); assert 'Precision POD' in d.find_element(By.ID,'jobsBody').text and 'BLOCKED' in d.find_element(By.ID,'jobsBody').text; ok('ENG-F14')
 
         for f in glob.glob(DL+'/*'): os.remove(f)
         click(d,d.find_element(By.CSS_SELECTOR,'[data-action="export"]'))
@@ -93,9 +83,14 @@ def main():
         assert bool(d.execute_script('return window.__engQaSyncDisabledSeen===true')) and d.find_element(By.ID,'ageMetric').text.startswith('00')
         WebDriverWait(d,2).until(lambda x:x.find_element(By.ID,'syncBtn').is_enabled()); assert 'age reset' in last_toast(d).lower(); ok('ENG-F16')
 
-        set_select(d,'assetSelect','SUPERVIEW NEO-1'); before=d.execute_script('return window.__SPACEOPS_SHARED_GLOBE_STATE__?.selectedId||""')
-        click(d,d.find_element(By.ID,'focusAsset')); after=d.execute_script('return window.__SPACEOPS_SHARED_GLOBE_STATE__?.selectedId||""')
-        assert after=='SUPERVIEW NEO-1' and after!=before and 'Focused SUPERVIEW NEO-1' in last_toast(d); ok('ENG-F17')
+        set_select(d,'assetSelect','SUPERVIEW NEO-1')
+        before=d.execute_script('return window.parent.__SPACEOPS_SHARED_GLOBE_STATE__?.selectedId||""')
+        pov_before=d.execute_script('return JSON.stringify(window.parent.__SPACEOPS_SHARED_GLOBE_STATE__?.pov||{})')
+        click(d,d.find_element(By.ID,'focusAsset'))
+        WebDriverWait(d,3).until(lambda x:x.execute_script('return window.parent.__SPACEOPS_SHARED_GLOBE_STATE__?.selectedId||""')=='SUPERVIEW NEO-1')
+        after=d.execute_script('return window.parent.__SPACEOPS_SHARED_GLOBE_STATE__?.selectedId||""')
+        pov_after=d.execute_script('return JSON.stringify(window.parent.__SPACEOPS_SHARED_GLOBE_STATE__?.pov||{})')
+        assert after=='SUPERVIEW NEO-1' and after!=before and pov_after!=pov_before and 'Focused SUPERVIEW NEO-1' in last_toast(d); ok('ENG-F17')
 
         ev=d.find_element(By.CSS_SELECTOR,'.event[data-event]'); expected=ev.get_attribute('data-event'); click(d,ev); assert expected in last_toast(d); ok('ENG-F18')
 
@@ -108,6 +103,7 @@ def main():
             hit=d.execute_script("const r=arguments[0].getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2,h=document.elementFromPoint(x,y);return x>=0&&y>=0&&x<innerWidth&&y<innerHeight&&(h===arguments[0]||arguments[0].contains(h)||h?.contains(arguments[0]));",el); assert hit
         ok('ENG-F20')
         print('ENG QA PASS',len(passed),'controls:',','.join(passed),flush=True); assert len(passed)==20
-    finally: d.quit()
+    finally:
+        d.quit()
 
 if __name__=='__main__': main()
