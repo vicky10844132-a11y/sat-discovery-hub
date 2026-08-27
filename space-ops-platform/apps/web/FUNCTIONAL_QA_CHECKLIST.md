@@ -134,30 +134,31 @@
   - Verification note: integrated headless Chromium/Selenium EARTH QA passed EARTH-F01…F22, 22/22, in GitHub Actions run 33052518521. The browser test exercised source tabs/modes/selection, EO-weather-AIS layer controls, canonical and invalid AOI handling, compare, EO+AIS preparation, prototype job creation and full PROCESSING → QC REVIEW → PACKAGE READY → PACKAGE COMPLETE lifecycle, explicit non-delivery state, recipe persistence, new-product validation/creation, blocked Dark Target connector behavior, exception acknowledgement, scenario sync/recompute, shared Mission Context/AOI consumption, and pointer-event hit testing.
 
 ## 06 ENG
-- [ ] ENG-F01 Spacecraft selection.
-- [ ] ENG-F02 ORBIT / NAV / GNC analysis tabs show only correct engine content.
-- [ ] ENG-F03 ORBITS layer toggle.
-- [ ] ENG-F04 VECTORS layer toggle.
-- [ ] ENG-F05 BODY FRAME layer toggle.
-- [ ] ENG-F06 COVARIANCE layer toggle.
-- [ ] ENG-F07 PROPAGATE creates RUNNING → COMPLETE job.
-- [ ] ENG-F08 Solution COMPARE creates/updates visible result.
-- [ ] ENG-F09 Maneuver evaluate creates/updates job/state.
-- [ ] ENG-F10 ADCS slew creates/updates job/state.
-- [ ] ENG-F11 Estimator reset creates/updates job/state.
-- [ ] ENG-F12 Precision POD remains CONNECTOR_REQUIRED / BLOCKED.
-- [ ] ENG-F13 NEW ANALYSIS validation 1–168 h.
-- [ ] ENG-F14 NEW ANALYSIS valid duration updates Propagation Horizon.
-- [ ] ENG-F15 EXPORT STATE produces export/download result.
-- [ ] ENG-F16 SYNC SCENARIO resets scenario/state age.
-- [ ] ENG-F17 FOCUS / camera behavior.
-- [ ] ENG-F18 Timeline / event selection if interactive.
-- [ ] ENG-F19 Shared Mission Context visible.
-- [ ] ENG-F20 Responsive / pointer-event sanity.
-- [ ] ENG-F21 ENG page gate.
+- [x] ENG-F01 Spacecraft selection.
+- [x] ENG-F02 ORBIT / NAV / GNC analysis tabs show only correct engine content.
+- [x] ENG-F03 ORBITS layer toggle.
+- [x] ENG-F04 VECTORS layer toggle.
+- [x] ENG-F05 BODY FRAME layer toggle.
+- [x] ENG-F06 COVARIANCE layer toggle.
+- [x] ENG-F07 PROPAGATE creates RUNNING → COMPLETE job.
+- [x] ENG-F08 Solution COMPARE creates/updates visible result.
+- [x] ENG-F09 Maneuver evaluate creates/updates job/state.
+- [x] ENG-F10 ADCS slew creates/updates job/state.
+- [x] ENG-F11 Estimator reset creates/updates job/state.
+- [x] ENG-F12 Precision POD remains CONNECTOR_REQUIRED / BLOCKED.
+- [x] ENG-F13 NEW ANALYSIS validation 1–168 h.
+- [x] ENG-F14 NEW ANALYSIS valid duration updates Propagation Horizon.
+- [x] ENG-F15 EXPORT STATE produces export/download result.
+- [x] ENG-F16 SYNC SCENARIO resets scenario/state age.
+- [x] ENG-F17 FOCUS / camera behavior.
+- [x] ENG-F18 Timeline / event selection if interactive.
+- [x] ENG-F19 Shared Mission Context visible.
+- [x] ENG-F20 Responsive / pointer-event sanity.
+- [x] ENG-F21 ENG page gate.
+  - Verification note: integrated headless Chromium/Selenium ENG QA passed ENG-F01…F20, 20/20, in dedicated GitHub Actions run 33069067199. The browser run exercised spacecraft selection; ORBIT/NAV/GNC tab isolation; all four scene layers; propagation lifecycle; compare, maneuver, ADCS and estimator jobs; blocked Precision POD connector boundary; New Analysis validation and valid horizon update; JSON state export; scenario sync; Globe focus; interactive timeline event; shared Mission Context; and pointer-event hit testing.
 
 ## Final Functional Gate
-- [ ] FREL-01 All six page gates passed.
+- [x] FREL-01 All six page gates passed.
 - [ ] FREL-02 Cross-module navigation retest after functional fixes.
 - [ ] FREL-03 Cross-module shared context retest after functional fixes.
 - [ ] FREL-04 No visual regression against `space-ops-v1` baseline except approved PLAN opportunity-window fix.
