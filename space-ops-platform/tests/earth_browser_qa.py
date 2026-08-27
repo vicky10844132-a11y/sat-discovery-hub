@@ -46,6 +46,14 @@ def main():
             });
             window.__earthQaToastObserver.observe(root,{childList:true});
           }
+          window.__earthQaSyncDisabledSeen=false;
+          const sync=document.getElementById('syncBtn');
+          if(sync && !window.__earthQaSyncObserver){
+            window.__earthQaSyncObserver=new MutationObserver(()=>{
+              if(sync.disabled) window.__earthQaSyncDisabledSeen=true;
+            });
+            window.__earthQaSyncObserver.observe(sync,{attributes:true,attributeFilter:['disabled']});
+          }
         """)
         assert set(visible_items(d))=={'eo-gf7','eo-neo','eo-sar'}
         click(d,d.find_element(By.CSS_SELECTOR,'.tab[data-tab="weather"]')); assert visible_items(d)==['wx-context']
@@ -97,7 +105,10 @@ def main():
         before=int(d.find_element(By.ID,'exceptionCount').text.split()[0]); ack=d.find_element(By.CSS_SELECTOR,'[data-ack] .ackBtn'); click(d,ack)
         assert ack.text=='ACKED' and ack.get_attribute('disabled') is not None and int(d.find_element(By.ID,'exceptionCount').text.split()[0])==before-1; ok('EARTH-F19')
         click(d,d.find_element(By.ID,'fuseBtn')); assert active_step(d)==2
-        sync=d.find_element(By.ID,'syncBtn'); click(d,sync,.05); assert not sync.is_enabled(); WebDriverWait(d,3).until(lambda x:x.find_element(By.ID,'syncBtn').is_enabled()); assert active_step(d)==1 and 'scenario reset' in last_toast(d).lower(); ok('EARTH-F20')
+        d.execute_script("window.__earthQaSyncDisabledSeen=false")
+        sync=d.find_element(By.ID,'syncBtn'); click(d,sync,.05)
+        assert bool(d.execute_script("return window.__earthQaSyncDisabledSeen===true")) and sync.is_enabled()
+        assert active_step(d)==1 and 'scenario reset' in last_toast(d).lower(); ok('EARTH-F20')
         d.switch_to.default_content(); click(d,d.find_element(By.ID,'missionBtn')); m=d.find_element(By.ID,'missionId'); m.clear(); m.send_keys('QA-EARTH-001'); a=d.find_element(By.ID,'missionAoi'); a.clear(); a.send_keys('SG-TUAS-02'); click(d,d.find_element(By.ID,'saveContext')); time.sleep(.35); d.switch_to.frame(d.find_element(By.ID,'frame'))
         ctx=d.find_element(By.CSS_SELECTOR,'[data-spaceops-shared-context]').text; assert 'QA-EARTH-001' in ctx and 'SG-TUAS-02' in ctx and 'SG-TUAS-02' in d.find_element(By.ID,'viewStatus').text; ok('EARTH-F21')
         controls=[d.find_element(By.ID,'syncBtn'),d.find_element(By.ID,'productBtn'),d.find_element(By.ID,'compareBtn'),d.find_element(By.ID,'fuseBtn'),d.find_element(By.ID,'runBtn'),d.find_element(By.CSS_SELECTOR,'.tab[data-tab="eo"]')]
