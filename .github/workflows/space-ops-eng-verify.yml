@@ -1,0 +1,26 @@
+name: Space Ops ENG Verify
+
+on:
+  push:
+    branches: [space-ops-dev]
+    paths:
+      - '.github/workflows/space-ops-eng-verify.yml'
+
+jobs:
+  eng-browser-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Selenium
+        run: python -m pip install --disable-pip-version-check selenium==4.35.0
+      - name: Start static server
+        run: |
+          python -m http.server 8765 --bind 127.0.0.1 > /tmp/spaceops-http.log 2>&1 &
+          sleep 2
+          curl --fail http://127.0.0.1:8765/space-ops-platform/apps/web/workspace.html >/dev/null
+      - name: Run ENG browser QA
+        run: python space-ops-platform/tests/eng_browser_qa.py
