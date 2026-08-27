@@ -47,7 +47,7 @@ def main():
             assert vis and set(vis)=={kind} and 'active' in d.find_element(By.CSS_SELECTOR,f'.engine[data-kind="{kind}"]').get_attribute('class').split()
         ok('ENG-F02')
 
-        for fid,layer,key,initial in [('ENG-F03','orbit','orbits',True),('ENG-F04','vectors','vectors',True),('ENG-F05','body','body',False),('ENG-F06','cov','covariance',False)]:
+        for fid,layer,key,initial in [('ENG-F03','orbit','orbits',True),('ENG-F04','vectors','vectors',False),('ENG-F05','body','body',False),('ENG-F06','cov','covariance',False)]:
             b=d.find_element(By.CSS_SELECTOR,f'.sceneTools [data-layer="{layer}"]')
             p=d.execute_script('return window.__spaceopsGlobeApi.refreshLayers(true)'); assert bool(p[key])==initial
             click(d,b); p=d.execute_script('return window.__spaceopsGlobeApi.refreshLayers(true)'); assert bool(p[key])!=initial
