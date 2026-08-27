@@ -1,0 +1,55 @@
+name: Space Ops ENG Focus Fix
+
+on:
+  push:
+    branches: [space-ops-dev]
+    paths:
+      - '.github/workflows/space-ops-eng-focus-fix.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-eng-focus:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: space-ops-dev
+      - name: Patch ENG focus behavior and QA stability
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          globe = Path('space-ops-platform/apps/web/globe-module.js')
+          s = globe.read_text()
+          old = "function focusObject(id) {\n  if (key !== 'ops') return;"
+          new = "function focusObject(id) {\n  if (key !== 'ops' && key !== 'eng') return;"
+          if old not in s:
+              raise SystemExit('focusObject guard pattern not found')
+          globe.write_text(s.replace(old, new, 1))
+
+          eng = Path('space-ops-platform/apps/web/modules/eng.html')
+          s = eng.read_text()
+          old = "$('#assetSelect').onchange=e=>applyAsset(e.target.value);$('#focusAsset').onclick=()=>{applyAsset($('#assetSelect').value);toast('Focused '+selectedAsset)};"
+          new = "$('#assetSelect').onchange=e=>applyAsset(e.target.value);$('#focusAsset').onclick=()=>{applyAsset($('#assetSelect').value);try{window.__spaceopsGlobeApi?.selectObject?.(selectedAsset)}catch(_){}toast('Focused '+selectedAsset)};"
+          if old not in s:
+              raise SystemExit('ENG focus handler pattern not found')
+          eng.write_text(s.replace(old, new, 1))
+
+          qa = Path('space-ops-platform/tests/eng_browser_qa.py')
+          s = qa.read_text()
+          old = "def last_toast(d):\n    xs=d.find_elements(By.CSS_SELECTOR,'.toast')\n    return xs[-1].text if xs else (d.execute_script(\"return window.__engQaLastToast||''\") or '')"
+          new = "def last_toast(d):\n    return d.execute_script(\"return window.__engQaLastToast||''\") or ''"
+          if old not in s:
+              raise SystemExit('last_toast pattern not found')
+          qa.write_text(s.replace(old, new, 1))
+          PY
+      - name: Commit focused ENG fix
+        run: |
+          git config user.name "space-ops-qa"
+          git config user.email "space-ops-qa@users.noreply.github.com"
+          git add space-ops-platform/apps/web/globe-module.js space-ops-platform/apps/web/modules/eng.html space-ops-platform/tests/eng_browser_qa.py
+          git diff --cached --check
+          git commit -m "fix(space-ops): make ENG focus drive globe camera" || exit 0
+          git push origin HEAD:space-ops-dev
