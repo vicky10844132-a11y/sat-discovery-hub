@@ -1,0 +1,55 @@
+name: Space Ops ENG Browser QA
+
+on:
+  push:
+    branches: [space-ops-dev]
+    paths:
+      - 'space-ops-platform/apps/web/**'
+      - 'space-ops-platform/tests/eng_browser_qa.py'
+      - '.github/workflows/space-ops-eng-qa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  eng-browser-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout space-ops-dev
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Selenium
+        run: python -m pip install --upgrade pip selenium
+
+      - name: Verify Chromium
+        run: |
+          which google-chrome || which chromium || which chromium-browser || true
+          google-chrome --version || chromium --version || chromium-browser --version || true
+
+      - name: Start local web server
+        run: |
+          python -m http.server 8765 --bind 127.0.0.1 > /tmp/spaceops-http.log 2>&1 &
+          echo $! > /tmp/spaceops-http.pid
+          python - <<'PY'
+          import time, urllib.request
+          url='http://127.0.0.1:8765/space-ops-platform/apps/web/workspace.html#eng'
+          for _ in range(30):
+              try:
+                  urllib.request.urlopen(url, timeout=1)
+                  print('server ready')
+                  break
+              except Exception:
+                  time.sleep(.2)
+          else:
+              raise SystemExit('server failed to start')
+          PY
+
+      - name: Run ENG F01-F20 integrated browser QA
+        run: python space-ops-platform/tests/eng_browser_qa.py
