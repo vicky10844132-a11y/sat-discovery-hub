@@ -314,7 +314,7 @@ function currentProfile() {
   profile.ground = read(['GROUND','STATION','NETWORK'],profile.ground);
   profile.aoi = read(['AOI'],profile.aoi);
   profile.ships = read(['AIS','SHIP'],profile.ships);
-  profile.links = key === 'twin' ? isOn('linkMode',false) : read(['LINK'],profile.links);
+  profile.links = key === 'twin' ? isOn('linkMode',false) : read(key === 'ground' ? ['ACCESS','LINK'] : ['LINK'],profile.links);
   profile.coverage = key === 'twin' && isOn('coverageMode',false);
   profile.anomaly = key === 'twin' && isOn('anomalyMode',false);
   profile.grid = key === 'ops' ? read(['GRID'],false) : false;
