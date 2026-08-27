@@ -82,29 +82,30 @@
   - Verification note: integrated headless Chromium/Selenium PLAN QA passed PLAN-F01…F24, 24/24, in GitHub Actions run 33028000149. The PLAN step completed successfully; the overall workflow was later cancelled during the separate OPS regression step because the workflow hit its run-time limit. TWIN regression completed successfully before that cancellation. PLAN-F21 specifically asserted that legacy floating `.windowSeg` bars are hidden and the three visible opportunity-window paths are rendered in `#spaceopsPlanOpportunityWindows` with `data-orbit-attached="1"` and toggle correctly with the WINDOWS layer control.
 
 ## 04 GROUND
-- [ ] GROUND-F01 Ground resource filters.
-- [ ] GROUND-F02 Band filters.
-- [ ] GROUND-F03 Sort controls.
-- [ ] GROUND-F04 Resource selection updates relevant contacts/scene.
-- [ ] GROUND-F05 Contact selection updates Selected Access.
-- [ ] GROUND-F06 Contact timeline selection/visibility.
-- [ ] GROUND-F07 ACCESS layer toggle.
-- [ ] GROUND-F08 STATIONS layer toggle.
-- [ ] GROUND-F09 FOOTPRINT layer toggle.
-- [ ] GROUND-F10 WEATHER layer toggle.
-- [ ] GROUND-F11 Managed RESERVE opens action flow.
-- [ ] GROUND-F12 Reservation confirm changes CANDIDATE → RESERVED and table/counters.
-- [ ] GROUND-F13 Re-reserve is prevented/handled correctly.
-- [ ] GROUND-F14 External QUOTE opens quote flow.
-- [ ] GROUND-F15 Quote submit changes QUOTE_REQUIRED → QUOTE_REQUESTED.
-- [ ] GROUND-F16 Repeat quote prevented/handled correctly.
-- [ ] GROUND-F17 Exception Review / Ack updates counters.
-- [ ] GROUND-F18 SYNC SCENARIO regenerates future 8h windows.
-- [ ] GROUND-F19 Countdown matches selected simulated contact.
-- [ ] GROUND-F20 Zoom / RESET / scene interaction.
-- [ ] GROUND-F21 Shared Mission Context visible.
-- [ ] GROUND-F22 Responsive / pointer-event sanity.
-- [ ] GROUND-F23 GROUND page gate.
+- [x] GROUND-F01 Ground resource filters.
+- [x] GROUND-F02 Band filters.
+- [x] GROUND-F03 Sort controls.
+- [x] GROUND-F04 Resource selection updates relevant contacts/scene.
+- [x] GROUND-F05 Contact selection updates Selected Access.
+- [x] GROUND-F06 Contact timeline selection/visibility.
+- [x] GROUND-F07 ACCESS layer toggle.
+- [x] GROUND-F08 STATIONS layer toggle.
+- [x] GROUND-F09 FOOTPRINT layer toggle.
+- [x] GROUND-F10 WEATHER layer toggle.
+- [x] GROUND-F11 Managed RESERVE opens action flow.
+- [x] GROUND-F12 Reservation confirm changes CANDIDATE → RESERVED and table/counters.
+- [x] GROUND-F13 Re-reserve is prevented/handled correctly.
+- [x] GROUND-F14 External QUOTE opens quote flow.
+- [x] GROUND-F15 Quote submit changes QUOTE_REQUIRED → QUOTE_REQUESTED.
+- [x] GROUND-F16 Repeat quote prevented/handled correctly.
+- [x] GROUND-F17 Exception Review / Ack updates counters.
+- [x] GROUND-F18 SYNC SCENARIO regenerates future 8h windows.
+- [x] GROUND-F19 Countdown matches selected simulated contact.
+- [x] GROUND-F20 Zoom / RESET / scene interaction.
+- [x] GROUND-F21 Shared Mission Context visible.
+- [x] GROUND-F22 Responsive / pointer-event sanity.
+- [x] GROUND-F23 GROUND page gate.
+  - Verification note: integrated headless Chromium/Selenium GROUND QA passed GROUND-F01…F22, 22/22, in GitHub Actions run 33038448441. The browser test exercised filters, sorting, resource/contact/timeline selection, all four scene layer controls, managed reservation and external quote state transitions including repeat prevention, exception resolution, scenario regeneration, runtime countdown, Globe zoom/reset, shared mission context, and pointer-event hit testing.
 
 ## 05 EARTH
 - [ ] EARTH-F01 Source type tabs.
