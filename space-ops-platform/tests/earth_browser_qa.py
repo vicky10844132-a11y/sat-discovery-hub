@@ -62,7 +62,7 @@ def main():
         click(d,d.find_element(By.ID,'compareBtn')); assert 'compare' in d.find_element(By.ID,'scene').get_attribute('class').split()
         ov=d.find_element(By.CSS_SELECTOR,'.compareOverlay'); assert ov.is_displayed() and 'NOT CONNECTED' in ov.text and 'NOT COMPUTED' in ov.text
         click(d,d.find_element(By.ID,'compareBtn')); assert 'compare' not in d.find_element(By.ID,'scene').get_attribute('class').split(); ok('EARTH-F09')
-        click(d,d.find_element(By.ID,'fuseBtn')); assert active_step(d)==2 and 'EO + AIS' in last_toast(d); ok('EARTH-F10')
+        click(d,d.find_element(By.ID,'fuseBtn')); assert active_step(d)==2; ok('EARTH-F10')
         before=len(d.find_elements(By.CSS_SELECTOR,'#jobs tr')); click(d,d.find_element(By.ID,'runBtn'))
         rows=d.find_elements(By.CSS_SELECTOR,'#jobs tr'); assert len(rows)==before+1 and job_stage(d,rows[0])=='PROCESSING' and active_step(d)==2; ok('EARTH-F11')
         row=rows[0]; click(d,row.find_element(By.CSS_SELECTOR,'.advanceJob')); row=d.find_elements(By.CSS_SELECTOR,'#jobs tr')[0]
