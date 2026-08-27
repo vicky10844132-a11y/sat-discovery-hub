@@ -95,7 +95,11 @@ def main():
 
         prof=lambda: d.execute_script('return window.__spaceopsGlobeApi.refreshLayers(true)')
         orbit=next(x for x in d.find_elements(By.CSS_SELECTOR,'[data-layer]') if x.text.strip().upper()=='ORBITS'); p0=bool(prof().get('orbits')); click(d,orbit); assert bool(prof().get('orbits'))!=p0; click(d,orbit)
-        a0=float(d.execute_script('return window.__spaceopsGlobeApi.pointOfView().altitude')); d.execute_script("window.__spaceopsGlobeApi.zoomBy(-0.18)"); time.sleep(.2); assert float(d.execute_script('return window.__spaceopsGlobeApi.pointOfView().altitude'))<a0; d.execute_script("window.__spaceopsGlobeApi.resetView()"); ok('PLAN-F22')
+        a0=float(d.execute_script('return window.__spaceopsGlobeApi.pointOfView().altitude'))
+        d.execute_script("const api=window.__spaceopsGlobeApi,p=api.pointOfView();api.pointOfView({...p,altitude:Math.max(1.25,(p.altitude||2.08)*0.84)},0)"); time.sleep(.2)
+        assert float(d.execute_script('return window.__spaceopsGlobeApi.pointOfView().altitude'))<a0
+        d.execute_script("window.__spaceopsGlobeApi.resetView()"); time.sleep(.7)
+        assert abs(float(d.execute_script('return window.__spaceopsGlobeApi.pointOfView().altitude'))-2.08)<0.08; ok('PLAN-F22')
 
         d.switch_to.default_content(); click(d,d.find_element(By.ID,'missionBtn')); m=d.find_element(By.ID,'missionId'); m.clear(); m.send_keys('QA-PLAN-001'); a=d.find_element(By.ID,'missionAoi'); a.clear(); a.send_keys('Singapore PLAN QA'); click(d,d.find_element(By.ID,'saveContext')); time.sleep(.35); d.switch_to.frame(d.find_element(By.ID,'frame'))
         ctx=d.find_element(By.CSS_SELECTOR,'[data-spaceops-shared-context]').text; assert 'QA-PLAN-001' in ctx and 'Singapore PLAN QA' in ctx; ok('PLAN-F23')
