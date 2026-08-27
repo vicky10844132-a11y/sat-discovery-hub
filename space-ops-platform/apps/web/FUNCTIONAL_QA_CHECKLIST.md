@@ -159,8 +159,11 @@
 
 ## Final Functional Gate
 - [x] FREL-01 All six page gates passed.
-- [ ] FREL-02 Cross-module navigation retest after functional fixes.
-- [ ] FREL-03 Cross-module shared context retest after functional fixes.
-- [ ] FREL-04 No visual regression against `space-ops-v1` baseline except approved PLAN opportunity-window fix.
+- [x] FREL-02 Cross-module navigation retest after functional fixes.
+  - Verification note: integrated Chromium/Selenium shell navigation retest passed OPS → TWIN → PLAN → GROUND → EARTH → ENG with hash, active-nav state, module pill and iframe source assertions in GitHub Actions run 33070058160.
+- [x] FREL-03 Cross-module shared context retest after functional fixes.
+  - Verification note: the same run 33070058160 set mission `FINAL-QA-CTX-001`, AOI `SG-PORT-04`, priority `P1` in the shell, then confirmed all six module iframes received and displayed the shared Mission Context.
+- [x] FREL-04 No visual regression against `space-ops-v1` baseline except approved PLAN opportunity-window fix.
+  - Verification note: dedicated V1-vs-dev Chromium screenshot regression in GitHub Actions run 33070413523 compared the five non-PLAN modules with dynamic animation/time/canvas noise frozen. Changed-pixel ratios were OPS 0.00005, TWIN 0.00003, GROUND 0.00006, EARTH 0.00001, ENG 0.00003, all far below the 0.035 regression threshold. PLAN was intentionally excluded because its opportunity-window rendering is the one user-approved visual change.
 - [ ] FREL-05 User spot-check acceptance.
 - [ ] FREL-06 Only then resume REL-09 → REL-12 release flow.
