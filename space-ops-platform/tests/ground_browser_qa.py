@@ -7,6 +7,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.common.exceptions import NoSuchElementException
 
 BASE='http://127.0.0.1:8765/space-ops-platform/apps/web/workspace.html#ground'
 
@@ -14,7 +15,11 @@ def wait_js(d,s,t=35): return WebDriverWait(d,t).until(lambda x:x.execute_script
 def click(d,e,p=.18):
     d.execute_script("arguments[0].scrollIntoView({block:'center',inline:'center'});",e); time.sleep(.05); e.click(); time.sleep(p)
 def on(e): return 'on' in (e.get_attribute('class') or '').split()
-def set_select(d,eid,text): Select(d.find_element(By.ID,eid)).select_by_visible_text(text); time.sleep(.15)
+def set_select(d,eid,text):
+    s=Select(d.find_element(By.ID,eid))
+    try: s.select_by_visible_text(text)
+    except NoSuchElementException: s.select_by_value(text)
+    time.sleep(.15)
 def set_input(d,eid,text):
     e=d.find_element(By.ID,eid); e.clear(); e.send_keys(text); time.sleep(.15)
 def first_resource(d):
