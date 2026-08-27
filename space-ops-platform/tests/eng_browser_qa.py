@@ -20,6 +20,25 @@ def last_toast(d):
 def top_job(d): return d.find_elements(By.CSS_SELECTOR,'#jobsBody tr')[0]
 def state(row): return row.find_element(By.CSS_SELECTOR,'.state').text.strip()
 def wait_complete(d,row): WebDriverWait(d,3).until(lambda _ : state(row)=='COMPLETE')
+def arm_job_watch(d):
+    d.execute_script("""
+      window.__engQaJobStates=[];
+      const body=document.getElementById('jobsBody');
+      if(window.__engQaJobObserver) window.__engQaJobObserver.disconnect();
+      window.__engQaJobObserver=new MutationObserver(ms=>{
+        for(const m of ms){
+          for(const n of m.addedNodes){
+            if(n.nodeType===1){const s=n.querySelector?.('.state'); if(s) window.__engQaJobStates.push(s.textContent.trim());}
+          }
+          if(m.type==='characterData'||m.type==='childList'){
+            const s=(m.target.nodeType===1?m.target:m.target.parentElement)?.closest?.('.state');
+            if(s) window.__engQaJobStates.push(s.textContent.trim());
+          }
+        }
+      });
+      window.__engQaJobObserver.observe(body,{childList:true,subtree:true,characterData:true});
+    """)
+def saw_job_state(d,value): return bool(d.execute_script("return (window.__engQaJobStates||[]).includes(arguments[0])",value))
 
 def main():
     os.makedirs(DL,exist_ok=True)
@@ -53,17 +72,17 @@ def main():
             click(d,b); p=d.execute_script('return window.__spaceopsGlobeApi.refreshLayers(true)'); assert bool(p[key])!=initial
             click(d,b); p=d.execute_script('return window.__spaceopsGlobeApi.refreshLayers(true)'); assert bool(p[key])==initial; ok(fid)
 
-        before=len(d.find_elements(By.CSS_SELECTOR,'#jobsBody tr')); click(d,d.find_element(By.CSS_SELECTOR,'[data-action="propagate"]'),.05); row=top_job(d)
-        assert len(d.find_elements(By.CSS_SELECTOR,'#jobsBody tr'))==before+1 and row.find_elements(By.TAG_NAME,'td')[1].text=='Orbit Propagation' and state(row)=='RUNNING'; wait_complete(d,row); ok('ENG-F07')
+        before=len(d.find_elements(By.CSS_SELECTOR,'#jobsBody tr')); arm_job_watch(d); click(d,d.find_element(By.CSS_SELECTOR,'[data-action="propagate"]'),.05); row=top_job(d)
+        assert len(d.find_elements(By.CSS_SELECTOR,'#jobsBody tr'))==before+1 and row.find_elements(By.TAG_NAME,'td')[1].text=='Orbit Propagation' and saw_job_state(d,'RUNNING'); wait_complete(d,row); ok('ENG-F07')
 
-        click(d,d.find_element(By.CSS_SELECTOR,'[data-action="compare"]'),.05); row=top_job(d); assert row.find_elements(By.TAG_NAME,'td')[1].text=='Solution Comparison' and state(row)=='RUNNING'; wait_complete(d,row); ok('ENG-F08')
-        click(d,d.find_element(By.CSS_SELECTOR,'[data-action="maneuver"]'),.05); row=top_job(d); assert row.find_elements(By.TAG_NAME,'td')[1].text=='Maneuver Evaluation'; wait_complete(d,row); ok('ENG-F09')
-        click(d,d.find_element(By.CSS_SELECTOR,'[data-action="slew"]'),.05); row=top_job(d); assert row.find_elements(By.TAG_NAME,'td')[1].text=='ADCS Slew'; wait_complete(d,row); ok('ENG-F10')
-        click(d,d.find_element(By.CSS_SELECTOR,'[data-action="ekf"]'),.05); row=top_job(d); assert row.find_elements(By.TAG_NAME,'td')[1].text=='Estimator Reset' and d.find_element(By.ID,'roll').text=='0.00°' and d.find_element(By.ID,'pitch').text=='0.00°' and d.find_element(By.ID,'yaw').text=='0.00°'; wait_complete(d,row); ok('ENG-F11')
+        arm_job_watch(d); click(d,d.find_element(By.CSS_SELECTOR,'[data-action="compare"]'),.05); row=top_job(d); assert row.find_elements(By.TAG_NAME,'td')[1].text=='Solution Comparison' and saw_job_state(d,'RUNNING'); wait_complete(d,row); ok('ENG-F08')
+        arm_job_watch(d); click(d,d.find_element(By.CSS_SELECTOR,'[data-action="maneuver"]'),.05); row=top_job(d); assert row.find_elements(By.TAG_NAME,'td')[1].text=='Maneuver Evaluation' and saw_job_state(d,'RUNNING'); wait_complete(d,row); ok('ENG-F09')
+        arm_job_watch(d); click(d,d.find_element(By.CSS_SELECTOR,'[data-action="slew"]'),.05); row=top_job(d); assert row.find_elements(By.TAG_NAME,'td')[1].text=='ADCS Slew' and saw_job_state(d,'RUNNING'); wait_complete(d,row); ok('ENG-F10')
+        arm_job_watch(d); click(d,d.find_element(By.CSS_SELECTOR,'[data-action="ekf"]'),.05); row=top_job(d); assert row.find_elements(By.TAG_NAME,'td')[1].text=='Estimator Reset' and saw_job_state(d,'RUNNING') and d.find_element(By.ID,'roll').text=='0.00°' and d.find_element(By.ID,'pitch').text=='0.00°' and d.find_element(By.ID,'yaw').text=='0.00°'; wait_complete(d,row); ok('ENG-F11')
         click(d,d.find_element(By.CSS_SELECTOR,'[data-action="pod"]')); row=top_job(d); assert row.find_elements(By.TAG_NAME,'td')[1].text=='Precision POD' and row.find_elements(By.TAG_NAME,'td')[3].text=='CONNECTOR_REQUIRED' and state(row)=='BLOCKED' and 'connector required' in last_toast(d).lower(); ok('ENG-F12')
 
         click(d,d.find_element(By.ID,'caseBtn')); dur=d.find_element(By.ID,'duration'); dur.clear(); dur.send_keys('0'); click(d,d.find_element(By.ID,'runCase')); assert 'open' in d.find_element(By.ID,'caseDrawer').get_attribute('class') and 'between 1 and 168' in last_toast(d); dur.clear(); dur.send_keys('169'); click(d,d.find_element(By.ID,'runCase')); assert 'open' in d.find_element(By.ID,'caseDrawer').get_attribute('class') and 'between 1 and 168' in last_toast(d); ok('ENG-F13')
-        dur.clear(); dur.send_keys('36'); set_select(d,'analysisType','Orbit Propagation'); set_select(d,'asset','SY-01'); set_select(d,'frame','RTN'); click(d,d.find_element(By.ID,'runCase'),.05); row=top_job(d); assert d.find_element(By.ID,'validityMetric').text=='36 h' and d.find_element(By.ID,'frameValue').text=='RTN' and row.find_elements(By.TAG_NAME,'td')[2].text=='SY-01'; wait_complete(d,row); ok('ENG-F14')
+        dur.clear(); dur.send_keys('36'); set_select(d,'analysisType','Orbit Propagation'); set_select(d,'asset','SY-01'); set_select(d,'frame','RTN'); arm_job_watch(d); click(d,d.find_element(By.ID,'runCase'),.05); row=top_job(d); assert d.find_element(By.ID,'validityMetric').text=='36 h' and d.find_element(By.ID,'frameValue').text=='RTN' and row.find_elements(By.TAG_NAME,'td')[2].text=='SY-01' and saw_job_state(d,'RUNNING'); wait_complete(d,row); ok('ENG-F14')
 
         for f in glob.glob(DL+'/*'): os.remove(f)
         click(d,d.find_element(By.CSS_SELECTOR,'[data-action="export"]'))
