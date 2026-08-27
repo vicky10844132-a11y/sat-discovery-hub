@@ -20,7 +20,8 @@ def set_select(d,eid,value):
     time.sleep(.15)
 def visible_items(d): return [x.get_attribute('data-id') for x in d.find_elements(By.CSS_SELECTOR,'#catalog .item') if x.is_displayed()]
 def last_toast(d):
-    xs=d.find_elements(By.CSS_SELECTOR,'.toast'); return xs[-1].text if xs else ''
+    xs=d.find_elements(By.CSS_SELECTOR,'.toast')
+    return xs[-1].text if xs else (d.execute_script("return window.__earthQaLastToast||''") or '')
 def active_step(d):
     xs=d.find_elements(By.CSS_SELECTOR,'#steps .step'); return next((int(x.get_attribute('data-step')) for x in xs if 'active' in (x.get_attribute('class') or '').split()),-1)
 def job_stage(d,row): return row.find_element(By.CSS_SELECTOR,'.state').text.strip()
@@ -34,6 +35,18 @@ def main():
         wait_js(d,"return document.readyState==='complete'"); wait_js(d,"return !!document.querySelector('#catalog .item')",30)
         wait_js(d,"return document.documentElement.dataset.spaceopsSpecialistRuntime==='1'",30)
         wait_js(d,"return !!window.__spaceopsGlobeApi",30)
+        d.execute_script("""
+          window.__earthQaLastToast='';
+          const root=document.getElementById('toasts');
+          if(root && !window.__earthQaToastObserver){
+            window.__earthQaToastObserver=new MutationObserver(ms=>{
+              for(const m of ms) for(const n of m.addedNodes){
+                if(n.nodeType===1 && n.classList && n.classList.contains('toast')) window.__earthQaLastToast=n.textContent||'';
+              }
+            });
+            window.__earthQaToastObserver.observe(root,{childList:true});
+          }
+        """)
         assert set(visible_items(d))=={'eo-gf7','eo-neo','eo-sar'}
         click(d,d.find_element(By.CSS_SELECTOR,'.tab[data-tab="weather"]')); assert visible_items(d)==['wx-context']
         click(d,d.find_element(By.CSS_SELECTOR,'.tab[data-tab="ais"]')); assert set(visible_items(d))=={'ais-context','ais-dark'}
