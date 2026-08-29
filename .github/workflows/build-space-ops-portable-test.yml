@@ -1,0 +1,86 @@
+name: Build SPACE OPS Portable Test
+
+on:
+  push:
+    branches: [space-ops-offline-test]
+    paths:
+      - 'space-ops-platform/desktop-test/**'
+      - 'space-ops-platform/apps/web/**'
+      - '.github/workflows/build-space-ops-portable-test.yml'
+  workflow_dispatch:
+
+jobs:
+  build-windows-portable:
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: space-ops-platform/desktop-test/package.json
+
+      - name: Prepare clean runtime package
+        shell: pwsh
+        run: |
+          $dst = 'space-ops-platform/desktop-test/web'
+          if (Test-Path $dst) { Remove-Item $dst -Recurse -Force }
+          New-Item -ItemType Directory -Path $dst | Out-Null
+          $src = 'space-ops-platform/apps/web'
+          Copy-Item "$src/workspace.html" $dst
+          Copy-Item "$src/globe-module.js" $dst
+          Copy-Item "$src/globe-runtime.js" $dst
+          Copy-Item "$src/ops-runtime.js" $dst
+          Copy-Item "$src/plan-runtime.js" $dst
+          Copy-Item "$src/specialist-runtime.js" $dst
+          Copy-Item "$src/specialist-shell-loader.js" $dst
+          Copy-Item "$src/twin-runtime.js" $dst
+          New-Item -ItemType Directory -Path "$dst/modules" | Out-Null
+          Copy-Item "$src/modules/ops.html" "$dst/modules/ops.html"
+          Copy-Item "$src/modules/twin.html" "$dst/modules/twin.html"
+          Copy-Item "$src/modules/plan.html" "$dst/modules/plan.html"
+          Copy-Item "$src/modules/ground.html" "$dst/modules/ground.html"
+          Copy-Item "$src/modules/earth.html" "$dst/modules/earth.html"
+          Copy-Item "$src/modules/eng.html" "$dst/modules/eng.html"
+
+      - name: Install builder
+        working-directory: space-ops-platform/desktop-test
+        run: npm install --no-audit --no-fund
+
+      - name: Build portable EXE
+        working-directory: space-ops-platform/desktop-test
+        run: npm run dist
+
+      - name: Prepare delivery ZIP
+        shell: pwsh
+        run: |
+          $out = 'space-ops-platform/desktop-test/delivery'
+          New-Item -ItemType Directory -Path $out -Force | Out-Null
+          Copy-Item 'space-ops-platform/desktop-test/dist/SPACE OPS_免安装测试版_Windows.exe' "$out/SPACE OPS_免安装测试版.exe"
+          @'
+          SPACE OPS 免安装测试版（Windows）
+
+          使用方法：
+          1. 解压 ZIP 文件。
+          2. 双击“SPACE OPS_免安装测试版.exe”。
+          3. 无需安装，无需 Node/Python/Chrome，可离线运行。
+
+          说明：
+          - 本文件为测试版本，仅用于功能演示与测试。
+          - 内部运行资源已封装，不包含 Git、QA 测试脚本和开发工程目录。
+          - 支持 Windows 10 / Windows 11 64 位。
+          '@ | Set-Content -Path "$out/使用说明.txt" -Encoding UTF8
+          Compress-Archive -Path "$out/*" -DestinationPath 'SPACE OPS_免安装测试版_Windows.zip' -Force
+
+      - name: Upload delivery artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SPACE OPS_免安装测试版_Windows
+          path: SPACE OPS_免安装测试版_Windows.zip
+          if-no-files-found: error
+          retention-days: 30
