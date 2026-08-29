@@ -1,0 +1,38 @@
+{
+  "name": "space-ops-portable-test",
+  "version": "0.1.0",
+  "private": true,
+  "main": "electron-main.cjs",
+  "description": "SPACE OPS Windows portable test edition",
+  "author": "GLORY STELLAR",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "electron": "37.2.6",
+    "electron-builder": "26.0.12"
+  },
+  "build": {
+    "appId": "com.glorystellar.spaceops.test",
+    "productName": "SPACE OPS 免安装测试版",
+    "asar": true,
+    "compression": "maximum",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "electron-main.cjs",
+      "web/**/*",
+      "!web/tests/**",
+      "!web/*CHECKLIST*",
+      "!web/*TRIGGER*"
+    ],
+    "win": {
+      "target": ["portable"]
+    },
+    "portable": {
+      "artifactName": "SPACE OPS_免安装测试版_Windows.exe"
+    }
+  },
+  "scripts": {
+    "dist": "electron-builder --win portable --x64"
+  }
+}
