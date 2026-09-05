@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#05070d" />
+  <title>GLORY STELLAR — 3D Product Showcase</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <main id="showcase" class="showcase" data-scene="global">
+    <canvas id="globeCanvas" aria-label="Animated global stereo coverage visualization"></canvas>
+
+    <div class="scanline"></div>
+    <div class="vignette"></div>
+
+    <section class="brand minimal-ui" aria-label="Brand">
+      <div class="brand-mark">GS</div>
+      <div class="brand-copy">
+        <strong>GLORY STELLAR</strong>
+        <span>GLOBAL 3D DATA</span>
+      </div>
+    </section>
+
+    <section class="coverage-card minimal-ui" aria-label="Coverage status">
+      <span class="eyebrow">GLOBAL STEREO COVERAGE</span>
+      <div class="coverage-value"><b>100</b><small>%</small></div>
+      <div class="timeline">
+        <span class="active">2024</span>
+        <i></i>
+        <span class="active">2025</span>
+        <i></i>
+        <span class="active">2026</span>
+        <i class="pulse"></i>
+        <span>BEYOND</span>
+      </div>
+    </section>
+
+    <section class="product-stack minimal-ui" aria-label="Product layers">
+      <article class="layer-card dom-card">
+        <div class="layer-preview dom-preview"></div>
+        <div class="layer-copy"><strong>DOM</strong><span>0.8 m</span></div>
+      </article>
+      <article class="layer-card dsm-card">
+        <div class="layer-preview dsm-preview"></div>
+        <div class="layer-copy"><strong>DSM</strong><span>0.8 m</span></div>
+      </article>
+      <div class="paired"><span></span>CO-TEMPORAL</div>
+    </section>
+
+    <section class="scene-caption minimal-ui" aria-live="polite">
+      <span id="sceneKicker">GLOBAL</span>
+      <strong id="sceneTitle">Complete stereo coverage</strong>
+      <p id="sceneText">2024–2026 foundation, continuously expanding.</p>
+    </section>
+
+    <section class="controls minimal-ui" aria-label="Showcase controls">
+      <button data-scene-target="global" class="active">GLOBAL</button>
+      <button data-scene-target="region">REGION</button>
+      <button data-scene-target="detail">DETAIL</button>
+      <button id="autoTourBtn">AUTO TOUR</button>
+      <button id="uiBtn">HIDE UI</button>
+      <button id="fullscreenBtn">FULLSCREEN</button>
+    </section>
+
+    <div class="record-badge minimal-ui"><i></i> RECORD MODE READY</div>
+  </main>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
