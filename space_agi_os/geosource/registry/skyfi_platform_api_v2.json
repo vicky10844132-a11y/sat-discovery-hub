@@ -1,0 +1,72 @@
+{
+  "source_id": "skyfi_platform_api_v2",
+  "display_name": "SkyFi Platform API",
+  "category": "Earth Observation / commercial aggregator / tasking",
+  "provider": "SkyFi Inc.",
+  "endpoint": "https://app.skyfi.com/platform-api",
+  "protocol": "REST/OpenAPI",
+  "auth_type": "API key header",
+  "auth_header": "X-Skyfi-Api-Key",
+  "api_key_required": true,
+  "account_required": true,
+  "pricing_model": "commercial with open-data options",
+  "commercial_use_allowed": "requires provider terms review",
+  "redistribution_allowed": "requires provider/product-specific review",
+  "attribution_required": "requires provider/product-specific review",
+  "health_status": "UNVERIFIED_AUTH",
+  "adapter_version": "0.1.0",
+  "survivability_class": "S3",
+  "source_priority": "SECONDARY_COMMERCIAL_AGGREGATOR",
+  "fallback_source_ids": [
+    "copernicus_data_space",
+    "landsat",
+    "nasa_earthdata",
+    "provider_direct_connectors"
+  ],
+  "capabilities": [
+    "archive_search",
+    "archive_lookup",
+    "pricing",
+    "tasking_feasibility",
+    "pass_prediction",
+    "archive_order_validation",
+    "tasking_order_validation",
+    "archive_order",
+    "tasking_order",
+    "order_tracking",
+    "order_redelivery",
+    "notifications",
+    "saved_aois",
+    "tile_tokens",
+    "cloud_delivery_s3",
+    "cloud_delivery_gcs",
+    "cloud_delivery_azure"
+  ],
+  "openapi_version": "2.0.0",
+  "aoi_format": "WKT simple convex POLYGON",
+  "aoi_constraints": {
+    "max_vertices": 500,
+    "archive_search_max_area_sqkm": 500000,
+    "notification_max_area_sqkm": 500000
+  },
+  "notable_provider_rules": {
+    "vantor_eula_required": true,
+    "planet_specific_pass": "provider_window_id",
+    "umbra_specific_pass": "AOI plus tightly matched time window",
+    "satvu_assured": "tasking_tier=ASSURED plus provider_window_id plus provider_metadata.signature; validate price before order"
+  },
+  "webhook": {
+    "public_endpoint_required": true,
+    "allowed_ports": [80, 443, 8080, 8443],
+    "redirects_followed": false,
+    "timeout_seconds": 2,
+    "max_retries": 3
+  },
+  "security_notes": [
+    "Never commit SKYFI_API_KEY",
+    "Never commit cloud delivery credentials",
+    "Keep provider-specific schemas behind the GeoSource adapter",
+    "Order creation must pass policy/financial approval gates before AGI execution"
+  ],
+  "source_basis": "User-provided SkyFi Platform API 2.0.0 OpenAPI specification"
+}
