@@ -1,0 +1,44 @@
+name: Cloud Backup Before Delete
+
+on:
+  push:
+    paths:
+      - '.github/workflows/cloud-backup-before-delete.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  BACKUP_NAME: sat-discovery-hub-full-backup
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout complete repository history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Create full repository archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --all --tags --prune
+          cd ..
+          tar -czf "${BACKUP_NAME}.tar.gz" sat-discovery-hub
+          sha256sum "${BACKUP_NAME}.tar.gz" > "${BACKUP_NAME}.sha256"
+          mv "${BACKUP_NAME}.tar.gz" sat-discovery-hub/
+          mv "${BACKUP_NAME}.sha256" sat-discovery-hub/
+
+      - name: Upload backup artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sat-discovery-hub-full-backup
+          path: |
+            sat-discovery-hub-full-backup.tar.gz
+            sat-discovery-hub-full-backup.sha256
+          if-no-files-found: error
+          retention-days: 1
