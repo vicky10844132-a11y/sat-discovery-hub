@@ -46,7 +46,7 @@ table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:9px;bord
   <main class="main">
     <div class="topbar">
       <div class="brand">Production</div>
-      <div class="badge"><span class="dot" id="workerDot"></span><span id="workerLabel">Worker offline</span></div>
+      <div class="badge"><span class="dot" id="workerDot"></span><span id="workerLabel">Local Engine Offline</span></div>
     </div>
 
     <div class="canvas">
@@ -106,7 +106,7 @@ table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:9px;bord
 
             <div class="field">
               <div class="label">Compute</div>
-              <select id="compute" class="control"><option>Private Worker</option><option>Browser Preview</option></select>
+              <select id="compute" class="control"><option>Local Engine</option><option>Browser Preview</option></select>
             </div>
           </div>
 
@@ -116,7 +116,7 @@ table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:9px;bord
             <button class="btn" id="cancelBtn" disabled>Cancel</button>
             <button class="btn" id="retryBtn">Retry</button>
           </div>
-          <div class="hint">Real production requires a compute worker. Browser preview performs real local file selection, archive heuristics, readiness checks, manifest creation and preflight QC only.</div>
+          <div class="hint">Real production requires the local processing engine. Browser preview performs real local file selection, archive heuristics, readiness checks, manifest creation and preflight QC only. Final deliverables require QA sign-off.</div>
         </div>
       </section>
 
@@ -152,7 +152,7 @@ table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:9px;bord
       <div class="field"><div class="label">Resampling</div><select class="control" id="resampling"><option>Cubic</option><option>Bilinear</option><option>Nearest</option></select></div>
       <div class="field"><div class="label">Compression</div><select class="control" id="compression"><option>DEFLATE</option><option>LZW</option><option>ZSTD</option></select></div>
       <div class="field"><div class="label">Tile Size</div><input class="control" id="tileSize" type="number" value="512"></div>
-      <div class="field"><div class="label">Worker Endpoint</div><input class="control" id="workerEndpoint" placeholder="http://127.0.0.1:8787"></div>
+      <div class="field"><div class="label">Local Engine Address</div><input class="control" id="workerEndpoint" value="http://127.0.0.1:8787"></div>
     </div>
   </div>
   <div class="dlgfoot"><button class="btn primary" id="saveSettings">Save</button></div>
@@ -174,7 +174,7 @@ table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:9px;bord
   <div class="dlgbody">
     <p><b>Archive policy:</b> Direct Read first. Use selective extraction only when an operation requires random access.</p>
     <p><b>Supported preview checks:</b> file selection, naming heuristics, PAN/MS/RPC/metadata candidates, product readiness, settings, output folder capability, worker health, manifest generation and preflight report.</p>
-    <p><b>Real compute:</b> GDAL/Rasterio/OpenCV/RPC workflows need the private worker. The browser will not fabricate PASS, outputs or completed products.</p>
+    <p><b>Real compute:</b> GDAL/Rasterio/OpenCV/RPC workflows run through the local processing engine. The browser will not fabricate PASS, outputs or completed products.</p><p><b>QA gate:</b> No product is considered final or deliverable until final QA is completed and signed off.</p>
   </div>
 </dialog>
 
@@ -218,7 +218,7 @@ $('#selectOutput').onclick=async()=>{
     if(window.showDirectoryPicker){
       directoryHandle=await window.showDirectoryPicker({mode:'readwrite'});
       $('#outputDisplay').textContent=directoryHandle.name;
-      $('#outputHint').textContent='Writable folder selected for worker-returned files when browser permissions remain active.';
+      $('#outputHint').textContent='Writable folder selected for Local Engine returned files when browser permissions remain active.';
       log('Output folder selected: '+directoryHandle.name,'ok');
     }else{
       $('#folderFallback').click();
@@ -254,9 +254,9 @@ function readiness(s){
   let state='READY FOR PREFLIGHT',reason='Browser-side requirements satisfied.';
   if(level.includes('Fusion') && !(s.pan&&s.ms)){state='MS REQUIRED / ARCHIVE INSPECTION';reason='Fusion requires matching PAN + MS. Browser filename heuristics cannot confirm hidden archive members.'}
   if(level.includes('Orthorectified') && !s.rpc){state='RPC / METADATA CHECK';reason='L1C requires valid RPC/georeference; hidden archive metadata must be inspected by the worker.'}
-  if(level.startsWith('L2')){state='WORKER REQUIRED';reason='Radiometric/atmospheric processing is not implemented in browser preview.'}
-  if(level.startsWith('L3')){state='MULTI-SCENE WORKER REQUIRED';reason='Mosaic/composite products require real raster processing and scene inventory.'}
-  if(level.startsWith('Test Mode')){state='VALIDATION MODE';reason='Only actually-supported worker outputs will run; unsupported levels remain pending.'}
+  if(level.startsWith('L2')){state='LOCAL ENGINE REQUIRED';reason='Radiometric/atmospheric processing is not implemented in browser preview.'}
+  if(level.startsWith('L3')){state='MULTI-SCENE LOCAL ENGINE REQUIRED';reason='Mosaic/composite products require real raster processing and scene inventory.'}
+  if(level.startsWith('Test Mode')){state='VALIDATION MODE';reason='Only actually-supported Local Engine outputs will run; unsupported levels remain pending.'}
   return {level,state,reason};
 }
 function renderResults(){
@@ -276,8 +276,8 @@ function runScan(){
     if(scanData.archive) log('Compressed archive detected. Strategy: Direct Read first → selective extraction/cache if required.','ok');
     if(scanData.pan) log('PAN/stereo naming candidate detected.','ok'); else log('PAN candidate not confirmed from selected filenames.','warn');
     if(scanData.ms) log('MS naming candidate detected.','ok'); else log('MS not confirmed from selected filenames.','warn');
-    if(scanData.rpc) log('RPC naming candidate detected.','ok'); else log('RPC not visible at browser level; worker inspection may still find it.','warn');
-    if(scanData.archive) log('Internal TIFF/XML/RPC inventory requires private compute worker.','warn');
+    if(scanData.rpc) log('RPC naming candidate detected.','ok'); else log('RPC not visible at browser level; Local Engine inspection may still find it.','warn');
+    if(scanData.archive) log('Internal TIFF/XML/RPC inventory requires Local Engine.','warn');
     setProgress(100); setStatus('Scanned','good'); $('#metricProducts').textContent='0'; renderResults();
     saveHistory('scan','Scanned '+scanData.count+' file(s)');
     return scanData;
@@ -302,7 +302,7 @@ function manifest(){
 }
 async function workerHealth(){
   const base=($('#workerEndpoint').value||localStorage.getItem('productionWorker')||'').replace(/\/$/,'');
-  if(!base) return {ready:false,reason:'Remote compute service not connected'};
+  if(!base) return {ready:false,reason:'Local processing engine not running'};
   try{
     const res=await fetch(base+'/health',{signal:AbortSignal.timeout(3500)});
     if(!res.ok) throw new Error('HTTP '+res.status);
@@ -312,7 +312,7 @@ async function workerHealth(){
 async function refreshWorker(){
   const h=await workerHealth();
   $('#workerDot').style.background=h.ready?'#44d17a':'#f5b942';
-  $('#workerLabel').textContent=h.ready?'Worker ready':'Worker offline';
+  $('#workerLabel').textContent=h.ready?'Local Engine Ready':'Local Engine Offline';
   return h;
 }
 async function startProduction(){
@@ -325,10 +325,10 @@ async function startProduction(){
     setProgress(15);
     const h=await refreshWorker();
     if(!h.ready){
-      setStatus('Compute required','warn'); setProgress(15);
-      log('Remote compute service not connected. Real production not started.','warn');
-      $('#results').insertAdjacentHTML('beforeend','<div class="resultitem"><div><b>Compute</b><br><small>Configure a private worker endpoint in Settings to run GDAL/RPC/fusion/QC.</small></div><span class="pill warn">REQUIRED</span></div>');
-      saveHistory('preflight','Worker required — no fake output generated');
+      setStatus('Local Engine Required','warn'); setProgress(15);
+      log('Local processing engine not running. Real production not started.','warn');
+      $('#results').insertAdjacentHTML('beforeend','<div class="resultitem"><div><b>Compute</b><br><small>Start the Local Engine at 127.0.0.1:8787 to run GDAL/RPC/fusion/QC.</small></div><span class="pill warn">REQUIRED</span></div>');
+      saveHistory('preflight','Local Engine required — no fake output generated');
       return;
     }
     const fd=new FormData();
@@ -359,19 +359,26 @@ async function pollJob(base,id){
       if(j.outputs||j.results) renderWorkerResults(j.outputs||j.results);
       if(['completed','failed','cancelled'].includes(String(j.status).toLowerCase())){
         clearInterval(pollTimer); $('#startBtn').disabled=false; $('#cancelBtn').disabled=true; saveHistory('job',String(j.status));
+        if(String(j.status).toLowerCase()==='completed'){
+          setStatus('QA Required','warn');
+          log('Production finished. Final QA sign-off is required before delivery.','warn');
+        }
       }
-    }catch(e){clearInterval(pollTimer);setStatus('Connection lost','bad');log('Worker polling failed: '+e.message,'err');$('#startBtn').disabled=false;$('#cancelBtn').disabled=true;}
+    }catch(e){clearInterval(pollTimer);setStatus('Connection lost','bad');log('Local Engine polling failed: '+e.message,'err');$('#startBtn').disabled=false;$('#cancelBtn').disabled=true;}
   };
   await once(); pollTimer=setInterval(once,2200);
 }
 function renderWorkerResults(items){
   const arr=Array.isArray(items)?items:[items];
   $('#metricProducts').textContent=arr.length;
-  $('#results').innerHTML=arr.map((r,i)=>'<div class="resultitem"><div><b>'+(r.name||r.filename||('Output '+(i+1)))+'</b><br><small>'+(r.type||r.format||'Worker output')+'</small></div><span class="pill good">READY</span></div>').join('');
+  $('#results').innerHTML=arr.map((r,i)=>'<div class="resultitem"><div><b>'+(r.name||r.filename||('Output '+(i+1)))+'</b><br><small>'+(r.type||r.format||'Local Engine output')+'</small></div><span class="pill warn">QA REQUIRED</span></div>').join('');
+  if(arr.length){
+    $('#results').insertAdjacentHTML('beforeend','<div class="resultitem"><div><b>Final QA Sign-off</b><br><small>Delivery is not final until QA is completed and signed.</small></div><span class="pill warn">REQUIRED</span></div>');
+  }
 }
 $('#cancelBtn').onclick=async()=>{
   const h=await workerHealth(); const id=currentJob&&(currentJob.id||currentJob.jobId);
-  if(!h.ready||!id){log('No active worker job to cancel.','warn');return;}
+  if(!h.ready||!id){log('No active Local Engine job to cancel.','warn');return;}
   try{await fetch(h.base+'/jobs/'+encodeURIComponent(id)+'/cancel',{method:'POST'});log('Cancel requested.','warn');setStatus('Cancelling','warn');}catch(e){log('Cancel failed: '+e.message,'err');}
 };
 $('#retryBtn').onclick=()=>{log('Retry requested.');startProduction();};
@@ -385,7 +392,7 @@ function preflight(){
       {check:'Archive recognition',status:s.archive?'PASS':'N/A'},
       {check:'PAN candidate',status:s.pan?'PASS':'CHECK'},
       {check:'MS candidate',status:s.ms?'PASS':'CHECK'},
-      {check:'RPC visible in browser',status:s.rpc?'PASS':'WORKER CHECK'},
+      {check:'RPC visible in browser',status:s.rpc?'PASS':'LOCAL ENGINE CHECK'},
       {check:'Direct archive strategy',status:'PASS'},
       {check:'Real raster QC',status:'WORKER REQUIRED'}
     ]};
